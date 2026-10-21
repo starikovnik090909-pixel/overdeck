@@ -102,3 +102,4 @@ twitch-extension.zip
 
 migrations_done.json
 follow_registry.json
+__pycache__/
