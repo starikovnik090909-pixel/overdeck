@@ -7,7 +7,7 @@ if not exist "%CSC%" (
   pause
   exit /b 1
 )
-"%CSC%" /nologo /target:winexe /win32icon:launcher\icon.ico /out:Overdeck.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll launcher\Overdeck.cs
+"%CSC%" /nologo /target:winexe /win32icon:launcher\icon.ico /out:Overdeck.exe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll launcher\Overdeck.cs
 if errorlevel 1 (
   echo BUILD FAILED
   pause

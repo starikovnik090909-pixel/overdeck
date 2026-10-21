@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -21,9 +22,15 @@ static class Program
     static void Main(string[] args)
     {
         bool created;
+        try { File.Delete(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Overdeck.exe.old")); } catch { }
         EventWaitHandle showEvt = new EventWaitHandle(false, EventResetMode.AutoReset, "Overdeck.By.Starikov.Show");
         using (Mutex m = new Mutex(true, "Overdeck.By.Starikov.Launcher", out created))
         {
+            // после обновления новый экземпляр ждёт, пока старый закроется
+            if (!created && Array.IndexOf(args, "--wait") >= 0)
+            {
+                try { created = m.WaitOne(20000); } catch (AbandonedMutexException) { created = true; }
+            }
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             if (!created)
@@ -104,6 +111,11 @@ class Launcher : Form
     bool quitting;
     string updateUrl = "";
     string updatePage = "";
+    string downloadUrl = "";
+    string pendingVersion = "";
+    bool autoUpdate = true;
+    bool updating;
+    CheckBox chkAuto;
 
     ConsoleForm console;
     Label lblVersion, lblStatus, lblUpdate;
@@ -152,7 +164,7 @@ class Launcher : Form
         LoadUpdateConfig();
 
         Text = "Overdeck by Starikov";
-        ClientSize = new Size(460, 372);
+        ClientSize = new Size(460, 400);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -202,14 +214,27 @@ class Launcher : Form
         btnConsole = MakeButton("Открыть консоль", 232, 160, false);
         btnConsole.Click += delegate { ShowConsole(); };
         btnUpdate = MakeButton("Проверить обновления", 22, 214, false);
-        btnUpdate.Click += delegate { CheckUpdates(true); };
+        btnUpdate.Click += delegate
+        {
+            if (pendingVersion.Length > 0 && downloadUrl.Length > 0 && !updating) InstallUpdate(pendingVersion);
+            else CheckUpdates(true);
+        };
         btnToggle = MakeButton("Остановить сервер", 232, 214, false);
         btnToggle.Click += delegate { ToggleServer(); };
 
+        chkAuto = new CheckBox();
+        chkAuto.Text = "Обновлять автоматически";
+        chkAuto.Checked = autoUpdate;
+        chkAuto.AutoSize = true;
+        chkAuto.ForeColor = Txt;
+        chkAuto.Location = new Point(24, 266);
+        chkAuto.CheckedChanged += delegate { autoUpdate = chkAuto.Checked; SaveUpdateConfig(); };
+        Controls.Add(chkAuto);
+
         lblUpdate = new Label();
         lblUpdate.AutoSize = false;
-        lblUpdate.Size = new Size(416, 52);
-        lblUpdate.Location = new Point(22, 270);
+        lblUpdate.Size = new Size(416, 62);
+        lblUpdate.Location = new Point(22, 294);
         lblUpdate.ForeColor = Dim;
         lblUpdate.Text = "Обновления ещё не проверялись.";
         Controls.Add(lblUpdate);
@@ -220,7 +245,7 @@ class Launcher : Form
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
         hint.Size = new Size(416, 34);
-        hint.Location = new Point(22, 326);
+        hint.Location = new Point(22, 360);
         Controls.Add(hint);
 
         console = new ConsoleForm();
@@ -499,6 +524,18 @@ class Launcher : Form
             string s = File.ReadAllText(Path.Combine(root, "launcher.json"), Encoding.UTF8);
             Match m = Regex.Match(s, "\"updateUrl\"\\s*:\\s*\"([^\"]*)\"");
             if (m.Success) updateUrl = m.Groups[1].Value.Trim();
+            Match a = Regex.Match(s, "\"autoUpdate\"\\s*:\\s*(true|false)");
+            if (a.Success) autoUpdate = a.Groups[1].Value == "true";
+        }
+        catch { }
+    }
+
+    void SaveUpdateConfig()
+    {
+        try
+        {
+            string json = "{\r\n  \"updateUrl\": \"" + updateUrl.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\",\r\n  \"autoUpdate\": " + (autoUpdate ? "true" : "false") + "\r\n}\r\n";
+            File.WriteAllText(Path.Combine(root, "launcher.json"), json, new UTF8Encoding(false));
         }
         catch { }
     }
@@ -540,7 +577,7 @@ class Launcher : Form
         btnUpdate.Enabled = false;
         ThreadPool.QueueUserWorkItem(delegate
         {
-            string msg; Color col = Dim; string page = "";
+            string msg; Color col = Dim; string page = ""; string newVersion = ""; string newDownload = "";
             try
             {
                 ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072; // TLS 1.2
@@ -558,7 +595,20 @@ class Launcher : Form
                     if (notes.Length == 0) notes = JsonStr(json, "body");
                     if (notes.Length > 300) notes = notes.Substring(0, 300) + "…";
                     if (remote.Length == 0) { msg = "Не удалось прочитать версию из ответа сервера обновлений."; col = Color.FromArgb(240, 140, 140); }
-                    else if (Newer(remote, version)) { msg = "Доступна новая версия " + remote.TrimStart('v', 'V') + " (у тебя " + version + "). Нажми здесь, чтобы открыть страницу загрузки." + (notes.Length > 0 ? "\n" + notes : ""); col = Color.FromArgb(255, 184, 107); }
+                    else if (Newer(remote, version))
+                    {
+                        string dl = JsonStr(json, "download");
+                        if (dl.Length == 0)
+                        {
+                            // релиз GitHub: сначала приложенный к релизу .zip, иначе исходный архив тега
+                            Match za = Regex.Match(json, "\"browser_download_url\"\\s*:\\s*\"([^\"]+\\.zip)\"");
+                            dl = za.Success ? za.Groups[1].Value : JsonStr(json, "zipball_url");
+                        }
+                        newVersion = remote.TrimStart('v', 'V');
+                        newDownload = dl;
+                        msg = "Доступна новая версия " + newVersion + " (у тебя " + version + ")." + (dl.Length > 0 ? "" : " Нажми здесь, чтобы открыть страницу загрузки.") + (notes.Length > 0 ? "\n" + notes : "");
+                        col = Color.FromArgb(255, 184, 107);
+                    }
                     else { msg = "У тебя последняя версия (" + version + ")."; col = Ok; page = ""; }
                 }
             }
@@ -566,12 +616,162 @@ class Launcher : Form
             BeginInvoke((MethodInvoker)delegate
             {
                 updatePage = page;
+                pendingVersion = newVersion;
+                downloadUrl = newDownload;
+                btnUpdate.Text = (newVersion.Length > 0 && newDownload.Length > 0) ? "Обновить до " + newVersion : "Проверить обновления";
                 lblUpdate.Text = msg;
                 lblUpdate.ForeColor = col;
                 lblUpdate.Cursor = page.Length > 0 ? Cursors.Hand : Cursors.Default;
                 btnUpdate.Enabled = true;
+                if (newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating) InstallUpdate(newVersion);
             });
         });
+    }
+
+
+    // ---------- установка обновления ----------
+    // Скачивает zip, распаковывает ПОВЕРХ папки проекта (личные данные в архиве отсутствуют, поэтому не затрагиваются),
+    // сам Overdeck.exe подменяется переименованием, при смене package.json выполняется npm install, затем лаунчер перезапускается.
+
+    void SetUpdateText(string text, Color col)
+    {
+        BeginInvoke((MethodInvoker)delegate { lblUpdate.Text = text; lblUpdate.ForeColor = col; });
+    }
+
+    void InstallUpdate(string newVer)
+    {
+        if (updating) return;
+        updating = true;
+        btnUpdate.Enabled = false;
+        string url = downloadUrl;
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            string tmpDir = Path.Combine(Path.GetTempPath(), "overdeck-update-" + Guid.NewGuid().ToString("N").Substring(0, 8));
+            try
+            {
+                Directory.CreateDirectory(tmpDir);
+                string zipPath = Path.Combine(tmpDir, "update.zip");
+                SetUpdateText("Скачиваю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+                using (WebClient wc = new WebClient())
+                {
+                    wc.Headers["User-Agent"] = "Overdeck-Launcher";
+                    wc.DownloadFile(url, zipPath);
+                }
+                SetUpdateText("Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
+                Log("[Overdeck] Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
+                StopServer();
+                Thread.Sleep(800);
+
+                byte[] oldPkg = null;
+                string pkgPath = Path.Combine(root, "package.json");
+                try { if (File.Exists(pkgPath)) oldPkg = File.ReadAllBytes(pkgPath); } catch { }
+
+                int count = ExtractOver(zipPath);
+                Log("[Overdeck] Обновлено файлов: " + count, Color.FromArgb(204, 204, 204));
+
+                // npm install нужен только если изменился список зависимостей (а не просто номер версии)
+                bool pkgChanged = true;
+                try { byte[] np = File.ReadAllBytes(pkgPath); pkgChanged = oldPkg == null || Deps(oldPkg) != Deps(np); } catch { }
+                if (pkgChanged)
+                {
+                    Log("[Overdeck] Зависимости изменились — выполняю npm install…", Color.FromArgb(255, 184, 107));
+                    SetUpdateText("Обновляю зависимости (npm install)…", Color.FromArgb(255, 184, 107));
+                    try
+                    {
+                        ProcessStartInfo npm = Prepare("cmd.exe", "/c npm install");
+                        using (Process p = Process.Start(npm))
+                        {
+                            p.OutputDataReceived += delegate(object s2, DataReceivedEventArgs e2) { OnLine(e2.Data); };
+                            p.ErrorDataReceived += delegate(object s2, DataReceivedEventArgs e2) { OnLine(e2.Data); };
+                            p.BeginOutputReadLine(); p.BeginErrorReadLine();
+                            p.WaitForExit();
+                        }
+                    }
+                    catch (Exception nex) { Log("[Overdeck] npm install не выполнен: " + nex.Message, Color.FromArgb(241, 76, 76)); }
+                }
+                try { Directory.Delete(tmpDir, true); } catch { }
+                Log("[Overdeck] Обновление установлено. Перезапускаюсь…", Color.FromArgb(95, 224, 160));
+                BeginInvoke((MethodInvoker)delegate { Relaunch(newVer); });
+            }
+            catch (Exception ex)
+            {
+                Log("[Overdeck] Не удалось обновиться: " + ex.Message, Color.FromArgb(241, 76, 76));
+                SetUpdateText("Не удалось установить обновление: " + ex.Message, Color.FromArgb(240, 140, 140));
+                try { Directory.Delete(tmpDir, true); } catch { }
+                BeginInvoke((MethodInvoker)delegate { updating = false; btnUpdate.Enabled = true; StartServerIfNeeded(); });
+            }
+        });
+    }
+
+    static string Deps(byte[] pkg)
+    {
+        Match m = Regex.Match(Encoding.UTF8.GetString(pkg), "\"dependencies\"\\s*:\\s*\\{[^}]*\\}");
+        return m.Success ? Regex.Replace(m.Value, "\\s+", "") : "";
+    }
+
+    int ExtractOver(string zipPath)
+    {
+        int count = 0;
+        string rootFull = Path.GetFullPath(root) + Path.DirectorySeparatorChar;
+        using (ZipArchive zip = ZipFile.OpenRead(zipPath))
+        {
+            // если все файлы лежат в одной папке верхнего уровня (так устроены архивы GitHub и наш zip) — срезаем её
+            string prefix = null; bool same = true;
+            foreach (ZipArchiveEntry e in zip.Entries)
+            {
+                string n = e.FullName.Replace('\\', '/');
+                int i = n.IndexOf('/');
+                if (i < 0) { if (e.Length > 0) { same = false; break; } continue; }
+                string top = n.Substring(0, i + 1);
+                if (prefix == null) prefix = top; else if (prefix != top) { same = false; break; }
+            }
+            if (!same) prefix = null;
+            foreach (ZipArchiveEntry e in zip.Entries)
+            {
+                string n = e.FullName.Replace('\\', '/');
+                if (n.EndsWith("/")) continue;
+                if (prefix != null && n.StartsWith(prefix)) n = n.Substring(prefix.Length);
+                if (n.Length == 0) continue;
+                string dest = Path.GetFullPath(Path.Combine(root, n.Replace('/', Path.DirectorySeparatorChar)));
+                if (!dest.StartsWith(rootFull)) continue; // защита от путей вида ../
+                if (n == "launcher.json" && File.Exists(dest)) continue; // личные настройки лаунчера не трогаем
+                if (n.StartsWith(".git/") || n.StartsWith("node_modules/")) continue;
+                if (n == "Overdeck.exe") dest = dest + ".new";
+                Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                using (Stream src = e.Open())
+                using (FileStream dst = new FileStream(dest, FileMode.Create, FileAccess.Write))
+                {
+                    byte[] buf = new byte[81920]; int r;
+                    while ((r = src.Read(buf, 0, buf.Length)) > 0) dst.Write(buf, 0, r);
+                }
+                count++;
+            }
+        }
+        return count;
+    }
+
+    void Relaunch(string newVer)
+    {
+        string exe = Application.ExecutablePath;
+        string fresh = exe + ".new";
+        try
+        {
+            if (File.Exists(fresh))
+            {
+                string old = exe + ".old";
+                try { if (File.Exists(old)) File.Delete(old); } catch { }
+                File.Move(exe, old);       // запущенный exe можно переименовать
+                File.Move(fresh, exe);
+            }
+        }
+        catch (Exception ex) { WriteLog("Подмена exe не удалась: " + ex.Message); }
+        try { tray.ShowBalloonTip(4000, "Overdeck обновлён", "Версия " + newVer + " установлена.", ToolTipIcon.Info); } catch { }
+        try { Process.Start(new ProcessStartInfo(exe, "--wait") { UseShellExecute = false, WorkingDirectory = root }); }
+        catch (Exception ex) { WriteLog("Перезапуск не удался: " + ex.Message); }
+        quitting = true;
+        tray.Visible = false;
+        Application.Exit();
     }
 
     protected override void OnLoad(EventArgs e)
