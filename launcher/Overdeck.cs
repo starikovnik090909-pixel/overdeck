@@ -573,8 +573,12 @@ class Launcher : Form
         return false;
     }
 
+    const string NodeVer = "22.11.0";
+    string PortableDir() { return Path.Combine(root, "node-runtime"); }
+
     string FindNode()
     {
+        try { string pn = Path.Combine(PortableDir(), "node.exe"); if (File.Exists(pn)) return pn; } catch { }
         string[] candidates = new string[] {
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "nodejs\\node.exe"),
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "nodejs\\node.exe"),
@@ -624,8 +628,9 @@ class Launcher : Form
         string node = FindNode();
         if (node == null)
         {
-            DialogResult r = MessageBox.Show("Не найден Node.js — он нужен для работы оверлея.\n\nОткрыть страницу загрузки (nodejs.org, версия LTS)?\nПосле установки запусти Overdeck ещё раз.", "Overdeck", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            if (r == DialogResult.Yes) try { Process.Start("https://nodejs.org/"); } catch { }
+            DialogResult r = MessageBox.Show("Не найден Node.js — он нужен для работы оверлея.\n\nСкачать и поставить автоматически? (~30 МБ, кладётся в папку node-runtime рядом с Overdeck, права администратора не нужны)\n\nНет — открыть страницу nodejs.org.", "Overdeck", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            if (r == DialogResult.Yes) InstallNode();
+            else if (r == DialogResult.No) try { Process.Start("https://nodejs.org/"); } catch { }
             return;
         }
         if (!File.Exists(Path.Combine(root, "server.js")))
@@ -677,6 +682,44 @@ class Launcher : Form
         });
     }
 
+    void InstallNode()
+    {
+        Log("[Overdeck] Node.js не найден — скачиваю портативную версию " + NodeVer + "…", Color.FromArgb(255, 184, 107));
+        SetUpdateText("Скачиваю Node.js " + NodeVer + "…", Color.FromArgb(255, 184, 107));
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            string zip = Path.Combine(Path.GetTempPath(), "overdeck-node-" + NodeVer + ".zip");
+            string tmp = Path.Combine(Path.GetTempPath(), "overdeck-node-x");
+            try
+            {
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+                using (WebClient wc = new WebClient())
+                {
+                    wc.Headers["User-Agent"] = "Overdeck-Launcher";
+                    wc.DownloadFile("https://nodejs.org/dist/v" + NodeVer + "/node-v" + NodeVer + "-win-x64.zip", zip);
+                }
+                Log("[Overdeck] Распаковываю Node.js…", Color.FromArgb(255, 184, 107));
+                if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
+                ZipFile.ExtractToDirectory(zip, tmp);
+                string[] dirs = Directory.GetDirectories(tmp);
+                string src = dirs.Length == 1 ? dirs[0] : tmp;
+                if (Directory.Exists(PortableDir())) Directory.Delete(PortableDir(), true);
+                Directory.Move(src, PortableDir());
+                try { Directory.Delete(tmp, true); File.Delete(zip); } catch { }
+                if (!File.Exists(Path.Combine(PortableDir(), "node.exe"))) throw new Exception("в архиве нет node.exe");
+                Log("[Overdeck] Node.js установлен.", Ui.Ok);
+                SetUpdateText("Node.js установлен", Ui.Ok);
+                BeginInvoke((MethodInvoker)delegate { lblNode.Text = "v" + NodeVer; lblNode.ForeColor = Ui.Dim; StartServer(); });
+            }
+            catch (Exception ex)
+            {
+                Log("[Overdeck] Не удалось установить Node.js: " + ex.Message, Color.FromArgb(241, 76, 76));
+                SetUpdateText("Node.js не установлен", Ui.Err);
+                BeginInvoke((MethodInvoker)delegate { MessageBox.Show("Не удалось скачать Node.js: " + ex.Message + "\n\nУстанови его вручную с nodejs.org (LTS) и запусти Overdeck снова.", "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Warning); });
+            }
+        });
+    }
+
     ProcessStartInfo Prepare(string file, string args)
     {
         ProcessStartInfo psi = new ProcessStartInfo(file, args);
@@ -688,6 +731,12 @@ class Launcher : Form
         psi.StandardOutputEncoding = Encoding.UTF8;
         psi.StandardErrorEncoding = Encoding.UTF8;
         psi.EnvironmentVariables["OVERDECK_LAUNCHER"] = "1";
+        try
+        {
+            string nd = Path.GetDirectoryName(FindNode() ?? "");
+            if (!string.IsNullOrEmpty(nd)) psi.EnvironmentVariables["PATH"] = nd + Path.PathSeparator + (psi.EnvironmentVariables["PATH"] ?? "");
+        }
+        catch { }
         return psi;
     }
 
