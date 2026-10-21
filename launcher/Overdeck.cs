@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -54,6 +55,141 @@ static class Program
             waiter.Start();
             Application.Run(form);
         }
+    }
+}
+
+
+// ----- оформление «Overdeck»: бордовый фон, коралловый акцент, стеклянные карточки -----
+static class Ui
+{
+    public static readonly Color Bg1 = Color.FromArgb(23, 10, 13), Bg2 = Color.FromArgb(12, 5, 7), Glow = Color.FromArgb(58, 18, 27);
+    public static readonly Color Coral = Color.FromArgb(255, 90, 100), Coral2 = Color.FromArgb(214, 47, 69), Peach = Color.FromArgb(255, 154, 106);
+    public static readonly Color Pink = Color.FromArgb(240, 160, 166), Txt = Color.FromArgb(246, 227, 229), Dim = Color.FromArgb(185, 143, 149);
+    public static readonly Color Ok = Color.FromArgb(95, 224, 160), Warn = Color.FromArgb(255, 184, 107), Err = Color.FromArgb(240, 140, 140);
+    public static readonly Color Line = Color.FromArgb(70, 255, 100, 110);
+
+    public static GraphicsPath Round(Rectangle r, int rad)
+    {
+        GraphicsPath p = new GraphicsPath();
+        int d = rad * 2;
+        p.AddArc(r.X, r.Y, d, d, 180, 90);
+        p.AddArc(r.Right - d, r.Y, d, d, 270, 90);
+        p.AddArc(r.Right - d, r.Bottom - d, d, d, 0, 90);
+        p.AddArc(r.X, r.Bottom - d, d, d, 90, 90);
+        p.CloseFigure();
+        return p;
+    }
+}
+
+class Card : Panel
+{
+    public Card() { DoubleBuffered = true; BackColor = Color.Transparent; SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.ResizeRedraw, true); }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+        using (GraphicsPath p = Ui.Round(r, 14))
+        {
+            using (LinearGradientBrush b = new LinearGradientBrush(r, Color.FromArgb(150, 56, 20, 30), Color.FromArgb(150, 36, 12, 18), 90f)) e.Graphics.FillPath(b, p);
+            using (Pen pen = new Pen(Ui.Line, 1f)) e.Graphics.DrawPath(pen, p);
+        }
+    }
+}
+
+class FancyButton : Button
+{
+    public bool Primary;
+    bool hover, down;
+    public FancyButton()
+    {
+        SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent;
+        FlatStyle = FlatStyle.Flat; FlatAppearance.BorderSize = 0; Cursor = Cursors.Hand;
+        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
+        Font = new Font("Segoe UI Semibold", 10f);
+    }
+    protected override void OnMouseEnter(EventArgs e) { hover = true; Invalidate(); base.OnMouseEnter(e); }
+    protected override void OnMouseLeave(EventArgs e) { hover = false; down = false; Invalidate(); base.OnMouseLeave(e); }
+    protected override void OnMouseDown(MouseEventArgs e) { down = true; Invalidate(); base.OnMouseDown(e); }
+    protected override void OnMouseUp(MouseEventArgs e) { down = false; Invalidate(); base.OnMouseUp(e); }
+    protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+        base.OnPaintBackground(e);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+        int alpha = Enabled ? 255 : 110;
+        using (GraphicsPath p = Ui.Round(r, 11))
+        {
+            if (Primary)
+            {
+                Color c1 = hover ? Color.FromArgb(alpha, 230, 60, 80) : Color.FromArgb(alpha, Ui.Coral2);
+                using (LinearGradientBrush b = new LinearGradientBrush(r, c1, Color.FromArgb(alpha, down ? Ui.Coral2 : Ui.Coral), LinearGradientMode.Horizontal))
+                {
+                    ColorBlend cb = new ColorBlend(3);
+                    cb.Colors = new Color[] { c1, Color.FromArgb(alpha, Ui.Coral), Color.FromArgb(alpha, Ui.Peach) };
+                    cb.Positions = new float[] { 0f, 0.6f, 1f };
+                    b.InterpolationColors = cb;
+                    g.FillPath(b, p);
+                }
+            }
+            else
+            {
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(hover ? 36 : 18, 255, 255, 255))) g.FillPath(b, p);
+                using (Pen pen = new Pen(Color.FromArgb(hover ? 150 : 90, 255, 100, 110), 1f)) g.DrawPath(pen, p);
+            }
+        }
+        TextRenderer.DrawText(g, Text, Font, ClientRectangle, Color.FromArgb(alpha, Primary ? Color.White : Ui.Txt), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+    }
+}
+
+class Toggle : CheckBox
+{
+    public Toggle() { SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; Cursor = Cursors.Hand; AutoSize = false; Height = 24; }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+        base.OnPaintBackground(e);
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        Rectangle tr = new Rectangle(0, 3, 38, 18);
+        using (GraphicsPath p = Ui.Round(tr, 9))
+        using (SolidBrush b = new SolidBrush(Checked ? Ui.Coral : Color.FromArgb(90, 58, 64))) g.FillPath(b, p);
+        int kx = Checked ? tr.Right - 16 : tr.X + 2;
+        using (SolidBrush b = new SolidBrush(Color.White)) g.FillEllipse(b, kx, tr.Y + 2, 14, 14);
+        TextRenderer.DrawText(g, Text, Font, new Rectangle(46, 0, Width - 46, Height), Ui.Dim, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+    }
+}
+
+class ProgressLine : Control
+{
+    int val;
+    public int Value { get { return val; } set { val = Math.Max(0, Math.Min(100, value)); Invalidate(); } }
+    public ProgressLine() { DoubleBuffered = true; Height = 6; SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        Graphics g = e.Graphics; g.SmoothingMode = SmoothingMode.AntiAlias;
+        Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+        using (GraphicsPath p = Ui.Round(r, 3)) using (SolidBrush b = new SolidBrush(Color.FromArgb(40, 255, 255, 255))) g.FillPath(b, p);
+        int w = (int)((Width - 1) * (val / 100.0));
+        if (w > 6)
+        {
+            Rectangle f = new Rectangle(0, 0, w, Height - 1);
+            using (GraphicsPath p = Ui.Round(f, 3)) using (LinearGradientBrush b = new LinearGradientBrush(f, Ui.Coral2, Ui.Peach, LinearGradientMode.Horizontal)) g.FillPath(b, p);
+        }
+    }
+}
+
+class Dot : Control
+{
+    Color c = Color.Gray;
+    public Color DotColor { get { return c; } set { c = value; Invalidate(); } }
+    public Dot() { Size = new Size(14, 14); DoubleBuffered = true; SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; }
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        using (SolidBrush glow = new SolidBrush(Color.FromArgb(55, c))) e.Graphics.FillEllipse(glow, 0, 0, 13, 13);
+        using (SolidBrush b = new SolidBrush(c)) e.Graphics.FillEllipse(b, 3, 3, 7, 7);
     }
 }
 
@@ -115,11 +251,13 @@ class Launcher : Form
     string pendingVersion = "";
     bool autoUpdate = true;
     bool updating;
-    CheckBox chkAuto;
+    Toggle chkAuto;
 
     ConsoleForm console;
-    Label lblVersion, lblStatus, lblUpdate;
-    Button btnAdmin, btnConsole, btnUpdate, btnToggle;
+    Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
+    FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle;
+    Dot dotUpd, dotServer;
+    ProgressLine progUpd;
     NotifyIcon tray;
     System.Windows.Forms.Timer poll;
     bool autoOpened;
@@ -164,88 +302,137 @@ class Launcher : Form
         LoadUpdateConfig();
 
         Text = "Overdeck by Starikov";
-        ClientSize = new Size(460, 400);
+        ClientSize = new Size(460, 566);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
-        BackColor = Bg;
-        ForeColor = Txt;
+        BackColor = Ui.Bg1;
+        ForeColor = Ui.Txt;
         Font = new Font("Segoe UI", 9.5f);
+        DoubleBuffered = true;
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
-        Label title = new Label();
-        title.Text = "Overdeck";
-        title.Font = new Font("Segoe UI Semibold", 22f);
-        title.ForeColor = Txt;
-        title.AutoSize = true;
-        title.Location = new Point(22, 16);
-        Controls.Add(title);
+        // --- шапка ---
+        PictureBox logo = new PictureBox();
+        logo.Size = new Size(56, 56);
+        logo.Location = new Point(22, 18);
+        logo.SizeMode = PictureBoxSizeMode.Zoom;
+        logo.BackColor = Color.Transparent;
+        try
+        {
+            using (Stream rs = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("logo.png"))
+                logo.Image = new Bitmap(rs);
+        }
+        catch { try { logo.Image = Icon.ToBitmap(); } catch { } }
+        Controls.Add(logo);
 
         Label by = new Label();
         by.Text = "BY STARIKOV";
         by.Font = new Font("Consolas", 8.5f, FontStyle.Bold);
-        by.ForeColor = Dim;
+        by.ForeColor = Ui.Pink;
+        by.BackColor = Color.Transparent;
         by.AutoSize = true;
-        by.Location = new Point(165, 34);
+        by.Location = new Point(88, 20);
         Controls.Add(by);
 
+        Label title = new Label();
+        title.Text = "Overdeck";
+        title.Font = new Font("Segoe UI Semibold", 23f);
+        title.ForeColor = Color.White;
+        title.BackColor = Color.Transparent;
+        title.AutoSize = true;
+        title.Location = new Point(84, 32);
+        Controls.Add(title);
+
+        Card verPill = new Card();
+        verPill.Size = new Size(96, 28);
+        verPill.Location = new Point(342, 34);
         lblVersion = new Label();
-        lblVersion.Text = "Версия " + version;
-        lblVersion.ForeColor = Dim;
-        lblVersion.AutoSize = true;
-        lblVersion.Location = new Point(25, 62);
-        Controls.Add(lblVersion);
+        lblVersion.Text = "v" + version;
+        lblVersion.Font = new Font("Consolas", 9.5f, FontStyle.Bold);
+        lblVersion.ForeColor = Ui.Dim;
+        lblVersion.BackColor = Color.Transparent;
+        lblVersion.AutoSize = false;
+        lblVersion.TextAlign = ContentAlignment.MiddleCenter;
+        lblVersion.Dock = DockStyle.Fill;
+        verPill.Controls.Add(lblVersion);
+        Controls.Add(verPill);
 
-        Panel card = new Panel();
-        card.BackColor = CardBg;
-        card.Location = new Point(22, 92);
-        card.Size = new Size(416, 52);
-        Controls.Add(card);
+        // --- карточка обновлений ---
+        Card cUpd = new Card();
+        cUpd.Location = new Point(22, 96);
+        cUpd.Size = new Size(416, 92);
+        Controls.Add(cUpd);
+        dotUpd = new Dot(); dotUpd.Location = new Point(16, 16); dotUpd.DotColor = Ui.Dim; cUpd.Controls.Add(dotUpd);
+        lblUpdTitle = new Label();
+        lblUpdTitle.Text = "Обновления";
+        lblUpdTitle.Font = new Font("Segoe UI Semibold", 10.5f);
+        lblUpdTitle.ForeColor = Color.White;
+        lblUpdTitle.BackColor = Color.Transparent;
+        lblUpdTitle.AutoSize = true;
+        lblUpdTitle.Location = new Point(36, 13);
+        cUpd.Controls.Add(lblUpdTitle);
+        lblUpdate = new Label();
+        lblUpdate.AutoSize = false;
+        lblUpdate.Size = new Size(384, 38);
+        lblUpdate.Location = new Point(18, 38);
+        lblUpdate.ForeColor = Ui.Dim;
+        lblUpdate.BackColor = Color.Transparent;
+        lblUpdate.Font = new Font("Segoe UI", 9f);
+        lblUpdate.Text = "Обновления ещё не проверялись.";
+        cUpd.Controls.Add(lblUpdate);
+        progUpd = new ProgressLine();
+        progUpd.Location = new Point(18, 78);
+        progUpd.Size = new Size(380, 6);
+        progUpd.Visible = false;
+        cUpd.Controls.Add(progUpd);
 
-        lblStatus = new Label();
-        lblStatus.AutoSize = false;
-        lblStatus.Size = new Size(390, 30);
-        lblStatus.Location = new Point(14, 14);
-        lblStatus.Font = new Font("Segoe UI Semibold", 10.5f);
-        card.Controls.Add(lblStatus);
+        // --- карточка состояния ---
+        Card cSt = new Card();
+        cSt.Location = new Point(22, 200);
+        cSt.Size = new Size(416, 116);
+        Controls.Add(cSt);
+        dotServer = new Dot(); dotServer.Location = new Point(16, 14); cSt.Controls.Add(dotServer);
+        cSt.Controls.Add(RowName("Сервер", 11));
+        lblStatus = RowValue(11); cSt.Controls.Add(lblStatus);
+        Dot dn = new Dot(); dn.Location = new Point(16, 48); dn.DotColor = Ui.Ok; cSt.Controls.Add(dn);
+        cSt.Controls.Add(RowName("Node.js", 45));
+        lblNode = RowValue(45); lblNode.Text = "…"; cSt.Controls.Add(lblNode);
+        Dot da = new Dot(); da.Location = new Point(16, 82); da.DotColor = Ui.Pink; cSt.Controls.Add(da);
+        cSt.Controls.Add(RowName("Админка", 79));
+        lblAdminUrl = RowValue(79); lblAdminUrl.Text = "localhost:" + port + "/admin"; cSt.Controls.Add(lblAdminUrl);
 
-        btnAdmin = MakeButton("Открыть админку", 22, 160, true);
+        // --- кнопки ---
+        btnAdmin = MakeButton("Открыть админку  ›", 22, 330, 416, 52, true);
+        btnAdmin.Font = new Font("Segoe UI Semibold", 12.5f);
         btnAdmin.Click += delegate { OpenAdmin(); };
-        btnConsole = MakeButton("Открыть консоль", 232, 160, false);
+        btnConsole = MakeButton("Консоль сервера", 22, 392, 204, 42, false);
         btnConsole.Click += delegate { ShowConsole(); };
-        btnUpdate = MakeButton("Проверить обновления", 22, 214, false);
+        btnUpdate = MakeButton("Проверить обновления", 234, 392, 204, 42, false);
         btnUpdate.Click += delegate
         {
             if (pendingVersion.Length > 0 && downloadUrl.Length > 0 && !updating) InstallUpdate(pendingVersion);
             else CheckUpdates(true);
         };
-        btnToggle = MakeButton("Остановить сервер", 232, 214, false);
+        btnToggle = MakeButton("Остановить сервер", 22, 442, 416, 40, false);
         btnToggle.Click += delegate { ToggleServer(); };
 
-        chkAuto = new CheckBox();
+        chkAuto = new Toggle();
         chkAuto.Text = "Обновлять автоматически";
         chkAuto.Checked = autoUpdate;
-        chkAuto.AutoSize = true;
-        chkAuto.ForeColor = Txt;
-        chkAuto.Location = new Point(24, 266);
+        chkAuto.Location = new Point(24, 498);
+        chkAuto.Size = new Size(280, 24);
         chkAuto.CheckedChanged += delegate { autoUpdate = chkAuto.Checked; SaveUpdateConfig(); };
         Controls.Add(chkAuto);
 
-        lblUpdate = new Label();
-        lblUpdate.AutoSize = false;
-        lblUpdate.Size = new Size(416, 62);
-        lblUpdate.Location = new Point(22, 294);
-        lblUpdate.ForeColor = Dim;
-        lblUpdate.Text = "Обновления ещё не проверялись.";
-        Controls.Add(lblUpdate);
-
         Label hint = new Label();
-        hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать.\nПолностью выйти: правый клик по значку в трее → «Выход».";
-        hint.ForeColor = Dim;
+        hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать.\nПолностью выйти: значок в трее → «Выход».";
+        hint.ForeColor = Color.FromArgb(150, 120, 126);
+        hint.BackColor = Color.Transparent;
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
         hint.Size = new Size(416, 34);
-        hint.Location = new Point(22, 360);
+        hint.Location = new Point(24, 526);
         Controls.Add(hint);
 
         console = new ConsoleForm();
@@ -273,6 +460,24 @@ class Launcher : Form
         Shown += delegate
         {
             WriteLog("Лаунчер запущен, папка: " + root + ", порт " + port);
+            ThreadPool.QueueUserWorkItem(delegate
+            {
+                string nv = "не найден";
+                Color nc = Ui.Err;
+                try
+                {
+                    string nodeExe = FindNode();
+                    if (nodeExe != null)
+                    {
+                        ProcessStartInfo ni = new ProcessStartInfo(nodeExe, "-v");
+                        ni.UseShellExecute = false; ni.CreateNoWindow = true; ni.RedirectStandardOutput = true;
+                        using (Process np = Process.Start(ni)) { nv = np.StandardOutput.ReadToEnd().Trim(); np.WaitForExit(3000); }
+                        nc = Ui.Dim;
+                    }
+                }
+                catch { }
+                BeginInvoke((MethodInvoker)delegate { lblNode.Text = nv; lblNode.ForeColor = nc; });
+            });
             StartServerIfNeeded();
             ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(2500); BeginInvoke((MethodInvoker)delegate { CheckUpdates(false); }); });
         };
@@ -282,21 +487,50 @@ class Launcher : Form
         };
     }
 
-    Button MakeButton(string text, int x, int y, bool primary)
+    FancyButton MakeButton(string text, int x, int y, int w, int h, bool primary)
     {
-        Button b = new Button();
+        FancyButton b = new FancyButton();
         b.Text = text;
+        b.Primary = primary;
         b.Location = new Point(x, y);
-        b.Size = new Size(206, 42);
-        b.FlatStyle = FlatStyle.Flat;
-        b.FlatAppearance.BorderSize = primary ? 0 : 1;
-        b.FlatAppearance.BorderColor = Color.FromArgb(70, 58, 62);
-        b.BackColor = primary ? Accent : CardBg;
-        b.ForeColor = Txt;
-        b.Font = new Font("Segoe UI Semibold", 10f);
-        b.Cursor = Cursors.Hand;
+        b.Size = new Size(w, h);
         Controls.Add(b);
         return b;
+    }
+
+    static Label RowName(string text, int y)
+    {
+        Label l = new Label();
+        l.Text = text; l.AutoSize = true; l.Location = new Point(38, y + 2);
+        l.ForeColor = Ui.Txt; l.BackColor = Color.Transparent; l.Font = new Font("Segoe UI Semibold", 10f);
+        return l;
+    }
+
+    static Label RowValue(int y)
+    {
+        Label l = new Label();
+        l.AutoSize = false; l.Size = new Size(260, 22); l.Location = new Point(140, y + 2);
+        l.TextAlign = ContentAlignment.MiddleRight; l.ForeColor = Ui.Dim; l.BackColor = Color.Transparent;
+        l.Font = new Font("Consolas", 9.5f, FontStyle.Bold);
+        return l;
+    }
+
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        Graphics g = e.Graphics;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        using (LinearGradientBrush b = new LinearGradientBrush(ClientRectangle, Ui.Bg1, Ui.Bg2, 90f)) g.FillRectangle(b, ClientRectangle);
+        using (GraphicsPath gp = new GraphicsPath())
+        {
+            Rectangle gr = new Rectangle(-260, -200, 760, 420);
+            gp.AddEllipse(gr);
+            using (PathGradientBrush pg = new PathGradientBrush(gp))
+            {
+                pg.CenterColor = Color.FromArgb(120, Ui.Glow);
+                pg.SurroundColors = new Color[] { Color.FromArgb(0, Ui.Glow) };
+                g.FillPath(pg, gp);
+            }
+        }
     }
 
     // ---------- сервер ----------
@@ -460,16 +694,18 @@ class Launcher : Form
         bool open = PortOpen();
         if (open)
         {
-            lblStatus.Text = "●  Сервер работает — порт " + port;
-            lblStatus.ForeColor = Ok;
+            lblStatus.Text = "работает · порт " + port;
+            lblStatus.ForeColor = Ui.Ok;
+            dotServer.DotColor = Ui.Ok;
             btnToggle.Text = "Остановить сервер";
             if (!autoOpened) AutoOpenAdmin();
         }
         else
         {
             bool starting = server != null && !server.HasExited;
-            lblStatus.Text = starting ? "●  Сервер запускается…" : "●  Сервер остановлен";
-            lblStatus.ForeColor = starting ? Color.FromArgb(255, 184, 107) : Dim;
+            lblStatus.Text = starting ? "запускается…" : "остановлен";
+            lblStatus.ForeColor = starting ? Ui.Warn : Ui.Dim;
+            dotServer.DotColor = starting ? Ui.Warn : Color.FromArgb(122, 90, 96);
             btnToggle.Text = "Запустить сервер";
         }
         btnAdmin.Enabled = open;
@@ -621,6 +857,7 @@ class Launcher : Form
                 btnUpdate.Text = (newVersion.Length > 0 && newDownload.Length > 0) ? "Обновить до " + newVersion : "Проверить обновления";
                 lblUpdate.Text = msg;
                 lblUpdate.ForeColor = col;
+                dotUpd.DotColor = col;
                 lblUpdate.Cursor = page.Length > 0 ? Cursors.Hand : Cursors.Default;
                 btnUpdate.Enabled = true;
                 if (newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating) InstallUpdate(newVersion);
@@ -656,7 +893,14 @@ class Launcher : Form
                 using (WebClient wc = new WebClient())
                 {
                     wc.Headers["User-Agent"] = "Overdeck-Launcher";
-                    wc.DownloadFile(url, zipPath);
+                    ManualResetEvent done = new ManualResetEvent(false);
+                    Exception derr = null;
+                    BeginInvoke((MethodInvoker)delegate { progUpd.Value = 0; progUpd.Visible = true; });
+                    wc.DownloadProgressChanged += delegate(object s3, DownloadProgressChangedEventArgs e3) { int pv = e3.ProgressPercentage; BeginInvoke((MethodInvoker)delegate { progUpd.Value = pv; }); };
+                    wc.DownloadFileCompleted += delegate(object s3, System.ComponentModel.AsyncCompletedEventArgs e3) { derr = e3.Error; done.Set(); };
+                    wc.DownloadFileAsync(new Uri(url), zipPath);
+                    done.WaitOne();
+                    if (derr != null) throw derr;
                 }
                 SetUpdateText("Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
                 Log("[Overdeck] Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
@@ -699,7 +943,7 @@ class Launcher : Form
                 Log("[Overdeck] Не удалось обновиться: " + ex.Message, Color.FromArgb(241, 76, 76));
                 SetUpdateText("Не удалось установить обновление: " + ex.Message, Color.FromArgb(240, 140, 140));
                 try { Directory.Delete(tmpDir, true); } catch { }
-                BeginInvoke((MethodInvoker)delegate { updating = false; btnUpdate.Enabled = true; StartServerIfNeeded(); });
+                BeginInvoke((MethodInvoker)delegate { updating = false; progUpd.Visible = false; btnUpdate.Enabled = true; StartServerIfNeeded(); });
             }
         });
     }
