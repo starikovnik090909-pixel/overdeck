@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Турнирная сетка</title>
+<link rel="stylesheet" href="bracket.css">
+</head>
+<body>
+<div id="bracketRoot">
+  <div id="bracketPanelMatches" class="bracket-panel">
+    <div class="bracket-panel-inner">
+      <div class="bracket-panel-title">
+        <span id="bracketMatchesTitle">Матчи</span>
+        <span id="bracketGroupLabel" class="bracket-panel-title-accent"></span>
+      </div>
+      <div id="bracketGroupGrid"></div>
+      <div id="bracketDeUpper" class="de-board"></div>
+    </div>
+  </div>
+  <div id="bracketPanelPlayoff" class="bracket-panel">
+    <div class="bracket-panel-inner">
+      <div class="bracket-panel-title"><span id="bracketPlayoffTitle">Решающие матчи</span></div>
+      <div id="bracketPlayoffBoxes"></div>
+      <div id="bracketDeFinal" class="de-final"></div>
+    </div>
+  </div>
+  <div id="bracketPanelStandings" class="bracket-panel">
+    <div class="bracket-panel-inner">
+      <div class="bracket-panel-title"><span id="bracketStandingsTitle">Турнирная таблица</span></div>
+      <div id="bracketDeLower" class="de-board"></div>
+      <div class="bracket-standings-shell">
+        <table id="bracketStandingsTable">
+          <thead><tr><th>Место</th><th>Команда</th><th>W-L</th><th>Очки</th></tr></thead>
+          <tbody id="bracketStandingsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="bracket-de.js"></script>
+<script src="bracket.js"></script>
+</body>
+</html>

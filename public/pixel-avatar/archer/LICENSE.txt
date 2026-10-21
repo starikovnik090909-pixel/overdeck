@@ -1,0 +1,9 @@
+ARCHER — Animated Hero Sprite (free pack, Part 1) by gegx — https://gegx.itch.io/archer-hero-128
+
+Спрайты в этой папке (walk.png, idle.png) собраны из кадров этого пака скриптом tools/build-pixel-pack.py (кадры только склеены в атласы и
+выровнены по земле, рисунок не менялся).
+
+Лицензия автора (из README пака):
+  Use in any project, commercial or free, no credit required.
+  Do not resell the assets themselves as an asset pack.
+(Использовать в любом проекте, коммерческом или бесплатном, указывать автора не обязательно. Нельзя перепродавать сами ассеты как набор ассетов.)

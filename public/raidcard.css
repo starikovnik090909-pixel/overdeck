@@ -1,0 +1,51 @@
+/* Алерт рейда «Табло»: HUD-панель со скошенными углами, аватарка с вращающимся кольцом, «толпа» зрителей, которая загорается вместе со счётчиком. Рисует runRaidCard в donationalert.js */
+.rj-layer { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 40; --rj: #ff8a1f; --rj2: color-mix(in srgb, var(--rj) 45%, #fff); font-family: 'TkSans', 'Manrope', sans-serif; color: #fff; overflow: hidden; }
+.rj-stage { position: absolute; left: 50%; top: 50%; width: 1120px; height: 440px; margin: -220px 0 0 -560px; }
+.rj-halo { position: absolute; inset: -140px -200px; z-index: -1; opacity: 0; background: radial-gradient(closest-side, color-mix(in srgb, var(--rj) 55%, #fff) 0%, color-mix(in srgb, var(--rj) 22%, transparent) 55%, transparent 100%); }
+.rj-layer.rj-in .rj-halo { opacity: .5; transition: opacity .8s .3s; animation: rjBreath 3s ease-in-out 1s infinite; }
+@keyframes rjBreath { 50% { opacity: .75; } }
+.rj-line { position: absolute; left: 20px; right: 20px; top: 50%; height: 4px; margin-top: -2px; background: var(--rj2); box-shadow: 0 0 24px var(--rj); transform: scaleX(0); opacity: 0; }
+.rj-layer.rj-in .rj-line { animation: rjLine .75s ease-out forwards; }
+@keyframes rjLine { 0% { transform: scaleX(0); opacity: 1; } 45% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+.rj-panel { position: absolute; left: 20px; top: 20px; width: 1080px; height: 400px; transform: scaleY(.02); opacity: 0; filter: drop-shadow(0 22px 34px rgba(0,0,0,.55)); }
+.rj-layer.rj-in .rj-panel { animation: rjOpen .55s .32s cubic-bezier(.2,.9,.25,1.05) forwards; }
+.rj-layer.rj-out .rj-panel { animation: rjClose .5s ease-in forwards; }
+.rj-layer.rj-out .rj-halo { opacity: 0; transition: opacity .4s; }
+@keyframes rjOpen { 0% { transform: scaleY(.02); opacity: 0; } 20% { opacity: 1; } 100% { transform: none; opacity: 1; } }
+@keyframes rjClose { 0% { transform: none; opacity: 1; } 100% { transform: scaleY(.02) scaleX(.9); opacity: 0; } }
+.rj-shape { position: absolute; inset: 0; clip-path: polygon(34px 0, 100% 0, 100% calc(100% - 34px), calc(100% - 34px) 100%, 0 100%, 0 34px); background: linear-gradient(135deg, var(--rj2), var(--rj)); }
+.rj-face { position: absolute; inset: 2px; clip-path: polygon(33px 0, 100% 0, 100% calc(100% - 33px), calc(100% - 33px) 100%, 0 100%, 0 33px); overflow: hidden;
+  background: repeating-linear-gradient(115deg, rgba(255,255,255,.028) 0 2px, transparent 2px 9px), radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--rj) 36%, #150d2b) 0%, #120b22 55%, #0c0817 100%); }
+.rj-scan { position: absolute; top: 0; bottom: 0; width: 160px; left: -200px; background: linear-gradient(100deg, transparent, color-mix(in srgb, var(--rj2) 55%, transparent), transparent); mix-blend-mode: screen; opacity: 0; }
+.rj-layer.rj-done .rj-scan { animation: rjScan 1.1s ease-out forwards; }
+@keyframes rjScan { 0% { left: -200px; opacity: 1; } 100% { left: 1100px; opacity: .9; } }
+.rj-br { position: absolute; width: 38px; height: 38px; border: 4px solid var(--rj2); opacity: .9; }
+.rj-br.a { left: 14px; bottom: 14px; border-width: 0 0 4px 4px; } .rj-br.b { right: 14px; top: 14px; border-width: 4px 4px 0 0; }
+.rj-top { position: absolute; left: 60px; right: 60px; top: 26px; display: flex; align-items: center; gap: 14px; font: 600 15px 'TkMono', monospace; letter-spacing: .28em; text-transform: uppercase; color: var(--rj2); }
+.rj-chip { background: var(--rj2); color: #140a05; border-radius: 6px; padding: 4px 12px; font-weight: 600; letter-spacing: .2em; }
+.rj-live { margin-left: auto; display: flex; align-items: center; gap: 8px; } .rj-live i { width: 10px; height: 10px; border-radius: 50%; background: #ff4d4d; box-shadow: 0 0 10px #ff4d4d; animation: rjBlink 1s steps(2) infinite; } @keyframes rjBlink { 50% { opacity: .25; } }
+.rj-avwrap { position: absolute; left: 58px; top: 76px; width: 190px; height: 190px; opacity: 0; transform: scale(.4); }
+.rj-layer.rj-in .rj-avwrap { animation: rjPopAv .6s .75s cubic-bezier(.2,1.5,.4,1) forwards; }
+@keyframes rjPopAv { to { opacity: 1; transform: none; } }
+.rj-ring { position: absolute; inset: -14px; border-radius: 50%; border: 3px dashed var(--rj2); opacity: .85; animation: rjSpin 14s linear infinite; }
+@keyframes rjSpin { to { transform: rotate(360deg); } }
+.rj-av { position: absolute; inset: 0; border-radius: 50%; padding: 6px; background: conic-gradient(var(--rj), var(--rj2), #fff, var(--rj)); }
+.rj-av > div { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 35% 30%, #ff9a62, #c4366a 60%, #4a1f6e); display: flex; align-items: center; justify-content: center; font: 800 80px 'TkSans'; }
+.rj-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rj-pulse { position: absolute; inset: 0; border-radius: 50%; border: 3px solid var(--rj2); opacity: 0; }
+.rj-layer.rj-done .rj-pulse { animation: rjPulse 1s ease-out forwards; } @keyframes rjPulse { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+.rj-fade { opacity: 0; transform: translateY(12px); }
+.rj-layer.rj-in .rj-fade { animation: rjUp .5s cubic-bezier(.2,.9,.3,1) forwards; }
+@keyframes rjUp { to { opacity: 1; transform: none; } }
+.rj-nickbox { position: absolute; left: 310px; top: 76px; width: 450px; overflow: hidden; white-space: nowrap; padding: 4px 8px 12px 0; }
+.rj-nick { display: inline-block; font-weight: 800; font-size: 72px; line-height: 1.1; text-shadow: 0 0 24px color-mix(in srgb, var(--rj) 60%, transparent); }
+.rj-sub { position: absolute; left: 310px; top: 170px; font: 600 16px 'TkMono', monospace; letter-spacing: .22em; color: rgba(255,255,255,.6); text-transform: uppercase; }
+.rj-crowd { position: absolute; left: 310px; top: 206px; width: 460px; display: flex; flex-wrap: wrap; gap: 6px 5px; }
+.rj-crowd svg { width: 20px; height: 30px; fill: rgba(255,255,255,.14); transition: fill .15s, filter .15s; } .rj-crowd svg.on { fill: var(--rj2); filter: drop-shadow(0 0 6px var(--rj)); }
+.rj-count { position: absolute; left: 790px; top: 70px; width: 250px; text-align: right; }
+.rj-num { font-weight: 800; font-size: 150px; line-height: 1; letter-spacing: -.02em; text-shadow: 0 0 34px color-mix(in srgb, var(--rj) 65%, transparent); white-space: nowrap; display: inline-block; }
+.rj-num.pop { animation: rjPopN .45s ease; } @keyframes rjPopN { 50% { transform: scale(1.16); } }
+.rj-lab { font: 600 20px 'TkMono', monospace; letter-spacing: .3em; color: var(--rj2); margin-top: -2px; }
+.rj-game { position: absolute; left: 60px; right: 60px; bottom: 30px; height: 84px; border-radius: 14px; background: rgba(0,0,0,.38); border: 1.5px solid rgba(255,255,255,.14); display: flex; align-items: center; gap: 20px; padding: 0 20px; }
+.rj-art { width: 50px; height: 66px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center; font: 800 22px 'TkSans'; background: linear-gradient(160deg, var(--rj2), color-mix(in srgb, var(--rj) 40%, #000)); color: #fff; box-shadow: 0 6px 16px rgba(0,0,0,.5); }
+.rj-gt { min-width: 0; flex: 1; } .rj-gk { font: 600 12px 'TkMono', monospace; letter-spacing: .3em; color: var(--rj2); } .rj-gn { font-weight: 800; font-size: 30px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .rj-gs { font: 600 15px 'TkMono', monospace; color: rgba(255,255,255,.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

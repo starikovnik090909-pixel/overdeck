@@ -1,0 +1,60 @@
+{
+  "name": "zombie3",
+  "title": "Зомби 3",
+  "group": "Зомби",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 52,
+    "h": 72
+  },
+  "pivot": {
+    "x": 26,
+    "y": 69
+  },
+  "headTop": 3,
+  "speed": 45,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Free-Urban-Zombie-Sprite-Sheet-Pixel-Art-Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 70,
+        "h": 72
+      },
+      "pivot": {
+        "x": 35,
+        "y": 68
+      }
+    }
+  ]
+}

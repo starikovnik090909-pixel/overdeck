@@ -1,0 +1,61 @@
+{
+  "channel": "ВСТАВЬ_СВОЙ_КАНАЛ",
+  "port": 3001,
+  "twitch": {
+    "clientId": "ВСТАВЬ_CLIENT_ID",
+    "clientSecret": "ВСТАВЬ_CLIENT_SECRET"
+  },
+  "theme": {
+    "accent": "#B14846",
+    "textMain": "#E0E0E0",
+    "bgPanelRGB": [
+      20,
+      20,
+      25
+    ],
+    "bgPanelAlpha": 0.55,
+    "fontMain": "Unbounded",
+    "fontText": "Inter",
+    "fontSizeMain": 16,
+    "fontSizeText": 14
+  },
+  "selectedTheme": "default",
+  "tts": {
+    "enabled": false,
+    "voice": "ru_RU-irina-medium",
+    "lengthScale": 1.0,
+    "noiseScale": 0.667,
+    "noiseWScale": 0.8,
+    "volume": 1.0,
+    "sentenceSilence": 0.2,
+    "readNickname": true,
+    "ignoreBots": true,
+    "maxLength": 200,
+    "queueEnabled": true,
+    "ignoredWords": []
+  },
+  "_comment_ttsEngine": "Внутренние настройки движка Piper — не показываются в панели управления. piperPath: путь к исполняемому файлу piper (по умолчанию берётся из PATH). voicesDir: папка с файлами .onnx/.onnx.json (относительно корня проекта либо абсолютный путь).",
+  "ttsEngine": {
+    "piperPath": "piper",
+    "voicesDir": "./voices"
+  },
+  "chatSettings": {
+    "showBadges": true,
+    "showAvatars": true,
+    "showThirdPartyEmotes": true
+  },
+  "topChattersCount": 10,
+  "wordCloudSize": 50,
+  "timelineWindowSec": 30,
+  "timelineMaxPoints": 500,
+  "categoryPollSec": 60,
+  "floatingAvatarCount": 30,
+  "wordCloudPhysics": true,
+  "emoteBoxMaxCount": 60,
+  "emoteBoxGravity": 0.5,
+  "emoteBoxBounce": 0.4,
+  "emoteBoxFriction": 0.98,
+  "saveIntervalMs": 15000,
+  "broadcastIntervalMs": 1000,
+  "statsFile": "stats.json"
+}

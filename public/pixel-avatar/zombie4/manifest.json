@@ -1,0 +1,60 @@
+{
+  "name": "zombie4",
+  "title": "Зомби 4",
+  "group": "Зомби",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 60,
+    "h": 76
+  },
+  "pivot": {
+    "x": 30,
+    "y": 72
+  },
+  "headTop": 3,
+  "speed": 45,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Free-Urban-Zombie-Sprite-Sheet-Pixel-Art-Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 12,
+      "west": 12
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 72,
+        "h": 84
+      },
+      "pivot": {
+        "x": 36,
+        "y": 80
+      }
+    }
+  ]
+}

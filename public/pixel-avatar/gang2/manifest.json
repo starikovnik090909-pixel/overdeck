@@ -1,0 +1,96 @@
+{
+  "name": "gang2",
+  "title": "Гангстер 2",
+  "group": "Гангстеры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 48,
+    "h": 78
+  },
+  "pivot": {
+    "x": 24,
+    "y": 74
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "gangster-pixel-character-sprite-sheets-pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "afk": [
+    {
+      "name": "idle2",
+      "title": "Скучает",
+      "clips": [
+        {
+          "file": "afk_idle2.png",
+          "frames": {
+            "east": 13,
+            "west": 13
+          },
+          "columns": 13,
+          "loops": 2
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 78,
+        "h": 90
+      },
+      "pivot": {
+        "x": 39,
+        "y": 86
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 76,
+        "h": 76
+      },
+      "pivot": {
+        "x": 38,
+        "y": 72
+      }
+    }
+  ]
+}

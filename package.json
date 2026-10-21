@@ -1,0 +1,24 @@
+{
+  "name": "twitch-overlay-v2",
+  "version": "2.0.0",
+  "description": "Twitch-оверлей для OBS: активность, таймлайн, коробка эмодзи, облако слов, категории",
+  "main": "server.js",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "tmi.js": "^1.8.5",
+    "msedge-tts": "^2.1.0",
+    "express": "^4.19.2",
+    "ws": "^8.17.0",
+    "dotenv": "^16.4.5",
+    "@mkody/twitch-emoticons": "^2.9.5",
+    "multer": "^1.4.5-lts.1",
+    "@hitomihiumi/donatex.js": "*",
+    "centrifuge": "2.6.0",
+    "bracketeer": "*",
+    "double-elimination": "*",
+    "brackets-model": "*"
+  }
+}

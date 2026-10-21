@@ -1,0 +1,79 @@
+{
+  "name": "crow",
+  "title": "Ворон (чумной доктор)",
+  "group": "Тёмные маги",
+  "fps": 8,
+  "scale": 4,
+  "cell": {
+    "w": 32,
+    "h": 36
+  },
+  "pivot": {
+    "x": 16,
+    "y": 33
+  },
+  "headTop": 3,
+  "speed": 65,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Crow Animations",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 34,
+        "h": 38
+      },
+      "pivot": {
+        "x": 17,
+        "y": 35
+      }
+    },
+    {
+      "name": "attack",
+      "title": "Клюёт",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 52,
+        "h": 36
+      },
+      "pivot": {
+        "x": 26,
+        "y": 32
+      }
+    }
+  ]
+}

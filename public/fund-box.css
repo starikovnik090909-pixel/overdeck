@@ -1,0 +1,68 @@
+/* public/fund-box.css — "Коробочка сбора": коробка в разрезе (без крышки —
+   открыта сверху, видны только левая/правая/нижняя стенки), внутри падают
+   монетки (рисуются на <canvas>, см. fund-box.js). Номинал уровня — над
+   коробкой, подпись — под ней. Прозрачный фон страницы. */
+
+:root {
+  --fb-box-w: 260px;
+  --fb-box-h: 220px;
+  --fb-coin-size: 22px;
+  --fb-box-color: #c9a24a;
+  --fb-coin-color: #ffd700;
+  --fb-text-color: #f0e6d2;
+  --fb-bg-opacity: 0;
+  --fb-bg-darken: 0;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#fundBoxRoot {
+  position: relative; z-index: 0; /* z-index:0 вместе с position:relative гарантированно создаёт свой контекст наложения — без него отрицательный z-index плашки ниже мог бы утечь за пределы виджета (та же ловушка, что уже была с текстурой команд, см. README) */
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 18px 24px;
+  transition: opacity 0.3s ease;
+}
+#fundBoxRoot.fb-hidden { opacity: 0; pointer-events: none; }
+
+/* Плашка-подложка позади коробки — простой тёмный прямоугольник (не картинка), чтобы виджет не терялся
+   на фоне игры. Два независимых слоя, как и "Фон плашек" в "Теме ивента": сама плашка + отдельное
+   затемнение поверх неё. Оба — с отрицательным z-index, под денежным текстом/коробкой/подписью. */
+#fbBackdrop { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: 16px; overflow: hidden; }
+.fb-backdrop-plate { position: absolute; inset: 0; background: #0e0e10; opacity: var(--fb-bg-opacity); }
+.fb-backdrop-darken { position: absolute; inset: 0; background: #000; opacity: var(--fb-bg-darken); }
+
+.fb-denomination {
+  color: var(--fb-text-color);
+  font-size: 20px; font-weight: 800;
+  text-shadow: 0 0 10px rgba(201,162,74,0.4), 0 2px 4px rgba(0,0,0,0.7);
+}
+
+.fb-box {
+  position: relative;
+  width: var(--fb-box-w); height: var(--fb-box-h);
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); /* пружинный рост до нового реального размера при заполнении */
+  border-left: 4px solid var(--fb-box-color);
+  border-right: 4px solid var(--fb-box-color);
+  border-bottom: 4px solid var(--fb-box-color);
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(180deg, rgba(20,20,30,0.15), rgba(20,20,30,0.55));
+  box-shadow: inset 0 -20px 30px -10px rgba(0,0,0,0.4);
+  overflow: visible; /* монетки при отскоке могут чуть выходить за верх коробки */
+}
+.fb-box canvas {
+  position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+}
+
+.fb-caption {
+  color: var(--fb-text-color);
+  font-size: 14px; font-weight: 600; text-align: center;
+  max-width: calc(var(--fb-box-w) * 1.4);
+  opacity: 0.9;
+}

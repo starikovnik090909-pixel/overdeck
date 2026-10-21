@@ -1,0 +1,104 @@
+# Зависимости
+node_modules/
+
+# Секреты и личные данные — никогда не коммитить
+.env
+config.json
+auth_credentials.json
+donation_credentials.json
+
+# Накопленные данные стрима — у каждого свои, в репозитории не нужны
+stats.json
+donations.json
+sub_registry.json
+donations_alltime.json
+widgets_layout.json
+widgets_settings.json
+help_texts.json
+team_data.json
+saved_teams.json
+mvp_data.json
+fact_data.json
+fact_presets.json
+fund_data.json
+fund_alert_data.json
+fund_box_data.json
+goal_data.json
+timer_data.json
+prediction_templates.json
+event_theme.json
+admin_themes.json
+chat_bot.json
+chat_bot.json.tmp
+bot_commands.json
+bot_timers.json
+bot_timers.json.tmp
+banned_words.json
+banned_words.json.tmp
+background_data.json
+bracket_data.json
+bracket_teams.json
+bracket_size_defaults.json
+bracket_panel_layout_defaults.json
+bracket_panel_layout_defaults_de.json
+
+# Загруженные фото игроков и логотипы команд
+uploads/team/*
+!uploads/team/README.md
+
+# Сохранённые пресеты команд (свои фото/логотипы у каждого пользователя)
+uploads/teams/*
+
+# Фото для карточки MVP
+uploads/mvp/*
+!uploads/mvp/README.md
+
+# Библиотека фонов трансляции (картинки/GIF/видео)
+backgrounds/*
+!backgrounds/.gitkeep
+
+# Турнирная сетка: логотипы команд и сохранённые сетки
+uploads/bracket-logos/*
+!uploads/bracket-logos/.gitkeep
+
+# Текстура фона карточки алерта доната — пользовательская картинка
+uploads/alert-texture/*
+!uploads/alert-texture/.gitkeep
+
+# "Тема ивента" — фон плашек
+uploads/theme/*
+!uploads/theme/.gitkeep
+
+# Обложка вкладки «Ивент» в админке: картинка и название — пользовательские данные, при обновлении проекта не затираются
+event_cover.json
+uploads/event/*
+!uploads/event/.gitkeep
+
+# Виджет «Инфо-карточка»: карточки (тексты) и их картинки — пользовательские данные
+info_cards.json
+uploads/infocard/*
+!uploads/infocard/.gitkeep
+
+# Пиксельные герои: настройки (выдавать чаттерам, режим 2D, галочки героев) — пользовательские данные
+pixel_heroes_settings.json
+pixel_profiles.json
+awards.json
+awards.json.tmp
+avatar_commands.json
+saved_brackets/*
+!saved_brackets/.gitkeep
+
+# Свои шрифты, загруженные через админку
+fonts/*
+!fonts/README.md
+
+# Расширение Twitch: ключи и Client ID расширения (секрет!) — никогда не коммитить и не класть в архив
+extension_config.json
+extension_config.json.tmp
+
+# Собранные файлы расширения (генерируются tools/build-extension.js)
+extension/dist/
+twitch-extension.zip
+
+migrations_done.json
+follow_registry.json

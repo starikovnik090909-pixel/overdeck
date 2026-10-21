@@ -1,0 +1,164 @@
+/* public/fact.css — fact.html: "Факт / Инфо-панель". Тот же стиль, что и
+   у "Панели команды"/MVP — тёмный градиент, золото-фиолетовая градиентная
+   обводка, скруглённые углы. Прозрачный фон страницы, панель непрозрачная.
+   Появление/исчезание — тот же проверенный приём, что и у MVP: transform
+   + transition (не display:none — это нельзя анимировать), сдвиг считается
+   от размера ОКНА (vw/vh), а не самой панели. Без лучей — не нужны по заданию. */
+
+:root {
+  --fact-card-w: 480px;
+  --fact-card-h: 160px;
+  --fact-title-size: 20px;
+  --fact-text-size: 16px;
+  --fact-padding: 24px;
+  --fact-anim-duration: 600ms;
+  /* --- "Тема ивента" (Часть 1) — раньше цвета фона/обводки/текста у Факта
+     не были настройками ВООБЩЕ, зашиты прямо в CSS ниже. Вынесены сюда
+     специально ради темы — значения по умолчанию ровно те же, что и были. */
+  --fact-fill-start: #1a1f3d;
+  --fact-fill-end: #3a2560;
+  --fact-border-start: #c9a24a;
+  --fact-border-end: #6a5acd;
+  --fact-title-color: #f0e6d2;
+  --fact-text-color: #ffffff;
+  --fact-title-font: 'Inter', system-ui, sans-serif;
+  --fact-data-font: 'Inter', system-ui, sans-serif;
+  --fact-radius: 14px;
+  --fact-chamfer-points: var(--fact-radius) 0, calc(100% - var(--fact-radius)) 0, 100% var(--fact-radius), 100% calc(100% - var(--fact-radius)), calc(100% - var(--fact-radius)) 100%, var(--fact-radius) 100%, 0 calc(100% - var(--fact-radius)), 0 var(--fact-radius); /* дефолт — все 4 угла, как было раньше; JS переопределит, если выбраны не все */
+  --fact-border-w: 2px;
+  --fact-texture-opacity: 0;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#factRoot {
+  position: relative;
+  width: var(--fact-card-w); height: var(--fact-card-h);
+  transition: transform var(--fact-anim-duration) ease;
+  transform: translate(0, 0);
+}
+#factRoot.fact-no-transition { transition: none; }
+#factRoot.fact-hidden[data-side="right"] { transform: translateX(100vw); }
+#factRoot.fact-hidden[data-side="left"] { transform: translateX(-100vw); }
+#factRoot.fact-hidden[data-side="top"] { transform: translateY(-100vh); }
+#factRoot.fact-hidden[data-side="bottom"] { transform: translateY(100vh); }
+
+.fact-card {
+  position: relative;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: var(--fact-padding);
+  border-radius: var(--fact-radius); overflow: hidden;
+  border: var(--fact-border-w) solid transparent;
+  background:
+    linear-gradient(180deg, var(--fact-fill-start) 0%, var(--fact-fill-end) 100%) padding-box,
+    linear-gradient(160deg, var(--fact-border-start), var(--fact-border-end) 60%, var(--fact-border-start)) border-box;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.6), 0 0 18px rgba(201,162,74,0.22);
+}
+#factRoot[data-border-style="solid"] .fact-card {
+  background:
+    linear-gradient(180deg, var(--fact-fill-start) 0%, var(--fact-fill-end) 100%) padding-box,
+    var(--fact-border-start) border-box;
+}
+#factRoot[data-border-style="double"] .fact-card {
+  border-style: double;
+  border-width: calc(var(--fact-border-w) * 2.5);
+  border-color: var(--fact-border-start);
+  background: linear-gradient(180deg, var(--fact-fill-start) 0%, var(--fact-fill-end) 100%);
+}
+/* Скошенные углы (Hextech-пресет) — см. подробный комментарий в mvp.css. */
+#factRoot[data-corner-style="chamfer"] .fact-card {
+  border-radius: 0;
+  clip-path: polygon(var(--fact-chamfer-points));
+}
+.fact-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: var(--fact-texture-opacity);
+  pointer-events: none;
+}
+#factRoot[data-texture="metal"] .fact-card::after {
+  background:
+    repeating-linear-gradient(115deg, rgba(142,147,150,0.24) 0 1px, transparent 1px 5px),
+    linear-gradient(100deg, transparent 35%, rgba(176,179,181,0.18) 50%, transparent 65%);
+}
+#factRoot[data-texture="runes"] .fact-card::after {
+  background-image:
+    linear-gradient(90deg, rgba(205,190,145,0.32) 1px, transparent 1px),
+    linear-gradient(rgba(205,190,145,0.32) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+#factRoot[data-texture="noise"] .fact-card::after {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0 0.6px, transparent 1px),
+    radial-gradient(circle at 65% 75%, rgba(255,255,255,0.13) 0 0.6px, transparent 1px),
+    radial-gradient(circle at 82% 15%, rgba(255,255,255,0.11) 0 0.6px, transparent 1px);
+  background-size: 6px 6px, 9px 9px, 5px 5px;
+}
+
+.fact-title {
+  color: var(--fact-title-color);
+  font-size: var(--fact-title-size);
+  font-family: var(--fact-title-font);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  margin-bottom: 6px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fact-text {
+  color: var(--fact-text-color);
+  font-size: var(--fact-text-size);
+  font-family: var(--fact-data-font);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+}
+
+/* "Тема ивента" — фон плашки (картинка/GIF через background-image на
+   псевдоэлементе, видео — через реальный <video> в .theme-bg-video-holder,
+   т.к. CSS background-image не умеет проигрывать видео). Оба слоя лежат
+   ПОД текстом карточки за счёт отрицательного z-index (не задевает z-index
+   существующего контента — его вообще не пришлось трогать), затемнение —
+   отдельный слой НАД фоном, тоже под текстом. Прозрачность/затемнение
+   применяются только к этим двум служебным слоям — обводка и сама плашка
+   (со своим фоновым градиентом) не затрагиваются. Работает только когда
+   "Тема ивента" применена к этому виджету и загружен фон — иначе
+   --theme-bg-image остаётся "none" и слои визуально не видны. */
+.fact-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: var(--theme-bg-image, none);
+  background-size: var(--theme-bg-size, cover);
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--theme-bg-opacity, 1);
+  z-index: -2;
+  pointer-events: none;
+}
+.fact-card .theme-bg-video-holder {
+  position: absolute; inset: 0;
+  z-index: -2;
+  opacity: var(--theme-bg-opacity, 1);
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fact-card .theme-bg-video-holder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.fact-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: #000;
+  opacity: var(--theme-bg-darken, 0);
+  z-index: -1;
+  pointer-events: none;
+}

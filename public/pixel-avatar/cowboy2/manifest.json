@@ -1,0 +1,117 @@
+{
+  "name": "cowboy2",
+  "title": "Ковбой 2",
+  "group": "Ковбои",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 48,
+    "h": 78
+  },
+  "pivot": {
+    "x": 24,
+    "y": 75
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix.net ковбои",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 12,
+      "west": 12
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 12,
+        "west": 12
+      },
+      "columns": 12,
+      "cell": {
+        "w": 82,
+        "h": 92
+      },
+      "pivot": {
+        "x": 41,
+        "y": 88
+      }
+    },
+    {
+      "name": "shot",
+      "title": "Выстрел",
+      "kind": "attack",
+      "file": "x_shot.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 128,
+        "h": 76
+      },
+      "pivot": {
+        "x": 64,
+        "y": 73
+      }
+    },
+    {
+      "name": "special",
+      "title": "Особый приём",
+      "kind": "cast",
+      "file": "x_special.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 68,
+        "h": 76
+      },
+      "pivot": {
+        "x": 34,
+        "y": 72
+      }
+    },
+    {
+      "name": "stance",
+      "title": "Боевая стойка",
+      "kind": "emote",
+      "file": "x_stance.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 58,
+        "h": 86
+      },
+      "pivot": {
+        "x": 29,
+        "y": 82
+      }
+    }
+  ]
+}

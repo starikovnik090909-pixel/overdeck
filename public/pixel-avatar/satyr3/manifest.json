@@ -1,0 +1,60 @@
+{
+  "name": "satyr3",
+  "title": "Сатир 3",
+  "group": "Сатиры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 66,
+    "h": 84
+  },
+  "pivot": {
+    "x": 33,
+    "y": 81
+  },
+  "headTop": 3,
+  "speed": 65,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Free-Satyr-Sprite-Sheet-Pixel-Art-Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 12,
+      "west": 12
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 9,
+        "west": 9
+      },
+      "columns": 9,
+      "cell": {
+        "w": 56,
+        "h": 82
+      },
+      "pivot": {
+        "x": 28,
+        "y": 78
+      }
+    }
+  ]
+}

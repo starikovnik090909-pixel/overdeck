@@ -1,0 +1,60 @@
+{
+  "name": "zombie2",
+  "title": "Зомби 2",
+  "group": "Зомби",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 74,
+    "h": 76
+  },
+  "pivot": {
+    "x": 37,
+    "y": 72
+  },
+  "headTop": 3,
+  "speed": 45,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Free-Urban-Zombie-Sprite-Sheet-Pixel-Art-Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 84,
+        "h": 80
+      },
+      "pivot": {
+        "x": 42,
+        "y": 77
+      }
+    }
+  ]
+}

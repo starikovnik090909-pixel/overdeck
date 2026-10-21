@@ -1,0 +1,115 @@
+{
+  "name": "gang3",
+  "title": "Гангстер 3",
+  "group": "Гангстеры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 48,
+    "h": 78
+  },
+  "pivot": {
+    "x": 24,
+    "y": 74
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "gangster-pixel-character-sprite-sheets-pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "afk": [
+    {
+      "name": "idle2",
+      "title": "Скучает",
+      "clips": [
+        {
+          "file": "afk_idle2.png",
+          "frames": {
+            "east": 14,
+            "west": 14
+          },
+          "columns": 14,
+          "loops": 2
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 70,
+        "h": 90
+      },
+      "pivot": {
+        "x": 35,
+        "y": 87
+      }
+    },
+    {
+      "name": "shot",
+      "title": "Выстрел",
+      "kind": "attack",
+      "file": "x_shot.png",
+      "frames": {
+        "east": 12,
+        "west": 12
+      },
+      "columns": 12,
+      "cell": {
+        "w": 116,
+        "h": 76
+      },
+      "pivot": {
+        "x": 58,
+        "y": 72
+      }
+    },
+    {
+      "name": "recharge",
+      "title": "Перезаряжает",
+      "kind": "emote",
+      "file": "x_recharge.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 50,
+        "h": 78
+      },
+      "pivot": {
+        "x": 25,
+        "y": 74
+      }
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "name": "knight3",
+  "title": "Латник 3",
+  "group": "Латники",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 110,
+    "h": 70
+  },
+  "pivot": {
+    "x": 55,
+    "y": 67
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "knight-character-sprites-pixel-art/Spritesheet 128",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 126,
+        "h": 88
+      },
+      "pivot": {
+        "x": 63,
+        "y": 84
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 134,
+        "h": 80
+      },
+      "pivot": {
+        "x": 67,
+        "y": 77
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 130,
+        "h": 82
+      },
+      "pivot": {
+        "x": 65,
+        "y": 78
+      }
+    },
+    {
+      "name": "defend",
+      "title": "Защита",
+      "kind": "emote",
+      "file": "x_defend.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 104,
+        "h": 68
+      },
+      "pivot": {
+        "x": 52,
+        "y": 64
+      }
+    }
+  ]
+}

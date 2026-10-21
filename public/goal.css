@@ -1,0 +1,27 @@
+/* goal.html — «Цель сбора»: компактная красная плашка со шкалой (стиль карточки доната: бордовое стекло, коралловая рамка). */
+/* html/body для самостоятельной страницы goal.html лежат в самой странице; здесь только плашка — этот файл подключается и в overlay.html */
+#gStage { position: absolute; left: 0; top: 0; width: 680px; height: 250px; transform-origin: 0 0; }
+#gStage { font-family: 'TkSans', 'Manrope', sans-serif; color: #fff; }
+#gStage.g-off { display: none; }
+#gStage.g-embed { z-index: 45; } /* в общем источнике алертов: поверх виджетов, но под карточкой доната (z-index 50) */
+#gCv { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 5; }
+.g-card {
+  position: absolute; left: 60px; top: 80px; width: 560px; height: 118px; box-sizing: border-box; overflow: hidden;
+  border-radius: 16px; border: 1px solid rgba(255,100,110,.55);
+  background: radial-gradient(120% 160% at 0% 0%, #431720 0%, #240d13 48%, #120709 100%);
+  box-shadow: 0 0 38px rgba(255,70,80,.22), 0 16px 30px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.12);
+  transform-origin: 0 50%;
+}
+.g-kick { position: absolute; left: 26px; top: 15px; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font: 600 12px 'TkMono', 'IBM Plex Mono', monospace; letter-spacing: .3em; text-transform: uppercase; color: #f0a0a6; }
+.g-pc { position: absolute; right: 26px; top: 11px; font-weight: 800; font-size: 20px; color: #ffb4ba; }
+.g-row { position: absolute; left: 25px; right: 26px; top: 34px; display: flex; align-items: baseline; gap: 14px; white-space: nowrap; }
+.g-amt { font-weight: 800; font-size: 42px; line-height: 1.1; background: linear-gradient(180deg, #fff 10%, #ffc2c7 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 14px rgba(255,90,100,.45)); transform-origin: 0 60%; }
+.g-of { font: 600 15px 'TkMono', 'IBM Plex Mono', monospace; letter-spacing: .08em; text-transform: uppercase; color: #d98f95; overflow: hidden; text-overflow: ellipsis; }
+.g-track { position: absolute; left: 26px; top: 84px; width: 508px; height: 14px; border-radius: 7px; background: rgba(0,0,0,.5); box-shadow: inset 0 0 0 1px rgba(255,120,130,.22); }
+.g-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 7px; background: linear-gradient(90deg, #d62f45, #ff5a64 55%, #ff9a6a); box-shadow: 0 0 16px rgba(255,80,90,.7); }
+.g-head { position: absolute; right: -2px; top: -3px; bottom: -3px; width: 6px; border-radius: 3px; background: #fff; box-shadow: 0 0 14px 3px rgba(255,170,150,.95); }
+.g-tk { position: absolute; top: 101px; width: 2px; height: 7px; background: rgba(255,130,140,.3); }
+.g-tk[data-q="0.25"] { left: 152px; } .g-tk[data-q="0.5"] { left: 279px; } .g-tk[data-q="0.75"] { left: 406px; }
+.g-tk.on { background: #ff7b84; box-shadow: 0 0 8px #ff5a64; }
+.g-sheen { position: absolute; top: 0; bottom: 0; width: 120px; left: -120px; opacity: 0; background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent); mix-blend-mode: screen; pointer-events: none; }
+.g-pop { position: absolute; left: 480px; top: 48px; z-index: 6; font-weight: 800; font-size: 26px; white-space: nowrap; color: #ffd0d3; text-shadow: 0 0 16px rgba(255,90,100,.9); padding: 3px 12px; border-radius: 10px; background: rgba(60,14,20,.85); border: 1px solid rgba(255,110,120,.6); opacity: 0; will-change: transform, opacity; }

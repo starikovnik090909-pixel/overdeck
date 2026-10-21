@@ -1,0 +1,56 @@
+{
+  "name": "knight",
+  "title": "Рыцарь",
+  "group": "Фэнтези (gegx)",
+  "fps": 12,
+  "scale": 1,
+  "cell": {
+    "w": 136,
+    "h": 130
+  },
+  "pivot": {
+    "x": 68,
+    "y": 126
+  },
+  "headTop": 3,
+  "speed": 80,
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "source": "knight-hero-128",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "south": 12,
+      "south-east": 12,
+      "east": 12,
+      "north-east": 12,
+      "north": 12,
+      "north-west": 11,
+      "west": 11,
+      "south-west": 11
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "south": 12,
+      "south-east": 12,
+      "east": 12,
+      "north-east": 12,
+      "north": 12,
+      "north-west": 12,
+      "west": 12,
+      "south-west": 12
+    },
+    "columns": 12
+  }
+}

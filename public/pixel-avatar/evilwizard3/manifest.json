@@ -1,0 +1,79 @@
+{
+  "name": "evilwizard3",
+  "title": "Злой маг 3",
+  "group": "Тёмные маги",
+  "fps": 12,
+  "scale": 2,
+  "cell": {
+    "w": 56,
+    "h": 60
+  },
+  "pivot": {
+    "x": 28,
+    "y": 56
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Evil Wizard 3 Asset Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 3,
+        "west": 3
+      },
+      "columns": 3,
+      "cell": {
+        "w": 50,
+        "h": 60
+      },
+      "pivot": {
+        "x": 25,
+        "y": 56
+      }
+    },
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 13,
+        "west": 13
+      },
+      "columns": 13,
+      "cell": {
+        "w": 140,
+        "h": 72
+      },
+      "pivot": {
+        "x": 70,
+        "y": 69
+      }
+    }
+  ]
+}

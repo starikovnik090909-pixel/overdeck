@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Пиксельные аватары (алерт для OBS)</title>
+<style>
+  /* Полноэкранный алерт: пиксельные герои бродят по экрану, над головой всплывает сообщение из чата в пиксельном облаке.
+     Фон ПРОЗРАЧНЫЙ — добавляется в OBS одним источником «Браузер» 1920×1080; каких героев показать, выбирают в админке (вкладка «ЧатАватары»).
+     Героев создаёт pixel-avatar.js — каждый герой это блок .hero (позиция только через transform) с пузырём сообщения и холстом со спрайтом. */
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; }
+
+  .hero { position: fixed; left: 0; top: 0; opacity: 0; will-change: transform; pointer-events: none; }
+  .hero-body { position: relative; width: 100%; height: 100%; } /* направление героя рисуют сами кадры пака (8 направлений) — зеркалить ничего не нужно */
+  .sprite { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; transform-origin: 50% 100%; animation: heroPop 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  .xsprite { position: absolute; display: none; pointer-events: none; image-rendering: pixelated; image-rendering: crisp-edges; } /* доп. анимация (прыжок, удар…) со своей ячейкой: стоит над основным холстом, пока играет */
+  .hero.acting .sprite { visibility: hidden; } .hero.acting .xsprite { display: block; }
+  @keyframes heroPop { 0% { transform: scale(0.15); } 100% { transform: scale(1); } }
+
+  /* Облако с сообщением над головой героя. Саму картинку (пиксельное облако с «завитками» и хвостом из «мыслей») рисует скрипт на canvas.bubble-cloud, который лежит под текстом
+     на всю коробку облака; отступы оставляют место под «завитки» и хвост. left/--tail-x считает скрипт: облако не вылезает за края экрана, а хвост тянется к голове героя. */
+  .bubble {
+    position: absolute; bottom: 100%; margin-bottom: 10px; left: 0;
+    /* width: max-content: облако лежит внутри героя шириной ~120px, и без этого его ширина «по содержимому» ограничивалась бы ею (длинный текст сжимался в узкую колонку).
+       Максимальную высоту скрипт выставляет сам — по запасу сверху (параметр top), чтобы облако не уходило за верх экрана. */
+    width: max-content; min-width: 90px; max-width: 360px; overflow: hidden; box-sizing: border-box;
+    padding: 17px 18px 50px; color: #15151c; font-size: 20px; line-height: 1.3; font-weight: 600;
+    word-break: break-word; opacity: 0; display: none; transition: opacity 0.2s ease;
+  }
+  .bubble.visible { display: block; opacity: 1; }
+  .bubble.fading { opacity: 0; transition: opacity 0.6s ease; }
+  .bubble-cloud { position: absolute; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; pointer-events: none; }
+  .bubble-inner { position: relative; }
+  .bubble-name { display: inline-block; margin-bottom: 4px; padding: 1px 8px; border-radius: 4px; background: #1b1b2f; font-size: 14px; font-weight: 800; }
+  .bubble-text { display: block; }
+  .bubble-text img.emote { height: 1.4em; width: auto; vertical-align: middle; margin: 0 1px; }
+
+  /* Подпись над головой героя чаттера: небольшой ник (цветом ника в Twitch) и рядом уровень «lvl N» (изначально lvl 0). Видна ВСЕГДА, в том числе пока герой говорит —
+     облако с сообщением стоит выше неё (отступ задаёт скрипт). */
+  .hero-name {
+    position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 2px; max-width: 220px; box-sizing: border-box; height: 20px;
+    display: flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 4px; background: rgba(15, 15, 22, 0.72);
+    font-size: 13px; font-weight: 800; line-height: 20px; white-space: nowrap;
+  }
+  .hero-name-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .hero-level { flex-shrink: 0; padding: 0 5px; border-radius: 3px; background: var(--lvl-bg, #ffd34d); color: var(--lvl-color, #1b1b2f); font-size: 11px; font-weight: 900; line-height: 14px; }
+</style>
+</head>
+<body>
+<script src="pixel-avatar.js"></script>
+</body>
+</html>

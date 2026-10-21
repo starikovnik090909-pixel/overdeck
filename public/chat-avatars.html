@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>ЧатАватары — алерт для OBS</title>
+<style>
+  /* Полноэкранный алерт с ПРОЗРАЧНЫМ фоном: добавляется в OBS источником «Браузер» 1920×1080.
+     Позже здесь будут появляться аватары чаттеров — пиксельные герои. Пока — только заготовка: страница прозрачная и пустая. */
+  html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: transparent; overflow: hidden; }
+  #stage { position: fixed; inset: 0; pointer-events: none; } /* сюда будут добавляться аватары */
+</style>
+</head>
+<body>
+<div id="stage"></div>
+</body>
+</html>

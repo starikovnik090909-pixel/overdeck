@@ -1,0 +1,98 @@
+{
+  "name": "girl2",
+  "title": "Школьница 2",
+  "group": "Школьницы",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 44,
+    "h": 80
+  },
+  "pivot": {
+    "x": 22,
+    "y": 76
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix-net-242415-free-schoolgirls-anime-character-pixel-sprite-pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 12,
+      "west": 12
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Взмах",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 9,
+        "west": 9
+      },
+      "columns": 9,
+      "cell": {
+        "w": 92,
+        "h": 76
+      },
+      "pivot": {
+        "x": 46,
+        "y": 73
+      }
+    },
+    {
+      "name": "talk",
+      "title": "Болтает",
+      "kind": "emote",
+      "file": "x_talk.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 60,
+        "h": 78
+      },
+      "pivot": {
+        "x": 30,
+        "y": 74
+      }
+    },
+    {
+      "name": "protect",
+      "title": "Защита",
+      "kind": "emote",
+      "file": "x_protect.png",
+      "frames": {
+        "east": 2,
+        "west": 2
+      },
+      "columns": 2,
+      "cell": {
+        "w": 68,
+        "h": 78
+      },
+      "pivot": {
+        "x": 34,
+        "y": 74
+      }
+    }
+  ]
+}

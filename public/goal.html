@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Цель сбора</title>
+<link rel="stylesheet" href="ticket.css">
+<link rel="stylesheet" href="goal.css?v=1">
+<style>html, body { margin: 0; background: transparent; overflow: hidden; }</style>
+</head>
+<body>
+<div id="gStage">
+  <canvas id="gCv" width="680" height="250"></canvas>
+  <div class="g-card" id="gCard">
+    <div class="g-kick" id="gKick"></div>
+    <div class="g-pc" id="gPc">0%</div>
+    <div class="g-row"><span class="g-amt" id="gAmt">0</span><span class="g-of" id="gOf"></span></div>
+    <div class="g-track"><div class="g-fill" id="gFill"><i class="g-head"></i></div></div>
+    <i class="g-tk" data-q="0.25"></i><i class="g-tk" data-q="0.5"></i><i class="g-tk" data-q="0.75"></i>
+    <div class="g-sheen" id="gSheen"></div>
+  </div>
+  <div id="gPops"></div>
+</div>
+<script src="goal.js?v=1"></script>
+</body>
+</html>

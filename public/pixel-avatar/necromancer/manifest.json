@@ -1,0 +1,79 @@
+{
+  "name": "necromancer",
+  "title": "Некромант",
+  "group": "Тёмные маги",
+  "fps": 12,
+  "scale": 2,
+  "cell": {
+    "w": 56,
+    "h": 66
+  },
+  "pivot": {
+    "x": 28,
+    "y": 60
+  },
+  "headTop": 3,
+  "speed": 65,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "CreativeKind — Necromancer (Free)",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "extras": [
+    {
+      "name": "staff",
+      "title": "Взмах посохом",
+      "kind": "attack",
+      "file": "x_staff.png",
+      "frames": {
+        "east": 13,
+        "west": 13
+      },
+      "columns": 13,
+      "cell": {
+        "w": 114,
+        "h": 110
+      },
+      "pivot": {
+        "x": 57,
+        "y": 107
+      }
+    },
+    {
+      "name": "cast",
+      "title": "Заклинание",
+      "kind": "cast",
+      "file": "x_cast.png",
+      "frames": {
+        "east": 17,
+        "west": 17
+      },
+      "columns": 17,
+      "cell": {
+        "w": 54,
+        "h": 70
+      },
+      "pivot": {
+        "x": 27,
+        "y": 66
+      }
+    }
+  ]
+}

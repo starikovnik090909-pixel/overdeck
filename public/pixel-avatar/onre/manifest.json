@@ -1,0 +1,98 @@
+{
+  "name": "onre",
+  "title": "Онрё",
+  "group": "Духи",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 42,
+    "h": 80
+  },
+  "pivot": {
+    "x": 21,
+    "y": 76
+  },
+  "headTop": 3,
+  "speed": 45,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix-net-872297-free-ghost-pixel-art-sprite-sheets",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 62,
+        "h": 76
+      },
+      "pivot": {
+        "x": 31,
+        "y": 73
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 86,
+        "h": 78
+      },
+      "pivot": {
+        "x": 43,
+        "y": 74
+      }
+    },
+    {
+      "name": "scream",
+      "title": "Крик",
+      "kind": "cast",
+      "file": "x_scream.png",
+      "frames": {
+        "east": 7,
+        "west": 7
+      },
+      "columns": 7,
+      "cell": {
+        "w": 34,
+        "h": 76
+      },
+      "pivot": {
+        "x": 17,
+        "y": 73
+      }
+    }
+  ]
+}

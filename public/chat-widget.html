@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Chat Widget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: transparent;
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+  }
+  #chatList {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px;
+    min-height: 100vh;
+  }
+  .chat-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.9), 0 0 6px rgba(0,0,0,0.6);
+    word-break: break-word;
+  }
+  .chat-avatar {
+    width: 1.5em; height: 1.5em; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0; vertical-align: middle;
+  }
+  .chat-badge { height: 1.2em; width: auto; vertical-align: middle; flex-shrink: 0; }
+  .chat-username { font-weight: 700; }
+  .chat-username::after { content: ':'; color: inherit; opacity: 0.8; }
+  .emote-wrap { position: relative; display: inline-block; vertical-align: middle; line-height: 0; }
+  .chat-emote { height: 1.5em; width: auto; vertical-align: middle; display: inline-block; }
+  .chat-emote-overlay { position: absolute; top: 0; left: 0; height: 100%; width: 100%; object-fit: contain; }
+  /* Появление нового сообщения: маленькое (45%) и прозрачное → плавно вырастает до обычного размера, растёт от левого нижнего угла. */
+  @keyframes chatPopIn {
+    0% { transform: scale(0.45); opacity: 0; }
+    55% { opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  .chat-line.chat-enter { transform-origin: left bottom; animation: chatPopIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
+  /* Подсветка по роли автора: цветная полоска слева и лёгкая заливка (цвета приходят из chat-format.js через --role-color / --role-bg) */
+  .chat-line.role-highlight { border-left: 3px solid var(--role-color); background: var(--role-bg); border-radius: 6px; padding: 3px 8px; }
+  .chat-role-tag { font-size: 0.62em; font-weight: 800; letter-spacing: 0.06em; padding: 1px 6px; border-radius: 4px; color: #111; text-shadow: none; line-height: 1.4; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="chatList"></div>
+
+<script src="chat-format.js"></script>
+<script>
+(function () {
+  const params = new URLSearchParams(location.search);
+  const LIMIT = Math.max(1, Math.min(100, parseInt(params.get('limit'), 10) || 20));
+  const FONT_SIZE = parseInt(params.get('fontSize'), 10) || 18;
+  const TEXT_COLOR = params.get('textColor') || '#F2F2F2';
+  const BG_COLOR = params.get('bg') || 'transparent';
+
+  document.body.style.fontSize = FONT_SIZE + 'px';
+  document.body.style.color = TEXT_COLOR;
+  document.body.style.background = BG_COLOR;
+
+  const AVATAR_COLORS = ['#B14846','#00D4FF','#FF5C8A','#4ADE80','#FFB454','#60A5FA','#F472B6','#34D399','#FBBF24','#A78BFA'];
+  function colorForName(name) {
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+  }
+
+  const chatList = document.getElementById('chatList');
+  let settings = { showBadges: true, showAvatars: true, showThirdPartyEmotes: true, animateMessages: true, hideLinks: false, highlightMods: false, highlightVips: false, highlightNewChatters: false, highlightRaiders: false };
+  let messages = []; // кэш последних сообщений — чтобы можно было перерисовать при смене настроек
+
+  // Подстраховка: подтягиваем текущие настройки сразу через REST, не дожидаясь
+  // WS-подключения (которое всё равно пришлёт то же самое чуть позже и будет
+  // держать их в актуальном состоянии дальше).
+  fetch('/api/chat-settings')
+    .then((res) => res.json())
+    .then((data) => { if (data && data.settings) { settings = data.settings; renderAll(); } })
+    .catch(() => {});
+
+  function renderEmotePart(part) {
+    const isThirdParty = part.source === 'third-party';
+    if (isThirdParty && !settings.showThirdPartyEmotes) {
+      return document.createTextNode(part.name);
+    }
+    const wrap = document.createElement('span');
+    wrap.className = 'emote-wrap';
+    const img = document.createElement('img');
+    img.className = 'chat-emote';
+    img.src = part.imageUrl;
+    img.alt = part.name;
+    wrap.appendChild(img);
+    if (settings.showThirdPartyEmotes && part.overlays && part.overlays.length) {
+      part.overlays.forEach((ov) => {
+        const ovImg = document.createElement('img');
+        ovImg.className = 'chat-emote chat-emote-overlay';
+        ovImg.src = ov.imageUrl;
+        ovImg.alt = ov.name;
+        wrap.appendChild(ovImg);
+      });
+    }
+    return wrap;
+  }
+
+  /** Строка сообщения или null, если её показывать не нужно (включено «скрывать ссылки», а в сообщении была только ссылка). */
+  function renderLine(msg) {
+    let parts = msg.parts || [];
+    if (settings.hideLinks) {
+      const r = window.ChatFormat.stripLinks(parts);
+      if (r.hadLink && r.empty) return null;
+      parts = r.parts;
+    }
+    const line = document.createElement('div');
+    line.className = 'chat-line';
+
+    if (settings.showAvatars && msg.avatarUrl) {
+      const avatar = document.createElement('img');
+      avatar.className = 'chat-avatar';
+      avatar.src = msg.avatarUrl;
+      line.appendChild(avatar);
+    }
+
+    if (settings.showBadges && msg.badges && msg.badges.length) {
+      msg.badges.forEach((url) => {
+        const badge = document.createElement('img');
+        badge.className = 'chat-badge';
+        badge.src = url;
+        line.appendChild(badge);
+      });
+    }
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'chat-username';
+    nameEl.textContent = msg.username;
+    nameEl.style.color = msg.color || colorForName(msg.username);
+    line.appendChild(nameEl);
+    window.ChatFormat.decorateLine(line, msg, settings, nameEl); // подсветка и метки ролей (если включены в настройках)
+
+    parts.forEach((part) => {
+      if (part.type === 'emote') {
+        line.appendChild(renderEmotePart(part));
+      } else if (part.text) {
+        line.appendChild(document.createTextNode(part.text));
+      }
+    });
+
+    return line;
+  }
+
+  function renderAll() {
+    chatList.innerHTML = '';
+    messages.slice(-LIMIT).forEach((msg) => { const line = renderLine(msg); if (line) chatList.appendChild(line); }); // уже показанные сообщения при смене настроек перерисовываются без анимации
+  }
+
+  function addMessage(msg) {
+    messages.push(msg);
+    if (messages.length > LIMIT) messages.shift();
+    const line = renderLine(msg);
+    if (line) {
+      if (settings.animateMessages) {
+        line.classList.add('chat-enter');
+        line.addEventListener('animationend', () => line.classList.remove('chat-enter'), { once: true });
+      }
+      chatList.appendChild(line);
+    }
+    while (chatList.children.length > LIMIT) {
+      chatList.removeChild(chatList.firstChild);
+    }
+  }
+
+  function connect() {
+    const ws = new WebSocket(`ws://${location.host}/?type=chat`);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'chat_history') {
+        settings = data.settings || settings;
+        messages = (data.messages || []).slice(-LIMIT);
+        renderAll();
+      } else if (data.type === 'chat') {
+        addMessage(data);
+      } else if (data.type === 'chat_settings') {
+        settings = data.settings || settings;
+        renderAll();
+      }
+    };
+    ws.onclose = () => setTimeout(connect, 3000);
+  }
+  connect();
+})();
+</script>
+</body>
+</html>

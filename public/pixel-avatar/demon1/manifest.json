@@ -1,0 +1,113 @@
+{
+  "name": "demon1",
+  "title": "Демоница (фаза 1)",
+  "group": "Демоницы",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 114,
+    "h": 104
+  },
+  "pivot": {
+    "x": 57,
+    "y": 101
+  },
+  "headTop": 3,
+  "speed": 80,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "ASSET_DEMON_GIRLS",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "afk": [
+    {
+      "name": "sit",
+      "title": "Садится и сидит",
+      "clips": [
+        {
+          "file": "afk_sit.png",
+          "frames": {
+            "east": 11,
+            "west": 11
+          },
+          "columns": 11
+        },
+        {
+          "file": "afk_sitidle.png",
+          "frames": {
+            "east": 5,
+            "west": 5
+          },
+          "columns": 5,
+          "seconds": 6
+        },
+        {
+          "file": "afk_sit.png",
+          "frames": {
+            "east": 11,
+            "west": 11
+          },
+          "columns": 11,
+          "reverse": true
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 60,
+        "h": 102
+      },
+      "pivot": {
+        "x": 30,
+        "y": 98
+      }
+    },
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 72,
+        "h": 100
+      },
+      "pivot": {
+        "x": 36,
+        "y": 97
+      }
+    }
+  ]
+}

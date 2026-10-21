@@ -1,0 +1,79 @@
+{
+  "name": "firemage",
+  "title": "Огненный маг",
+  "group": "Маги",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 68,
+    "h": 72
+  },
+  "pivot": {
+    "x": 34,
+    "y": 69
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "free-wizard-sprite-sheets-pixel-art",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 9,
+        "west": 9
+      },
+      "columns": 9,
+      "cell": {
+        "w": 96,
+        "h": 78
+      },
+      "pivot": {
+        "x": 48,
+        "y": 75
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 104,
+        "h": 64
+      },
+      "pivot": {
+        "x": 52,
+        "y": 61
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Чат-аватары</title>
+<!-- Помощник Twitch должен подключаться первым (требование Twitch) -->
+<script src="https://extension-files.twitch.tv/helper/v1/twitch-ext.min.js"></script>
+<link rel="stylesheet" href="viewer.css">
+</head>
+<body>
+<button id="pill" class="pill" type="button" hidden aria-label="Открыть чат-аватары">Аватары</button>
+<div id="scene" class="scene" hidden aria-label="Сцена с чат-аватарами"></div>
+<section id="panel" class="panel" aria-label="Чат-аватары">
+  <header class="head">
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="profile" type="button">Профиль</button>
+      <button class="tab" role="tab" data-tab="top" type="button">Топ</button>
+      <button class="tab" role="tab" data-tab="awards" type="button">События</button>
+    </nav>
+    <button id="bgbtn" class="bgbtn" type="button" aria-pressed="false" title="Фон сцены: вкл/выкл">Фон</button>
+    <button id="close" class="close" type="button" aria-label="Свернуть">×</button>
+  </header>
+  <main class="body">
+    <div id="view-profile" class="view active"></div>
+    <div id="view-top" class="view"></div>
+    <div id="view-awards" class="view"></div>
+  </main>
+  <footer id="foot" class="foot muted small">Ждём данные от стримера…</footer>
+</section>
+<script src="viewer.js"></script>
+</body>
+</html>

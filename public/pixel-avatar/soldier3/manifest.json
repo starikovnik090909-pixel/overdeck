@@ -1,0 +1,136 @@
+{
+  "name": "soldier3",
+  "title": "Солдат 3",
+  "group": "Солдаты",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 56,
+    "h": 74
+  },
+  "pivot": {
+    "x": 28,
+    "y": 70
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix.net солдаты",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 98,
+        "h": 70
+      },
+      "pivot": {
+        "x": 49,
+        "y": 66
+      }
+    },
+    {
+      "name": "shot",
+      "title": "Выстрел",
+      "kind": "attack",
+      "file": "x_shot.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 74,
+        "h": 70
+      },
+      "pivot": {
+        "x": 37,
+        "y": 66
+      }
+    },
+    {
+      "name": "shot2",
+      "title": "Выстрел 2",
+      "kind": "attack",
+      "file": "x_shot2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 74,
+        "h": 58
+      },
+      "pivot": {
+        "x": 37,
+        "y": 55
+      }
+    },
+    {
+      "name": "grenade",
+      "title": "Бросает гранату",
+      "kind": "attack",
+      "file": "x_grenade.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 72,
+        "h": 80
+      },
+      "pivot": {
+        "x": 36,
+        "y": 76
+      }
+    },
+    {
+      "name": "recharge",
+      "title": "Перезаряжает",
+      "kind": "emote",
+      "file": "x_recharge.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 46,
+        "h": 86
+      },
+      "pivot": {
+        "x": 23,
+        "y": 82
+      }
+    }
+  ]
+}

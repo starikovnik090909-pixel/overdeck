@@ -1,0 +1,96 @@
+{
+  "name": "gorgon2",
+  "title": "Горгона 2",
+  "group": "Горгоны",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 132,
+    "h": 96
+  },
+  "pivot": {
+    "x": 66,
+    "y": 92
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "free-gorgon-pixel-art-character-sprite-sheets",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 13,
+      "west": 13
+    },
+    "columns": 13
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "afk": [
+    {
+      "name": "idle2",
+      "title": "Скучает",
+      "clips": [
+        {
+          "file": "afk_idle2.png",
+          "frames": {
+            "east": 5,
+            "west": 5
+          },
+          "columns": 5,
+          "loops": 3
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 16,
+        "west": 16
+      },
+      "columns": 16,
+      "cell": {
+        "w": 128,
+        "h": 96
+      },
+      "pivot": {
+        "x": 64,
+        "y": 93
+      }
+    },
+    {
+      "name": "special",
+      "title": "Особый приём",
+      "kind": "cast",
+      "file": "x_special.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 84,
+        "h": 100
+      },
+      "pivot": {
+        "x": 42,
+        "y": 96
+      }
+    }
+  ]
+}

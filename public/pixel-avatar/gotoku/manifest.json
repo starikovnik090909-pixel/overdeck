@@ -1,0 +1,117 @@
+{
+  "name": "gotoku",
+  "title": "Готоку",
+  "group": "Духи",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 40,
+    "h": 82
+  },
+  "pivot": {
+    "x": 20,
+    "y": 79
+  },
+  "headTop": 3,
+  "speed": 65,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix-net-872297-free-ghost-pixel-art-sprite-sheets",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 5,
+      "west": 5
+    },
+    "columns": 5
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 52,
+        "h": 94
+      },
+      "pivot": {
+        "x": 26,
+        "y": 91
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 76,
+        "h": 82
+      },
+      "pivot": {
+        "x": 38,
+        "y": 79
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 88,
+        "h": 82
+      },
+      "pivot": {
+        "x": 44,
+        "y": 79
+      }
+    },
+    {
+      "name": "scream",
+      "title": "Крик",
+      "kind": "cast",
+      "file": "x_scream.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 46,
+        "h": 74
+      },
+      "pivot": {
+        "x": 23,
+        "y": 71
+      }
+    }
+  ]
+}

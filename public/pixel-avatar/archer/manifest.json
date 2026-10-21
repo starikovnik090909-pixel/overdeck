@@ -1,0 +1,56 @@
+{
+  "name": "archer",
+  "title": "Лучник",
+  "group": "Фэнтези (gegx)",
+  "fps": 12,
+  "scale": 1,
+  "cell": {
+    "w": 122,
+    "h": 136
+  },
+  "pivot": {
+    "x": 61,
+    "y": 131
+  },
+  "headTop": 3,
+  "speed": 80,
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "source": "archer-hero-128",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "south": 14,
+      "south-east": 12,
+      "east": 12,
+      "north-east": 12,
+      "north": 11,
+      "north-west": 12,
+      "west": 12,
+      "south-west": 11
+    },
+    "columns": 14
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "south": 12,
+      "south-east": 12,
+      "east": 12,
+      "north-east": 12,
+      "north": 12,
+      "north-west": 12,
+      "west": 12,
+      "south-west": 12
+    },
+    "columns": 12
+  }
+}

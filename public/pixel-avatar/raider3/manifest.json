@@ -1,0 +1,134 @@
+{
+  "name": "raider3",
+  "title": "Рейдер 3",
+  "group": "Рейдеры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 50,
+    "h": 74
+  },
+  "pivot": {
+    "x": 25,
+    "y": 70
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix.net рейдеры",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "afk": [
+    {
+      "name": "idle2",
+      "title": "Скучает",
+      "clips": [
+        {
+          "file": "afk_idle2.png",
+          "frames": {
+            "east": 5,
+            "west": 5
+          },
+          "columns": 5,
+          "loops": 2
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 92,
+        "h": 96
+      },
+      "pivot": {
+        "x": 46,
+        "y": 92
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 116,
+        "h": 74
+      },
+      "pivot": {
+        "x": 58,
+        "y": 70
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 124,
+        "h": 76
+      },
+      "pivot": {
+        "x": 62,
+        "y": 72
+      }
+    },
+    {
+      "name": "attack3",
+      "title": "Удар 3",
+      "kind": "attack",
+      "file": "x_attack3.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 104,
+        "h": 80
+      },
+      "pivot": {
+        "x": 52,
+        "y": 76
+      }
+    }
+  ]
+}

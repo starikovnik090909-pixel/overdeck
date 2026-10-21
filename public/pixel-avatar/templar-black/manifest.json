@@ -1,0 +1,60 @@
+{
+  "name": "templar-black",
+  "title": "Лучник-тамплиер (чёрный)",
+  "group": "Тамплиеры",
+  "fps": 12,
+  "scale": 3,
+  "cell": {
+    "w": 50,
+    "h": 50
+  },
+  "pivot": {
+    "x": 25,
+    "y": 46
+  },
+  "headTop": 3,
+  "speed": 70,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "GandalfHardcore Archer",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 5,
+      "west": 5
+    },
+    "columns": 5
+  },
+  "extras": [
+    {
+      "name": "shoot",
+      "title": "Стреляет из лука",
+      "kind": "attack",
+      "file": "x_shoot.png",
+      "frames": {
+        "east": 11,
+        "west": 11
+      },
+      "columns": 11,
+      "cell": {
+        "w": 70,
+        "h": 54
+      },
+      "pivot": {
+        "x": 35,
+        "y": 50
+      }
+    }
+  ]
+}

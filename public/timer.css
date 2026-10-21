@@ -1,0 +1,83 @@
+/* public/timer.css — "Таймер": обратный отсчёт мм:сс с эффектом "перекатывания"
+   разрядов (старое число уезжает вниз, новое въезжает сверху — как в
+   классическом одометре/табло). Каждый разряд — независимая "катушка"
+   (.timer-digit → .timer-digit-track с двумя ячейками), см. public/timer.js.
+   Прозрачный фон страницы — как и у остальных виджетов. */
+
+:root {
+  --timer-digit-size: 64px;
+  --timer-digit-color: #f0e6d2;
+  --timer-font: 'Inter', system-ui, sans-serif;
+  --timer-bg-opacity: 0;
+  --timer-bg-darken: 0;
+  --timer-label-size: 18px;
+  --timer-label-color: #f0e6d2;
+  --timer-label-font: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+
+#timerRoot {
+  position: relative; z-index: 0; /* position:relative + z-index:0 вместе гарантируют свой контекст наложения — без этого отрицательный z-index плашки ниже мог бы утечь за пределы виджета */
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 14px 22px;
+  transition: opacity 0.3s ease;
+}
+
+/* Плашка-подложка позади таймера — тот же приём (простой прямоугольник + отдельное затемнение), что и у "Коробочки сбора". */
+#timerBackdrop { position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: 14px; overflow: hidden; }
+.timer-backdrop-plate { position: absolute; inset: 0; background: #0e0e10; opacity: var(--timer-bg-opacity); }
+.timer-backdrop-darken { position: absolute; inset: 0; background: #000; opacity: var(--timer-bg-darken); }
+
+/* Подпись над/под цифрами ("Стрим начнётся через" и т.п.) — order переключает "над"/"под" без перестановки DOM. */
+.timer-label {
+  font-family: var(--timer-label-font);
+  font-size: var(--timer-label-size);
+  color: var(--timer-label-color);
+  line-height: 1.3;
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.55);
+  order: 0; /* "сверху" (по умолчанию) — подпись первая в потоке */
+}
+.timer-label:empty { display: none; } /* пустой текст — подписи как будто нет, gap тоже схлопывается */
+#timerRoot[data-label-position="bottom"] .timer-label { order: 2; }
+.timer-face { order: 1; }
+
+.timer-face {
+  display: flex; align-items: center;
+  font-family: var(--timer-font);
+  font-weight: 800;
+  font-size: var(--timer-digit-size);
+  line-height: 1;
+  color: var(--timer-digit-color);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.55);
+}
+
+.timer-colon {
+  padding: 0 0.12em;
+  transform: translateY(-0.04em); /* двоеточие визуально чуть выше центра цифр в большинстве шрифтов — небольшая поправка */
+}
+
+/* --- Катушка одного разряда --- */
+.timer-digit {
+  position: relative;
+  display: inline-block;
+  width: 0.62em; /* фиксированная ширина цифры — чтобы смена 1↔8 не "гуляла" по ширине моноширинных на глаз цифр */
+  height: 1em;
+  overflow: hidden;
+  text-align: center;
+}
+.timer-digit-track {
+  position: absolute; left: 0; top: 0; width: 100%;
+  display: flex; flex-direction: column;
+}
+.timer-digit-cell {
+  height: 1em; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}

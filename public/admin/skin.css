@@ -1,0 +1,57 @@
+/* skin.css — оформление «Overdeck»: графит с красным акцентом и мягкими градиентами.
+   Только цвета и фон: расположение блоков, размеры и превью сцены не меняются. Чтобы вернуть старый вид — убери <link> на skin.css из index.html. */
+:root[data-theme="dark"] {
+  --bg-app: #120D0F;
+  --bg-sidebar: #171214;
+  --bg-card: #1D1719;
+  --text-primary: #F0E9EA;
+  --text-secondary: rgba(240,233,234,0.6);
+  --divider: rgba(255,255,255,0.07);
+  --hover: rgba(255,120,128,0.06);
+  --accent: #D14B54;
+  --accent-soft: rgba(209,75,84,0.16);
+  --accent-grad: linear-gradient(135deg, #E0545D 0%, #B8323E 100%);
+  --accent-glow: rgba(209,75,84,0.28);
+}
+:root[data-theme="light"] {
+  --bg-app: #F8F4F4;
+  --bg-sidebar: #FFFFFF;
+  --accent: #C8434C;
+  --accent-soft: rgba(200,67,76,0.12);
+  --accent-grad: linear-gradient(135deg, #D8505A 0%, #B8323E 100%);
+  --accent-glow: rgba(200,67,76,0.22);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(900px 420px at 12% -8%, rgba(209,75,84,0.13), transparent 65%),
+    radial-gradient(700px 400px at 100% 105%, rgba(150,40,56,0.10), transparent 65%),
+    var(--bg-app);
+  background-attachment: fixed;
+}
+.app-header { background: transparent; border-bottom: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(209,75,84,.55), rgba(255,255,255,.07) 40%, rgba(255,255,255,.07)) 1; }
+.sidebar { background: var(--bg-sidebar); }
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(209,75,84,.26), rgba(209,75,84,.05));
+  color: #fff; box-shadow: inset 3px 0 0 var(--accent);
+}
+.nav-item.active svg { stroke: #FF8A92; }
+.card {
+  background: linear-gradient(180deg, rgba(209,75,84,.07), rgba(209,75,84,0) 38%), var(--bg-card);
+  border-color: rgba(255,255,255,.07);
+  box-shadow: 0 1px 0 rgba(255,255,255,.03) inset;
+}
+.section-title { position: relative; padding-left: 12px; }
+.section-title::before {
+  content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 3px;
+  background: var(--accent-grad);
+}
+.btn-primary { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+.btn-primary:hover { filter: brightness(1.08); }
+.help-fab { background: linear-gradient(135deg, rgba(209,75,84,.22), rgba(40,22,26,.9)); border-color: rgba(209,75,84,.45); }
+.help-fab-icon { background: var(--accent-grad); color: #fff; }
+.guide-body h3, .guide-link, .guide-how > summary { color: #FF8A92; }
+.guide-modal { border-color: rgba(209,75,84,.3); }
+.guide-how > summary { color: var(--accent); }
+.status-pill { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); }

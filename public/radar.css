@@ -1,0 +1,28 @@
+/* Алерт рейда «Радар»: луч радара зажигает точки-зрителей, счётчик считает, лёгкая сирена-тревога. Рисует runRadar в donationalert.js */
+.rd-layer { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 40; --rd: #35e08a; font-family: 'TkSans', 'Manrope', sans-serif; color: #fff; overflow: hidden; }
+.rd-stage { position: absolute; left: 50%; top: 50%; width: 1700px; height: 900px; margin: -450px 0 0 -850px; opacity: 0; transform: scale(.92); }
+.rd-layer.rd-in .rd-stage { opacity: 1; transform: none; transition: opacity .45s, transform .55s cubic-bezier(.2,.9,.3,1.2); }
+.rd-layer.rd-out .rd-stage { opacity: 0; transform: scale(.96); transition: opacity .5s, transform .5s; }
+.rd-disc { position: absolute; left: 470px; top: 70px; width: 760px; height: 760px; border-radius: 50%; background: radial-gradient(circle, rgba(6,28,18,.9), rgba(3,12,8,.9)); border: 3px solid var(--rd); box-shadow: 0 0 60px color-mix(in srgb, var(--rd) 30%, transparent) inset, 0 0 50px color-mix(in srgb, var(--rd) 25%, transparent), 0 30px 80px rgba(0,0,0,.5); overflow: hidden; }
+.rd-ring { position: absolute; border-radius: 50%; border: 2px solid color-mix(in srgb, var(--rd) 33%, transparent); }
+.rd-hl, .rd-vl { position: absolute; background: color-mix(in srgb, var(--rd) 27%, transparent); }
+.rd-hl { left: 0; right: 0; top: 50%; height: 2px; } .rd-vl { top: 0; bottom: 0; left: 50%; width: 2px; }
+.rd-sweep { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, color-mix(in srgb, var(--rd) 53%, transparent) 358deg, var(--rd) 360deg); }
+.rd-dot { position: absolute; width: 14px; height: 14px; margin: -7px; border-radius: 50%; background: #d8ffe9; box-shadow: 0 0 14px var(--rd); opacity: 0; }
+.rd-av { position: absolute; left: 50%; top: 50%; width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%; border: 4px solid #fff; overflow: hidden; background: radial-gradient(circle at 35% 30%, #ff9a62, #c4366a 60%, #4a1f6e); display: flex; align-items: center; justify-content: center; font: 800 52px 'TkSans'; z-index: 3; box-shadow: 0 0 30px rgba(0,0,0,.6); }
+.rd-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-ping { position: absolute; left: 50%; top: 50%; width: 0; height: 0; border-radius: 50%; border: 4px solid var(--rd); opacity: 0; z-index: 2; }
+.rd-panel { position: absolute; background: rgba(4,16,10,.82); border: 2px solid color-mix(in srgb, var(--rd) 45%, transparent); border-radius: 20px; padding: 22px 28px; font: 600 26px/1.55 'TkMono', monospace; letter-spacing: .1em; color: var(--rd); box-shadow: 0 20px 50px rgba(0,0,0,.45); }
+.rd-left { left: 0; top: 70px; width: 440px; }
+.rd-left .t { font: 800 34px 'TkSans'; letter-spacing: .06em; margin-bottom: 8px; }
+.rd-left .k { font-size: 18px; opacity: .8; letter-spacing: .22em; margin-top: 10px; }
+.rd-left .v { color: #eafff3; overflow: hidden; white-space: nowrap; font-size: 30px; }
+.rd-left .v span { display: inline-block; }
+.rd-right { right: 0; top: 70px; width: 400px; text-align: right; }
+.rd-right .k { font-size: 20px; letter-spacing: .2em; }
+.rd-right .n { font: 800 170px/1.05 'TkMono', monospace; color: #fff; text-shadow: 0 0 36px var(--rd); letter-spacing: 0; }
+.rd-right .u { font-size: 22px; letter-spacing: .2em; opacity: .85; }
+.rd-nick { position: absolute; left: 0; right: 0; top: 50%; margin-top: 74px; text-align: center; font: 800 34px 'TkSans'; z-index: 3; text-shadow: 0 2px 14px #000; }
+.rd-alarm { position: absolute; inset: -20px; border-radius: 50%; box-shadow: 0 0 0 0 transparent; pointer-events: none; }
+.rd-layer.rd-siren .rd-disc { animation: rdAlarm .8s ease-in-out 3; }
+@keyframes rdAlarm { 50% { box-shadow: 0 0 60px color-mix(in srgb, var(--rd) 30%, transparent) inset, 0 0 90px 10px color-mix(in srgb, #ff4a3a 55%, transparent), 0 30px 80px rgba(0,0,0,.5); border-color: #ff6a5a; } }

@@ -1,0 +1,31 @@
+{
+  "name": "Modern Glass",
+  "preview": "",
+  "params": {
+    "colors": {
+      "panelBg": "#14141c",
+      "accent": "#c9524f",
+      "text": "#e8e8ec"
+    },
+    "opacity": 0.62,
+    "fonts": {
+      "heading": "Unbounded",
+      "text": "Inter"
+    },
+    "sizes": {
+      "headingText": 16,
+      "bodyText": 14
+    },
+    "borderRadius": 16,
+    "panels": {
+      "showHeaderIcon": true,
+      "showCategoryThumbnails": true,
+      "glassEffect": true
+    },
+    "timeline": {
+      "showTimecodes": true,
+      "waveGradient": ["#c9524f", "#e07a3f"],
+      "dotColor": "#ffffff"
+    }
+  }
+}

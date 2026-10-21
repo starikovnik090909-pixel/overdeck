@@ -1,0 +1,98 @@
+{
+  "name": "citizen-m4",
+  "title": "Горожанин 4",
+  "group": "Горожане",
+  "fps": 10,
+  "scale": 3,
+  "cell": {
+    "w": 34,
+    "h": 52
+  },
+  "pivot": {
+    "x": 17,
+    "y": 49
+  },
+  "headTop": 3,
+  "speed": 110,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "left",
+  "source": "GandalfHardcore Character Asset Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 5,
+      "west": 5
+    },
+    "columns": 5
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 26,
+        "h": 56
+      },
+      "pivot": {
+        "x": 13,
+        "y": 52
+      }
+    },
+    {
+      "name": "cheer",
+      "title": "Ликует",
+      "kind": "emote",
+      "file": "x_cheer.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 28,
+        "h": 54
+      },
+      "pivot": {
+        "x": 14,
+        "y": 50
+      }
+    },
+    {
+      "name": "wave",
+      "title": "Машет рукой",
+      "kind": "emote",
+      "file": "x_wave.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 42,
+        "h": 52
+      },
+      "pivot": {
+        "x": 21,
+        "y": 49
+      }
+    }
+  ]
+}

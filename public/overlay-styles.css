@@ -1,0 +1,420 @@
+/* Стили виджетов оверлея (5 вариантов + классический). Выбираются в админке (вкладка «Виджеты оверлея»), для проверок можно и адресом: overlay.html?ostyle=a|b|c|d|e (+ &glass=off).
+   A Frost (Apple) · B Razer (скошенные углы, зелёный) · C HUD (рамки-уголки, сегментные полосы) · D Soft (мягкие «скруглённые квадраты») · E Arcade (пиксельный).
+   Классический вид — без стиля. Цвет акцента берётся из темы. Размеры шрифтов, иконок, отступов и полос выводятся из ОДНОГО числа (--o-n — размер ника, зависит от настройки «Размер ника»), поэтому всё остаётся пропорциональным. */
+/* Шрифты пробных стилей лежат в проекте (ovl-fonts/) — оверлей не зависит от интернета. */
+@font-face { font-family: 'OvlInter'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/inter-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlInter'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/inter-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlInter'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/inter-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlInter'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/inter-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlay'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/play-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlay'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/play-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlay'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/play-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlay'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/play-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlTektur'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/tektur-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlTektur'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/tektur-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlTektur'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/tektur-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlTektur'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/tektur-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlManrope'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/manrope-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlManrope'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/manrope-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlManrope'; font-weight: 800; font-style: normal; font-display: swap; src: url('ovl-fonts/manrope-cyrillic-800-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlManrope'; font-weight: 800; font-style: normal; font-display: swap; src: url('ovl-fonts/manrope-latin-800-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPixel'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/press-start-2p-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPixel'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+
+/* ---------- общее для всех вариантов ---------- */
+body[data-ostyle] .panel:not(.infocard-panel), body[data-ostyle] .infocard-face {
+  background: var(--o-bg); border: var(--o-bw, 1px) solid var(--o-border); border-radius: var(--o-r);
+  -webkit-backdrop-filter: blur(var(--o-blur)) saturate(var(--o-sat)); backdrop-filter: blur(var(--o-blur)) saturate(var(--o-sat));
+  box-shadow: var(--o-shadow), inset 0 1px 0 var(--o-hi);
+}
+body[data-ostyle] .infocard-face { backdrop-filter: none; -webkit-backdrop-filter: none; }
+body[data-ostyle][data-glass="off"] { --o-bg: var(--o-solid); --o-blur: 0px; --o-sat: 100%; --o-hi: transparent; }
+body[data-ostyle] .panel { padding: 22px 26px 24px; }
+body[data-ostyle] .panel-title-row { justify-content: flex-start; gap: 12px; margin-bottom: 16px; align-items: center; }
+body[data-ostyle] .panel-title { font-family: var(--font-main); font-size: var(--o-title-size, 15px); font-weight: var(--o-title-w, 700); letter-spacing: var(--o-track); text-transform: var(--o-case); color: var(--o-title); opacity: 1; }
+body[data-ostyle] .panel-icon { display: inline-flex; order: -1; width: var(--o-chip, 28px); height: var(--o-chip, 28px); padding: 6px; box-sizing: border-box; border-radius: var(--o-chip-r); background: var(--o-chip-bg); color: var(--o-chip-fg); opacity: 1; flex-shrink: 0; }
+body[data-ostyle] .donor-top-label { font-weight: 500; opacity: .7; }
+body[data-ostyle] .chatter-name, body[data-ostyle] .donor-name { font-weight: 600; }
+body[data-ostyle] .chatter-count, body[data-ostyle] .donor-amount { font-family: var(--font-main); font-weight: 700; font-variant-numeric: tabular-nums; }
+body[data-ostyle] .chatter-bar-track { background: var(--o-track-bg); border-radius: var(--o-bar-r, 999px); height: var(--o-bar-h, 7px); }
+body[data-ostyle] .chatter-bar-fill { border-radius: var(--o-bar-r, 999px); }
+body[data-ostyle] .chatter-avatar { border-radius: var(--o-av-r, 50%); border-width: 2px; box-shadow: var(--o-av-shadow); }
+body[data-ostyle] .chatter-row.rank-0 .chatter-avatar { box-shadow: 0 0 18px rgba(255,190,0,.5); }
+body[data-ostyle] .donor-circle, body[data-ostyle] .donor-circle-inner, body[data-ostyle] .donor-circle-glow::after { border-radius: var(--o-dc-r, 50%) !important; }
+body[data-ostyle] .donor-top-list.donor-dividers .donor-row:not(:last-child) { border-bottom-color: var(--o-line); }
+body[data-ostyle] .chatter-row:not(.rank-0) .chatter-name, body[data-ostyle] .chatter-row:not(.rank-0) .chatter-count { color: var(--o-name, var(--accent)); }
+
+/* ================= A · FROST (Apple): матовое стекло, крупные скругления, Inter ================= */
+body[data-ostyle="a"] {
+  --font-main: 'OvlInter', system-ui, sans-serif; --font-text: 'OvlInter', system-ui, sans-serif;
+  --o-r: 26px; --o-blur: 30px; --o-sat: 85%; --o-bg: linear-gradient(rgba(255,255,255,.06), rgba(255,255,255,.06)), rgba(18,20,28,.52); --o-solid: rgba(34,36,46,.95); --o-border: rgba(255,255,255,.18); --o-hi: rgba(255,255,255,.22);
+  --o-shadow: 0 18px 48px rgba(0,0,0,.35); --o-track: -.005em; --o-case: none; --o-title: #fff; --o-title-size: 15px; --o-line: rgba(255,255,255,.12); --o-track-bg: rgba(255,255,255,.12);
+  --o-chip-r: 50%; --o-chip-bg: rgba(255,255,255,.12); --o-chip-fg: #fff; --o-name: color-mix(in srgb, var(--accent) 45%, #fff);
+  --o-av-shadow: 0 0 0 3px rgba(255,255,255,.08), 0 4px 14px rgba(0,0,0,.35);
+}
+body[data-ostyle="a"] .chatter-bar-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 70%, #fff), var(--accent)); }
+body[data-ostyle="a"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(90deg, #FFD700, #FFA500); }
+
+/* ================= B · RAZER: скошенные углы, зелёный неон, Play ================= */
+body[data-ostyle="b"] {
+  --font-main: 'OvlPlay', system-ui, sans-serif; --font-text: 'OvlPlay', system-ui, sans-serif;
+  --o-r: 0px; --o-blur: 14px; --o-sat: 110%; --o-bg: linear-gradient(135deg, rgba(14,24,14,.82), rgba(6,10,8,.9)); --o-solid: #0a120b; --o-border: rgba(68,214,44,.55); --o-hi: transparent;
+  --o-shadow: none; --o-track: .12em; --o-case: uppercase; --o-title: #e8ffe3; --o-title-size: 14px; --o-line: rgba(68,214,44,.3); --o-track-bg: rgba(68,214,44,.12);
+  --o-chip-r: 0px; --o-chip-bg: #44D62C; --o-chip-fg: #06140a; --o-name: #8dff75; --o-bar-r: 0px; --o-bar-h: 8px; --o-av-r: 8px; --o-dc-r: 0px; --o-av-shadow: 0 0 12px rgba(68,214,44,.35);
+}
+body[data-ostyle="b"] .panel:not(.infocard-panel) { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px)); }
+body[data-ostyle="b"] .panel:not(.infocard-panel)::before { content: ''; position: absolute; left: 0; top: 0; width: 90px; height: 3px; background: #44D62C; box-shadow: 0 0 14px #44D62C; }
+body[data-ostyle="b"] .panel-icon { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
+body[data-ostyle="b"] .chatter-bar-track, body[data-ostyle="b"] .chatter-bar-fill { transform: skewX(-24deg); }
+body[data-ostyle="b"] .chatter-bar-fill { background: linear-gradient(90deg, #2fa81d, #7dff63); box-shadow: 0 0 10px rgba(68,214,44,.55); }
+body[data-ostyle="b"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(90deg, #FFD700, #FFA500); box-shadow: 0 0 10px rgba(255,190,0,.5); }
+body[data-ostyle="b"] .donor-circle, body[data-ostyle="b"] .donor-circle-inner { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); border-radius: 0 !important; }
+body[data-ostyle="b"] .chatter-name, body[data-ostyle="b"] .donor-name { text-transform: uppercase; letter-spacing: .06em; }
+
+/* ================= C · HUD: рамки-уголки, сегментные полосы, Tektur ================= */
+body[data-ostyle="c"] {
+  --font-main: 'OvlTektur', system-ui, sans-serif; --font-text: 'OvlTektur', system-ui, sans-serif;
+  --o-r: 4px; --o-blur: 8px; --o-sat: 100%; --o-bg: repeating-linear-gradient(0deg, rgba(255,255,255,.028) 0 1px, transparent 1px 3px), rgba(8,12,18,.78); --o-solid: #0a0f16; --o-border: color-mix(in srgb, var(--accent) 35%, transparent); --o-hi: transparent;
+  --o-shadow: 0 0 0 1px rgba(0,0,0,.4); --o-track: .16em; --o-case: uppercase; --o-title: #dfe8f2; --o-title-size: 13px; --o-title-w: 700; --o-line: color-mix(in srgb, var(--accent) 30%, transparent); --o-track-bg: transparent;
+  --o-chip-r: 2px; --o-chip-bg: transparent; --o-chip-fg: var(--accent); --o-name: #e8eef6; --o-bar-r: 0px; --o-bar-h: 10px; --o-av-r: 4px; --o-dc-r: 4px; --o-av-shadow: none;
+}
+body[data-ostyle="c"] .panel:not(.infocard-panel)::before, body[data-ostyle="c"] .panel:not(.infocard-panel)::after { content: ''; position: absolute; width: 22px; height: 22px; pointer-events: none; border: 2px solid var(--accent); }
+body[data-ostyle="c"] .panel:not(.infocard-panel)::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+body[data-ostyle="c"] .panel:not(.infocard-panel)::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+body[data-ostyle="c"] .panel-title-row::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--o-line), transparent); }
+body[data-ostyle="c"] .panel-icon { border: 1px solid var(--o-line); }
+body[data-ostyle="c"] .chatter-bar-track { background: repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 9px, transparent 9px 12px); }
+body[data-ostyle="c"] .chatter-bar-fill { background: repeating-linear-gradient(90deg, var(--accent) 0 9px, transparent 9px 12px); }
+body[data-ostyle="c"] .chatter-row.rank-0 .chatter-bar-fill { background: repeating-linear-gradient(90deg, #FFD700 0 9px, transparent 9px 12px); }
+body[data-ostyle="c"] .chatter-name, body[data-ostyle="c"] .donor-name { letter-spacing: .04em; }
+body[data-ostyle="c"] .chatter-avatar { border-color: var(--accent); }
+
+/* ================= D · SOFT: «скруглённые квадраты», мягкий градиент, Manrope ================= */
+body[data-ostyle="d"] {
+  --font-main: 'OvlManrope', system-ui, sans-serif; --font-text: 'OvlManrope', system-ui, sans-serif;
+  --o-r: 34px; --o-blur: 24px; --o-sat: 105%; --o-bg: linear-gradient(155deg, rgba(255,255,255,.1), color-mix(in srgb, var(--accent) 20%, transparent) 65%, rgba(18,10,18,.45)); --o-solid: #261820; --o-border: rgba(255,255,255,.14); --o-hi: rgba(255,255,255,.18);
+  --o-shadow: 0 22px 56px rgba(10,0,10,.45); --o-track: -.01em; --o-case: none; --o-title: #fff; --o-title-size: 16px; --o-title-w: 800; --o-line: rgba(255,255,255,.12); --o-track-bg: rgba(255,255,255,.12);
+  --o-chip: 32px; --o-chip-r: 11px; --o-chip-bg: linear-gradient(135deg, color-mix(in srgb, var(--accent) 75%, #fff), var(--accent)); --o-chip-fg: #fff; --o-name: color-mix(in srgb, var(--accent) 40%, #fff);
+  --o-bar-h: 11px; --o-av-r: 36%; --o-dc-r: 36%; --o-av-shadow: 0 6px 16px rgba(0,0,0,.35);
+}
+body[data-ostyle="d"][data-glass="off"] { --o-bg: var(--o-solid); }
+body[data-ostyle="d"] .panel { padding: 26px 30px 28px; }
+body[data-ostyle="d"] .chatter-bar-fill { background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 60%, #fff), var(--accent)); }
+body[data-ostyle="d"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(90deg, #FFD700, #FFA500); }
+
+/* ================= E · ARCADE: пиксельный стиль, жёсткие тени, Press Start 2P ================= */
+body[data-ostyle="e"] {
+  --font-main: 'OvlPixel', monospace; --font-text: 'OvlPixel', monospace;
+  --o-r: 0px; --o-bw: 3px; --o-blur: 0px; --o-sat: 100%; --o-bg: #15122a; --o-solid: #15122a; --o-border: #f4efe0; --o-hi: transparent;
+  --o-shadow: 8px 8px 0 rgba(0,0,0,.6); --o-track: .04em; --o-case: uppercase; --o-title: #ffd84d; --o-title-size: 12px; --o-title-w: 400; --o-line: rgba(244,239,224,.25); --o-track-bg: #0a0818;
+  --o-chip: 30px; --o-chip-r: 0px; --o-chip-bg: #ffd84d; --o-chip-fg: #15122a; --o-name: #7df9ff; --o-bar-r: 0px; --o-bar-h: 14px; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: 4px 4px 0 rgba(0,0,0,.55);
+}
+body[data-ostyle="e"][data-glass="off"] { --o-bg: #15122a; }
+body[data-ostyle="e"] .chatter-name, body[data-ostyle="e"] .donor-name { line-height: 1.4; }
+body[data-ostyle="e"] .chatter-count { color: #ffd84d !important; }
+body[data-ostyle="e"] .donor-amount { color: #ffd84d !important; }
+body[data-ostyle="e"] .chatter-avatar { image-rendering: pixelated; border-color: #f4efe0; }
+body[data-ostyle="e"] .chatter-bar-track { border: 2px solid #f4efe0; box-sizing: border-box; }
+body[data-ostyle="e"] .chatter-bar-fill { background: repeating-linear-gradient(90deg, #7df9ff 0 8px, #3fb8c2 8px 10px) !important; }
+body[data-ostyle="e"] .chatter-row.rank-0 .chatter-bar-fill { background: repeating-linear-gradient(90deg, #ffd84d 0 8px, #d9a91c 8px 10px) !important; }
+body[data-ostyle="e"] .donor-circle, body[data-ostyle="e"] .donor-circle-inner { image-rendering: pixelated; }
+body[data-ostyle="e"] .donor-circle { box-shadow: 3px 3px 0 rgba(0,0,0,.55); }
+body[data-ostyle="e"] .panel-icon { box-shadow: 3px 3px 0 rgba(0,0,0,.55); }
+
+
+/* ================= ПРОПОРЦИИ: всё выводится из одного числа --o-n (размер ника) ================= */
+body[data-ostyle] { --o-scale: 1; --o-n: calc(var(--chatter-name-size, 14px) * var(--o-scale)); }
+body[data-ostyle="a"], body[data-ostyle="c"], body[data-ostyle="d"] { --o-scale: 1.07; }
+body[data-ostyle="e"] { --o-scale: .72; }
+body[data-ostyle] .panel:not(.infocard-panel) { padding: calc(var(--o-n) * 1.6) calc(var(--o-n) * 1.85) calc(var(--o-n) * 1.7); }
+body[data-ostyle] .panel-title-row { gap: calc(var(--o-n) * .8); margin-bottom: calc(var(--o-n) * 1.15); }
+body[data-ostyle] .panel-title { font-size: calc(var(--o-n) * var(--o-title-k, .9)); line-height: 1.2; }
+body[data-ostyle] .panel-icon { width: calc(var(--o-n) * 2); height: calc(var(--o-n) * 2); padding: calc(var(--o-n) * .5); }
+body[data-ostyle] .chatter-name, body[data-ostyle] .donor-name { font-size: var(--o-n); }
+body[data-ostyle] .chatter-count, body[data-ostyle] .donor-amount { font-size: calc(var(--o-n) * 1.2); line-height: 1; }
+body[data-ostyle] .chatter-count { width: calc(var(--o-n) * 3.2); }
+body[data-ostyle] .donor-top-label { font-size: calc(var(--o-n) * .72); }
+body[data-ostyle] .chatter-bar-track { height: calc(var(--o-n) * var(--o-bar-k, .5)); }
+body[data-ostyle] .chatter-row, body[data-ostyle] .donor-row { align-items: center; }
+body[data-ostyle="b"] { --o-title-k: .92; --o-bar-k: .55; }
+body[data-ostyle="c"] { --o-title-k: .8; --o-bar-k: .72; }
+body[data-ostyle="d"] { --o-title-k: 1.02; --o-bar-k: .78; }
+body[data-ostyle="d"] .panel-icon { width: calc(var(--o-n) * 2.3); height: calc(var(--o-n) * 2.3); padding: calc(var(--o-n) * .6); }
+body[data-ostyle="e"] { --o-title-k: 1.15; --o-bar-k: 1.1; }
+body[data-ostyle="c"] { --o-chip-fg: color-mix(in srgb, var(--accent) 45%, #fff); }
+body[data-ostyle="c"] .panel-icon { padding: calc(var(--o-n) * .42); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+
+/* ---- шрифты стилей 6–15 ---- */
+@font-face { font-family: 'OvlOswald'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/oswald-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlOswald'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/oswald-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlOswald'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/oswald-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlOswald'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/oswald-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlForum'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/forum-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlForum'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/forum-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPhilo'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/philosopher-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPhilo'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/philosopher-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPhilo'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/philosopher-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPhilo'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/philosopher-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlRobotoC'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/roboto-condensed-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlRobotoC'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/roboto-condensed-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlRobotoC'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/roboto-condensed-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlRobotoC'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/roboto-condensed-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlRusso'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/russo-one-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlRusso'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/russo-one-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPixelify'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/pixelify-sans-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPixelify'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/pixelify-sans-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPixelify'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/pixelify-sans-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPixelify'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/pixelify-sans-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlexMono'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-mono-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlexMono'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlexMono'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-mono-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlexMono'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlexSans'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-sans-cyrillic-500-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlexSans'; font-weight: 500; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-sans-latin-500-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlPlexSans'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-sans-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlPlexSans'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/ibm-plex-sans-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlExo'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/exo-2-cyrillic-600-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlExo'; font-weight: 600; font-style: normal; font-display: swap; src: url('ovl-fonts/exo-2-latin-600-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlExo'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/exo-2-cyrillic-700-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlExo'; font-weight: 700; font-style: normal; font-display: swap; src: url('ovl-fonts/exo-2-latin-700-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+
+/* ================= 6 · DISCORD: тёмные карточки, серые заголовки-категории, «сине-фиолетовый» акцент ================= */
+body[data-ostyle="f"] {
+  --font-main: 'OvlInter', system-ui, sans-serif; --font-text: 'OvlInter', system-ui, sans-serif; --o-scale: 1.05;
+  --o-r: 10px; --o-blur: 0px; --o-sat: 100%; --o-bg: rgba(43,45,49,.94); --o-solid: #2b2d31; --o-border: rgba(255,255,255,.04); --o-hi: transparent; --o-shadow: 0 8px 24px rgba(0,0,0,.35);
+  --o-track: .03em; --o-case: uppercase; --o-title: #b5bac1; --o-title-k: .82; --o-line: rgba(255,255,255,.06); --o-track-bg: #1e1f22;
+  --o-chip-r: 50%; --o-chip-bg: #5865F2; --o-chip-fg: #fff; --o-name: #f2f3f5; --o-bar-r: 4px; --o-bar-k: .5; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: none;
+}
+body[data-ostyle="f"] .chatter-bar-fill { background: #5865F2; }
+body[data-ostyle="f"] .chatter-row.rank-0 .chatter-bar-fill { background: #f0b232; }
+body[data-ostyle="f"] .chatter-row:not(.rank-0) .chatter-count { background: #1e1f22; color: #dbdee1; border-radius: 999px; padding: 4px 0; width: calc(var(--o-n) * 3.2); text-align: center; font-size: var(--o-n); }
+body[data-ostyle="f"] .chatter-avatar { border: 0; }
+body[data-ostyle="f"] .donor-amount { color: #23a55a !important; }
+
+/* ================= 7 · DOTA 2: стальной тёмный, золото и красная кровь, Oswald ================= */
+body[data-ostyle="g"] {
+  --font-main: 'OvlOswald', system-ui, sans-serif; --font-text: 'OvlOswald', system-ui, sans-serif; --o-scale: 1.1;
+  --o-r: 3px; --o-blur: 0px; --o-sat: 100%; --o-bg: linear-gradient(180deg, #23262b, #121316 55%, #0c0d0f); --o-solid: #15171a; --o-border: #3b3f46; --o-hi: rgba(255,255,255,.1); --o-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px #08090a;
+  --o-track: .1em; --o-case: uppercase; --o-title: #e3d7b6; --o-title-k: .86; --o-title-w: 500; --o-line: rgba(200,160,70,.35); --o-track-bg: #08090a;
+  --o-chip-r: 3px; --o-chip-bg: linear-gradient(180deg, #7d1c12, #4a0f09); --o-chip-fg: #f0d9a0; --o-name: #e8e2d0; --o-bar-r: 2px; --o-bar-k: .6; --o-av-r: 4px; --o-dc-r: 4px; --o-av-shadow: 0 0 0 1px #08090a;
+}
+body[data-ostyle="g"] .panel-title-row { padding-bottom: calc(var(--o-n) * .7); position: relative; }
+body[data-ostyle="g"] .panel-title-row::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: linear-gradient(90deg, #c8a046, rgba(200,160,70,.05)); }
+body[data-ostyle="g"] .panel-icon { border: 1px solid #b08a3a; }
+body[data-ostyle="g"] .chatter-bar-track { box-shadow: inset 0 0 0 1px #2a2c31; }
+body[data-ostyle="g"] .chatter-bar-fill { background: linear-gradient(90deg, #7d1c12, #e04b2d); }
+body[data-ostyle="g"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="g"] .donor-amount { color: #e6c66b !important; }
+body[data-ostyle="g"] .chatter-avatar { border-color: #b08a3a; }
+
+/* ================= 8 · LEAGUE OF LEGENDS (Hextech): тёмно-синий, золотая двойная рамка, Forum ================= */
+body[data-ostyle="h"] {
+  --font-main: 'OvlForum', Georgia, serif; --font-text: 'OvlForum', Georgia, serif; --o-scale: 1.12;
+  --o-r: 0px; --o-blur: 0px; --o-sat: 100%; --o-bg: linear-gradient(180deg, #0b1a26, #010a13); --o-solid: #06121c; --o-border: #785a28; --o-hi: transparent; --o-shadow: inset 0 0 0 1px #010a13, inset 0 0 0 2px #463714, 0 10px 30px rgba(0,0,0,.6);
+  --o-track: .08em; --o-case: uppercase; --o-title: #c8aa6e; --o-title-k: .92; --o-title-w: 400; --o-line: rgba(200,170,110,.3); --o-track-bg: #091e2d;
+  --o-chip-r: 0px; --o-chip-bg: #c8aa6e; --o-chip-fg: #010a13; --o-name: #f0e6d2; --o-bar-r: 0px; --o-bar-k: .5; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: 0 0 0 2px #010a13, 0 0 0 3px #785a28;
+}
+body[data-ostyle="h"] .panel:not(.infocard-panel) { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
+body[data-ostyle="h"] .panel-icon { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); padding: calc(var(--o-n) * .62); }
+body[data-ostyle="h"] .chatter-avatar { border-color: #c8aa6e; }
+body[data-ostyle="h"] .chatter-bar-fill { background: linear-gradient(90deg, #0a8f87, #0ac8b9); box-shadow: 0 0 8px rgba(10,200,185,.45); }
+body[data-ostyle="h"] .chatter-bar-track { box-shadow: inset 0 0 0 1px #1e2d3a; }
+body[data-ostyle="h"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="h"] .donor-amount { color: #c8aa6e !important; }
+
+/* ================= 9 · COUNTER-STRIKE 2: прозрачные тёмные плашки, жёлтая метка, Roboto Condensed ================= */
+body[data-ostyle="i"] {
+  --font-main: 'OvlRobotoC', system-ui, sans-serif; --font-text: 'OvlRobotoC', system-ui, sans-serif; --o-scale: 1.15;
+  --o-r: 2px; --o-blur: 6px; --o-sat: 100%; --o-bg: rgba(18,22,26,.82); --o-solid: #14181c; --o-border: transparent; --o-hi: transparent; --o-shadow: none;
+  --o-track: .06em; --o-case: uppercase; --o-title: rgba(255,255,255,.72); --o-title-k: .8; --o-line: rgba(255,255,255,.1); --o-track-bg: rgba(255,255,255,.1);
+  --o-chip-r: 0px; --o-chip-bg: transparent; --o-chip-fg: #f0c14b; --o-name: #f2f2f2; --o-bar-r: 0px; --o-bar-k: .42; --o-av-r: 2px; --o-dc-r: 2px; --o-av-shadow: none;
+}
+body[data-ostyle="i"] .panel:not(.infocard-panel)::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f0c14b; }
+body[data-ostyle="i"] .panel { padding-left: calc(var(--o-n) * 2.1) !important; }
+body[data-ostyle="i"] .panel-icon { padding: 0; width: calc(var(--o-n) * 1.7); height: calc(var(--o-n) * 1.7); }
+body[data-ostyle="i"] .chatter-bar-fill { background: #e8e8e8; }
+body[data-ostyle="i"] .chatter-row.rank-0 .chatter-bar-fill { background: #f0c14b; }
+body[data-ostyle="i"] .chatter-avatar { border: 0; filter: saturate(.85); }
+body[data-ostyle="i"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="i"] .donor-amount { color: #f0c14b !important; }
+
+/* ================= 10 · WORLD OF WARCRAFT: тёмный пергамент, золотая рамка, цвета редкости, Philosopher ================= */
+body[data-ostyle="j"] {
+  --font-main: 'OvlPhilo', Georgia, serif; --font-text: 'OvlPhilo', Georgia, serif; --o-scale: 1.12;
+  --o-r: 8px; --o-blur: 0px; --o-sat: 100%; --o-bg: linear-gradient(180deg, rgba(40,28,16,.96), rgba(14,9,5,.97)); --o-solid: #1c130b; --o-bw: 2px; --o-border: #7a5a22; --o-hi: rgba(255,220,140,.18); --o-shadow: 0 0 0 1px #1a0f05, 0 12px 32px rgba(0,0,0,.65), inset 0 0 22px rgba(0,0,0,.55);
+  --o-track: .02em; --o-case: none; --o-title: #ffd100; --o-title-k: 1.05; --o-title-w: 700; --o-line: rgba(255,209,0,.25); --o-track-bg: rgba(0,0,0,.55);
+  --o-chip-r: 50%; --o-chip-bg: radial-gradient(circle at 35% 30%, #ffe27a, #b8860b); --o-chip-fg: #2a1a05; --o-name: #a335ee; --o-bar-r: 3px; --o-bar-k: .52; --o-av-r: 7px; --o-dc-r: 7px; --o-av-shadow: inset 0 0 0 1px #000, 0 0 0 1px #000;
+}
+body[data-ostyle="j"] .chatter-avatar { border: 2px solid #b8860b; }
+body[data-ostyle="j"] .chatter-row:not(.rank-0) .chatter-name { color: #c77dff; }
+body[data-ostyle="j"] .chatter-row:not(.rank-0) .chatter-count { color: #f8f8f8; }
+body[data-ostyle="j"] .chatter-row.rank-0 .chatter-name { color: #ff8000; }
+body[data-ostyle="j"] .chatter-bar-track { box-shadow: inset 0 0 0 1px #3a2a12; }
+body[data-ostyle="j"] .chatter-bar-fill { background: linear-gradient(180deg, #c77dff, #7a2bb3); }
+body[data-ostyle="j"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(180deg, #ffb04d, #ff8000); }
+body[data-ostyle="j"] .donor-amount { color: #ffd100 !important; }
+
+/* ================= 11 · VALORANT: тёмно-синий, красный, косые срезы, Russo One ================= */
+body[data-ostyle="k"] {
+  --font-main: 'OvlRusso', system-ui, sans-serif; --font-text: 'OvlRusso', system-ui, sans-serif; --o-scale: .98;
+  --o-r: 0px; --o-blur: 0px; --o-sat: 100%; --o-bg: linear-gradient(160deg, #1a2733, #0f1923 60%); --o-solid: #0f1923; --o-border: rgba(236,232,225,.1); --o-hi: transparent; --o-shadow: 0 12px 30px rgba(0,0,0,.5);
+  --o-track: .06em; --o-case: uppercase; --o-title: #ece8e1; --o-title-k: .9; --o-line: rgba(236,232,225,.12); --o-track-bg: rgba(236,232,225,.1);
+  --o-chip-r: 0px; --o-chip-bg: #ff4655; --o-chip-fg: #fff; --o-name: #ece8e1; --o-bar-r: 0px; --o-bar-k: .55; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
+}
+body[data-ostyle="k"] .panel:not(.infocard-panel) { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); }
+body[data-ostyle="k"] .panel:not(.infocard-panel)::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 46px; background: #ff4655; }
+body[data-ostyle="k"] .panel-title-row { padding-left: calc(var(--o-n) * .6); }
+body[data-ostyle="k"] .panel-icon, body[data-ostyle="k"] .chatter-avatar { clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
+body[data-ostyle="k"] .chatter-avatar { border: 0; }
+body[data-ostyle="k"] .chatter-bar-track, body[data-ostyle="k"] .chatter-bar-fill { transform: skewX(-30deg); }
+body[data-ostyle="k"] .chatter-bar-fill { background: #ff4655; }
+body[data-ostyle="k"] .chatter-row.rank-0 .chatter-bar-fill { background: #ece8e1; }
+body[data-ostyle="k"] .chatter-row:not(.rank-0) .chatter-count { color: #ff4655; }
+body[data-ostyle="k"] .donor-circle, body[data-ostyle="k"] .donor-circle-inner { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
+
+/* ================= 12 · MINECRAFT: серые «слоты» с фасками, пиксельный шрифт, зелёная полоска опыта ================= */
+body[data-ostyle="l"] {
+  --font-main: 'OvlPixelify', monospace; --font-text: 'OvlPixelify', monospace; --o-scale: 1.1;
+  --o-r: 0px; --o-bw: 4px; --o-blur: 0px; --o-sat: 100%; --o-bg: #3a3a3a; --o-solid: #3a3a3a; --o-border: #8b8b8b; --o-hi: transparent; --o-shadow: 6px 6px 0 rgba(0,0,0,.45), inset 4px 4px 0 #555, inset -4px -4px 0 #1f1f1f;
+  --o-track: 0em; --o-case: none; --o-title: #ffff55; --o-title-k: 1.05; --o-title-w: 700; --o-line: rgba(255,255,255,.15); --o-track-bg: #1f1f1f;
+  --o-chip-r: 0px; --o-chip-bg: #8b8b8b; --o-chip-fg: #fff; --o-name: #fff; --o-bar-r: 0px; --o-bar-k: .6; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
+}
+body[data-ostyle="l"] .panel:not(.infocard-panel) { border-color: #c6c6c6 #555 #555 #c6c6c6; }
+body[data-ostyle="l"] .panel-title, body[data-ostyle="l"] .chatter-name, body[data-ostyle="l"] .donor-name, body[data-ostyle="l"] .chatter-count, body[data-ostyle="l"] .donor-amount { text-shadow: 2px 2px 0 #3f3f3f; }
+body[data-ostyle="l"] .panel-icon { box-shadow: inset 2px 2px 0 #c6c6c6, inset -2px -2px 0 #555; }
+body[data-ostyle="l"] .chatter-avatar { image-rendering: pixelated; border: 2px solid #8b8b8b; border-color: #c6c6c6 #555 #555 #c6c6c6; }
+body[data-ostyle="l"] .chatter-bar-track { box-shadow: inset 2px 2px 0 #000; }
+body[data-ostyle="l"] .chatter-bar-fill { background: repeating-linear-gradient(90deg, #80ff20 0 6px, #52c010 6px 8px); }
+body[data-ostyle="l"] .chatter-row.rank-0 .chatter-bar-fill { background: repeating-linear-gradient(90deg, #ffff55 0 6px, #d9d92a 6px 8px); }
+body[data-ostyle="l"] .chatter-row:not(.rank-0) .chatter-count { color: #80ff20; }
+body[data-ostyle="l"] .donor-amount { color: #ffff55 !important; }
+
+/* ================= 13 · СТРОГИЙ MONO: чёрный, тонкие линии, моноширинный, ничего лишнего ================= */
+body[data-ostyle="m"] {
+  --font-main: 'OvlPlexMono', ui-monospace, monospace; --font-text: 'OvlPlexMono', ui-monospace, monospace; --o-scale: .96;
+  --o-r: 0px; --o-blur: 0px; --o-sat: 100%; --o-bg: rgba(10,10,10,.9); --o-solid: #0a0a0a; --o-border: #2e2e2e; --o-hi: transparent; --o-shadow: none;
+  --o-track: .06em; --o-case: uppercase; --o-title: #8c8c8c; --o-title-k: .8; --o-title-w: 500; --o-line: #262626; --o-track-bg: #232323;
+  --o-chip-r: 0px; --o-chip-bg: transparent; --o-chip-fg: #8c8c8c; --o-name: #e6e6e6; --o-bar-r: 0px; --o-bar-k: .3; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: none;
+}
+body[data-ostyle="m"] .panel-title::before { content: '// '; color: #5a5a5a; }
+body[data-ostyle="m"] .panel-icon { padding: 0; width: calc(var(--o-n) * 1.5); height: calc(var(--o-n) * 1.5); }
+body[data-ostyle="m"] .chatter-avatar { filter: grayscale(1) contrast(1.05); border: 1px solid #5a5a5a; }
+body[data-ostyle="m"] .chatter-bar-fill { background: #e6e6e6; }
+body[data-ostyle="m"] .chatter-row.rank-0 .chatter-bar-fill { background: #ffffff; }
+body[data-ostyle="m"] .chatter-row.rank-0 .chatter-name, body[data-ostyle="m"] .chatter-row.rank-0 .chatter-count { color: #fff; }
+body[data-ostyle="m"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="m"] .donor-amount { color: #b8b8b8 !important; }
+body[data-ostyle="m"] .donor-circle, body[data-ostyle="m"] .donor-circle-inner { filter: grayscale(.9); }
+
+/* ================= 14 · СТРОГИЙ LIGHT: светлая карточка, графит, тонкая рамка, IBM Plex Sans ================= */
+body[data-ostyle="n"] {
+  --font-main: 'OvlPlexSans', system-ui, sans-serif; --font-text: 'OvlPlexSans', system-ui, sans-serif; --o-scale: 1.04;
+  --o-r: 12px; --o-blur: 14px; --o-sat: 120%; --o-bg: rgba(250,250,248,.93); --o-solid: #fafaf8; --o-border: rgba(0,0,0,.08); --o-hi: rgba(255,255,255,.9); --o-shadow: 0 10px 30px rgba(0,0,0,.18);
+  --o-track: 0em; --o-case: none; --o-title: #4a4a48; --o-title-k: .95; --o-title-w: 600; --o-line: rgba(0,0,0,.09); --o-track-bg: rgba(0,0,0,.08);
+  --o-chip-r: 50%; --o-chip-bg: rgba(0,0,0,.07); --o-chip-fg: #2a2a28; --o-name: #1c1c1a; --o-bar-r: 999px; --o-bar-k: .4; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: 0 0 0 2px #fff, 0 2px 8px rgba(0,0,0,.2);
+}
+body[data-ostyle="n"] .panel-title-row { padding-bottom: calc(var(--o-n) * .7); border-bottom: 1px solid rgba(0,0,0,.08); }
+body[data-ostyle="n"] .chatter-avatar { border: 0; }
+body[data-ostyle="n"] .chatter-bar-fill { background: #2a2a28; }
+body[data-ostyle="n"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(90deg, #d9a21b, #f0c14b); }
+body[data-ostyle="n"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="n"] .donor-amount { color: #1c1c1a !important; }
+body[data-ostyle="n"] .chatter-row.rank-0 .chatter-name, body[data-ostyle="n"] .chatter-row.rank-0 .chatter-count { color: #a8740c; }
+body[data-ostyle="n"] .donor-name { color: #1c1c1a !important; }
+body[data-ostyle="n"] .donor-top-label { color: #6a6a66; }
+
+/* ================= 15 · CYBERPUNK 2077: жёлтый и бирюзовый на чёрном, срезанный угол, Exo 2 ================= */
+body[data-ostyle="o"] {
+  --font-main: 'OvlExo', system-ui, sans-serif; --font-text: 'OvlExo', system-ui, sans-serif; --o-scale: 1.05;
+  --o-r: 0px; --o-bw: 2px; --o-blur: 0px; --o-sat: 100%; --o-bg: linear-gradient(180deg, rgba(14,14,10,.95), rgba(4,4,4,.97)); --o-solid: #0c0c08; --o-border: #fcee0a; --o-hi: transparent; --o-shadow: 0 0 22px rgba(252,238,10,.12);
+  --o-track: .1em; --o-case: uppercase; --o-title: #0a0a0a; --o-title-k: .9; --o-title-w: 700; --o-line: rgba(252,238,10,.3); --o-track-bg: rgba(252,238,10,.12);
+  --o-chip-r: 0px; --o-chip-bg: #fcee0a; --o-chip-fg: #0a0a0a; --o-name: #f4f1c8; --o-bar-r: 0px; --o-bar-k: .5; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
+}
+body[data-ostyle="o"] .panel:not(.infocard-panel) { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%); }
+body[data-ostyle="o"] .panel-title { background: #fcee0a; padding: .18em .7em; text-shadow: none; clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); padding-right: 1.3em; }
+body[data-ostyle="o"] .panel-icon, body[data-ostyle="o"] .chatter-avatar { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
+body[data-ostyle="o"] .chatter-avatar { border: 0; outline: 0; }
+body[data-ostyle="o"] .chatter-bar-fill { background: repeating-linear-gradient(135deg, #fcee0a 0 8px, #b6aa00 8px 11px); }
+body[data-ostyle="o"] .chatter-row.rank-0 .chatter-bar-fill { background: repeating-linear-gradient(135deg, #00f0ff 0 8px, #0097a0 8px 11px); }
+body[data-ostyle="o"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="o"] .donor-amount { color: #00f0ff !important; text-shadow: 1px 0 #ff2a6d; }
+body[data-ostyle="o"] .chatter-row.rank-0 .chatter-count { color: #00f0ff; }
+body[data-ostyle="o"] .donor-circle, body[data-ostyle="o"] .donor-circle-inner { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
+
+/* ================= Облако слов («Слово дня»): подстройка под стили. Базовые цвета берутся из переменных стиля (--o-name, --o-line, --o-bar-r…) ================= */
+body[data-ostyle] .wc-poster { --wc-bar-h: max(4px, calc(var(--o-bar-h, 7px) * 0.6)); }
+body[data-ostyle] .wc-kicker { font-weight: var(--o-title-w, 700); }
+body[data-ostyle="b"] .wc-poster { --wc-case: uppercase; --wc-acc: #44D62C; --wc-up: #8dff75; }
+body[data-ostyle="b"] .wc-big, body[data-ostyle="b"] .wc-w { letter-spacing: .04em; }
+body[data-ostyle="c"] .wc-poster { --wc-case: uppercase; }
+body[data-ostyle="c"] .wc-big, body[data-ostyle="c"] .wc-w { letter-spacing: .04em; }
+body[data-ostyle="e"] .wc-poster { --wc-hero: linear-gradient(#ffd84d, #ffd84d); --wc-acc: #ffd84d; --wc-up: #7df9ff; --wc-line: rgba(255,255,255,.22); }
+body[data-ostyle="e"] .wc-big { filter: drop-shadow(4px 4px 0 rgba(0,0,0,.6)); }
+body[data-ostyle="e"] .wc-w, body[data-ostyle="e"] .wc-count { text-shadow: 2px 2px 0 rgba(0,0,0,.55); }
+body[data-ostyle="f"] .wc-poster { --wc-acc: #7983f5; --wc-up: #57F287; }
+body[data-ostyle="g"] .wc-poster { --wc-hi: #f0d9a0; --wc-acc: #d9402e; }
+body[data-ostyle="h"] .wc-poster { --wc-hi: #f0e6d2; --wc-acc: #c8aa6e; --wc-up: #0ac8b9; }
+body[data-ostyle="i"] .wc-poster { --wc-hi: #fff; --wc-acc: #f0c14b; }
+body[data-ostyle="j"] .wc-poster { --wc-text: #e8e2d0; --wc-hero: linear-gradient(100deg, #ffb347, #ff8000); --wc-acc: #ff8000; --wc-up: #1eff00; }
+body[data-ostyle="j"] .wc-row .wc-w { color: #c77dff; }
+body[data-ostyle="k"] .wc-poster { --wc-hi: #ece8e1; --wc-acc: #ff4655; --wc-up: #4fb87a; }
+body[data-ostyle="l"] .wc-poster { --wc-hero: linear-gradient(#fff, #fff); --wc-acc: #ffff55; --wc-up: #55ff55; --wc-line: rgba(255,255,255,.2); }
+body[data-ostyle="l"] .wc-big { filter: drop-shadow(3px 3px 0 #3f3f3f); }
+body[data-ostyle="l"] .wc-w, body[data-ostyle="l"] .wc-count, body[data-ostyle="l"] .wc-kicker { text-shadow: 2px 2px 0 #3f3f3f; }
+body[data-ostyle="m"] .wc-poster { --wc-hero: linear-gradient(#e6e6e6, #e6e6e6); --wc-acc: #8c8c8c; --wc-up: #c4c4c4; }
+body[data-ostyle="m"] .wc-kicker { color: #8c8c8c; }
+body[data-ostyle="m"] .wc-ln i { background: #8c8c8c; }
+body[data-ostyle="n"] .wc-poster { --wc-hi: #1c1c1a; --wc-acc: color-mix(in srgb, var(--accent) 85%, #000); --wc-up: #1f9d55; --wc-line: rgba(0,0,0,.1); --wc-track: rgba(0,0,0,.08); }
+body[data-ostyle="o"] .wc-poster { --wc-hero: linear-gradient(100deg, #f4f1c8 10%, #fcee0a 90%); --wc-acc: #fcee0a; --wc-up: #00f0ff; }
+body[data-ostyle="o"] .wc-ln i { background: linear-gradient(90deg, #00f0ff, #fcee0a); }
+
+/* ================= События: подстройка под стили ================= */
+body[data-ostyle="e"] .ef-hero .ef-nm { font-size: calc(15px * var(--ef-u)); }
+body[data-ostyle="e"] .ef-hero .ef-rt { font-size: calc(17px * var(--ef-u)); }
+body[data-ostyle="e"] .ef-nm { font-size: calc(11px * var(--ef-u)); }
+body[data-ostyle="e"] .ef-dt, body[data-ostyle="e"] .ef-rt { font-size: calc(9px * var(--ef-u)); }
+body[data-ostyle="b"] .ef-host { --ef-follow: #44D62C; --ef-sub: #8dff75; --ef-gift: #2bd1a3; --ef-don: #44D62C; --ef-raid: #b6ff3b; --ef-hi: #8dff75; --ef-ic-r: 0; }
+body[data-ostyle="b"] .ef-ic { color: #06140a; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
+body[data-ostyle="n"] .ef-host { --ef-hi: #1f9d55; --ef-follow: #4c7fe0; --ef-sub: #d99a14; --ef-gift: #d9588a; --ef-don: #2f9e44; --ef-raid: #e0703c; }
+body[data-ostyle="o"] .ef-ic { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); border-radius: 0; }
+body[data-ostyle="e"] .ef-nm, body[data-ostyle="e"] .ef-dt { line-height: 1.45; }
+
+/* ================= Алерт доната: плашка = панель виджетов выбранного стиля =================
+   При включённой привязке к теме (нет класса .da-plain) лицо и рубашка карточки берут фон, обводку, скругление, тень, скосы и уголки
+   ровно такие же, как у панелей виджетов этого стиля, а акцент — цвет стиля. */
+body[data-ostyle] .da-layer:not(.da-plain) .da-face {
+  background: transparent; border: var(--o-bw, 1px) solid var(--o-border); border-radius: var(--o-r);
+  box-shadow: var(--o-shadow), inset 0 1px 0 var(--o-hi);
+}
+/* подложка: сплошной цвет стиля с регулируемой непрозрачностью (--da-op) + «кожа» стиля поверх (как у панели виджета) */
+body[data-ostyle] .da-layer:not(.da-plain) .da-plate { display: block; background: var(--o-solid, #0e0e14); opacity: var(--da-op, 1); }
+body[data-ostyle] .da-layer:not(.da-plain) .da-skin { display: block; background: var(--o-bg); }
+body[data-ostyle] .da-layer:not(.da-plain) .da-front { color: var(--o-name, var(--text-main)); }
+body[data-ostyle] .da-layer:not(.da-plain) .da-msg { color: var(--o-name, var(--text-main)); opacity: .92; }
+body[data-ostyle] .da-layer:not(.da-plain) .da-line { background: linear-gradient(90deg, transparent, var(--o-line, var(--da-c0)), transparent); }
+/* акцентный цвет стиля (там, где он не берётся из темы) */
+body[data-ostyle="b"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #44D62C; }
+body[data-ostyle="e"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #ffd84d; }
+body[data-ostyle="f"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #5865F2; }
+body[data-ostyle="g"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #c8a046; }
+body[data-ostyle="h"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #c8aa6e; }
+body[data-ostyle="i"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #f0c14b; }
+body[data-ostyle="j"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #ffd100; }
+body[data-ostyle="k"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #ff4655; }
+body[data-ostyle="l"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #ffff55; }
+body[data-ostyle="m"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #cfcfcf; }
+body[data-ostyle="o"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #fcee0a; }
+/* скосы и декор — как у .panel этого стиля */
+body[data-ostyle="b"] .da-layer:not(.da-plain) .da-face { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px)); }
+body[data-ostyle="b"] .da-layer:not(.da-plain) .da-face::before { content: ''; position: absolute; left: 0; top: 0; width: 90px; height: 3px; background: #44D62C; box-shadow: 0 0 14px #44D62C; }
+body[data-ostyle="c"] .da-layer:not(.da-plain) .da-face::before, body[data-ostyle="c"] .da-layer:not(.da-plain) .da-face::after { content: ''; position: absolute; width: 22px; height: 22px; pointer-events: none; border: 2px solid var(--accent); }
+body[data-ostyle="c"] .da-layer:not(.da-plain) .da-face::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+body[data-ostyle="c"] .da-layer:not(.da-plain) .da-face::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+body[data-ostyle="h"] .da-layer:not(.da-plain) .da-face { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
+body[data-ostyle="i"] .da-layer:not(.da-plain) .da-face::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f0c14b; }
+body[data-ostyle="k"] .da-layer:not(.da-plain) .da-face { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); }
+body[data-ostyle="k"] .da-layer:not(.da-plain) .da-face::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 46px; background: #ff4655; }
+body[data-ostyle="l"] .da-layer:not(.da-plain) .da-face { border-color: #c6c6c6 #555 #555 #c6c6c6; }
+body[data-ostyle="o"] .da-layer:not(.da-plain) .da-face { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%); }
+/* регистр и размеры шрифта */
+body[data-ostyle="b"] .da-layer:not(.da-plain) .da-nick, body[data-ostyle="b"] .da-layer:not(.da-plain) .da-kicker, body[data-ostyle="c"] .da-layer:not(.da-plain) .da-nick, body[data-ostyle="c"] .da-layer:not(.da-plain) .da-kicker,
+body[data-ostyle="g"] .da-layer:not(.da-plain) .da-nick, body[data-ostyle="h"] .da-layer:not(.da-plain) .da-nick, body[data-ostyle="k"] .da-layer:not(.da-plain) .da-nick, body[data-ostyle="o"] .da-layer:not(.da-plain) .da-nick { text-transform: uppercase; }
+body[data-ostyle="e"] .da-layer:not(.da-plain) .da-nick { font-size: 24px; } body[data-ostyle="e"] .da-layer:not(.da-plain) .da-amount { font-size: 54px; } body[data-ostyle="e"] .da-layer:not(.da-plain) .da-msg { font-size: 20px; line-height: 1.5; }
+body[data-ostyle="l"] .da-layer:not(.da-plain) .da-nick { font-size: 30px; } body[data-ostyle="l"] .da-layer:not(.da-plain) .da-amount { font-size: 64px; }
+/* светлый стиль N: тёмные буквы, сумма с тёмным градиентом */
+body[data-ostyle="n"] .da-layer:not(.da-plain) .da-kicker { color: color-mix(in srgb, var(--da-c0) 80%, #000); }
+body[data-ostyle="n"] .da-layer:not(.da-plain) .da-amount { background: linear-gradient(180deg, #1c1c1a, color-mix(in srgb, var(--da-c0) 70%, #000)); -webkit-background-clip: text; background-clip: text; filter: none; }

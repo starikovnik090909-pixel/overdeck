@@ -1,0 +1,478 @@
+[
+ {
+  "id": "zap-up",
+  "label": "Взлёт · три тона",
+  "group": "Подлёт",
+  "file": "zap-up.ogg",
+  "sec": 1.2
+ },
+ {
+  "id": "power-up",
+  "label": "Заряд",
+  "group": "Подлёт",
+  "file": "power-up.ogg",
+  "sec": 1.2
+ },
+ {
+  "id": "power-up-2",
+  "label": "Заряд 2",
+  "group": "Подлёт",
+  "file": "power-up-2.ogg",
+  "sec": 1.15
+ },
+ {
+  "id": "laser",
+  "label": "Лазер",
+  "group": "Подлёт",
+  "file": "laser.ogg",
+  "sec": 1.13
+ },
+ {
+  "id": "force-field",
+  "label": "Силовое поле",
+  "group": "Подлёт",
+  "file": "force-field.ogg",
+  "sec": 0.95
+ },
+ {
+  "id": "space-vortex",
+  "label": "Космический вихрь",
+  "group": "Подлёт",
+  "file": "space-vortex.ogg",
+  "sec": 1.54
+ },
+ {
+  "id": "zap-two",
+  "label": "Зап",
+  "group": "Подлёт",
+  "file": "zap-two.ogg",
+  "sec": 1.31
+ },
+ {
+  "id": "engine",
+  "label": "Двигатель (разгон)",
+  "group": "Подлёт",
+  "file": "engine.ogg",
+  "sec": 2.4
+ },
+ {
+  "id": "thruster",
+  "label": "Реактивный ускоритель",
+  "group": "Подлёт",
+  "file": "thruster.ogg",
+  "sec": 2.4
+ },
+ {
+  "id": "computer",
+  "label": "Компьютер",
+  "group": "Подлёт",
+  "file": "computer.ogg",
+  "sec": 2.0
+ },
+ {
+  "id": "card-fan",
+  "label": "Веер карт",
+  "group": "Подлёт",
+  "file": "card-fan.ogg",
+  "sec": 1.31
+ },
+ {
+  "id": "dice",
+  "label": "Кости",
+  "group": "Подлёт",
+  "file": "dice.ogg",
+  "sec": 1.48
+ },
+ {
+  "id": "bell",
+  "label": "Колокол",
+  "group": "Удары",
+  "file": "bell.ogg",
+  "sec": 1.48
+ },
+ {
+  "id": "plate-heavy",
+  "label": "Тяжёлый удар",
+  "group": "Удары",
+  "file": "plate-heavy.ogg",
+  "sec": 0.49
+ },
+ {
+  "id": "metal-heavy",
+  "label": "Металл",
+  "group": "Удары",
+  "file": "metal-heavy.ogg",
+  "sec": 0.36
+ },
+ {
+  "id": "punch",
+  "label": "Удар кулаком",
+  "group": "Удары",
+  "file": "punch.ogg",
+  "sec": 0.65
+ },
+ {
+  "id": "glass",
+  "label": "Стекло",
+  "group": "Удары",
+  "file": "glass.ogg",
+  "sec": 0.24
+ },
+ {
+  "id": "bass-boom",
+  "label": "Бас-бум",
+  "group": "Удары",
+  "file": "bass-boom.ogg",
+  "sec": 2.0
+ },
+ {
+  "id": "explosion",
+  "label": "Взрыв",
+  "group": "Удары",
+  "file": "explosion.ogg",
+  "sec": 1.55
+ },
+ {
+  "id": "fanfare-1",
+  "label": "Фанфара 1",
+  "group": "Джинглы",
+  "file": "fanfare-1.ogg",
+  "sec": 0.61
+ },
+ {
+  "id": "fanfare-2",
+  "label": "Фанфара 2",
+  "group": "Джинглы",
+  "file": "fanfare-2.ogg",
+  "sec": 0.75
+ },
+ {
+  "id": "fanfare-3",
+  "label": "Фанфара 3",
+  "group": "Джинглы",
+  "file": "fanfare-3.ogg",
+  "sec": 0.42
+ },
+ {
+  "id": "chip-1",
+  "label": "8-бит 1",
+  "group": "Джинглы",
+  "file": "chip-1.ogg",
+  "sec": 0.6
+ },
+ {
+  "id": "chip-2",
+  "label": "8-бит 2",
+  "group": "Джинглы",
+  "file": "chip-2.ogg",
+  "sec": 0.41
+ },
+ {
+  "id": "steel",
+  "label": "Стил-джингл",
+  "group": "Джинглы",
+  "file": "steel.ogg",
+  "sec": 0.94
+ },
+ {
+  "id": "sax",
+  "label": "Саксофон",
+  "group": "Джинглы",
+  "file": "sax.ogg",
+  "sec": 0.39
+ },
+ {
+  "id": "pizzicato",
+  "label": "Пиццикато",
+  "group": "Джинглы",
+  "file": "pizzicato.ogg",
+  "sec": 1.32
+ },
+ {
+  "id": "coins",
+  "label": "Монеты",
+  "group": "Монеты",
+  "file": "coins.ogg",
+  "sec": 0.85
+ },
+ {
+  "id": "coins-rain",
+  "label": "Звон монет",
+  "group": "Монеты",
+  "file": "coins-rain.ogg",
+  "sec": 1.23
+ },
+ {
+  "id": "chips",
+  "label": "Фишки",
+  "group": "Монеты",
+  "file": "chips.ogg",
+  "sec": 0.56
+ },
+ {
+  "id": "tk-pre-1",
+  "label": "Колокольчик",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-1.ogg",
+  "sec": 0.9
+ },
+ {
+  "id": "tk-pre-2",
+  "label": "Два тона",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-2.ogg",
+  "sec": 0.61
+ },
+ {
+  "id": "tk-pre-3",
+  "label": "Три тона",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-3.ogg",
+  "sec": 0.76
+ },
+ {
+  "id": "tk-pre-4",
+  "label": "Пиццикато",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-4.ogg",
+  "sec": 0.9
+ },
+ {
+  "id": "tk-pre-5",
+  "label": "8-бит звонок",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-5.ogg",
+  "sec": 0.87
+ },
+ {
+  "id": "tk-pre-6",
+  "label": "Металлический звон",
+  "group": "Билет · перед вылетом",
+  "file": "tk-pre-6.ogg",
+  "sec": 0.24
+ },
+ {
+  "id": "tk-fly-1",
+  "label": "Скольжение карты",
+  "group": "Билет · вылет",
+  "file": "tk-fly-1.ogg",
+  "sec": 0.6
+ },
+ {
+  "id": "tk-fly-2",
+  "label": "Взмах ткани",
+  "group": "Билет · вылет",
+  "file": "tk-fly-2.ogg",
+  "sec": 0.46
+ },
+ {
+  "id": "tk-fly-3",
+  "label": "Веер карт",
+  "group": "Билет · вылет",
+  "file": "tk-fly-3.ogg",
+  "sec": 0.72
+ },
+ {
+  "id": "tk-fly-4",
+  "label": "Быстрый свист",
+  "group": "Билет · вылет",
+  "file": "tk-fly-4.ogg",
+  "sec": 0.46
+ },
+ {
+  "id": "tk-fly-5",
+  "label": "Лёгкий ветер",
+  "group": "Билет · вылет",
+  "file": "tk-fly-5.ogg",
+  "sec": 0.26
+ },
+ {
+  "id": "tk-fly-6",
+  "label": "Дверь-раздвижка",
+  "group": "Билет · вылет",
+  "file": "tk-fly-6.ogg",
+  "sec": 0.53
+ },
+ {
+  "id": "tk-stamp-1",
+  "label": "Деревянный штамп",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-1.ogg",
+  "sec": 0.31
+ },
+ {
+  "id": "tk-stamp-2",
+  "label": "Плотный удар",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-2.ogg",
+  "sec": 0.65
+ },
+ {
+  "id": "tk-stamp-3",
+  "label": "Печать на бумагу",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-3.ogg",
+  "sec": 0.57
+ },
+ {
+  "id": "tk-stamp-4",
+  "label": "Металлический штамп",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-4.ogg",
+  "sec": 0.36
+ },
+ {
+  "id": "tk-stamp-5",
+  "label": "Книга хлопнула",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-5.ogg",
+  "sec": 0.21
+ },
+ {
+  "id": "tk-stamp-6",
+  "label": "Доска",
+  "group": "Билет · штамп",
+  "file": "tk-stamp-6.ogg",
+  "sec": 0.7
+ },
+ {
+  "id": "tk-tear-1",
+  "label": "Рывок ткани",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-1.ogg",
+  "sec": 0.63
+ },
+ {
+  "id": "tk-tear-2",
+  "label": "Разрез ножом",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-2.ogg",
+  "sec": 0.52
+ },
+ {
+  "id": "tk-tear-3",
+  "label": "Листание страницы",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-3.ogg",
+  "sec": 0.43
+ },
+ {
+  "id": "tk-tear-4",
+  "label": "Вскрытие пачки",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-4.ogg",
+  "sec": 0.94
+ },
+ {
+  "id": "tk-tear-5",
+  "label": "Ремень",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-5.ogg",
+  "sec": 0.72
+ },
+ {
+  "id": "tk-tear-6",
+  "label": "Щелчок замка",
+  "group": "Билет · отрыв",
+  "file": "tk-tear-6.ogg",
+  "sec": 0.25
+ },
+ {
+  "id": "rc-print-1",
+  "label": "Принтер: стрекот",
+  "group": "Чек · печать",
+  "file": "rc-print-1.ogg",
+  "sec": 2.97
+ },
+ {
+  "id": "rc-print-2",
+  "label": "Принтер: жужжание",
+  "group": "Чек · печать",
+  "file": "rc-print-2.ogg",
+  "sec": 2.97
+ },
+ {
+  "id": "rc-print-3",
+  "label": "Матричный принтер",
+  "group": "Чек · печать",
+  "file": "rc-print-3.ogg",
+  "sec": 4.0
+ },
+ {
+  "id": "rc-tear-1",
+  "label": "Отрыв чека (резкий)",
+  "group": "Чек · отрыв",
+  "file": "rc-tear-1.ogg",
+  "sec": 2.0
+ },
+ {
+  "id": "rc-tear-2",
+  "label": "Отрыв чека (бумага)",
+  "group": "Чек · отрыв",
+  "file": "rc-tear-2.ogg",
+  "sec": 2.0
+ },
+ {
+  "id": "rd-ping-1",
+  "label": "Радар: сонар",
+  "group": "Рейд · радар",
+  "file": "rd-ping-1.ogg",
+  "sec": 1.6
+ },
+ {
+  "id": "rd-ping-2",
+  "label": "Радар: писк-писк",
+  "group": "Рейд · радар",
+  "file": "rd-ping-2.ogg",
+  "sec": 0.45
+ },
+ {
+  "id": "rd-ping-3",
+  "label": "Радар: глубокий пинг",
+  "group": "Рейд · радар",
+  "file": "rd-ping-3.ogg",
+  "sec": 2.2
+ },
+ {
+  "id": "rd-tick-1",
+  "label": "Счётчик: щелчок",
+  "group": "Рейд · счётчик",
+  "file": "rd-tick-1.ogg",
+  "sec": 0.05
+ },
+ {
+  "id": "rd-tick-2",
+  "label": "Счётчик: мягкий тик",
+  "group": "Рейд · счётчик",
+  "file": "rd-tick-2.ogg",
+  "sec": 0.07
+ },
+ {
+  "id": "rd-tick-3",
+  "label": "Счётчик: блип",
+  "group": "Рейд · счётчик",
+  "file": "rd-tick-3.ogg",
+  "sec": 0.09
+ },
+ {
+  "id": "rd-siren-1",
+  "label": "Тревога: мягкая сирена",
+  "group": "Рейд · тревога",
+  "file": "rd-siren-1.ogg",
+  "sec": 3.0
+ },
+ {
+  "id": "rd-siren-2",
+  "label": "Тревога: вверх-вниз",
+  "group": "Рейд · тревога",
+  "file": "rd-siren-2.ogg",
+  "sec": 3.2
+ },
+ {
+  "id": "rd-siren-3",
+  "label": "Тревога: сигнал",
+  "group": "Рейд · тревога",
+  "file": "rd-siren-3.ogg",
+  "sec": 2.4
+ }
+]

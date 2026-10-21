@@ -1,0 +1,79 @@
+{
+  "name": "lightning",
+  "title": "Маг молний",
+  "group": "Маги",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 120,
+    "h": 88
+  },
+  "pivot": {
+    "x": 60,
+    "y": 85
+  },
+  "headTop": 3,
+  "speed": 70,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "free-wizard-sprite-sheets-pixel-art",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 48,
+        "h": 78
+      },
+      "pivot": {
+        "x": 24,
+        "y": 74
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 122,
+        "h": 92
+      },
+      "pivot": {
+        "x": 61,
+        "y": 88
+      }
+    }
+  ]
+}

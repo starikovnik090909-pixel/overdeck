@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Twitch Overlay v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="ticket.css?v=1">
+  <link rel="stylesheet" href="wall.css?v=1">
+  <link rel="stylesheet" href="badge.css?v=1">
+  <link rel="stylesheet" href="receipt.css?v=3">
+  <link rel="stylesheet" href="slots.css?v=2">
+  <link rel="stylesheet" href="radar.css?v=1">
+  <link rel="stylesheet" href="raidcard.css?v=3">
+  <link rel="stylesheet" href="goal.css?v=1">
+  <link rel="stylesheet" href="overlay-styles.css?v=11">
+</head>
+<body>
+
+<div class="scene" id="scene">
+
+  <div class="panel" data-widget="activity">
+    <div class="panel-title-row">
+      <div class="panel-title">Активность зрителей</div>
+      <span class="panel-icon" title="Активность зрителей">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M4 19c0-2.8 2.2-5 5-5s5 2.2 5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.5"/><path d="M15 19c0-2.3 1.4-4.2 3.5-4.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+    <div class="chatters-list" id="chattersList"></div>
+  </div>
+
+  <div class="panel" data-widget="timeline">
+    <div class="panel-title-row">
+      <div class="panel-title">Таймлайн стрима</div>
+      <span class="panel-icon" title="Таймлайн стрима">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M12 9v4l3 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 2.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+    <div class="timeline-wrap" id="timelineWrap">
+      <canvas id="timelineCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="panel" data-widget="emotebox">
+    <div class="panel-title-row">
+      <div class="panel-title">Топ эмодзи</div>
+      <span class="panel-icon" title="Топ эмодзи">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 14.5c1 1.2 2.1 1.8 3.5 1.8s2.5-.6 3.5-1.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1" fill="currentColor"/><circle cx="15" cy="10" r="1" fill="currentColor"/></svg>
+      </span>
+    </div>
+    <canvas id="emoteBoxCanvas"></canvas>
+  </div>
+
+  <div class="panel" data-widget="wordcloud">
+    <div class="panel-title-row">
+      <div class="panel-title">Слова эфира</div>
+      <span class="panel-icon" title="Слова эфира">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 17h8a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 5.06 10.5 3.5 3.5 0 0 0 7 17Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+      </span>
+    </div>
+    <div class="wc-poster" id="wordcloudPoster"></div>
+  </div>
+
+  <div class="panel" data-widget="donortop">
+    <div class="panel-title-row">
+      <div class="panel-title">Топ донатеров <span class="donor-top-label" id="donorTopLabel"></span></div>
+      <span class="panel-icon" title="Топ донатеров">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M7 5H4.5A1.5 1.5 0 0 0 3 6.5C3 8.4 4.6 10 6.5 10H7M17 5h2.5A1.5 1.5 0 0 1 21 6.5C21 8.4 19.4 10 17.5 10H17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M12 13v3m-3 4h6m-3-4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+    <div class="donor-top-list" id="donorTopList"></div>
+  </div>
+
+  <div class="panel" data-widget="eventfeed">
+    <div class="panel-title-row">
+      <div class="panel-title">События</div>
+      <span class="panel-icon" title="События">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="18" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M6 8v8M11 6h9M11 18h9M11 12h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+    <div class="ef-host" id="eventFeedHost"></div>
+  </div>
+
+  <!-- Инфо-карточка: без заголовка и без своего фона панели — всё рисуют две стороны переворачивающейся карточки.
+       Последней в сцене, чтобы при выезде лежать поверх остальных виджетов. -->
+  <div class="panel infocard-panel" data-widget="infocard">
+    <div class="infocard-stage" id="infoCardStage">
+      <div class="infocard-flip" id="infoCardFlip">
+        <div class="infocard-face" id="infoCardFaceA"></div>
+        <div class="infocard-face" id="infoCardFaceB"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- «Цель сбора» в общем источнике алертов (overlay.html?only=donation), если в админке включено «Использовать общий алерт»; иначе плашка живёт отдельно на goal.html (public/goal.js). -->
+  <div id="gStage" class="g-embed g-off" data-embed="1">
+    <canvas id="gCv" width="680" height="250"></canvas>
+    <div class="g-card" id="gCard">
+      <div class="g-kick" id="gKick"></div>
+      <div class="g-pc" id="gPc">0%</div>
+      <div class="g-row"><span class="g-amt" id="gAmt">0</span><span class="g-of" id="gOf"></span></div>
+      <div class="g-track"><div class="g-fill" id="gFill"><i class="g-head"></i></div></div>
+      <i class="g-tk" data-q="0.25"></i><i class="g-tk" data-q="0.5"></i><i class="g-tk" data-q="0.75"></i>
+      <div class="g-sheen" id="gSheen"></div>
+    </div>
+    <div id="gPops"></div>
+  </div>
+
+  <!-- Алерт доната: карточка подлетает из центра, зависает и улетает вбок (public/donationalert.js). Поверх всех виджетов. -->
+  <div class="da-layer" id="daLayer">
+    <div class="da-wave"></div>
+    <div class="da-card">
+      <div class="da-halo"></div>
+      <div class="da-face da-front">
+        <div class="da-plate"></div><div class="da-skin"></div><div class="da-tex"></div>
+        <div class="da-frame"></div>
+        <div class="da-src"></div>
+        <div class="da-shine"></div>
+        <div class="da-kicker">донат</div>
+        <div class="da-nick"></div>
+        <div class="da-amount"></div>
+        <div class="da-stat"></div>
+        <div class="da-line"></div>
+        <div class="da-msgwrap"><div class="da-msg"></div></div>
+        <div class="da-timebar"><i></i></div>
+      </div>
+      <div class="da-face da-back"><div class="da-plate"></div><div class="da-skin"></div><div class="da-coin">₽</div></div>
+    </div>
+  </div>
+
+  <div class="rc-layer" id="rcLayer"><div class="rc-printer"><i></i></div><div class="rc-win" id="rcWin"><div class="rc-paper" id="rcPaper"></div></div></div>
+  <div class="sl-layer" id="slLayer"><div class="sl-mach"><div class="sl-bulbs"></div><div class="sl-mq" id="slMq"></div><div class="sl-reels" id="slReels"></div><div class="sl-payline"></div><div class="sl-winmark" id="slWinMark"></div><div class="sl-lever"></div><div class="sl-plate"><b id="slNickB"><span id="slNick"></span></b><span class="sl-m" id="slMsg"></span></div></div></div>
+  <div class="rd-layer" id="rdLayer"><div class="rd-stage" id="rdStage"></div></div>
+  <div class="rj-layer" id="rjLayer"><div class="rj-stage" id="rjStage"></div></div>
+  <div class="bd-layer" id="bdLayer"><div class="bd-rig" id="bdRig"><div class="bd-strap"><span id="bdStrap"></span></div><div class="bd-pivot"><div class="bd-clip"></div><div class="bd-card"><div class="bd-hole"></div><div class="bd-band"><b>ПРОПУСК · ЗА КУЛИСЫ</b><h1>Добро пожаловать!</h1></div><div class="bd-ava" id="bdAva"></div><div class="bd-nm"><span id="bdNm"></span></div><div class="bd-no" id="bdNo"></div><div class="bd-dt" id="bdDt"></div><div class="bd-stamp">ОДОБРЕНО<br>✓</div><div class="bd-bars"></div></div></div></div></div>
+  <div class="fw-layer" id="fwLayer"><div class="fw-panel" id="fwPanel"><div class="fw-head"><span class="fw-title">СТЕНА ФОЛЛОВЕРОВ</span><span class="fw-total" id="fwTotal"></span></div><div class="fw-grid" id="fwGrid"></div><div class="fw-new" id="fwNew"><div class="fw-nk">новый фолловер</div><div class="fw-nn" id="fwNn"></div><div class="fw-nm" id="fwNm"></div><div class="fw-nd" id="fwNd"></div></div><div class="fw-shock"></div></div></div>
+  <div class="tk-layer" id="tkLayer"><div class="tk-stage"><div class="tk-ticket" id="tkTicket"><div class="tk-halo"></div><div class="tk-shaker">
+    <div class="tk-part tk-main"><div class="tk-face"></div>
+      <div class="tk-in"><div class="tk-top"><i></i><span id="tkTop">Абонемент подписчика</span><i></i></div><div class="tk-nick" id="tkNick"></div><div class="tk-month" id="tkMonth"></div><div class="tk-meta" id="tkMeta"></div><div class="tk-quote" id="tkQuote"></div><div class="tk-slots" id="tkSlots"></div></div>
+      <div class="tk-shock"></div>
+      <svg class="tk-bigstamp" viewBox="0 0 240 240"><defs><filter id="tkRough"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.2"/></filter><path id="tkCirc" d="M120,120 m-92,0 a92,92 0 1,1 184,0 a92,92 0 1,1 -184,0"/></defs>
+        <g filter="url(#tkRough)" fill="none" stroke="currentColor"><circle cx="120" cy="120" r="112" stroke-width="5"/><circle cx="120" cy="120" r="104" stroke-width="1.6"/><circle cx="120" cy="120" r="66" stroke-width="2"/>
+        <text font-family="TkMono" font-weight="600" font-size="16" fill="currentColor" stroke="none"><textPath href="#tkCirc" id="tkRing" textLength="566" lengthAdjust="spacing"></textPath></text>
+        <text x="120" y="116" text-anchor="middle" font-family="TkSans" font-weight="800" font-size="62" fill="currentColor" stroke="none" id="tkSn"></text>
+        <text x="120" y="146" text-anchor="middle" font-family="TkSans" font-weight="800" font-size="18" letter-spacing="3" fill="currentColor" stroke="none" id="tkSl"></text></g></svg></div>
+    <div class="tk-part tk-stub"><div class="tk-face"></div>
+      <div class="tk-in"><div class="tk-adm">Проход на стрим</div><div class="tk-num"><small id="tkNoLab">подписчик №</small><span id="tkNo"></span></div><div class="tk-bars" id="tkBars"><div class="tk-scan"></div></div><div class="tk-code" id="tkCode"></div></div></div>
+  </div></div></div></div>
+
+</div>
+
+<script src="ovl-proto.js?v=2"></script>
+<script src="app.js"></script>
+<script src="timeline.js?v=4"></script>
+<script src="wordcloud.js?v=2"></script>
+<script src="emotebox.js?v=6"></script>
+<script src="donortop.js"></script>
+<script src="infocard.js"></script>
+<script src="eventfeed.js"></script>
+<script src="donationalert.js?v=16"></script>
+<script src="goal.js?v=1"></script>
+</body>
+</html>

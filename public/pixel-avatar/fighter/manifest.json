@@ -1,0 +1,117 @@
+{
+  "name": "fighter",
+  "title": "Боец",
+  "group": "Воины",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 54,
+    "h": 90
+  },
+  "pivot": {
+    "x": 27,
+    "y": 86
+  },
+  "headTop": 3,
+  "speed": 70,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix-net-453698-free-shinobi-sprites-pixel-art",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 68,
+        "h": 92
+      },
+      "pivot": {
+        "x": 34,
+        "y": 88
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 70,
+        "h": 90
+      },
+      "pivot": {
+        "x": 35,
+        "y": 86
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 3,
+        "west": 3
+      },
+      "columns": 3,
+      "cell": {
+        "w": 64,
+        "h": 88
+      },
+      "pivot": {
+        "x": 32,
+        "y": 85
+      }
+    },
+    {
+      "name": "shield",
+      "title": "Щит",
+      "kind": "emote",
+      "file": "x_shield.png",
+      "frames": {
+        "east": 2,
+        "west": 2
+      },
+      "columns": 2,
+      "cell": {
+        "w": 52,
+        "h": 82
+      },
+      "pivot": {
+        "x": 26,
+        "y": 79
+      }
+    }
+  ]
+}

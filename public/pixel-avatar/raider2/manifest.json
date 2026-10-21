@@ -1,0 +1,136 @@
+{
+  "name": "raider2",
+  "title": "Рейдер 2",
+  "group": "Рейдеры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 46,
+    "h": 70
+  },
+  "pivot": {
+    "x": 23,
+    "y": 67
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix.net рейдеры",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 7,
+        "west": 7
+      },
+      "columns": 7,
+      "cell": {
+        "w": 44,
+        "h": 72
+      },
+      "pivot": {
+        "x": 22,
+        "y": 68
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 60,
+        "h": 70
+      },
+      "pivot": {
+        "x": 30,
+        "y": 67
+      }
+    },
+    {
+      "name": "shot",
+      "title": "Выстрел",
+      "kind": "attack",
+      "file": "x_shot.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 74,
+        "h": 68
+      },
+      "pivot": {
+        "x": 37,
+        "y": 65
+      }
+    },
+    {
+      "name": "shot2",
+      "title": "Выстрел 2",
+      "kind": "attack",
+      "file": "x_shot2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 102,
+        "h": 70
+      },
+      "pivot": {
+        "x": 51,
+        "y": 67
+      }
+    },
+    {
+      "name": "recharge",
+      "title": "Перезаряжает",
+      "kind": "emote",
+      "file": "x_recharge.png",
+      "frames": {
+        "east": 12,
+        "west": 12
+      },
+      "columns": 12,
+      "cell": {
+        "w": 54,
+        "h": 78
+      },
+      "pivot": {
+        "x": 27,
+        "y": 74
+      }
+    }
+  ]
+}

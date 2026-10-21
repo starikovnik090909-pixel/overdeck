@@ -1,0 +1,8 @@
+GandalfHardcore — Лучник-тамплиер (жёлтый)  (https://gandalfhardcore.itch.io/)
+
+Лицензия автора (из README пака):
+  Permitted uses for the assets include incorporating them into commercial and non-commercial video games and projects, modifying them as needed,
+  and displaying work featuring the assets on designated websites. Restrictions include not reselling, repackaging (selling the edited pixel art),
+  or redistributing the assets, using them for AI training, incorporating them in game tools, NFT projects, or printed materials.
+Спрайты в этой папке собраны скриптом tools/build-new-heroes.py (кадры отобраны, выровнены по земле, для движения влево отражены).
+НЕ выкладывайте проект с ними в открытый доступ; это личный стрим-оверлей, а не игровой инструмент.

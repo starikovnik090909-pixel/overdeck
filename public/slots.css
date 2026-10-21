@@ -1,0 +1,31 @@
+/* Алерт доната «Игровой автомат»: барабаны останавливаются на цифрах суммы, внизу табличка с ником и сообщением */
+.sl-layer { position: fixed; inset: 0; display: none; pointer-events: none; z-index: 30; --sl-acc: #ff3fa4; font-family: 'TkSans', 'Manrope', 'Inter', sans-serif; overflow: hidden; }
+.sl-mach { position: absolute; left: 50%; top: 50%; width: 1300px; height: 860px; margin: -430px 0 0 -650px; border-radius: 44px; box-sizing: border-box; color: #fff; opacity: 0; transform: translateY(60px) scale(.9);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--sl-acc) 25%, #2a1450), #1b0f33 60%, #2a1450); border: 6px solid var(--sl-acc);
+  box-shadow: 0 0 90px color-mix(in srgb, var(--sl-acc) 55%, transparent), 0 40px 80px rgba(0,0,0,.65), inset 0 0 60px rgba(0,0,0,.6); }
+.sl-layer.sl-in .sl-mach { opacity: 1; transform: none; transition: opacity .4s, transform .5s cubic-bezier(.2,.9,.3,1.1); }
+.sl-layer.sl-out .sl-mach { opacity: 0; transform: translateY(40px) scale(.94); transition: opacity .5s, transform .55s ease-in; }
+.sl-bulbs { position: absolute; left: 60px; right: 60px; top: 20px; height: 12px; background: radial-gradient(circle, #ffe58a 0 4px, transparent 5px) 0 0 / 34px 12px; animation: sl-blink .5s steps(2) infinite; }
+.sl-layer.sl-win .sl-bulbs { animation-duration: .18s; }
+@keyframes sl-blink { 50% { opacity: .3; } }
+.sl-mq { position: absolute; left: 60px; right: 60px; top: 34px; height: 96px; border-radius: 20px; background: #12081f; border: 3px solid #ffcf3f; display: flex; align-items: center; justify-content: center; font: 800 54px 'TkSans'; letter-spacing: .26em; color: #ffcf3f; text-shadow: 0 0 22px #ffcf3f; white-space: nowrap; overflow: hidden; }
+.sl-reels { position: absolute; left: 100px; top: 170px; width: 1000px; height: 450px; display: flex; gap: 14px; }
+.sl-reel { flex: 1; overflow: hidden; border-radius: 16px; background: linear-gradient(#e9e9f5, #fff 30%, #fff 70%, #dcdcec); box-shadow: inset 0 0 30px rgba(0,0,0,.45); position: relative; }
+.sl-reel::after { content: ''; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.65), transparent 30%, transparent 70%, rgba(0,0,0,.65)); }
+.sl-strip { position: absolute; left: 0; right: 0; top: 0; }
+.sl-sym { height: 150px; display: flex; align-items: center; justify-content: center; font: 800 var(--sl-fs, 110px) 'TkSans'; color: #2a1450; }
+.sl-sym.r { color: #e0245e; }
+.sl-payline { position: absolute; left: 84px; width: 1032px; top: 392px; height: 6px; background: var(--sl-acc); box-shadow: 0 0 14px var(--sl-acc); opacity: 0; z-index: 3; }
+.sl-layer.sl-win .sl-payline { opacity: .9; transition: opacity .3s; }
+.sl-winmark { position: absolute; left: 1108px; top: 168px; width: 186px; text-align: center; white-space: nowrap; font: 800 36px/1.05 'TkSans'; color: #ffcf3f; text-shadow: 0 0 24px #ffcf3f; transform: rotate(-8deg) scale(0); }
+.sl-layer.sl-win .sl-winmark { transform: rotate(-8deg) scale(1); transition: transform .5s cubic-bezier(.2,1.5,.4,1); }
+.sl-lever { position: absolute; right: -8px; top: 240px; width: 44px; height: 200px; }
+.sl-lever::before { content: ''; position: absolute; left: 14px; bottom: 0; width: 16px; height: 150px; background: linear-gradient(90deg, #999, #eee, #999); border-radius: 8px; transform-origin: 50% 100%; }
+.sl-lever::after { content: ''; position: absolute; left: -2px; top: 0; width: 48px; height: 48px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff7aa8, #c0124f); box-shadow: 0 6px 14px rgba(0,0,0,.5); }
+.sl-layer.sl-pull .sl-lever::before { animation: sl-pull .7s ease-in-out; }
+.sl-layer.sl-pull .sl-lever::after { animation: sl-pullb .7s ease-in-out; }
+@keyframes sl-pull { 50% { transform: scaleY(.55); } } @keyframes sl-pullb { 50% { transform: translateY(80px); } }
+.sl-plate { position: absolute; left: 100px; width: 1000px; top: 640px; height: 196px; border-radius: 20px; background: #12081f; border: 3px solid var(--sl-acc); padding: 14px 30px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+.sl-plate b { font: 800 48px/1.3 'TkSans'; white-space: nowrap; overflow: hidden; padding-bottom: 4px; }
+.sl-plate b span { display: inline-block; }
+.sl-plate span.sl-m { font: 600 24px/1.25 'TkMono', monospace; opacity: .9; margin-top: 2px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

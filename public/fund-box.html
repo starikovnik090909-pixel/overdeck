@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Коробочка сбора</title>
+<link rel="stylesheet" href="fund-box.css">
+</head>
+<body>
+<div id="fundBoxRoot">
+  <div id="fbBackdrop">
+    <div class="fb-backdrop-plate"></div>
+    <div class="fb-backdrop-darken"></div>
+  </div>
+  <div class="fb-denomination" id="fbDenomination"></div>
+  <div class="fb-box" id="fbBox">
+    <canvas id="fbCanvas"></canvas>
+  </div>
+  <div class="fb-caption" id="fbCaption"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+<script src="fund-box.js"></script>
+</body>
+</html>

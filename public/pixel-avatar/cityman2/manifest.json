@@ -1,0 +1,60 @@
+{
+  "name": "cityman2",
+  "title": "Городской парень 2",
+  "group": "Городские парни",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 50,
+    "h": 72
+  },
+  "pivot": {
+    "x": 25,
+    "y": 69
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix.net городские парни",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "extras": [
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 82,
+        "h": 70
+      },
+      "pivot": {
+        "x": 41,
+        "y": 67
+      }
+    }
+  ]
+}

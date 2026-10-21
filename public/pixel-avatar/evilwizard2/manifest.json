@@ -1,0 +1,98 @@
+{
+  "name": "evilwizard2",
+  "title": "Злой маг 2",
+  "group": "Тёмные маги",
+  "fps": 12,
+  "scale": 1,
+  "cell": {
+    "w": 86,
+    "h": 110
+  },
+  "pivot": {
+    "x": 43,
+    "y": 107
+  },
+  "headTop": 3,
+  "speed": 55,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Evil Wizard 2 Asset Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 2,
+        "west": 2
+      },
+      "columns": 2,
+      "cell": {
+        "w": 92,
+        "h": 88
+      },
+      "pivot": {
+        "x": 46,
+        "y": 84
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 228,
+        "h": 148
+      },
+      "pivot": {
+        "x": 114,
+        "y": 144
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 8,
+        "west": 8
+      },
+      "columns": 8,
+      "cell": {
+        "w": 242,
+        "h": 156
+      },
+      "pivot": {
+        "x": 121,
+        "y": 139
+      }
+    }
+  ]
+}

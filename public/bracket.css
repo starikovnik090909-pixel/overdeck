@@ -1,0 +1,316 @@
+/* public/bracket.css — bracket.html: турнирная сетка как ТРИ независимые
+   панели (Матчи / Решающие матчи / Турнирная таблица), каждая со своим
+   положением/размером (см. bracketData.js: panelLayout — та же модель,
+   что и у "Виджетов оверлея", widgets.js/widgetsPersistence.js). Позиция и
+   размер каждой панели задаются ИНЛАЙН-СТИЛЕМ из bracket.js (left/top/
+   width/height в px, 0-1920×0-1080), не здесь.
+
+   Адаптивность внутри панели: JS считает --panel-scale через ResizeObserver
+   (отношение реального размера панели к "эталонному" размеру по умолчанию
+   для этой панели) и выставляет как CSS-переменную на сам контейнер панели;
+   все размеры шрифтов/логотипов внутри — calc(базовое-значение * scale), так
+   при растягивании панели содержимое растёт/уменьшается вместе с ней, а не
+   вылезает за её границы (плюс overflow:hidden на самой панели — двойная
+   подстраховка). */
+
+:root {
+  --bracket-name-size: 20px;
+  --bracket-score-size: 26px;
+  --bracket-table-size: 15px;
+  --bracket-columns: 2;
+  --bracket-plate-max-width: 100000px; /* практически «без ограничения»; JS подставляет настоящее значение, если оно задано */
+  --bracket-panel-padding: 20px;
+  --bracket-plate-padding: 16px;
+  --bracket-plate-gap: 12px;
+  --bracket-plate-height: 64px;
+  --bracket-logo-size: 36px;
+  --bracket-gap-x: 24px;
+  --bracket-gap-y: 16px;
+  --bracket-table-row-h: 32px;
+  --bracket-table-row-gap: 2px;
+  --bracket-panel-opacity: 1;
+  --bracket-bg: #0f1220;
+  --bracket-text: #f0e6d2;
+  --bracket-title-color: #f0e6d2;
+  --bracket-border: #c9a24a;
+  --bracket-accent: #ffd700;
+  --bracket-title-font: 'Inter', system-ui, sans-serif;
+  --bracket-data-font: 'Inter', system-ui, sans-serif;
+  --bracket-title-weight: 900;
+  --bracket-data-weight: 700;
+  --bracket-win-color: #2ecc71;
+  --bracket-lose-color: #e74c3c;
+  --bracket-pulse-speed: 1600ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--bracket-text);
+}
+
+#bracketRoot {
+  position: relative;
+  width: 1920px; height: 1080px;
+}
+
+/* --- Панель (общая оболочка для всех трёх) --- */
+.bracket-panel {
+  position: absolute;
+  overflow: hidden; /* контент не вылезает за границы панели при уменьшении её размера */
+  --panel-scale: 1;
+  /* Единая "оболочка" для всех трёх панелей — раньше её не было вовсе (фон/рамку имели только элементы ВНУТРИ
+     панелей, каждый на свой лад), из-за чего три панели читались как разрозненные куски, а не части одного
+     целого. Теперь у всех одинаковый фон/рамка/скругление/тень — куда бы вы их ни перетащили и как бы ни
+     изменили размер, они всегда выглядят как один комплект. */
+  background: linear-gradient(165deg, color-mix(in srgb, var(--bracket-bg) 88%, white 4%), var(--bracket-bg));
+  border: 1px solid color-mix(in srgb, var(--bracket-border) 35%, transparent);
+  border-radius: calc(12px * var(--panel-scale));
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+.bracket-panel[data-enabled="false"] { display: none; }
+.bracket-panel-inner {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  padding: calc(var(--bracket-panel-padding) * var(--panel-scale)); /* настройка «Отступ от краёв панелей» */
+}
+
+/* Единый заголовок панели — общий для всех трёх ("Матчи", "Решающие матчи", "Турнирная таблица"): один и тот
+   же размер/начертание/отступ/линия снизу, вместо трёх разных (раньше 28px/20px/15px — было похоже на три
+   заголовка разного уровня важности, а не на подписи трёх равноправных панелей одного набора). */
+.bracket-panel-title {
+  display: flex; align-items: baseline; gap: calc(12px * var(--panel-scale));
+  font-size: calc(20px * var(--panel-scale));
+  font-weight: var(--bracket-title-weight);
+  font-family: var(--bracket-title-font);
+  color: var(--bracket-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-bottom: calc(10px * var(--panel-scale));
+  margin-bottom: calc(16px * var(--panel-scale));
+  border-bottom: calc(2px * var(--panel-scale)) solid color-mix(in srgb, var(--bracket-border) 45%, transparent);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.bracket-panel-title-accent { font-size: calc(13px * var(--panel-scale)); font-weight: 700; color: var(--bracket-border); letter-spacing: 0.04em; text-transform: none; }
+
+#bracketGroupGrid {
+  position: relative;
+  flex: 1; min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--bracket-columns), 1fr); /* 1 или 2 колонки — настройка в админке */
+  grid-auto-rows: minmax(var(--bracket-plate-height), 1fr); /* не сжимается меньше заданной высоты, но тянется, если места больше — см. раздел 66 */
+  column-gap: calc(var(--bracket-gap-x) * var(--panel-scale));
+  row-gap: calc(var(--bracket-gap-y) * var(--panel-scale));
+  overflow-y: auto;
+  overflow-x: hidden; /* полоса горизонтальной прокрутки не нужна — см. min-width:0 на .bracket-match-row ниже, из-за которого она и появлялась */
+}
+
+/* --- Матч группы: две плашки команд напротив друг друга + "VS" между ними (заменяет прежнюю карточку с
+   двумя строками друг НАД другом — теперь стороны стоят РЯДОМ, как две команды на афише). Номер матча
+   ("МАТЧ N") в новом виде решил убрать — в макете его нет, и для двух горизонтальных плашек без общей
+   "шапки"-карточки ему больше некуда естественно встать; если он всё же нужен — можно вернуть отдельной
+   подписью слева от ряда, скажите. */
+.bracket-match-row {
+  position: relative;
+  min-width: 0; /* БАГ: без этого — элемент грида по умолчанию не сжимается меньше "естественной" ширины своего
+                   содержимого (назвение команды с white-space:nowrap может быть широким), из-за чего ряд не
+                   помещался в узкую панель и появлялась ненужная горизонтальная прокрутка всей сетки */
+  max-width: calc(var(--bracket-plate-max-width) * var(--panel-scale)); /* весь матч (обе плашки + VS) не растягивается шире заданного — особенно заметно при 1 колонке */
+  width: 100%; /* БАГ (§70-71): раньше здесь стояло margin:0 auto — у элемента CSS-сетки с авто-полями браузер отключает растягивание,
+                  и ряд сжимался до ширины своего содержимого (~450px при колонке ~960px) и вставал по центру. Теперь ряд всегда
+                  занимает всю ширину ячейки (но не больше max-width выше), а центрируется только если упёрся в этот потолок. */
+  justify-self: center;
+  height: 100%;
+  display: flex; align-items: stretch; gap: calc(12px * var(--panel-scale));
+  opacity: var(--bracket-panel-opacity);
+}
+/* Тонкая золотая линия под каждым рядом матчей группы — отделяет один ряд от другого явной чертой, а не только
+   отступом (просили именно так: "небольшим пробелом И тонкой золотой линией"). В плей-офф этот же класс используется
+   ВНУТРИ уже обособленного бокса — там линия не нужна, поэтому подключена только внутри #bracketGroupGrid. */
+#bracketGroupGrid .bracket-match-row {
+  padding-bottom: calc(10px * var(--panel-scale));
+  border-bottom: 1px solid color-mix(in srgb, var(--bracket-border) 35%, transparent);
+}
+.bracket-match-vs {
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(var(--bracket-name-size) * 0.6 * var(--panel-scale));
+  font-weight: 900;
+  font-family: var(--bracket-title-font);
+  color: var(--bracket-accent); /* золотой — как и попросили ("между ними — VS жёлтым/золотым цветом") */
+  letter-spacing: 0.06em;
+}
+.bracket-match-plate {
+  position: relative; /* якорь для ::after — кольцо пульсирующего свечения победителя, см. ниже */
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: calc(var(--bracket-plate-gap) * var(--panel-scale)); /* настройка «Расстояние между элементами плашки» */
+  padding: 0 calc(var(--bracket-plate-padding) * var(--panel-scale)); /* настройка «Внутренний отступ плашки» */
+  background: var(--bracket-bg);
+  border: calc(2px * var(--panel-scale)) solid color-mix(in srgb, var(--bracket-border) 25%, transparent);
+  border-radius: calc(10px * var(--panel-scale)); /* скруглённые углы, НЕ круглая "пилюля" (была 9999px — слишком круглая, попросили просто закруглить углы) */
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.bracket-match-plate.bracket-row-empty { opacity: 0.5; }
+.bracket-match-plate .bracket-team-logo, .bracket-match-plate .bracket-logo-placeholder {
+  width: calc(var(--bracket-logo-size) * var(--panel-scale)); height: calc(var(--bracket-logo-size) * var(--panel-scale)); border-radius: 50%; object-fit: contain; flex-shrink: 0;
+}
+.bracket-match-plate .bracket-logo-placeholder {
+  background: rgba(255,255,255,0.12);
+  display: flex; align-items: center; justify-content: center;
+  font-size: calc(16px * var(--panel-scale)); color: #8f88a8; font-weight: 800;
+}
+.bracket-match-plate .bracket-team-name {
+  flex: 1; min-width: 0; font-size: calc(var(--bracket-name-size) * var(--panel-scale)); font-weight: var(--bracket-data-weight); font-family: var(--bracket-data-font); color: var(--bracket-text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Буква "W"/"L" в правом углу плашки — вместо прежнего числового счёта (для обычного BO1-матча число 0/1 не несло
+   смысла отдельно от самого факта победы/поражения; сам счёт по-прежнему хранится в данных на случай других нужд). */
+.bracket-match-plate .bracket-team-badge {
+  flex-shrink: 0; font-size: calc(var(--bracket-score-size) * 0.65 * var(--panel-scale)); font-weight: 900; font-family: var(--bracket-title-font);
+}
+/* Победитель — цветная обводка + ПУЛЬСИРУЮЩЕЕ свечение. Проигравший — обводка + СТАТИЧНОЕ свечение, без
+   пульсации. Оба цвета и скорость пульсации — настройки (см. админку).
+   Свечение победителя сделано через ::after с фиксированным box-shadow и анимированной ТОЛЬКО прозрачностью —
+   не самим box-shadow (менять его блюр/цвет напрямую в keyframes давало резкий эффект "мигания лампочкой", а не
+   плавного разгорания/затухания: прозрачность анимируется идеально гладко в любом браузере, поэтому пульсирует
+   именно она, а сама тень остаётся неизменной по размеру и цвету всё время). */
+.bracket-match-plate.bracket-row-winner {
+  border-color: var(--bracket-win-color);
+}
+.bracket-match-plate.bracket-row-winner::after {
+  content: '';
+  position: absolute; inset: calc(-3px * var(--panel-scale));
+  border-radius: inherit;
+  box-shadow: 0 0 calc(18px * var(--panel-scale)) calc(2px * var(--panel-scale)) var(--bracket-win-color);
+  pointer-events: none;
+  animation: bracket-win-pulse var(--bracket-pulse-speed) ease-in-out infinite;
+}.bracket-match-plate.bracket-row-winner .bracket-team-badge { color: var(--bracket-win-color); }
+.bracket-match-plate.bracket-row-loser {
+  border-color: var(--bracket-lose-color);
+  box-shadow: 0 0 calc(14px * var(--panel-scale)) color-mix(in srgb, var(--bracket-lose-color) 55%, transparent);
+}
+.bracket-match-plate.bracket-row-loser .bracket-team-badge { color: var(--bracket-lose-color); }
+@keyframes bracket-win-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* --- Турнирная таблица --- */
+/* Обёртка таблицы — тот же фон/рамка/радиус, что и у карточки матча/плей-офф-бокса ниже: таблица теперь тоже
+   читается как "карточка из того же комплекта", а не голый список строк без рамки. */
+.bracket-standings-shell {
+  background: var(--bracket-bg);
+  border: 1px solid color-mix(in srgb, var(--bracket-border) 25%, transparent);
+  border-radius: calc(8px * var(--panel-scale));
+  padding: calc(12px * var(--panel-scale));
+  flex: 1; min-height: 0; overflow: auto;
+  display: flex; flex-direction: column; /* чтобы таблица ниже могла растянуться через flex:1, см. #bracketStandingsTable */
+}
+#bracketStandingsTable { width: 100%; flex: 1; border-collapse: separate; border-spacing: 0 calc(var(--bracket-table-row-gap) * var(--panel-scale)); overflow: hidden; }
+#bracketStandingsTable th { text-align: left; font-size: calc(11px * var(--panel-scale)); color: #8f88a8; text-transform: uppercase; letter-spacing: 0.05em; padding: 0 calc(8px * var(--panel-scale)); }
+#bracketStandingsTable th:last-child, #bracketStandingsTable td:last-child,
+#bracketStandingsTable th:nth-child(3), #bracketStandingsTable td:nth-child(3) { text-align: right; }
+/* было фиксированной высотой (height) — теперь min-height: строки не сжимаются меньше родного размера, но таблица
+   (flex:1 выше) занимает всю карточку целиком, и браузер распределяет лишнюю высоту между строками. */
+#bracketStandingsTable tbody tr { height: auto; min-height: calc(var(--bracket-table-row-h) * var(--panel-scale)); }
+#bracketStandingsTable td { padding: 0 calc(8px * var(--panel-scale)); font-size: calc(var(--bracket-table-size) * var(--panel-scale)); font-family: var(--bracket-data-font); color: var(--bracket-text); background: rgba(255,255,255,0.03); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bracketStandingsTable td:first-child { color: var(--bracket-border); font-weight: 800; border-radius: 6px 0 0 6px; }
+#bracketStandingsTable td:last-child { border-radius: 0 6px 6px 0; color: var(--bracket-accent); font-weight: 800; }
+#bracketStandingsTable .bracket-standings-team-cell { display: flex; align-items: center; gap: calc(10px * var(--panel-scale)); }
+#bracketStandingsTable img, #bracketStandingsTable .bracket-logo-placeholder { width: calc(24px * var(--panel-scale)); height: calc(24px * var(--panel-scale)); border-radius: 50%; object-fit: contain; flex-shrink: 0; }
+#bracketStandingsTable .bracket-logo-placeholder { background: rgba(255,255,255,0.08); }
+
+/* --- Решающие матчи (плей-офф) --- */
+#bracketPlayoffBoxes { display: flex; flex-direction: column; gap: calc(16px * var(--panel-scale)); flex: 1; min-height: 0; overflow-y: auto; }
+.bracket-playoff-box {
+  background: var(--bracket-bg);
+  border: 1px solid color-mix(in srgb, var(--bracket-border) 25%, transparent);
+  opacity: var(--bracket-panel-opacity);
+  border-radius: calc(8px * var(--panel-scale));
+  overflow: hidden;
+  flex: 1; min-height: 0; /* боксы делят доступную высоту поровну между собой, растягиваясь вместе с панелью */
+  display: flex; flex-direction: column;
+}
+.bracket-playoff-box.bracket-match-current { border-color: var(--bracket-accent); box-shadow: 0 0 16px color-mix(in srgb, var(--bracket-accent) 30%, transparent); }
+.bracket-playoff-box h3 {
+  font-size: calc(var(--bracket-table-size) * var(--panel-scale)); font-weight: 800; font-family: var(--bracket-title-font); letter-spacing: 0.06em; color: var(--bracket-border);
+  padding: calc(10px * var(--panel-scale)) calc(16px * var(--panel-scale)); border-bottom: 1px solid color-mix(in srgb, var(--bracket-border) 20%, transparent);
+  flex-shrink: 0;
+}
+/* Содержимое бокса — тот же .bracket-match-row (две плашки + VS), что и у матчей группы выше: единый визуальный
+   язык для любого матча в сетке, а не два разных вида. */
+.bracket-playoff-box .bracket-match-row { flex: 1; min-height: 0; padding: calc(16px * var(--panel-scale)); }
+.bracket-team-name.bracket-tbd { color: rgba(240,230,210,0.4); font-style: italic; }
+
+/* ===================== Double Elimination (public/bracket-de.js) =====================
+   Включается классом de-mode на <body> (ставит bracket.js, когда в данных mode === 'double'). Три те же панели,
+   но с другим содержимым: matches → «Верхняя сетка», standings → «Нижняя сетка», playoff → «Гранд-финал».
+   Плашки команд — те же .bracket-match-plate, поэтому цвета победителя/проигравшего, пульсация и все размеры
+   из админки работают так же; здесь только компактный вариант под дерево. Всё ниже действует только при de-mode. */
+.de-board, .de-final { display: none; }
+body.de-mode #bracketGroupGrid,
+body.de-mode #bracketPlayoffBoxes,
+body.de-mode .bracket-standings-shell { display: none; }
+body.de-mode .de-board { display: flex; position: relative; flex: 1; min-height: 0; }
+body.de-mode .de-final { display: flex; flex-direction: column; gap: calc(12px * var(--panel-scale)); flex: 1; min-height: 0; overflow: hidden; }
+.de-empty { margin: auto; color: color-mix(in srgb, var(--bracket-text) 55%, transparent); font-size: calc(14px * var(--panel-scale)); text-align: center; }
+.de-grid {
+  position: relative; flex: 1; min-width: 0; min-height: 0;
+  display: grid;
+  column-gap: calc(max(var(--bracket-gap-x), 24px) * var(--panel-scale)); /* настройка «Отступ между колонками»; не меньше 24px — там проходят линии-связи */
+  row-gap: calc(var(--bracket-gap-y) * 0.8 * var(--panel-scale)); /* настройка «Отступ между матчами» */
+}
+.de-lines { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; z-index: 0; }
+.de-lines path { fill: none; stroke: color-mix(in srgb, var(--bracket-border) 60%, transparent); stroke-width: calc(2px * var(--panel-scale)); stroke-linejoin: round; }
+.de-round-title {
+  text-align: center; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-family: var(--bracket-title-font); font-weight: 800; letter-spacing: 0.08em;
+  font-size: calc(11px * var(--panel-scale)); color: var(--bracket-border);
+  padding-bottom: calc(4px * var(--panel-scale));
+}
+.de-match {
+  position: relative; z-index: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: calc(3px * var(--panel-scale));
+  opacity: var(--bracket-panel-opacity);
+}
+.de-match.de-ghost { visibility: hidden; } /* матч-BYE: клетка остаётся на месте, чтобы дерево не «поплыло» */
+.de-match .bracket-match-plate {
+  flex: 0 1 calc(var(--bracket-plate-height) * 0.55 * var(--panel-scale)); min-height: 0;
+  padding: 0 calc(var(--bracket-plate-padding) * 0.6 * var(--panel-scale));
+  gap: calc(var(--bracket-plate-gap) * 0.6 * var(--panel-scale));
+  border-width: calc(1.5px * var(--panel-scale));
+  border-radius: calc(7px * var(--panel-scale));
+}
+.de-match .bracket-match-plate .bracket-team-logo,
+.de-match .bracket-match-plate .bracket-logo-placeholder { width: calc(var(--bracket-logo-size) * 0.6 * var(--panel-scale)); height: calc(var(--bracket-logo-size) * 0.6 * var(--panel-scale)); }
+.de-match .bracket-match-plate .bracket-team-name { line-height: 1; font-size: calc(var(--bracket-name-size) * 0.75 * var(--panel-scale)); }
+.de-match .bracket-match-plate .bracket-team-badge { font-size: calc(var(--bracket-score-size) * 0.5 * var(--panel-scale)); }
+.de-match.de-current .bracket-match-plate:not(.bracket-row-winner):not(.bracket-row-loser):not(.bracket-row-empty) { border-color: color-mix(in srgb, var(--bracket-accent) 75%, transparent); }
+
+/* Гранд-финал: два матча-«бокса» (сам гранд-финал и, если он понадобился, решающий) + чемпион */
+.de-final-box {
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  background: var(--bracket-bg); border: 1px solid color-mix(in srgb, var(--bracket-border) 25%, transparent);
+  border-radius: calc(8px * var(--panel-scale)); overflow: hidden; opacity: var(--bracket-panel-opacity);
+}
+.de-final-box.de-current { border-color: var(--bracket-accent); box-shadow: 0 0 16px color-mix(in srgb, var(--bracket-accent) 30%, transparent); }
+.de-final-box h3 {
+  flex-shrink: 0; font-size: calc(var(--bracket-table-size) * var(--panel-scale)); font-weight: 800; font-family: var(--bracket-title-font); letter-spacing: 0.06em; color: var(--bracket-border);
+  text-transform: uppercase; padding: calc(8px * var(--panel-scale)) calc(14px * var(--panel-scale)); border-bottom: 1px solid color-mix(in srgb, var(--bracket-border) 20%, transparent);
+}
+.de-final-plates { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: center; gap: calc(6px * var(--panel-scale)); padding: calc(12px * var(--panel-scale)); }
+.de-final-plates .bracket-match-plate { flex: 0 1 calc(var(--bracket-plate-height) * var(--panel-scale)); min-height: 0; }
+.de-final-plates .bracket-match-vs { justify-content: center; }
+.de-champion {
+  flex-shrink: 0; text-align: center; padding: calc(10px * var(--panel-scale));
+  background: var(--bracket-bg); border: 2px solid var(--bracket-accent); border-radius: calc(8px * var(--panel-scale));
+  box-shadow: 0 0 calc(18px * var(--panel-scale)) color-mix(in srgb, var(--bracket-accent) 45%, transparent);
+}
+.de-champion-label { font-family: var(--bracket-title-font); font-weight: 900; letter-spacing: 0.18em; text-transform: uppercase; font-size: calc(12px * var(--panel-scale)); color: var(--bracket-accent); margin-bottom: calc(6px * var(--panel-scale)); }
+.de-champion-body { display: flex; align-items: center; justify-content: center; gap: calc(12px * var(--panel-scale)); min-width: 0; }
+.de-champion-body .bracket-team-logo, .de-champion-body .bracket-logo-placeholder { width: calc(var(--bracket-logo-size) * 1.2 * var(--panel-scale)); height: calc(var(--bracket-logo-size) * 1.2 * var(--panel-scale)); border-radius: 50%; object-fit: contain; flex-shrink: 0; background: rgba(255,255,255,0.1); }
+.de-champion-name { font-family: var(--bracket-title-font); font-weight: 900; font-size: calc(var(--bracket-name-size) * 1.15 * var(--panel-scale)); color: var(--bracket-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }

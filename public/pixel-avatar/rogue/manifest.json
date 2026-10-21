@@ -1,0 +1,56 @@
+{
+  "name": "rogue",
+  "title": "Разбойник",
+  "group": "Фэнтези (gegx)",
+  "fps": 12,
+  "scale": 1,
+  "cell": {
+    "w": 132,
+    "h": 136
+  },
+  "pivot": {
+    "x": 66,
+    "y": 127
+  },
+  "headTop": 3,
+  "speed": 85,
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "source": "rogue-hero-128",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "south": 10,
+      "south-east": 10,
+      "east": 10,
+      "north-east": 10,
+      "north": 10,
+      "north-west": 10,
+      "west": 10,
+      "south-west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "south": 7,
+      "south-east": 7,
+      "east": 7,
+      "north-east": 7,
+      "north": 12,
+      "north-west": 12,
+      "west": 7,
+      "south-west": 12
+    },
+    "columns": 12
+  }
+}

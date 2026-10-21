@@ -1,0 +1,79 @@
+{
+  "name": "satyr1",
+  "title": "Сатир 1",
+  "group": "Сатиры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 66,
+    "h": 84
+  },
+  "pivot": {
+    "x": 33,
+    "y": 80
+  },
+  "headTop": 3,
+  "speed": 65,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Free-Satyr-Sprite-Sheet-Pixel-Art-Pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 12,
+      "west": 12
+    },
+    "columns": 12
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 7,
+      "west": 7
+    },
+    "columns": 7
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 62,
+        "h": 80
+      },
+      "pivot": {
+        "x": 31,
+        "y": 77
+      }
+    },
+    {
+      "name": "charge",
+      "title": "Рывок",
+      "kind": "attack",
+      "file": "x_charge.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 120,
+        "h": 122
+      },
+      "pivot": {
+        "x": 60,
+        "y": 118
+      }
+    }
+  ]
+}

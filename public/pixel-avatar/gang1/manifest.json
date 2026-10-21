@@ -1,0 +1,134 @@
+{
+  "name": "gang1",
+  "title": "Гангстер 1",
+  "group": "Гангстеры",
+  "fps": 12,
+  "scale": 1.5,
+  "cell": {
+    "w": 58,
+    "h": 78
+  },
+  "pivot": {
+    "x": 29,
+    "y": 75
+  },
+  "headTop": 3,
+  "speed": 60,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "gangster-pixel-character-sprite-sheets-pack",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 10,
+      "west": 10
+    },
+    "columns": 10
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 6,
+      "west": 6
+    },
+    "columns": 6
+  },
+  "afk": [
+    {
+      "name": "idle2",
+      "title": "Скучает",
+      "clips": [
+        {
+          "file": "afk_idle2.png",
+          "frames": {
+            "east": 11,
+            "west": 11
+          },
+          "columns": 11,
+          "loops": 2
+        }
+      ]
+    }
+  ],
+  "extras": [
+    {
+      "name": "jump",
+      "title": "Прыжок",
+      "kind": "jump",
+      "file": "x_jump.png",
+      "frames": {
+        "east": 10,
+        "west": 10
+      },
+      "columns": 10,
+      "cell": {
+        "w": 74,
+        "h": 106
+      },
+      "pivot": {
+        "x": 37,
+        "y": 103
+      }
+    },
+    {
+      "name": "attack1",
+      "title": "Удар",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 3,
+        "west": 3
+      },
+      "columns": 3,
+      "cell": {
+        "w": 108,
+        "h": 74
+      },
+      "pivot": {
+        "x": 54,
+        "y": 71
+      }
+    },
+    {
+      "name": "shot",
+      "title": "Выстрел",
+      "kind": "attack",
+      "file": "x_shot.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 84,
+        "h": 76
+      },
+      "pivot": {
+        "x": 42,
+        "y": 73
+      }
+    },
+    {
+      "name": "recharge",
+      "title": "Перезаряжает",
+      "kind": "emote",
+      "file": "x_recharge.png",
+      "frames": {
+        "east": 17,
+        "west": 17
+      },
+      "columns": 17,
+      "cell": {
+        "w": 58,
+        "h": 78
+      },
+      "pivot": {
+        "x": 29,
+        "y": 75
+      }
+    }
+  ]
+}

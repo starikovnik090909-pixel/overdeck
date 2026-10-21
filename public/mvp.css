@@ -1,0 +1,275 @@
+/* public/mvp.css — mvp.html: "MVP матча", ГОРИЗОНТАЛЬНАЯ панель (не карточка
+   игрока вертикально). Тот же стиль, что и у "Панели команды" — тёмный
+   градиент от синего к фиолетовому, тонкая золото-фиолетовая градиентная
+   обводка, скруглённые углы. Прозрачный фон страницы, сама панель
+   непрозрачная. Появление/исчезание — выезд/уезд сбоку экрана через
+   transform+transition (см. #mvpRoot ниже), сторона и длительность
+   настраиваются в админке. */
+
+:root {
+  --mvp-card-w: 420px;
+  --mvp-card-h: 150px;
+  --mvp-photo-size: 150px; /* ширина фото — высота у него всегда 100% панели */
+  --mvp-nick-size: 22px;
+  --mvp-data-size: 14px;
+  --mvp-label-size: 20px;
+  --mvp-label-color: #FFD700;
+  --mvp-label-x: 50%;
+  --mvp-label-y: -12%;
+  --mvp-anim-duration: 500ms;
+  --mvp-rays-color: #FFD700;
+  --mvp-rays-intensity: 0.2;
+  --mvp-rays-duration: 22s;
+  --mvp-rays-fade-ms: 400ms;
+  /* --- "Тема ивента" (Часть 1) — раньше эти цвета/шрифт/радиус были
+     зашиты прямо в CSS-правилах ниже; вынесены в переменные СПЕЦИАЛЬНО ради
+     темы, значения по умолчанию — ровно те же, что и были, так что без
+     активной темы вид не меняется ни на пиксель. */
+  --mvp-fill-start: #1a1f3d;
+  --mvp-fill-end: #3a2560;
+  --mvp-border-start: #c9a24a;
+  --mvp-border-end: #6a5acd;
+  --mvp-text-color: #ffffff;
+  --mvp-label-text-color: #b9a8e0;
+  --mvp-title-font: 'Inter', system-ui, sans-serif;
+  --mvp-data-font: 'Inter', system-ui, sans-serif;
+  --mvp-title-weight: 800;
+  --mvp-data-weight: 600;
+  --mvp-panel-opacity: 1;
+  --mvp-radius: 14px;
+  --mvp-chamfer-points: var(--mvp-radius) 0, calc(100% - var(--mvp-radius)) 0, 100% var(--mvp-radius), 100% calc(100% - var(--mvp-radius)), calc(100% - var(--mvp-radius)) 100%, var(--mvp-radius) 100%, 0 calc(100% - var(--mvp-radius)), 0 var(--mvp-radius); /* дефолт — все 4 угла, как было раньше; JS переопределит, если выбраны не все */
+  --mvp-border-w: 2px;
+  --mvp-texture-opacity: 0;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0; width: 100%; height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Inter', system-ui, sans-serif;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Обёртка того же размера, что и панель, БЕЗ overflow:hidden — иначе надпись
+   "MVP" не сможет заступать за края панели/висеть над ней.
+   Выезд/уезд считается от размера ОКНА (vw/vh), а не самой панели — иначе
+   при полноэкранном источнике в OBS сдвига на 100% ширины панели может не
+   хватить, чтобы реально уйти с экрана. */
+#mvpRoot {
+  position: relative;
+  width: var(--mvp-card-w); height: var(--mvp-card-h);
+  transition: transform var(--mvp-anim-duration) ease;
+  transform: translate(0, 0);
+}
+#mvpRoot.mvp-no-transition { transition: none; } /* для мгновенной (не анимированной) первичной установки стороны */
+#mvpRoot.mvp-hidden[data-side="right"] { transform: translateX(100vw); }
+#mvpRoot.mvp-hidden[data-side="left"] { transform: translateX(-100vw); }
+#mvpRoot.mvp-hidden[data-side="top"] { transform: translateY(-100vh); }
+#mvpRoot.mvp-hidden[data-side="bottom"] { transform: translateY(100vh); }
+
+/* Лучи/прожекторы — вращающийся полупрозрачный conic-gradient ЗА плашкой
+   (z-index ниже неё). Не canvas и не JS rAF — см. обоснование в README:
+   для этого эффекта чистый CSS (conic-gradient + @keyframes) даёт то же
+   самое визуально, но без цикла отрисовки на JS, поэтому по построению не
+   может лишний раз грузить систему. Прозрачность (--mvp-rays-intensity) и
+   сама видимость (класс .mvp-rays-on) — РАЗНЫЕ вещи: видимость управляется
+   из mvp.js по таймеру, синхронизированному с выездом/уездом панели. */
+#mvpRays {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 210%; height: 210%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--mvp-rays-fade-ms) ease;
+  background: repeating-conic-gradient(
+    from 0deg,
+    var(--mvp-rays-color) 0deg 6deg,
+    transparent 6deg 72deg
+  );
+  -webkit-mask-image: radial-gradient(circle, #000 35%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 35%, transparent 72%);
+  animation: mvp-rays-spin var(--mvp-rays-duration) linear infinite,
+             mvp-rays-pulse 4.5s ease-in-out infinite;
+}
+#mvpRays.mvp-rays-on { opacity: var(--mvp-rays-intensity); }
+
+@keyframes mvp-rays-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes mvp-rays-pulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.35); }
+}
+
+/* Надпись "MVP" — свободно позиционируется в процентах от размеров панели,
+   диапазон шире 0-100%, поэтому может висеть над панелью или заступать на неё. */
+.mvp-label {
+  position: absolute;
+  left: var(--mvp-label-x); top: var(--mvp-label-y);
+  transform: translate(-50%, -50%);
+  z-index: 6;
+  color: var(--mvp-label-color);
+  font-size: var(--mvp-label-size);
+  font-family: var(--mvp-title-font);
+  font-weight: var(--mvp-title-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.8), 0 0 12px rgba(255,215,0,0.35);
+  white-space: nowrap;
+}
+
+.mvp-card {
+  position: absolute; left: 0; top: 0;
+  width: 100%; height: 100%;
+  z-index: 2;
+  display: flex; flex-direction: row; /* горизонтально: фото слева, информация справа */
+  border-radius: var(--mvp-radius); overflow: hidden;
+  border: var(--mvp-border-w) solid transparent;
+  background:
+    linear-gradient(180deg, var(--mvp-fill-start) 0%, var(--mvp-fill-end) 100%) padding-box,
+    linear-gradient(160deg, var(--mvp-border-start), var(--mvp-border-end) 60%, var(--mvp-border-start)) border-box;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.6), 0 0 18px rgba(201,162,74,0.22);
+  opacity: var(--mvp-panel-opacity);
+}
+/* Тип обводки "сплошная" — вместо градиента одна заливка акцентным цветом. */
+#mvpRoot[data-border-style="solid"] .mvp-card {
+  background:
+    linear-gradient(180deg, var(--mvp-fill-start) 0%, var(--mvp-fill-end) 100%) padding-box,
+    var(--mvp-border-start) border-box;
+}
+/* Тип обводки "двойная" — настоящий CSS border-style:double, без градиента. */
+#mvpRoot[data-border-style="double"] .mvp-card {
+  border-style: double;
+  border-width: calc(var(--mvp-border-w) * 2.5);
+  border-color: var(--mvp-border-start);
+  background: linear-gradient(180deg, var(--mvp-fill-start) 0%, var(--mvp-fill-end) 100%);
+}
+/* Скошенные углы (Hextech-пресет, по реальным ассетам Riot — угловые скобки
+   в ките клиента LoL срезаны, а не скруглены). Величина среза переиспользует
+   ту же переменную радиуса — border-radius при этом снимается, т.к. форму
+   уже задаёт clip-path. Честная оговорка: обводка на самом срезе не рисуется
+   (clip-path обрезает и её тоже) — визуально угол просто "открыт", это
+   разумное приближение чистым CSS без SVG/доп. слоёв. */
+#mvpRoot[data-corner-style="chamfer"] .mvp-card {
+  border-radius: 0;
+  clip-path: polygon(var(--mvp-chamfer-points));
+}
+/* Текстура фона — лёгкий узор поверх карточки (по умолчанию невидим, opacity 0). */
+.mvp-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  opacity: var(--mvp-texture-opacity);
+  pointer-events: none;
+  z-index: 1;
+}
+#mvpRoot[data-texture="metal"] .mvp-card::after {
+  background:
+    repeating-linear-gradient(115deg, rgba(142,147,150,0.24) 0 1px, transparent 1px 5px),
+    linear-gradient(100deg, transparent 35%, rgba(176,179,181,0.18) 50%, transparent 65%);
+}
+#mvpRoot[data-texture="runes"] .mvp-card::after {
+  background-image:
+    linear-gradient(90deg, rgba(205,190,145,0.32) 1px, transparent 1px),
+    linear-gradient(rgba(205,190,145,0.32) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+#mvpRoot[data-texture="noise"] .mvp-card::after {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.16) 0 0.6px, transparent 1px),
+    radial-gradient(circle at 65% 75%, rgba(255,255,255,0.13) 0 0.6px, transparent 1px),
+    radial-gradient(circle at 82% 15%, rgba(255,255,255,0.11) 0 0.6px, transparent 1px);
+  background-size: 6px 6px, 9px 9px, 5px 5px;
+}
+
+.mvp-badge {
+  position: absolute; top: 8px; right: 10px; z-index: 5;
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.7));
+}
+
+/* --- Фото — слева, на всю высоту панели --- */
+.mvp-photo {
+  flex-shrink: 0;
+  width: var(--mvp-photo-size); height: 100%;
+  background: linear-gradient(160deg, #2a2f45, #1a1d2e);
+  border-right: 1.5px solid rgba(201,162,74,0.4);
+}
+.mvp-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* --- Информация — справа, всё выровнено по левому краю --- */
+.mvp-info {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: flex-start;
+  padding: 14px 20px;
+  gap: 4px;
+}
+
+.mvp-nick {
+  color: var(--mvp-text-color); font-size: var(--mvp-nick-size); font-weight: var(--mvp-title-weight);
+  font-family: var(--mvp-title-font);
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mvp-hero-role {
+  color: var(--mvp-label-text-color); font-size: calc(var(--mvp-data-size) * 0.95); font-weight: var(--mvp-data-weight);
+  font-family: var(--mvp-data-font);
+  max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+.mvp-stats {
+  margin-top: 6px;
+  display: flex; flex-wrap: wrap; gap: 4px 16px;
+}
+.mvp-stats-item {
+  display: flex; align-items: baseline; gap: 6px;
+  color: #f0e6d2; font-size: var(--mvp-data-size); font-weight: var(--mvp-data-weight);
+  font-family: var(--mvp-data-font);
+  white-space: nowrap;
+}
+.mvp-stats-item .mvp-stat-label { color: var(--mvp-label-text-color); font-weight: var(--mvp-data-weight); opacity: 0.85; }
+.mvp-kda-main { font-weight: var(--mvp-title-weight); color: var(--mvp-text-color); }
+
+/* "Тема ивента" — фон плашки (картинка/GIF через background-image на
+   псевдоэлементе, видео — через реальный <video> в .theme-bg-video-holder,
+   т.к. CSS background-image не умеет проигрывать видео). Оба слоя лежат
+   ПОД текстом карточки за счёт отрицательного z-index (не задевает z-index
+   существующего контента — его вообще не пришлось трогать), затемнение —
+   отдельный слой НАД фоном, тоже под текстом. Прозрачность/затемнение
+   применяются только к этим двум служебным слоям — обводка и сама плашка
+   (со своим фоновым градиентом) не затрагиваются. Работает только когда
+   "Тема ивента" применена к этому виджету и загружен фон — иначе
+   --theme-bg-image остаётся "none" и слои визуально не видны. */
+.mvp-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image: var(--theme-bg-image, none);
+  background-size: var(--theme-bg-size, cover);
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--theme-bg-opacity, 1);
+  z-index: -2;
+  pointer-events: none;
+}
+.mvp-card .theme-bg-video-holder {
+  position: absolute; inset: 0;
+  z-index: -2;
+  opacity: var(--theme-bg-opacity, 1);
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mvp-card .theme-bg-video-holder video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mvp-card::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: #000;
+  opacity: var(--theme-bg-darken, 0);
+  z-index: -1;
+  pointer-events: none;
+}

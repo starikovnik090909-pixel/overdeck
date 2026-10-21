@@ -1,0 +1,20 @@
+{
+  "name": "Стандартная",
+  "preview": "",
+  "params": {
+    "colors": {
+      "panelBg": "#141419",
+      "accent": "#B14846",
+      "text": "#E0E0E0"
+    },
+    "opacity": 0.55,
+    "fonts": {
+      "heading": "Unbounded",
+      "text": "Inter"
+    },
+    "sizes": {
+      "headingText": 16,
+      "bodyText": 14
+    }
+  }
+}
