@@ -62,11 +62,34 @@ static class Program
 // ----- оформление «Overdeck»: бордовый фон, коралловый акцент, стеклянные карточки -----
 static class Ui
 {
-    public static readonly Color Bg1 = Color.FromArgb(23, 10, 13), Bg2 = Color.FromArgb(12, 5, 7), Glow = Color.FromArgb(58, 18, 27);
-    public static readonly Color Coral = Color.FromArgb(255, 90, 100), Coral2 = Color.FromArgb(214, 47, 69), Peach = Color.FromArgb(255, 154, 106);
-    public static readonly Color Pink = Color.FromArgb(240, 160, 166), Txt = Color.FromArgb(246, 227, 229), Dim = Color.FromArgb(185, 143, 149);
-    public static readonly Color Ok = Color.FromArgb(95, 224, 160), Warn = Color.FromArgb(255, 184, 107), Err = Color.FromArgb(240, 140, 140);
-    public static readonly Color Line = Color.FromArgb(70, 255, 100, 110);
+    // палитра: 0 — бордо (как было), 1 — графит с мягким красным, 2 — нейтральный графит
+    public static Color Bg1, Bg2, Glow, CardTop, CardBot, Line, GhostLine, Coral, Coral2, Peach, Pink, Txt, Dim, Ok, Warn, Err;
+    public static int GlowAlpha;
+    static Ui()
+    {
+        Txt = Color.FromArgb(240, 233, 234); Ok = Color.FromArgb(95, 224, 160); Warn = Color.FromArgb(255, 184, 107); Err = Color.FromArgb(240, 140, 140);
+        int pal = 1;
+        try { string v = Environment.GetEnvironmentVariable("OVERDECK_PALETTE"); if (!string.IsNullOrEmpty(v)) pal = int.Parse(v); } catch { }
+        if (pal == 0)
+        {
+            Bg1 = Color.FromArgb(23, 10, 13); Bg2 = Color.FromArgb(12, 5, 7); Glow = Color.FromArgb(58, 18, 27); GlowAlpha = 120;
+            CardTop = Color.FromArgb(150, 56, 20, 30); CardBot = Color.FromArgb(150, 36, 12, 18); Line = Color.FromArgb(70, 255, 100, 110); GhostLine = Color.FromArgb(255, 100, 110);
+            Coral = Color.FromArgb(255, 90, 100); Coral2 = Color.FromArgb(214, 47, 69); Peach = Color.FromArgb(255, 154, 106); Pink = Color.FromArgb(240, 160, 166); Dim = Color.FromArgb(185, 143, 149);
+        }
+        else if (pal == 1)
+        {
+            // графит как в админке (#18181B / #1F1F23), красный — только акцент
+            Bg1 = Color.FromArgb(27, 25, 27); Bg2 = Color.FromArgb(14, 14, 16); Glow = Color.FromArgb(74, 28, 34); GlowAlpha = 70;
+            CardTop = Color.FromArgb(235, 36, 34, 37); CardBot = Color.FromArgb(235, 29, 28, 31); Line = Color.FromArgb(34, 255, 255, 255); GhostLine = Color.FromArgb(255, 255, 255);
+            Coral = Color.FromArgb(209, 78, 86); Coral2 = Color.FromArgb(160, 52, 58); Peach = Color.FromArgb(226, 112, 108); Pink = Color.FromArgb(214, 150, 154); Dim = Color.FromArgb(160, 156, 158);
+        }
+        else
+        {
+            Bg1 = Color.FromArgb(24, 24, 27); Bg2 = Color.FromArgb(14, 14, 16); Glow = Color.FromArgb(24, 24, 27); GlowAlpha = 0;
+            CardTop = Color.FromArgb(255, 33, 33, 37); CardBot = Color.FromArgb(255, 31, 31, 35); Line = Color.FromArgb(28, 255, 255, 255); GhostLine = Color.FromArgb(255, 255, 255);
+            Coral = Color.FromArgb(193, 76, 80); Coral2 = Color.FromArgb(150, 56, 58); Peach = Color.FromArgb(193, 76, 80); Pink = Color.FromArgb(190, 160, 162); Dim = Color.FromArgb(150, 150, 154);
+        }
+    }
 
     public static GraphicsPath Round(Rectangle r, int rad)
     {
@@ -90,7 +113,7 @@ class Card : Panel
         Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
         using (GraphicsPath p = Ui.Round(r, 14))
         {
-            using (LinearGradientBrush b = new LinearGradientBrush(r, Color.FromArgb(150, 56, 20, 30), Color.FromArgb(150, 36, 12, 18), 90f)) e.Graphics.FillPath(b, p);
+            using (LinearGradientBrush b = new LinearGradientBrush(r, Ui.CardTop, Ui.CardBot, 90f)) e.Graphics.FillPath(b, p);
             using (Pen pen = new Pen(Ui.Line, 1f)) e.Graphics.DrawPath(pen, p);
         }
     }
@@ -124,7 +147,7 @@ class FancyButton : Button
         {
             if (Primary)
             {
-                Color c1 = hover ? Color.FromArgb(alpha, 230, 60, 80) : Color.FromArgb(alpha, Ui.Coral2);
+                Color c1 = Color.FromArgb(alpha, hover ? Ui.Coral : Ui.Coral2);
                 using (LinearGradientBrush b = new LinearGradientBrush(r, c1, Color.FromArgb(alpha, down ? Ui.Coral2 : Ui.Coral), LinearGradientMode.Horizontal))
                 {
                     ColorBlend cb = new ColorBlend(3);
@@ -136,8 +159,8 @@ class FancyButton : Button
             }
             else
             {
-                using (SolidBrush b = new SolidBrush(Color.FromArgb(hover ? 36 : 18, 255, 255, 255))) g.FillPath(b, p);
-                using (Pen pen = new Pen(Color.FromArgb(hover ? 150 : 90, 255, 100, 110), 1f)) g.DrawPath(pen, p);
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(hover ? 30 : 14, 255, 255, 255))) g.FillPath(b, p);
+                using (Pen pen = new Pen(Color.FromArgb(hover ? 110 : 55, Ui.GhostLine), 1f)) g.DrawPath(pen, p);
             }
         }
         TextRenderer.DrawText(g, Text, Font, ClientRectangle, Color.FromArgb(alpha, Primary ? Color.White : Ui.Txt), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
@@ -526,7 +549,7 @@ class Launcher : Form
             gp.AddEllipse(gr);
             using (PathGradientBrush pg = new PathGradientBrush(gp))
             {
-                pg.CenterColor = Color.FromArgb(120, Ui.Glow);
+                pg.CenterColor = Color.FromArgb(Ui.GlowAlpha, Ui.Glow);
                 pg.SurroundColors = new Color[] { Color.FromArgb(0, Ui.Glow) };
                 g.FillPath(pg, gp);
             }
