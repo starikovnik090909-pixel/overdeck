@@ -551,9 +551,12 @@ class Launcher : Form
                     string json = wc.DownloadString(updateUrl);
                     string remote = JsonStr(json, "version");
                     if (remote.Length == 0) remote = JsonStr(json, "tag_name");
-                    page = JsonStr(json, "url");
-                    if (page.Length == 0) page = JsonStr(json, "html_url");
+                    // GitHub: html_url — страница релиза (поле "url" там — адрес API, его открывать нельзя). Свой JSON: "url".
+                    page = JsonStr(json, "html_url");
+                    if (page.Length == 0) page = JsonStr(json, "url");
                     string notes = JsonStr(json, "notes");
+                    if (notes.Length == 0) notes = JsonStr(json, "body");
+                    if (notes.Length > 300) notes = notes.Substring(0, 300) + "…";
                     if (remote.Length == 0) { msg = "Не удалось прочитать версию из ответа сервера обновлений."; col = Color.FromArgb(240, 140, 140); }
                     else if (Newer(remote, version)) { msg = "Доступна новая версия " + remote.TrimStart('v', 'V') + " (у тебя " + version + "). Нажми здесь, чтобы открыть страницу загрузки." + (notes.Length > 0 ? "\n" + notes : ""); col = Color.FromArgb(255, 184, 107); }
                     else { msg = "У тебя последняя версия (" + version + ")."; col = Ok; page = ""; }
