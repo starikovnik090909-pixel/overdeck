@@ -6,7 +6,7 @@
 .np-tl { left: 36px; top: 36px; }
 .np-tr { right: 36px; top: 36px; --dx: 40px; }
 .np-card { display: flex; gap: 12px; padding: 10px; border-radius: 14px; background: rgba(18, 16, 30, .9); border: 1px solid rgba(255, 255, 255, .14); box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
-.np-card.np-swap { animation: np-swap .6s ease; }
+.np-card.np-swap, .np-mini.np-swap { animation: np-swap .6s ease; }
 @keyframes np-swap { 0% { transform: translateY(6px); opacity: .3; } 100% { transform: none; opacity: 1; } }
 .np-cover { position: relative; flex: none; width: 76px; height: 76px; border-radius: 10px; overflow: hidden; background: linear-gradient(135deg, var(--np-acc), #2a2250); display: flex; align-items: center; justify-content: center; }
 .np-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -25,3 +25,11 @@
 .np-others { margin-top: 6px; padding: 6px 10px; border-radius: 10px; background: rgba(18, 16, 30, .78); font-size: 11px; color: #cfcbe6; display: flex; flex-direction: column; gap: 2px; }
 .np-others b { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #9e99c0; }
 .np-others span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Прозрачный миниатюрный вид: без плашки, только мини-обложка (если есть), название, время и шкала */
+.np-mini { display: flex; align-items: center; gap: 8px; text-shadow: 0 1px 4px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .6); }
+.np-mcover { flex: none; width: 34px; height: 34px; border-radius: 6px; object-fit: cover; box-shadow: 0 2px 8px rgba(0, 0, 0, .5); }
+.np-minfo { flex: 1; min-width: 0; }
+.np-mrow { display: flex; align-items: baseline; gap: 8px; }
+.np-mini .np-title { flex: 1; min-width: 0; display: block; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-line-clamp: unset; }
+.np-mini .np-times { flex: none; font-size: 10px; color: #e6e3f5; }
+.np-mini .np-bar { margin-top: 3px; height: 3px; background: rgba(255, 255, 255, .28); }

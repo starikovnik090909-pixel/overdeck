@@ -9,6 +9,12 @@
   let P = null, recvAt = 0, shownKey = '', hideTimer = null, visible = false, lastNoCur = 0;
 
   function build(c, cfg) {
+    if (cfg.style === 'mini') { // прозрачный миниатюрный вид: мини-обложка (если она есть), название, время и шкала
+      const cv = cfg.showCover !== false && c.cover ? `<img class="np-mcover" src="${esc(c.cover)}" alt="" onerror="this.remove()">` : '';
+      const nm = esc(c.title || c.artist || 'Без названия');
+      layer.innerHTML = `<div class="np-mini">${cv}<div class="np-minfo"><div class="np-mrow"><span class="np-title">${nm}</span><span class="np-times"><span class="np-pos">0:00</span><span class="np-sep">&nbsp;/&nbsp;</span><span class="np-dur"></span></span></div><div class="np-bar"><i></i></div></div></div><div class="np-others" style="display:none"></div>`;
+      return;
+    }
     const cover = cfg.showCover !== false ? `<div class="np-cover">${c.cover ? `<img src="${esc(c.cover)}" alt="" onerror="this.remove()">` : ''}<span class="np-note">${NOTE}</span></div>` : '';
     const src = cfg.showSource !== false ? `<div class="np-src"><i class="np-dot"></i><span class="np-app">${esc(c.app)}</span><span class="np-st"></span></div>` : '';
     const title = esc(c.title || c.artist || 'Без названия');
@@ -25,14 +31,16 @@
     const bar = q('.np-bar i'); if (bar) bar.style.width = c.dur > 0 ? (100 * pos / c.dur).toFixed(2) + '%' : '0%';
     const bw = q('.np-bar'); if (bw) bw.classList.toggle('np-live', !(c.dur > 0));
     const pe = q('.np-pos'); if (pe) pe.textContent = fmt(pos);
-    const de = q('.np-dur'); if (de) de.textContent = c.dur > 0 ? fmt(c.dur) : 'в эфире';
+    const mini = !!q('.np-mini');
+    const de = q('.np-dur'); if (de) de.textContent = c.dur > 0 ? fmt(c.dur) : (mini ? '' : 'в эфире');
+    const sp = q('.np-sep'); if (sp) sp.style.display = c.dur > 0 ? '' : 'none';
     const st = q('.np-st'); if (st) st.textContent = c.playing ? ' · играет' : ' · пауза';
     const card = q('.np-card'); if (card) card.classList.toggle('np-paused', !c.playing);
   }
 
   function renderOthers(cfg, others) {
     const o = layer.querySelector('.np-others'); if (!o) return;
-    if (cfg.showOthers === false || !others.length) { o.style.display = 'none'; return; }
+    if (cfg.style === 'mini' || cfg.showOthers === false || !others.length) { o.style.display = 'none'; return; }
     o.style.display = '';
     o.innerHTML = '<b>Ещё открыто:</b>' + others.slice(0, 3).map((x) => `<span>${esc(x.app)}${x.title ? ' — ' + esc(x.title) : ''}</span>`).join('');
   }
@@ -53,8 +61,8 @@
       return;
     }
     clearTimeout(hideTimer); hideTimer = null;
-    const key = c.key + '|' + c.title + '|' + !!c.cover;
-    if (!visible || key !== shownKey) { build(c, cfg); shownKey = key; if (!visible) show(); else { const card = layer.querySelector('.np-card'); card.classList.add('np-swap'); setTimeout(() => card.classList.remove('np-swap'), 600); } }
+    const key = c.key + '|' + c.title + '|' + !!c.cover + '|' + cfg.style + '|' + (cfg.showCover !== false);
+    if (!visible || key !== shownKey) { build(c, cfg); shownKey = key; if (!visible) show(); else { const card = layer.querySelector('.np-card, .np-mini'); if (card) { card.classList.add('np-swap'); setTimeout(() => card.classList.remove('np-swap'), 600); } } }
     renderOthers(cfg, st.others || []);
     tick();
   }

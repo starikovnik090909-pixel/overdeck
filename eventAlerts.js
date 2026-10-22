@@ -42,7 +42,7 @@ const DEFAULTS = {
     speech: '{user} получил{а} награду {reward}.',
   },
   nowplaying: { // «Сейчас играет»: закреплённая карточка с тем, что играет в браузере/плеере (nowPlaying.js)
-    enabled: false, corner: 'bl', size: 100, showCover: true, showSource: true, showOthers: true, hideWhenPaused: false, hideDelaySec: 8, minDurationSec: 0, ignoreApps: '', color: '#a970ff',
+    enabled: false, style: 'card', corner: 'bl', size: 100, showCover: true, showSource: true, showOthers: true, hideWhenPaused: false, hideDelaySec: 8, minDurationSec: 0, ignoreApps: '', color: '#a970ff',
   },
   streak: {
     style: 'pill', corner: 'bl', holdSec: 6, size: 100,
@@ -70,6 +70,7 @@ function sanitizeKind(kind, raw, base) {
     if (typeof def === 'boolean') out[k] = bool(r[k], b[k]);
     else if (k === 'color') out[k] = colorOf(r[k], b[k]);
     else if (k === 'voice') out[k] = voiceOf(r[k], b[k]);
+    else if (k === 'style' && kind === 'nowplaying') out[k] = ['card', 'mini'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style' && kind === 'streak') out[k] = ['pill', 'chat', 'ring', 'checkin', 'flip', 'glass'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'corner') out[k] = ['bl', 'br', 'tl', 'tr'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
