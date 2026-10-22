@@ -8760,9 +8760,7 @@
       test: [],
       preview: '/nowplaying-preview.html',
       fields: [['enabled', 'toggle', 'Показывать «Сейчас играет»'], ['style', 'select', 'Вид', [['card', 'Широкая лента (обложка, название, время)'], ['cols', 'Две колонки (крупное время слева)'], ['mini', 'Мини: скраббер (название, время, шкала)'], ['vbar', 'Мини: вертикальный акцент'], ['bigtime', 'Мини: крупное время'], ['corners', 'Мини: уголки']]], ['bgOpacity', 'range', 'Непрозрачность фона (лента и две колонки), % (0 — без фона)'], ['corner', 'select', 'Угол экрана', [['bl', 'Слева внизу'], ['br', 'Справа внизу'], ['tl', 'Слева вверху'], ['tr', 'Справа вверху']]], ['size', 'number', 'Размер карточки, % (50–200)'], ['showCover', 'toggle', 'Показывать обложку (если у трека/фильма она есть)'], ['showSource', 'toggle', 'Показывать, откуда играет (Chrome, Spotify…)'], ['showOthers', 'toggle', 'Показывать «Ещё открыто» (другие источники)'], ['hideWhenPaused', 'toggle', 'Прятать, когда ничего не играет (пауза)'], ['hideDelaySec', 'number', 'Через сколько секунд прятать'], ['minDurationSec', 'number', 'Не показывать короче N секунд (0 — всё)'], ['color', 'color', 'Цвет полоски и акцентов'],
-        ['browsers', 'text', 'Искать только в этих браузерах (через запятую: chrome, firefox, edge, yandex, opera; пусто — во всех)'],
-        ['byTitle', 'toggle', 'Распознавать сайты по заголовку вкладки (если браузер не отдаёт данные о воспроизведении; времени и обложки тогда нет)'],
-        ['sites', 'text', 'Свои сайты для распознавания по заголовку (через запятую, часть названия вкладки: например, mysite, kino)'],
+        ['browsers', 'text', 'Системное чтение: только из этих браузеров (через запятую: chrome, firefox, edge, yandex, opera; пусто — из всех)'],
         ['ignoreApps', 'text', 'Не показывать эти источники (через запятую, например: spotify, discord)']],
       hint: 'Если ничего не отображается: убедись, что в браузере реально играет видео или музыка и вкладка не заглушена. Сайты без поддержки управления медиа (редкие плееры) Windows не видит. Прямые трансляции показывают только время «прошло».',
     },
@@ -8794,15 +8792,15 @@
       return `<div class="toggle-row"><span class="toggle-row-label">${l}</span>${ctl}</div>`;
     }).join('');
     root.innerHTML = `
-      <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
+      <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div class="actions" style="margin:0 0 12px"><button class="btn btn-primary" type="button" data-a="npapply">Сохранить и обновить</button><span class="card-hint" data-a="npapplyst" style="margin:0 0 0 10px">Изменения тоже сохраняются сами через секунду.</span></div><div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
           <p class="card-hint" style="margin:4px 0 8px" data-a="extst">Проверяю…</p>
           <ol class="card-hint" style="margin:0 0 8px;padding-left:18px;line-height:1.6">
             <li>Нажми «Открыть страницу расширений» и включи там «Режим разработчика» (переключатель вверху справа).</li>
             <li>Нажми «Загрузить распакованное».</li>
-            <li>Выбери папку с расширением. Её путь:</li></ol>
+            <li>Выбери папку с расширением. Лучше выбрать вручную: в окне выбора папки перейди в папку Overdeck и выбери <b>browser-extension</b> (не вставляй путь, если не сработало). Путь для справки:</li></ol>
           <div class="toggle-row-extra" style="margin:0 0 8px"><input type="text" readonly data-a="extdir" style="flex:1;min-width:0" value="…"><button class="btn-tiny" type="button" data-a="extcopy">Копировать</button><button class="btn-tiny" type="button" data-a="extfolder">Открыть папку</button></div>
-          <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Открыть страницу расширений</button></div>
-          <p class="card-hint" style="margin:8px 0 0">В другом браузере открой страницу расширений сам (Яндекс: browser://extensions, Opera: opera://extensions, Brave: brave://extensions). Расширение ставится один раз, потом статус выше станет «подключено».</p></div>` : ''}
+          <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="yandex">Яндекс Браузер</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Открыть страницу расширений</button></div>
+          <p class="card-hint" style="margin:8px 0 0">Если страница не открылась, вставь адрес в адресную строку сам: Яндекс — browser://extensions/, Opera — opera://extensions, Brave — brave://extensions. Расширение ставится один раз, потом статус выше станет «подключено».</p></div>` : ''}
         <div class="actions"><button class="btn btn-primary" type="button" data-a="test">Тест алерта</button><button class="btn btn-secondary" type="button" data-a="skip">Пропустить текущий</button></div>
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
       <div class="da-mid"><div class="card" data-a="cfgcard" hidden><h2 class="section-title">Настройки события</h2><p class="card-hint">${esc(cfg.note)}</p>${rows}
@@ -8822,6 +8820,17 @@
     });
     const collect = () => { const o = {}; cfg.fields.forEach(([k, t]) => { const e = el(k); o[k] = t === 'toggle' ? e.checked : (t === 'number' || t === 'range') ? Number(e.value) : t === 'color' ? (e.dataset.empty === '1' ? '' : e.value) : e.value; }); return o; };
     if (kind === 'nowplaying') {
+      const ast = $('[data-a="npapplyst"]');
+      const doSave = async (reload) => {
+        try {
+          const d = await api('/api/event-alerts/nowplaying', collect());
+          if (d.success) { apply(d.settings); ast.textContent = 'Сохранено и применено.'; ast.style.color = '#4cc38a'; if (reload) { const fr = root.querySelector('.da-prev iframe'); if (fr) fr.contentWindow.location.reload(); } }
+          else { ast.textContent = d.error || 'Не удалось сохранить.'; ast.style.color = '#e5484d'; }
+        } catch (e) { ast.textContent = 'Сетевая ошибка.'; ast.style.color = '#e5484d'; }
+      };
+      btn('npapply').addEventListener('click', () => doSave(true));
+      let saveTimer = null;
+      root.querySelectorAll('.da-mid [id^="ev_nowplaying_"]').forEach((f) => { const go = () => { clearTimeout(saveTimer); ast.textContent = 'Сохраняю…'; ast.style.color = ''; saveTimer = setTimeout(() => doSave(false), 900); }; f.addEventListener('change', go); if (f.type === 'text' || f.type === 'number') f.addEventListener('input', go); });
       const est = $('[data-a="extst"]');
       const refreshExt = () => { if (!root.isConnected) return; fetch('/api/nowplaying').then((r) => r.json()).then((d) => { const x = d.state && d.state.diag && d.state.diag.ext; est.textContent = x && x.fresh ? 'Расширение подключено' + (x.browser ? ' (' + x.browser + ')' : '') + ', видео и аудио на вкладках: ' + x.count + '.' : 'Расширение не подключено.'; est.style.color = x && x.fresh ? '#4cc38a' : ''; }).catch(() => {}); };
       refreshExt(); setInterval(refreshExt, 2500);

@@ -73,7 +73,7 @@
       return;
     }
     clearTimeout(hideTimer); hideTimer = null;
-    const key = c.key + '|' + c.title + '|' + !!c.cover + '|' + cfg.style + '|' + (cfg.showCover !== false);
+    const key = c.key + '|' + c.title + '|' + !!c.cover + '|' + cfg.style + '|' + (cfg.showCover !== false) + '|' + (cfg.showSource !== false);
     if (!visible || key !== shownKey) { build(c, cfg); shownKey = key; if (!visible) show(); else { const card = layer.firstElementChild; if (card) { card.classList.add('np-swap'); setTimeout(() => card.classList.remove('np-swap'), 600); } } }
     renderOthers(cfg, st.others || []);
     tick();

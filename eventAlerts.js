@@ -42,7 +42,7 @@ const DEFAULTS = {
     speech: '{user} получил{а} награду {reward}.',
   },
   nowplaying: { // «Сейчас играет»: закреплённая карточка с тем, что играет в браузере/плеере (nowPlaying.js)
-    enabled: false, style: 'card', corner: 'bl', size: 100, showCover: true, showSource: true, showOthers: true, bgOpacity: 90, hideWhenPaused: false, hideDelaySec: 8, minDurationSec: 0, ignoreApps: '', browsers: '', sites: '', byTitle: true, color: '#a970ff',
+    enabled: false, style: 'card', corner: 'bl', size: 100, showCover: true, showSource: true, showOthers: true, bgOpacity: 90, hideWhenPaused: false, hideDelaySec: 8, minDurationSec: 0, ignoreApps: '', browsers: '', color: '#a970ff',
   },
   streak: {
     style: 'pill', corner: 'bl', holdSec: 6, size: 100,
@@ -83,8 +83,7 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'minViewers') out[k] = Math.round(num(r[k], 0, 1000000, b[k]));
     else if (k === 'bgOpacity') out[k] = Math.round(num(r[k], 0, 100, b[k]));
     else if (k === 'hideDelaySec') out[k] = Math.round(num(r[k], 0, 600, b[k]));
-    else if ((k === 'browsers' || k === 'sites') && kind === 'nowplaying') out[k] = String(r[k] == null ? '' : r[k]).slice(0, 300);
-    else if (k === 'byTitle' && kind === 'nowplaying') out[k] = r[k] !== false && r[k] !== 'false';
+    else if (k === 'browsers' && kind === 'nowplaying') out[k] = String(r[k] == null ? '' : r[k]).slice(0, 300);
     else if (k === 'minDurationSec') out[k] = Math.round(num(r[k], 0, 7200, b[k]));
     else if (k === 'minStreak') out[k] = Math.round(num(r[k], 0, 100000, b[k]));
     else if (k === 'minCost') out[k] = Math.round(num(r[k], 0, 100000000, b[k]));

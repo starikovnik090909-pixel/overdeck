@@ -3199,7 +3199,8 @@ app.get('/api/nowplaying/extension', (req, res) => { res.json({ success: true, d
 app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (req, res) => {
   const dir = path.join(__dirname, 'browser-extension');
   const b = String((req.body && req.body.browser) || '');
-  const BR = { chrome: ['chrome', 'chrome://extensions'], edge: ['msedge', 'edge://extensions'] };
+  const BR = { chrome: ['chrome', 'chrome://extensions'], edge: ['msedge', 'edge://extensions'], yandex: [path.join(process.env.LOCALAPPDATA || '', 'Yandex', 'YandexBrowser', 'Application', 'browser.exe'), 'browser://extensions/'] };
+  if (b === 'yandex' && process.platform === 'win32' && !require('fs').existsSync(BR.yandex[0])) BR.yandex[0] = 'browser';   // нестандартная установка: пробуем через PATH
   const store = String(config.nowplayingExtensionStoreUrl || '');
   if (/^https:\/\//.test(store)) return res.json({ success: true, store, dir });
   let opened = false;

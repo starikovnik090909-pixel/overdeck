@@ -5,7 +5,7 @@
 <body><div class="hint">Предпросмотр.<br>Если ничего не играет, показан пример.</div>
 <div id="diag" style="position:fixed;left:30px;top:24px;font:500 26px/1.35 'Manrope',sans-serif;color:#ffd38a;max-width:1500px"></div>
 <div class="np-layer" id="npLayer"></div>
-<script src="nowplaying.js?v=5"></script>
+<script src="nowplaying.js?v=6"></script>
 <script>
 // страница сама опрашивает сервер: настройки и реальное состояние; если играть нечему — показывает пример, чтобы был виден вид карточки
 const t0 = Date.now();
@@ -20,9 +20,9 @@ async function poll() {
     const dg = document.getElementById('diag'), x = st.diag;
     if (real) dg.textContent = '';
     else if (!x) dg.textContent = '';
-    else if (!x.win) dg.textContent = 'Показан пример. Чтение медиа-сессий работает только в Windows.';
+    else if (!x.win) dg.textContent = 'Показан пример. Системное чтение работает только в Windows; на других системах установи расширение браузера (блок «Расширение браузера» выше).';
     else if (!x.running) dg.textContent = 'Показан пример. Читалка Windows не запущена' + (st.error ? ': ' + st.error : '. Включи алерт и сохрани.');
-    else dg.textContent = 'Показан пример — реальных источников нет. Windows видит сессий: ' + x.raw + (x.titles.length ? ' (' + x.titles.join('; ') + ')' : '') + ', окон браузера: ' + x.windows + (x.errs.length ? '. Ошибки: ' + x.errs.join('; ') : '') + '. ' + (x.ext && x.ext.fresh ? 'Расширение браузера подключено, но видео не найдено — запусти видео.' : 'Расширение браузера не подключено: chrome://extensions → «Режим разработчика» → «Загрузить распакованное» → папка browser-extension в папке Overdeck. Оно видит видео и аудио на любом сайте.');
+    else dg.textContent = 'Показан пример — реальных источников нет. Windows видит сессий: ' + x.raw + (x.titles.length ? ' (' + x.titles.join('; ') + ')' : '') + '' + (x.errs.length ? '. Ошибки: ' + x.errs.join('; ') : '') + '. ' + (x.ext && x.ext.fresh ? 'Расширение браузера подключено, но видео не найдено — запусти видео.' : 'Расширение браузера не подключено: chrome://extensions → «Режим разработчика» → «Загрузить распакованное» → папка browser-extension в папке Overdeck. Оно видит видео и аудио на любом сайте.');
     window.NowPlayingModule.set({ enabled: true, settings: d.settings, state });
   } catch (e) { /* сервер недоступен */ }
 }
