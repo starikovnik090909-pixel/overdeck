@@ -897,8 +897,9 @@ function onChatMessage(tags, message) {
     pushChatHistory(chatMsg);
     broadcastChat(chatMsg);
 
-    if (tts.shouldSpeak(username, clean, config.tts)) {
-      const speechText = tts.buildSpeechText(username, clean, config.tts);
+    const ttsText = tts.applyCommandMode(clean, config.tts); // «только по команде»: нужен префикс «!!», он не озвучивается
+    if (ttsText !== null && tts.shouldSpeak(username, ttsText, config.tts)) {
+      const speechText = tts.buildSpeechText(username, ttsText, config.tts);
       tts.enqueue({
         text: speechText,
         ttsConfig: config.tts,

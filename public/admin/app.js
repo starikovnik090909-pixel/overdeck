@@ -2624,6 +2624,7 @@
   const ttsEnabled = document.getElementById('ttsEnabled');
   const ttsReadNickname = document.getElementById('ttsReadNickname');
   const ttsIgnoreBots = document.getElementById('ttsIgnoreBots');
+  const ttsOnlyOnCommand = document.getElementById('ttsOnlyOnCommand');
   const ttsMaxLength = document.getElementById('ttsMaxLength');
   const ttsQueueEnabled = document.getElementById('ttsQueueEnabled');
   const ttsWordInput = document.getElementById('ttsWordInput');
@@ -2693,6 +2694,7 @@
     ttsEnabled.checked = ttsData.enabled;
     ttsReadNickname.checked = ttsData.readNickname;
     ttsIgnoreBots.checked = ttsData.ignoreBots;
+    ttsOnlyOnCommand.checked = !!ttsData.onlyOnCommand;
     ttsMaxLength.value = ttsData.maxLength;
     ttsQueueEnabled.checked = ttsData.queueEnabled;
     ttsIgnoredWords = Array.isArray(ttsData.ignoredWords) ? [...ttsData.ignoredWords] : [];
@@ -2729,6 +2731,7 @@
       enabled: ttsEnabled.checked,
       readNickname: ttsReadNickname.checked,
       ignoreBots: ttsIgnoreBots.checked,
+      onlyOnCommand: ttsOnlyOnCommand.checked,
       maxLength: Number(ttsMaxLength.value),
       queueEnabled: ttsQueueEnabled.checked,
       ignoredWords: ttsIgnoredWords,

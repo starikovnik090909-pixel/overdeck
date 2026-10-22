@@ -31,6 +31,7 @@
     "sentenceSilence": 0.2,
     "readNickname": true,
     "ignoreBots": true,
+    "onlyOnCommand": false,
     "maxLength": 200,
     "queueEnabled": true,
     "ignoredWords": []

@@ -582,6 +582,7 @@
             <div class="ui3-row"><div class="l"><b>Голос</b><span>Выбор голоса — справа в каталоге или здесь</span></div><select id="ttsVoice" class="ui3-select"></select></div></div>
           <div class="card ui3-card"><div class="ui3-ch"><h3>Что читать</h3></div>
             <div class="ui3-row"><div class="l"><b>Ник перед сообщением</b><span>«neon_fox пишет: …»</span></div><label class="toggle-switch"><input type="checkbox" id="ttsReadNickname"><span class="toggle-slider"></span></label></div>
+            <div class="ui3-row"><div class="l"><b>Только по команде !!</b><span>Озвучиваются лишь сообщения, начинающиеся с «!!», остальные молчат</span></div><label class="toggle-switch"><input type="checkbox" id="ttsOnlyOnCommand"><span class="toggle-slider"></span></label></div>
             <div class="ui3-row"><div class="l"><b>Пропускать ботов</b><span>StreamElements, Nightbot, Streamlabs и др.</span></div><label class="toggle-switch"><input type="checkbox" id="ttsIgnoreBots"><span class="toggle-slider"></span></label></div>
             <div class="ui3-row"><div class="l"><b>По очереди</b><span>Не читать сообщения одновременно</span></div><label class="toggle-switch"><input type="checkbox" id="ttsQueueEnabled"><span class="toggle-slider"></span></label></div>
             <div class="ui3-row"><div class="l"><b>Максимум символов</b><span>Длинные сообщения обрезаются</span></div><div class="ui3-num"><input type="number" id="ttsMaxLength" min="20" max="500" step="10"><span>симв.</span></div></div>
@@ -3146,7 +3147,7 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=150"></script>
+<script src="app.js?v=151"></script>
 <script src="guides-data.js?v=6"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>

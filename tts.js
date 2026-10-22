@@ -66,6 +66,7 @@ const DEFAULT_TTS = {
   sentenceSilence: 0.2,
   readNickname: true,
   ignoreBots: true,
+  onlyOnCommand: false,
   maxLength: 200,
   queueEnabled: true,
   ignoredWords: [],
@@ -94,6 +95,7 @@ function sanitizeTts(body, base) {
     sentenceSilence: clampNum(b.sentenceSilence, 0.0, 2.0, base.sentenceSilence),
     readNickname: typeof b.readNickname === 'boolean' ? b.readNickname : base.readNickname,
     ignoreBots: typeof b.ignoreBots === 'boolean' ? b.ignoreBots : base.ignoreBots,
+    onlyOnCommand: typeof b.onlyOnCommand === 'boolean' ? b.onlyOnCommand : base.onlyOnCommand,
     maxLength: Math.round(clampNum(b.maxLength, 20, 500, base.maxLength)),
     queueEnabled: typeof b.queueEnabled === 'boolean' ? b.queueEnabled : base.queueEnabled,
     ignoredWords: Array.isArray(b.ignoredWords)
@@ -113,6 +115,17 @@ function containsIgnoredWord(text, ignoredWords) {
   if (!ignoredWords || ignoredWords.length === 0) return false;
   const lower = text.toLowerCase();
   return ignoredWords.some((w) => w && lower.includes(w));
+}
+
+/**
+ * Режим «только по команде»: озвучиваются лишь сообщения, начинающиеся с «!!»; сам префикс не читается.
+ * Возвращает текст для озвучки (без «!!») или null, если сообщение озвучивать не нужно.
+ */
+function applyCommandMode(cleanText, ttsConfig) {
+  const text = String(cleanText || '');
+  if (!ttsConfig || !ttsConfig.onlyOnCommand) return text;
+  const m = /^\s*!!\s*([\s\S]*)$/.exec(text);
+  return m && m[1].trim() ? m[1] : null;
 }
 
 /** cleanText — сообщение уже без кодов эмодзи (см. stats.recordMessage). */
@@ -416,6 +429,7 @@ module.exports = {
   getDefaultTts,
   sanitizeTts,
   shouldSpeak,
+  applyCommandMode,
   buildSpeechText,
   configurePaths,
   enqueue,
