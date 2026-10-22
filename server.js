@@ -3054,7 +3054,7 @@ app.delete('/api/donation-alert/texture', (req, res) => {
 /** Тестовый алерт: в историю донатов и в «Топ донатеров» не попадает. */
 app.post('/api/donation-alert/test', (req, res) => {
   const b = req.body || {};
-  fireDonationAlert({ username: String(b.username || 'Большой член').slice(0, 40), amount: Number(b.amount) > 0 ? Number(b.amount) : 500, currency: String(b.currency || 'RUB'), message: String(b.message == null ? 'Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!' : b.message), platform: b.platform === 'donatex' ? 'donatex' : 'donationalerts' }, true);
+  fireDonationAlert({ username: String(b.username || 'Тестовый зритель').slice(0, 40), amount: Number(b.amount) > 0 ? Number(b.amount) : 500, currency: String(b.currency || 'RUB'), message: String(b.message == null ? 'Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!' : b.message), platform: b.platform === 'donatex' ? 'donatex' : 'donationalerts' }, true);
   res.json({ success: true });
 });
 // ---------- REST API: алерты событий ----------
