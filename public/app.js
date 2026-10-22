@@ -221,6 +221,7 @@ ws.onmessage = (event) => {
 
   if (data.type === 'tts') { handleTtsAudio(data.audio); return; }
   if (data.type === 'tts_stop') { stopTts(); return; }
+  if (data.type === 'nowplaying') { if (window.NowPlayingModule) window.NowPlayingModule.set(data); return; }
   if (data.type === 'donation_alert') { if (window.DonationAlertModule) window.DonationAlertModule.show(data); return; }
   if (data.type === 'donation_alert_skip') { if (window.DonationAlertModule) window.DonationAlertModule.skip(); return; }
 

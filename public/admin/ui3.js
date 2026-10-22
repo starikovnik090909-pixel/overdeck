@@ -588,6 +588,7 @@
         user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
         train: '<rect x="5" y="3.5" width="14" height="13" rx="2.5"/><path d="M5 10.5h14M8 20l2-3.5M16 20l-2-3.5"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/>',
         coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.6h3.4a1.6 1.6 0 010 3.2h-1.8a1.6 1.6 0 000 3.2H15"/>',
+        music: '<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
         flame: '<path d="M12 3c.5 3-1.6 4.6-3.2 6.6C7.4 11.3 7 12.6 7 14a5 5 0 0010 0c0-1.8-.8-3.1-1.7-4.2-.3 1-.9 1.6-1.6 1.9.6-3-.2-6.2-1.7-8.7z"/>',
       };
       const gv = (id) => { const e = document.getElementById(id); return e ? Number(e.value) : 0; };
@@ -599,6 +600,7 @@
         ['follow', 'user', 'Фоллоу', () => 'новые фолловеры', 'ev_follow_enabled'],
         ['hype', 'train', 'Hype Train', () => 'начало, уровни, финал', 'ev_hype_enabled'],
         ['points', 'coin', 'Баллы канала', () => 'выбранные награды', 'ev_points_enabled'],
+        ['nowplaying', 'music', 'Сейчас играет', () => 'видео и музыка с ПК', 'ev_nowplaying_enabled'],
         ['streak', 'flame', 'Серия просмотров', () => (gv('ev_streak_minStreak') > 1 ? 'от ' + gv('ev_streak_minStreak') + ' стримов' : 'любая серия'), 'ev_streak_enabled'],
       ];
       const shell = document.createElement('div'); shell.className = 'da-shell';

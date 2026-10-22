@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Предпросмотр «Сейчас играет»</title>
+<link rel="stylesheet" href="nowplaying.css?v=1">
+<style>html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:linear-gradient(135deg,#232850,#10111f)}.hint{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font:600 34px 'Manrope',sans-serif;color:rgba(255,255,255,.35);text-align:center}</style></head>
+<body><div class="hint">Предпросмотр.<br>Если ничего не играет, показан пример.</div>
+<div class="np-layer" id="npLayer"></div>
+<script src="nowplaying.js?v=1"></script>
+<script>
+// страница сама опрашивает сервер: настройки и реальное состояние; если играть нечему — показывает пример, чтобы был виден вид карточки
+const t0 = Date.now();
+const sample = { id: 'Chrome', app: 'Google Chrome', browser: true, title: 'Lofi Hip Hop Radio — beats to relax/study to', artist: 'Lofi Girl', status: 'Playing', playing: true, pos: 754, dur: 2465, rate: 1, cover: '/api/nowplaying/cover?k=demo1', current: true, key: 'sample' };
+Object.defineProperty(sample, 'pos', { get() { return 754 + (Date.now() - t0) / 1000; } });
+async function poll() {
+  try {
+    const d = await (await fetch('/api/nowplaying')).json();
+    const st = d.state || {};
+    const real = st.supported && st.current;
+    const state = real ? st : { supported: true, current: sample, others: [{ app: 'Spotify', title: 'Midnight City' }, { app: 'Firefox', title: 'Интервью: как делают оверлеи' }], count: 3 };
+    window.NowPlayingModule.set({ enabled: true, settings: d.settings, state });
+  } catch (e) { /* сервер недоступен */ }
+}
+poll(); setInterval(poll, 1500);
+</script></body></html>

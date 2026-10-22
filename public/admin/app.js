@@ -8755,6 +8755,14 @@
         ['speech', 'text', 'Текст озвучки']],
       hint: PH + ' Ещё: {streak} — стримов подряд, {streamsWord} — «стрим/стрима/стримов», {points} — баллы.',
     },
+    nowplaying: {
+      note: 'Закреплённая карточка «Сейчас играет»: обложка, название, сколько прошло и сколько всего. Данные берутся из медиа-сессий Windows: их публикуют браузеры (Chrome, Edge, Firefox, Яндекс Браузер), Spotify, VLC и другие плееры, поэтому карточка понимает, что именно сейчас играет, и показывает остальные открытые источники. Работает только на Windows 10/11 и только пока включено.',
+      test: [],
+      preview: '/nowplaying-preview.html',
+      fields: [['enabled', 'toggle', 'Показывать «Сейчас играет»'], ['corner', 'select', 'Угол экрана', [['bl', 'Слева внизу'], ['br', 'Справа внизу'], ['tl', 'Слева вверху'], ['tr', 'Справа вверху']]], ['size', 'number', 'Размер карточки, % (50–200)'], ['showCover', 'toggle', 'Показывать обложку'], ['showSource', 'toggle', 'Показывать, откуда играет (Chrome, Spotify…)'], ['showOthers', 'toggle', 'Показывать другие открытые источники'], ['hideWhenPaused', 'toggle', 'Прятать, когда ничего не играет (пауза)'], ['hideDelaySec', 'number', 'Через сколько секунд прятать'], ['minDurationSec', 'number', 'Не показывать короче N секунд (0 — всё)'], ['color', 'color', 'Цвет полоски и акцентов'],
+        ['ignoreApps', 'text', 'Не показывать эти источники (через запятую, например: spotify, discord)']],
+      hint: 'Если ничего не отображается: убедись, что в браузере реально играет видео или музыка и вкладка не заглушена. Сайты без поддержки управления медиа (редкие плееры) Windows не видит. Прямые трансляции показывают только время «прошло».',
+    },
   };
   const api = async (url, body, method) => { const r = await fetch(url, { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body || {}) }); return r.json(); };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -8790,7 +8798,7 @@
         <p class="card-hint" style="margin-top:10px">${esc(cfg.hint)}</p>
         <div class="actions"><button class="btn btn-primary" type="button" data-a="save">Сохранить</button><button class="btn btn-secondary" type="button" data-a="reset">Сбросить</button></div>
         <div class="form-message" data-a="msg"></div></div></div>
-      <div class="da-side"><div class="da-prev"><iframe src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe></div>
+      <div class="da-side"><div class="da-prev"><iframe src="${cfg.preview || '/overlay.html?only=donation&preview=1'}" title="Предпросмотр"></iframe></div>
         <div class="da-ctrl"><button class="dbtn" data-a="cfg" type="button" aria-pressed="false" data-tip="Настройки алерта"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button><button class="dbtn" data-a="obs" type="button" data-tip="Скопировать ссылку для OBS&#10;Источник «Браузер» 1920×1080, фон прозрачный"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1-1"/></svg></button><span class="da-ctrl-gap"></span><button class="btn-tiny" type="button" data-a="play">▶ Анимация</button><label class="da-loop"><input type="checkbox" data-a="loop"> ↻</label></div></div>`;
     const $ = (sel) => root.querySelector(sel);
     const btn = (a) => root.querySelector(`[data-a="${a}"]`);

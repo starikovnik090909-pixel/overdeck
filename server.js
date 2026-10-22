@@ -338,6 +338,35 @@ function fireEventAlert(kind, data, force) {
   return true;
 }
 
+// ---------- «Сейчас играет»: что играет в браузере/плеере (nowPlaying.js, только Windows) ----------
+const nowPlaying = require('./nowPlaying');
+let npLast = { sig: '', at: 0, pos: 0, rate: 1, playing: false, sentAt: 0 };
+function nowPlayingPayload() {
+  const cfg = config.eventAlerts.nowplaying;
+  const state = nowPlaying.getState(cfg);
+  return { type: 'nowplaying', enabled: !!(cfg.enabled || state.demo), settings: cfg, state };
+}
+/** Шлёт состояние оверлею, если оно заметно изменилось (время между рассылками оверлей считает сам). force — всем безусловно. */
+function broadcastNowPlaying(force) {
+  const p = nowPlayingPayload(), s = p.state, c = s.current, now = Date.now();
+  const sig = JSON.stringify([p.enabled, s.supported, s.fresh, s.demo, c && [c.key, c.status, c.title, c.artist, c.dur, !!c.cover], s.others.map((o) => [o.key, o.status, o.title]), p.settings]);
+  let drift = false;
+  if (c && npLast.sig && !force) { const pred = npLast.pos + (npLast.playing ? (now - npLast.sentAt) / 1000 * npLast.rate : 0); drift = Math.abs(pred - c.pos) > 2; }
+  if (!force && sig === npLast.sig && !drift && now - npLast.sentAt < 15000) return;
+  npLast = { sig, pos: c ? c.pos : 0, rate: c ? c.rate : 1, playing: !!(c && c.playing), sentAt: now };
+  const json = JSON.stringify(p);
+  overlayClients.forEach((ws) => {
+    if (ws.readyState !== ws.OPEN || ws.view === 'preview') return;
+    if (!ws.view && !config.donationAlert.inMain) return;      // как у алертов: в основной оверлей — только если там включены алерты
+    ws.send(json);
+  });
+}
+function applyNowPlayingConfig() {
+  if (config.eventAlerts.nowplaying.enabled) nowPlaying.start(() => broadcastNowPlaying(false)); else nowPlaying.stop();
+  broadcastNowPlaying(true);
+}
+setInterval(() => { try { broadcastNowPlaying(false); } catch (e) { /* не мешаем оверлею */ } }, 1000);
+process.on('exit', () => { try { nowPlaying.stop(); } catch (e) { /* уже закрываемся */ } });
 let hypeLevel = 0;
 /** Сырое уведомление EventSub → алерт события. */
 function handleEventAlertRaw(type, e) {
@@ -3148,6 +3177,7 @@ app.post('/api/event-alerts/:kind', (req, res) => {
   if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
   config.eventAlerts[k] = eventAlerts.sanitizeKind(k, req.body || {}, config.eventAlerts[k]);
   saveConfigToDisk();
+  if (k === 'nowplaying') applyNowPlayingConfig();
   res.json({ success: true, settings: config.eventAlerts[k] });
 });
 app.post('/api/event-alerts/:kind/reset', (req, res) => {
@@ -3155,12 +3185,21 @@ app.post('/api/event-alerts/:kind/reset', (req, res) => {
   if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
   config.eventAlerts[k] = eventAlerts.sanitizeKind(k, {}, null);
   saveConfigToDisk();
+  if (k === 'nowplaying') applyNowPlayingConfig();
   res.json({ success: true, settings: config.eventAlerts[k] });
 });
+app.get('/api/nowplaying', (req, res) => { res.json({ success: true, ...nowPlayingPayload() }); });
+app.get('/api/nowplaying/cover', (req, res) => {
+  const c = nowPlaying.getCover(req.query.k);
+  if (!c) return res.status(404).end();
+  res.set('Content-Type', c.mime); res.set('Cache-Control', 'no-cache'); res.send(c.buf);
+});
+
 /** Тест: показывает алерт события на оверлее (даже если событие выключено). */
 app.post('/api/event-alerts/:kind/test', (req, res) => {
   const k = req.params.kind;
   if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
+  if (k === 'nowplaying') { nowPlaying.setDemo(25); broadcastNowPlaying(true); return res.json({ success: true }); }
   fireEventAlert(k, req.body || {}, true);
   res.json({ success: true });
 });
@@ -3506,6 +3545,7 @@ wss.on('connection', (ws, req) => {
     ws.view = url.searchParams.get('view') || ''; // '' — основной оверлей, 'alerts' — отдельный источник алертов, 'preview' — предпросмотр в админке
     overlayClients.add(ws);
     ws.send(JSON.stringify(buildSnapshot()));
+    if (ws.view !== 'preview' && (ws.view || config.donationAlert.inMain)) { try { ws.send(JSON.stringify(nowPlayingPayload())); } catch (e) { /* не критично */ } }
     ws.on('close', () => { overlayClients.delete(ws); broadcastAdminStatus(); });
     broadcastAdminStatus(); // новый оверлей-клиент — статус в админке меняется на "онлайн"
   }
@@ -3798,6 +3838,7 @@ setInterval(() => {
 
 const port = config.port || 3001;
 server.listen(port, netGuard.listenHost(config), () => {
+  try { if (config.eventAlerts.nowplaying.enabled) nowPlaying.start(() => broadcastNowPlaying(false)); } catch (e) { console.log('[Сейчас играет] не запустилось:', e.message); }
   console.log(`\nOverdeck запущен: http://localhost:${port}` + (config.allowLan ? '  (виджеты доступны из локальной сети)' : ''));
   console.log(`Оверлей (OBS Browser Source): http://localhost:${port}/overlay.html  (1920x1080)`);
   console.log(`Панель управления: http://localhost:${port}/admin`);
