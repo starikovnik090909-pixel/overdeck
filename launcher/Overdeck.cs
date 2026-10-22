@@ -19,10 +19,12 @@ using System.Windows.Forms;
 
 static class Program
 {
+    public static bool JustUpdated;
     [STAThread]
     static void Main(string[] args)
     {
         bool created;
+        JustUpdated = Array.IndexOf(args, "--wait") >= 0;
         try { File.Delete(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Overdeck.exe.old")); } catch { }
         EventWaitHandle showEvt = new EventWaitHandle(false, EventResetMode.AutoReset, "Overdeck.By.Starikov.Show");
         using (Mutex m = new Mutex(true, "Overdeck.By.Starikov.Launcher", out created))
@@ -503,6 +505,7 @@ class Launcher : Form
             });
             StartServerIfNeeded();
             ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(2500); BeginInvoke((MethodInvoker)delegate { CheckUpdates(false); }); });
+            CheckWhatsNew();
         };
         FormClosing += delegate(object s, FormClosingEventArgs e)
         {
@@ -818,6 +821,118 @@ class Launcher : Form
         tray.Visible = false;
         tray.Dispose();
         Application.Exit();
+    }
+
+
+    // ---------- «Что нового» после обновления ----------
+    // Версия, для которой окно уже показывали, хранится в launcher.state. Если после запуска версия в package.json другая
+    // (или лаунчер только что перезапустился после установки обновления) — берём описание релиза этой версии и показываем окно.
+
+    static string Unescape(string v)
+    {
+        if (v == null) return "";
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < v.Length; i++)
+        {
+            char c = v[i];
+            if (c != '\\' || i + 1 >= v.Length) { sb.Append(c); continue; }
+            char n = v[++i];
+            if (n == 'n') sb.Append('\n');
+            else if (n == 'r') { }
+            else if (n == 't') sb.Append(' ');
+            else if (n == 'u' && i + 4 < v.Length) { int cp; if (int.TryParse(v.Substring(i + 1, 4), System.Globalization.NumberStyles.HexNumber, null, out cp)) { sb.Append((char)cp); i += 4; } }
+            else sb.Append(n);
+        }
+        return sb.ToString();
+    }
+
+    static string RawJsonStr(string json, string key)
+    {
+        Match m = Regex.Match(json, "\"" + key + "\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+        return m.Success ? Unescape(m.Groups[1].Value) : "";
+    }
+
+    static string CleanNotes(string md)
+    {
+        List<string> lines = new List<string>();
+        foreach (string raw in md.Split('\n'))
+        {
+            string l = raw.TrimEnd();
+            l = Regex.Replace(l, "^#+\\s*", "");
+            l = Regex.Replace(l, "^\\s*[-*]\\s+", "•  ");
+            l = l.Replace("**", "").Replace("`", "");
+            lines.Add(l);
+        }
+        return string.Join("\r\n", lines.ToArray()).Trim();
+    }
+
+    void CheckWhatsNew()
+    {
+        string statePath = Path.Combine(root, "launcher.state");
+        string last = "";
+        try { if (File.Exists(statePath)) last = File.ReadAllText(statePath, Encoding.UTF8).Trim(); } catch { }
+        string cur = version;
+        if (cur.Length == 0 || cur == "?") return;
+        if (last == cur) return;
+        if (last.Length == 0 && !Program.JustUpdated)
+        {
+            try { File.WriteAllText(statePath, cur, new UTF8Encoding(false)); } catch { }
+            return;
+        }
+        if (updateUrl.IndexOf("/releases/latest") < 0) { try { File.WriteAllText(statePath, cur, new UTF8Encoding(false)); } catch { } return; }
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            string title = "", notes = "";
+            try
+            {
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+                foreach (string tag in new string[] { cur, "v" + cur })
+                {
+                    try
+                    {
+                        using (WebClient wc = new WebClient())
+                        {
+                            wc.Encoding = Encoding.UTF8;
+                            wc.Headers["User-Agent"] = "Overdeck-Launcher";
+                            string json = wc.DownloadString(updateUrl.Replace("/releases/latest", "/releases/tags/" + tag));
+                            notes = RawJsonStr(json, "body");
+                            title = RawJsonStr(json, "name");
+                            break;
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            if (notes.Trim().Length == 0 && title.Length == 0) return; // не удалось получить описание — попробуем при следующем запуске
+            BeginInvoke((MethodInvoker)delegate { ShowWhatsNew(cur, title, CleanNotes(notes)); });
+            try { File.WriteAllText(statePath, cur, new UTF8Encoding(false)); } catch { }
+        });
+    }
+
+    void ShowWhatsNew(string ver, string title, string notes)
+    {
+        try
+        {
+            Form f = new Form();
+            f.Text = "Overdeck — что нового";
+            f.StartPosition = FormStartPosition.CenterScreen;
+            f.ClientSize = new Size(560, 440);
+            f.FormBorderStyle = FormBorderStyle.FixedDialog; f.MaximizeBox = false; f.MinimizeBox = false;
+            f.BackColor = Ui.Bg2; f.ForeColor = Ui.Txt; f.TopMost = true;
+            try { f.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+            Label h = new Label(); h.Text = "Overdeck обновлён до " + ver; h.Font = new Font("Segoe UI Semibold", 15f); h.ForeColor = Ui.Txt; h.SetBounds(20, 16, 520, 32); f.Controls.Add(h);
+            Label sub = new Label(); sub.Text = title; sub.Font = new Font("Segoe UI", 10f); sub.ForeColor = Ui.Dim; sub.SetBounds(22, 50, 516, 22); f.Controls.Add(sub);
+            TextBox tb = new TextBox(); tb.Multiline = true; tb.ReadOnly = true; tb.ScrollBars = ScrollBars.Vertical; tb.BorderStyle = BorderStyle.None;
+            tb.BackColor = Color.FromArgb(30, 29, 32); tb.ForeColor = Ui.Txt; tb.Font = new Font("Segoe UI", 10.5f);
+            tb.Text = notes.Length > 0 ? notes : "Описание этой версии на странице релиза не заполнено.";
+            tb.SetBounds(20, 82, 520, 288); tb.Select(0, 0); f.Controls.Add(tb);
+            Button ok = new Button(); ok.Text = "Понятно"; ok.FlatStyle = FlatStyle.Flat; ok.FlatAppearance.BorderSize = 0;
+            ok.BackColor = Ui.Coral; ok.ForeColor = Color.White; ok.Font = new Font("Segoe UI Semibold", 10f);
+            ok.SetBounds(420, 384, 120, 36); ok.Click += delegate { f.Close(); }; f.Controls.Add(ok); f.AcceptButton = ok;
+            f.ShowDialog();
+        }
+        catch (Exception ex) { WriteLog("Окно «Что нового» не показано: " + ex.Message); }
     }
 
     // ---------- обновления ----------
