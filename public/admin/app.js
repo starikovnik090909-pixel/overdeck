@@ -8794,7 +8794,10 @@
       return `<div class="toggle-row"><span class="toggle-row-label">${l}</span>${ctl}</div>`;
     }).join('');
     root.innerHTML = `
-      <div class="da-main"><div class="card">${tests}
+      <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
+          <p class="card-hint" style="margin:4px 0 8px" data-a="extst">Проверяю…</p>
+          <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Установить расширение</button></div>
+          <p class="card-hint" style="margin:8px 0 0">Читает видео и аудио на любом сайте. Нужно один раз.</p></div>` : ''}
         <div class="actions"><button class="btn btn-primary" type="button" data-a="test">Тест алерта</button><button class="btn btn-secondary" type="button" data-a="skip">Пропустить текущий</button></div>
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
       <div class="da-mid"><div class="card" data-a="cfgcard" hidden><h2 class="section-title">Настройки события</h2><p class="card-hint">${esc(cfg.note)}</p>${rows}
@@ -8813,6 +8816,18 @@
       if (t === 'toggle') e.checked = !!v; else if (t === 'range') { e.value = v == null ? 100 : v; const lv = document.getElementById(`ev_${kind}_${k}_v`); if (lv) lv.textContent = e.value + '%'; } else if (t === 'color') { e.dataset.empty = v ? '' : '1'; e.value = v || '#b14846'; } else e.value = v == null ? '' : v;
     });
     const collect = () => { const o = {}; cfg.fields.forEach(([k, t]) => { const e = el(k); o[k] = t === 'toggle' ? e.checked : (t === 'number' || t === 'range') ? Number(e.value) : t === 'color' ? (e.dataset.empty === '1' ? '' : e.value) : e.value; }); return o; };
+    if (kind === 'nowplaying') {
+      const est = $('[data-a="extst"]');
+      const refreshExt = () => { if (!root.isConnected) return; fetch('/api/nowplaying').then((r) => r.json()).then((d) => { const x = d.state && d.state.diag && d.state.diag.ext; est.textContent = x && x.fresh ? 'Расширение подключено' + (x.browser ? ' (' + x.browser + ')' : '') + ', видео и аудио на вкладках: ' + x.count + '.' : 'Расширение не подключено.'; est.style.color = x && x.fresh ? '#4cc38a' : ''; }).catch(() => {}); };
+      refreshExt(); setInterval(refreshExt, 2500);
+      btn('extinstall').addEventListener('click', async () => {
+        const b = btn('extbr').value;
+        let d = {}; try { d = await api('/api/nowplaying/extension/install', { browser: b }); } catch (e) { d = {}; }
+        if (d.store) { window.open(d.store, '_blank', 'noopener'); return; }
+        try { await navigator.clipboard.writeText(d.page || 'chrome://extensions'); } catch (e) { /* без буфера — вручную */ }
+        window.ui3Alert('Установка расширения\n\n' + (d.opened ? 'Открыл страницу расширений браузера и папку с расширением. ' : 'Открыл папку с расширением. Адрес ' + (d.page || 'chrome://extensions') + ' скопирован в буфер — вставь его в адресную строку браузера. ') + 'Дальше три шага:\n1. Включи «Режим разработчика» (переключатель вверху справа).\n2. Нажми «Загрузить распакованное».\n3. Выбери папку browser-extension' + (d.dir ? ' (' + d.dir + ')' : '') + '.\n\nПосле этого здесь появится «Расширение подключено».');
+      });
+    }
     if (kind === 'follow') {
       const sb = el('wallsync'), st = document.getElementById('ev_follow_wallsync_st');
       const showStat = () => fetch('/api/follow-wall').then((r) => r.json()).then((d) => { st.textContent = d.count ? `в базе: ${d.count}` + (d.syncedAt ? '' : ' (из Twitch ещё не подтягивали)') : 'пока пусто'; }).catch(() => {});
