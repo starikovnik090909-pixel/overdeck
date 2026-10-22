@@ -345,3 +345,136 @@
     else if (!store.get('ov3WizardDone') && (m.setup || !m.loggedIn)) wizard(0);
   }).catch(() => {});
 })();
+
+// ---------- Этап 2: Озвучка — автосохранение, фильтр каталога ----------
+(function () {
+  'use strict';
+  const sec = document.getElementById('tab-voice'); if (!sec) return;
+  const $ = (s) => sec.querySelector(s);
+  const saveBtn = document.getElementById('btnTtsSave');
+  const saved = document.getElementById('ttsSaved');
+  const msg = document.getElementById('ttsFormMessage');
+  let t = 0, ready = false;
+  setTimeout(() => { ready = true; }, 2500); // не сохраняем, пока app.js заполняет форму при загрузке
+  const mark = (txt, cls) => { if (saved) { saved.textContent = txt; saved.className = 'ui3-saved ' + (cls || ''); } };
+  function schedule() {
+    if (!ready || !saveBtn) return;
+    clearTimeout(t); mark('Сохраняем…', 'busy');
+    t = setTimeout(() => { if (saveBtn.disabled) { schedule(); return; } saveBtn.click(); }, 600);
+  }
+  if (msg) new MutationObserver(() => {
+    const c = msg.className, txt = msg.textContent;
+    if (/success/.test(c)) { mark(/остановлен/i.test(txt) ? 'Озвучка остановлена' : /умолчанию/.test(txt) ? 'Сброшено по умолчанию' : 'Сохранено', 'ok'); msg.textContent = ''; msg.className = 'form-message'; if (window.reloadTtsCatalog) window.reloadTtsCatalog(); }
+    else if (/error/.test(c)) mark(txt || 'Не сохранилось', 'err');
+  }).observe(msg, { childList: true, characterData: true, subtree: true, attributes: true });
+  const skip = (el) => el.closest('#ttsCatalog') || el.id === 'ttsCatSearch' || el.id === 'ttsWordInput';
+  sec.addEventListener('change', (e) => { if (!skip(e.target)) schedule(); });
+  sec.addEventListener('input', (e) => { if (e.target.type === 'range' && !skip(e.target)) schedule(); });
+  // слова: добавление и удаление чипов тоже сохраняем
+  const add = document.getElementById('btnAddWord'); if (add) add.addEventListener('click', () => setTimeout(schedule, 0));
+  const wi = document.getElementById('ttsWordInput'); if (wi) wi.addEventListener('keydown', (e) => { if (e.key === 'Enter') setTimeout(schedule, 0); });
+  const chips = document.getElementById('ttsWordChips'); if (chips) chips.addEventListener('click', () => setTimeout(schedule, 0));
+  const reset = document.getElementById('btnTtsReset'); if (reset) reset.addEventListener('click', () => mark('Сбрасываем…', 'busy'));
+  setTimeout(() => { if (window.reloadTtsCatalog) window.reloadTtsCatalog(); }, 1500);
+
+  // фильтр каталога
+  const box = document.getElementById('ttsCatalog'), seg = document.getElementById('ttsCatEngine'), q = document.getElementById('ttsCatSearch'), cnt = document.getElementById('ttsCatCount');
+  let eng = '';
+  function filter() {
+    if (!box) return;
+    const s = (q && q.value || '').trim().toLowerCase();
+    let shown = 0, total = 0;
+    box.querySelectorAll('.ui3-voice').forEach((v) => { total++; const ok = (!eng || v.dataset.engine === eng) && (!s || v.dataset.search.includes(s)); v.hidden = !ok; if (ok) shown++; });
+    let none = box.querySelector('.none');
+    if (!shown && total) { if (!none) { none = document.createElement('div'); none.className = 'none'; none.textContent = 'Ничего не нашлось'; box.appendChild(none); } } else if (none) none.remove();
+    if (cnt) cnt.textContent = total ? (shown === total ? total + ' голосов' : shown + ' из ' + total) : '';
+  }
+  if (seg) seg.addEventListener('click', (e) => { const b = e.target.closest('span[data-v]'); if (!b) return; eng = b.dataset.v; seg.querySelectorAll('span').forEach((x) => x.classList.toggle('on', x === b)); filter(); });
+  if (q) q.addEventListener('input', filter);
+  if (box) new MutationObserver(filter).observe(box, { childList: true });
+})();
+
+// ---------- Этап 2: Чат-бот — разделы, статус, счётчики ----------
+(function () {
+  'use strict';
+  const sec = document.getElementById('tab-chatbot'); if (!sec) return;
+  const tabs = document.getElementById('botTabs');
+  const show = (id) => {
+    tabs.querySelectorAll('span[data-pane]').forEach((t) => t.classList.toggle('on', t.dataset.pane === id));
+    sec.querySelectorAll('.bot-pane').forEach((p) => { p.hidden = p.dataset.pane !== id; });
+    try { localStorage.setItem('ov3BotPane', id); } catch (e) {}
+  };
+  tabs.addEventListener('click', (e) => { const t = e.target.closest('span[data-pane]'); if (t) show(t.dataset.pane); });
+  sec.addEventListener('click', (e) => { const b = e.target.closest('[data-botpane]'); if (b) show(b.dataset.botpane); });
+  let saved = null; try { saved = localStorage.getItem('ov3BotPane'); } catch (e) {}
+  if (saved && sec.querySelector('.bot-pane[data-pane="' + saved + '"]')) show(saved);
+  const nb = document.getElementById('ui3BotNewCmd');
+  if (nb) nb.addEventListener('click', () => { show('cmd'); const b = document.getElementById('btnBotCommandAdd'); if (b) b.click(); setTimeout(() => { const i = document.getElementById('botCmdCommand'); if (i) i.focus(); }, 50); });
+  // счётчики команд и таймеров
+  const count = (id, out) => { const body = document.getElementById(id), o = document.getElementById(out); if (!body || !o) return; const upd = () => { const n = [...body.querySelectorAll('tr')].filter((tr) => !tr.querySelector('td[colspan]')).length; o.textContent = n ? String(n) : ''; }; new MutationObserver(upd).observe(body, { childList: true, subtree: true }); upd(); };
+  count('botCommandsBody', 'botCntCmd'); count('botTimersBody', 'botCntTim');
+  // статус бота справа — по кнопке-статусу из app.js
+  const src = document.getElementById('btnChatBotAuthToggle');
+  const ico = document.getElementById('botSideIco'), ttl = document.getElementById('botSideTitle'), sub = document.getElementById('botSideSub');
+  const user = document.getElementById('chatBotUsername');
+  function sync() {
+    const st = src ? src.dataset.state : 'disconnected';
+    const name = user && user.value ? user.value : 'Бот';
+    ico.className = 'ui3-ico ' + (st === 'connected' ? 'ok' : st === 'connecting' ? 'warn' : '');
+    ttl.textContent = st === 'connected' ? name + ' в чате' : st === 'connecting' ? 'Подключаемся…' : st === 'error' ? 'Ошибка подключения' : 'Бот не подключён';
+    sub.textContent = st === 'connected' ? 'Отвечает на команды и шлёт таймеры' : st === 'error' ? ((src && src.title) || 'Проверь токен в «Подключение бота»') : 'Подключи бота, чтобы он отвечал в чате';
+  }
+  if (src) new MutationObserver(sync).observe(src, { attributes: true, attributeFilter: ['data-state', 'title'] });
+  setTimeout(sync, 1500); sync();
+})();
+
+// ---------- Этап 2: Донаты — сводка, фильтр ленты, топ донатеров ----------
+(function () {
+  'use strict';
+  const sec = document.getElementById('tab-donations'); if (!sec) return;
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const rub = (n) => Math.round(Number(n) || 0).toLocaleString('ru-RU') + ' ₽';
+  const plural = (n, a, b, c) => { n = Math.abs(n) % 100; const d = n % 10; return n > 10 && n < 20 ? c : d > 1 && d < 5 ? b : d === 1 ? a : c; };
+  const isRub = (d) => !d.currency || d.currency === 'RUB';
+  let hist = [], goal = null, topDays = 7, plat = '';
+  async function load() {
+    try { hist = (await (await fetch('/api/donations/history')).json()).donations || []; } catch (e) {}
+    try { goal = (await (await fetch('/api/goal')).json()).goal || null; } catch (e) {}
+    render();
+  }
+  function render() {
+    const now = Date.now(), d0 = new Date(); d0.setHours(0, 0, 0, 0);
+    const sum = (a) => a.filter(isRub).reduce((s, d) => s + (Number(d.amount) || 0), 0);
+    const today = hist.filter((d) => d.ts >= d0.getTime()), week = hist.filter((d) => now - d.ts < 7 * 864e5), prev = hist.filter((d) => now - d.ts >= 7 * 864e5 && now - d.ts < 14 * 864e5);
+    const avg = week.length ? sum(week) / week.filter(isRub).length || 0 : 0;
+    const diff = prev.length && sum(prev) ? Math.round((sum(week) / sum(prev) - 1) * 100) : null;
+    const tile = (t, v, s, extra) => '<div class="ui3-stat" style="cursor:default"><div style="flex:1"><small>' + t + '</small><b style="font-size:22px">' + v + '</b>' + (extra || '') + '<span>' + s + '</span></div></div>';
+    let g = '';
+    if (goal && goal.target) { const p = Math.min(100, Math.round((goal.amount || 0) / goal.target * 100)); g = tile('Цель «' + esc(goal.title || 'Сбор') + '»', p + '%', rub(goal.amount) + ' из ' + rub(goal.target), '<div class="ui3-goalbar"><i style="width:' + p + '%"></i></div>'); }
+    else g = tile('Цель сбора', '—', 'Не задана — вкладка «Алерты» → «Цель сбора»');
+    document.getElementById('donStats').innerHTML =
+      tile('Сегодня', rub(sum(today)), today.length + ' ' + plural(today.length, 'донат', 'доната', 'донатов')) +
+      tile('За 7 дней', rub(sum(week)), week.length + ' ' + plural(week.length, 'донат', 'доната', 'донатов') + (diff != null ? ' · ' + (diff >= 0 ? '+' : '') + diff + '% к прошлой неделе' : '')) +
+      tile('Средний донат', avg ? rub(avg) : '—', 'за 7 дней') + g;
+    // топ
+    const src = topDays ? hist.filter((d) => now - d.ts < topDays * 864e5) : hist;
+    const by = new Map(); src.filter(isRub).forEach((d) => { const k = String(d.username || 'Аноним'); by.set(k, (by.get(k) || 0) + (Number(d.amount) || 0)); });
+    const top = [...by.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    document.getElementById('donTop').innerHTML = top.length ? top.map(([n, a], i) => '<div class="ui3-row"><span class="rank">' + (i + 1) + '</span><div class="l"><b>' + esc(n) + '</b></div><span class="amt">' + rub(a) + '</span></div>').join('') : '<div class="ui3-empty">Пока никого</div>';
+    filter();
+  }
+  function filter() {
+    const q = (document.getElementById('donSearch').value || '').trim().toLowerCase();
+    sec.querySelectorAll('.donation-item').forEach((it) => { it.hidden = !!((plat && it.dataset.platform !== plat) || (q && !it.textContent.toLowerCase().includes(q))); });
+  }
+  const seg = (id, fn) => { const el = document.getElementById(id); el.addEventListener('click', (e) => { const b = e.target.closest('span[data-v]'); if (!b) return; el.querySelectorAll('span').forEach((x) => x.classList.toggle('on', x === b)); fn(b.dataset.v); }); };
+  seg('donFilter', (v) => { plat = v; filter(); });
+  seg('donTopScope', (v) => { topDays = +v; render(); });
+  document.getElementById('donSearch').addEventListener('input', filter);
+  document.getElementById('ui3DonTest').addEventListener('click', async () => { await fetch('/api/donation-alert/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); if (window.ui3Toast) window.ui3Toast('Тестовый донат отправлен в оверлей (в историю не попадает)'); });
+  window.ui3DonationsChanged = () => setTimeout(load, 300);
+  const feed = document.getElementById('donationsFeed');
+  if (feed) new MutationObserver(() => setTimeout(filter, 0)).observe(feed, { childList: true });
+  document.querySelectorAll('.nav-item[data-tab="donations"]').forEach((n) => n.addEventListener('click', load));
+  load();
+})();

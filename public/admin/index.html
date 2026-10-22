@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=125">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=2">
+<link rel="stylesheet" href="ui3.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -574,128 +574,57 @@
     </section>
 
     <section class="tab-section" id="tab-voice">
-      <h1 class="tab-title">Озвучка</h1>
-      <p class="tab-description">Локальная озвучка сообщений чата через Piper TTS (офлайн, без облачных API). Настройки применяются на оверлее сразу после «Сохранить».</p>
-
-      <div class="card">
-        <h2 class="section-title">Озвучка чата</h2>
-        <div class="toggle-row">
-          <span class="toggle-row-label">Включить озвучку чата</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="ttsEnabled">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">Функции</h2>
-
-        <div class="toggle-row">
-          <span class="toggle-row-label">Читать ник перед сообщением</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="ttsReadNickname">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-row">
-          <span class="toggle-row-label">Игнорировать ботов (StreamElements, Nightbot, Streamlabs и т.д.)</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="ttsIgnoreBots">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="toggle-row">
-          <span class="toggle-row-label">Максимальная длина сообщения</span>
-          <div class="toggle-row-extra">
-            <input type="number" id="ttsMaxLength" min="20" max="500" step="10">
-            <span class="toggle-row-suffix">симв.</span>
+      <div class="page-head"><div><h1 class="tab-title">Озвучка</h1><p class="tab-description">Зрители пишут в чат — Overdeck читает сообщения вслух прямо в оверлее.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="ttsSaved"></span><button class="btn btn-secondary" id="btnTtsVoicePreview" type="button">Прослушать голос</button><button class="btn btn-secondary" id="btnTtsStop" type="button">Остановить озвучку</button></div></div>
+      <div class="ui3-grid voice-grid">
+        <div class="ui3-col">
+          <div class="card ui3-card"><div class="ui3-row ui3-main-toggle"><div class="ui3-ico acc"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2M12 19v3"/></svg></div><div class="l"><b>Озвучка чата</b><span>Читать сообщения зрителей вслух</span></div><label class="toggle-switch"><input type="checkbox" id="ttsEnabled"><span class="toggle-slider"></span></label></div>
+            <div class="ui3-row"><div class="l"><b>Голос</b><span>Выбор голоса — справа в каталоге или здесь</span></div><select id="ttsVoice" class="ui3-select"></select></div></div>
+          <div class="card ui3-card"><div class="ui3-ch"><h3>Что читать</h3></div>
+            <div class="ui3-row"><div class="l"><b>Ник перед сообщением</b><span>«neon_fox пишет: …»</span></div><label class="toggle-switch"><input type="checkbox" id="ttsReadNickname"><span class="toggle-slider"></span></label></div>
+            <div class="ui3-row"><div class="l"><b>Пропускать ботов</b><span>StreamElements, Nightbot, Streamlabs и др.</span></div><label class="toggle-switch"><input type="checkbox" id="ttsIgnoreBots"><span class="toggle-slider"></span></label></div>
+            <div class="ui3-row"><div class="l"><b>По очереди</b><span>Не читать сообщения одновременно</span></div><label class="toggle-switch"><input type="checkbox" id="ttsQueueEnabled"><span class="toggle-slider"></span></label></div>
+            <div class="ui3-row"><div class="l"><b>Максимум символов</b><span>Длинные сообщения обрезаются</span></div><div class="ui3-num"><input type="number" id="ttsMaxLength" min="20" max="500" step="10"><span>симв.</span></div></div>
           </div>
-        </div>
-
-        <div class="toggle-row">
-          <span class="toggle-row-label">Очередь сообщений (не читать накладываясь)</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="ttsQueueEnabled">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">Каталог голосов</h2>
-        <p class="card-hint">Голоса скачиваются кнопкой прямо с Hugging Face в папку <code>voices</code> (по ~60 МБ). Любой свой голос Piper (<code>.onnx</code> + <code>.onnx.json</code>) можно просто положить в эту папку и обновить страницу — он появится в списке. Голоса «онлайн» (Microsoft Edge) ничего не скачивают и звучат естественнее, но им нужен интернет; после обновления проекта один раз выполни в папке проекта <code>npm install</code>. «Экспериментальные» — любительские модели: могут звучать менее ровно или не заработать на старой версии Piper, сначала нажми «Прослушать».</p>
-        <div id="ttsCatalog"></div>
-        <div class="form-message" id="ttsCatalogMessage"></div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">Игнорируемые слова</h2>
-        <p class="card-hint">Если сообщение содержит любое из этих слов — оно не озвучивается.</p>
-        <div class="word-input-row">
-          <input type="text" id="ttsWordInput" placeholder="Слово или несколько через запятую">
-          <button class="btn btn-secondary" id="btnAddWord" type="button">Добавить</button>
-        </div>
-        <div class="word-chips" id="ttsWordChips"></div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">Голос</h2>
-        <div class="field">
-          <label for="ttsVoice">Голос Piper</label>
-          <select id="ttsVoice"></select>
-          <div style="margin-top:8px"><button class="btn-tiny" id="btnTtsVoicePreview" type="button">▶ Прослушать голос</button></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="section-title">Настройки синтеза</h2>
-
-        <div class="field">
-          <label>Скорость речи (length_scale)</label>
-          <div class="slider-row">
-            <input type="range" id="ttsLengthScale" min="0.5" max="2.0" step="0.05">
-            <span class="slider-value" id="ttsLengthScaleValue">1.0</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Вариативность голоса (noise_scale)</label>
-          <div class="slider-row">
-            <input type="range" id="ttsNoiseScale" min="0" max="1" step="0.01">
-            <span class="slider-value" id="ttsNoiseScaleValue">0.667</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Вариативность произношения (noise_w_scale)</label>
-          <div class="slider-row">
-            <input type="range" id="ttsNoiseWScale" min="0" max="1" step="0.01">
-            <span class="slider-value" id="ttsNoiseWScaleValue">0.8</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Громкость</label>
-          <div class="slider-row">
+          <div class="card ui3-card"><div class="ui3-ch"><h3>Звук</h3></div>
+            <div class="ui3-row ui3-srow"><div class="l"><b>Громкость</b></div><div class="slider-row ui3-slider">
             <input type="range" id="ttsVolume" min="0" max="2" step="0.05">
             <span class="slider-value" id="ttsVolumeValue">1.0</span>
-          </div>
-        </div>
-        <div class="field">
-          <label>Пауза между предложениями, сек</label>
-          <div class="slider-row">
+          </div></div>
+            <div class="ui3-row ui3-srow"><div class="l"><b>Скорость речи</b><span>Меньше — быстрее</span></div><div class="slider-row ui3-slider">
+            <input type="range" id="ttsLengthScale" min="0.5" max="2.0" step="0.05">
+            <span class="slider-value" id="ttsLengthScaleValue">1.0</span>
+          </div></div>
+            <div class="ui3-row ui3-srow"><div class="l"><b>Пауза между предложениями</b><span>Секунды</span></div><div class="slider-row ui3-slider">
             <input type="range" id="ttsSentenceSilence" min="0" max="2" step="0.05">
             <span class="slider-value" id="ttsSentenceSilenceValue">0.2</span>
+          </div></div>
+            <details class="ui3-more"><summary>Тонкая настройка голосов Piper</summary>
+              <div class="ui3-row ui3-srow"><div class="l"><b>Вариативность голоса</b><span>noise_scale</span></div><div class="slider-row ui3-slider">
+            <input type="range" id="ttsNoiseScale" min="0" max="1" step="0.01">
+            <span class="slider-value" id="ttsNoiseScaleValue">0.667</span>
+          </div></div>
+              <div class="ui3-row ui3-srow"><div class="l"><b>Вариативность произношения</b><span>noise_w_scale</span></div><div class="slider-row ui3-slider">
+            <input type="range" id="ttsNoiseWScale" min="0" max="1" step="0.01">
+            <span class="slider-value" id="ttsNoiseWScaleValue">0.8</span>
+          </div></div>
+            </details>
+            <div class="ui3-row"><div class="l"><span>Все настройки сохраняются сами</span></div><button class="btn btn-ghost btn-sm" id="btnTtsReset" type="button">Сбросить по умолчанию</button><button class="btn btn-primary ui3-hide" id="btnTtsSave" type="button">Сохранить</button></div>
+            <div class="form-message" id="ttsFormMessage" style="margin:0 18px 12px"></div>
           </div>
+          <div class="card ui3-card"><div class="ui3-ch"><div><h3>Не читать сообщения со словами</h3><div class="sub">Если в сообщении есть слово из списка — оно не озвучивается</div></div></div>
+            <div style="padding:14px 18px">
+              <div class="word-input-row"><input type="text" id="ttsWordInput" placeholder="Слово или несколько через запятую"><button class="btn btn-secondary" id="btnAddWord" type="button">Добавить</button></div>
+              <div class="word-chips" id="ttsWordChips"></div>
+            </div></div>
+        </div>
+        <div class="card ui3-card voice-catalog"><div class="ui3-ch"><div><h3>Голоса</h3><div class="sub" id="ttsCatCount"></div></div>
+            <div class="r"><div class="ui3-seg" id="ttsCatEngine"><span class="on" data-v="">Все</span><span data-v="edge">Онлайн · Edge</span><span data-v="piper">Офлайн · Piper</span><span data-v="silero">Silero</span></div><input type="search" id="ttsCatSearch" class="ui3-search" placeholder="Найти голос"></div></div>
+          <div class="ui3-cat-hint"><b>Онлайн (Edge)</b> — звучат естественнее, нужен интернет. <b>Piper</b> — без интернета, скачиваются по кнопке (~60 МБ). <b>Silero</b> — без интернета, нужен Python (<code>install-silero.bat</code>). Свой голос Piper (<code>.onnx</code> + <code>.onnx.json</code>) — положи в папку <code>voices</code> и обнови страницу.</div>
+          <div id="ttsCatalog" class="ui3-voices"></div>
+          <div class="form-message" id="ttsCatalogMessage" style="margin:0 18px 14px"></div>
         </div>
       </div>
-
-      <div class="actions">
-        <button class="btn btn-primary" id="btnTtsSave" type="button">Сохранить</button>
-        <button class="btn btn-secondary" id="btnTtsReset" type="button">Сбросить к дефолту</button>
-        <button class="btn btn-danger" id="btnTtsStop" type="button">Остановить озвучку</button>
-      </div>
-      <div class="form-message" id="ttsFormMessage"></div>
     </section>
 
     <section class="tab-section" id="tab-widgets">
@@ -989,23 +918,19 @@
     </section>
 
     <section class="tab-section" id="tab-donations">
-      <h1 class="tab-title">Донаты</h1>
-      <p class="tab-description">Донаты с DonationAlerts и DonateX в реальном времени, с историей на диске.</p>
-
-      <div class="donations-layout">
-        <div class="donations-feed-col">
-          <div class="donations-feed-header">
-            <h2 class="section-title">Лента донатов</h2>
-            <button class="btn btn-danger" id="btnDonationsReset" type="button">Сбросить историю</button>
-          </div>
+      <div class="page-head"><div><h1 class="tab-title">Донаты</h1><p class="tab-description">Донаты с DonationAlerts и DonateX в одной ленте. История хранится на этом ПК.</p></div>
+        <div class="page-actions"><button class="btn btn-secondary" id="ui3DonTest" type="button">Тестовый донат</button></div></div>
+      <div class="ui3-stats" id="donStats"></div>
+      <div class="ui3-grid don-grid">
+        <div class="card ui3-card">
+          <div class="ui3-ch"><h3>Лента</h3><div class="r"><div class="ui3-seg" id="donFilter"><span class="on" data-v="">Все</span><span data-v="donationalerts">DonationAlerts</span><span data-v="donatex">DonateX</span></div><input type="search" class="ui3-search" id="donSearch" placeholder="Ник или сообщение"><button class="btn btn-ghost btn-sm" id="btnDonationsReset" type="button">Очистить историю</button></div></div>
           <div class="donations-feed" id="donationsFeed">
-            <div class="donations-feed-empty" id="donationsFeedEmpty">Донатов пока не было.</div>
+            <div class="donations-feed-empty" id="donationsFeedEmpty"><b>Донатов пока не было</b>Подключи DonationAlerts или DonateX справа — новые донаты появятся здесь сразу. Как выглядит алерт, можно проверить кнопкой «Тестовый донат».</div>
           </div>
         </div>
-
-        <div class="donations-platforms-col">
-          <h2 class="section-title">Подключение платформ</h2>
-
+        <div class="ui3-col">
+          <div class="card ui3-card"><div class="ui3-ch"><h3>Топ донатеров</h3><div class="r"><div class="ui3-seg" id="donTopScope"><span class="on" data-v="7">Неделя</span><span data-v="0">Всё время</span></div></div></div><div id="donTop"></div></div>
+          <div class="card ui3-card don-platforms"><div class="ui3-ch"><h3>Площадки</h3></div>
           <div class="platform-card" id="platformCardDonateX" data-platform="donatex">
             <div class="platform-card-header">
               <span class="platform-dot" id="donateXDot"></span>
@@ -1075,24 +1000,165 @@
               <div class="form-message" id="daMessage"></div>
             </div>
           </div>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="tab-section" id="tab-chatbot">
-      <h1 class="tab-title">Чат-бот</h1>
-      <p class="tab-description">Команды, сообщения по таймеру и защита чата от оскорблений.</p>
-
-      <!-- Вся авторизация бота спрятана за одной кнопкой справа (слева останется место под будущие функции бота). -->
-      <div class="chatbot-toolbar">
+      <div class="page-head"><div><h1 class="tab-title">Чат-бот</h1><p class="tab-description">Команды, сообщения по таймеру и защита чата от оскорблений.</p></div>
+        <div class="page-actions"><button class="btn btn-primary" id="ui3BotNewCmd" type="button">+ Новая команда</button></div></div>
+      <div class="ui3-hide"><div class="chatbot-toolbar">
         <button class="chatbot-auth-toggle" id="btnChatBotAuthToggle" type="button" aria-expanded="false" data-state="disconnected" title="Не подключён">
           <span class="chatbot-status-dot"></span>
           <span>Авторизация бота</span>
           <svg class="chatbot-auth-chevron" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
       </div>
-      <div class="chatbot-auth-panel" id="chatBotAuthPanel" style="display:none;">
-      <div class="card" style="max-width:640px;">
+</div>
+      <div class="ui3-tabs" id="botTabs">
+        <span class="on" data-pane="cmd">Команды <i id="botCntCmd"></i></span>
+        <span data-pane="tim">Таймеры <i id="botCntTim"></i></span>
+        <span data-pane="mod">Модерация</span>
+        <span data-pane="av">Команды аватаров</span>
+        <span data-pane="auth">Подключение бота</span>
+      </div>
+      <div class="ui3-grid bot-grid">
+        <div class="bot-panes">
+          <div class="bot-pane" data-pane="cmd">
+      <div class="card" id="botCommandsCard">
+        <div class="chat-card-head">
+          <h2 class="section-title" style="margin:0;">Команды бота</h2>
+          <button class="btn btn-primary" id="btnBotCommandAdd" type="button">Добавить команду</button>
+        </div>
+        <p class="card-hint">Зритель пишет команду — бот отвечает в чат. Одна команда — не чаще раза в 3 секунды.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Если сообщение зрителя начинается с команды из списка, бот отвечает в чат. Команды, которых нет в списке, бот игнорирует. Отвечает только подключённый бот (индикатор «Чат бот» вверху) с токеном, у которого есть право <code>user:write:chat</code>; одну и ту же команду — не чаще раза в 3 секунды.</p></details>
+
+        <div class="bot-cmd-form" id="botCommandForm" style="display:none;">
+          <div class="field">
+            <label for="botCmdCommand" id="botCmdFormTitle">Команда</label>
+            <input type="text" id="botCmdCommand" maxlength="32" placeholder="!привет" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="botCmdResponse">Ответ</label>
+            <textarea id="botCmdResponse" rows="3" maxlength="500" placeholder="Привет, {user}!"></textarea>
+            <p class="card-hint" style="margin-top:6px;">
+              Плейсхолдеры: <code>{user}</code> — ник того, кто написал, <code>{channel}</code> — название канала. Вставить:
+              <button class="btn-tiny" type="button" data-bot-placeholder="{user}">{user}</button>
+              <button class="btn-tiny" type="button" data-bot-placeholder="{channel}">{channel}</button><br>
+              В чате Twitch нет переноса строк — если в ответе несколько строк, бот склеит их пробелом. До 500 символов.
+            </p>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" id="btnBotCmdSave" type="button">Сохранить</button>
+            <button class="btn btn-secondary" id="btnBotCmdCancel" type="button">Отмена</button>
+          </div>
+          <div class="form-message" id="botCmdMessage"></div>
+        </div>
+
+        <table class="bot-cmd-table">
+          <thead><tr><th>Команда</th><th>Ответ</th><th></th></tr></thead>
+          <tbody id="botCommandsBody"><tr><td colspan="3" class="card-hint">Загружаем…</td></tr></tbody>
+        </table>
+        <div class="form-message" id="botCommandsStatus"></div>
+      </div>
+
+</div>
+          <div class="bot-pane" data-pane="tim" hidden>
+      <div class="card" id="botTimersCard">
+        <div class="chat-card-head">
+          <h2 class="section-title" style="margin:0;">Сообщения по таймеру</h2>
+          <button class="btn btn-primary" id="btnBotTimerAdd" type="button">Добавить сообщение</button>
+        </div>
+        <p class="card-hint">Бот сам повторяет сообщения в чате раз в 15–60 минут, пока подключён.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Бот сам отправляет ваши сообщения в чат раз в 15–60 минут (свой интервал у каждого сообщения), пока он подключён. Первая отправка — через один интервал после подключения. Нужен токен бота с правом <code>user:write:chat</code>. В тексте можно использовать <code>{channel}</code> — название канала.</p></details>
+        <div class="toggle-row">
+          <span class="toggle-row-label">Отправлять только пока идёт стрим</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="botTimersOnlyLive">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="bot-cmd-form" id="botTimerForm" style="display:none;">
+          <div class="field">
+            <label for="botTimerText" id="botTimerFormTitle">Сообщение</label>
+            <textarea id="botTimerText" rows="3" maxlength="500" placeholder="Например: Подписывайтесь на канал и заходите в Discord!"></textarea>
+            <p class="card-hint" style="margin-top:6px;">До 500 символов. В чате Twitch нет переноса строк — строки текста бот склеит пробелом.</p>
+          </div>
+          <div class="field">
+            <label for="botTimerInterval">Раз в (минут, от 15 до 60)</label>
+            <input type="number" id="botTimerInterval" min="15" max="60" step="1" value="20" style="max-width:140px;">
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-row-label">Сообщение включено</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="botTimerEnabled" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="actions">
+            <button class="btn btn-primary" id="btnBotTimerSave" type="button">Сохранить</button>
+            <button class="btn btn-secondary" id="btnBotTimerCancel" type="button">Отмена</button>
+          </div>
+          <div class="form-message" id="botTimerMessage"></div>
+        </div>
+
+        <table class="bot-cmd-table">
+          <thead><tr><th>Сообщение</th><th>Раз в</th><th>Следующее</th><th>Вкл.</th><th></th></tr></thead>
+          <tbody id="botTimersBody"><tr><td colspan="5" class="card-hint">Загружаем…</td></tr></tbody>
+        </table>
+        <div class="form-message" id="botTimersStatus"></div>
+      </div>
+
+</div>
+          <div class="bot-pane" data-pane="mod" hidden>
+      <div class="card" id="autoModCard">
+        <div class="chat-card-head">
+          <h2 class="section-title" style="margin:0;">Модерация чата</h2>
+          <button class="btn btn-primary" id="btnAutoMod" type="button">Автомодерация</button>
+        </div>
+        <p class="card-hint">Бот сам удаляет сообщения со словами из списка. Аккаунт бота должен быть модератором канала.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Бот сам удаляет сообщения, в которых есть слово из списка (оскорбления по расе и ориентации). Список открывается кнопкой «Автомодерация» и на этой странице не показывается. Нужно, чтобы аккаунт бота был <b>модератором канала</b>, а у токена бота было право <code>moderator:manage:chat_messages</code> (не <code>channel:moderate</code> — для удаления сообщений Twitch требует именно первое). Сообщения стримера, модераторов и самого бота не проверяются.</p></details>
+        <div class="form-message" id="autoModStatus"></div>
+        <div class="form-message" id="autoModWarning"></div>
+      </div>
+
+</div>
+          <div class="bot-pane" data-pane="av" hidden>
+      <div class="card" id="avatarCommandsCard">
+        <div class="chat-card-head">
+          <h2 class="section-title" style="margin:0;">Команды чат-аватаров</h2>
+          <label class="toggle-switch" title="Включить команды аватаров">
+            <input type="checkbox" id="avatarCmdEnabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <p class="card-hint">Зритель пишет команду — его герой на оверлее меняется или играет анимацию.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Зритель пишет команду — и его герой на оверлее меняется или играет анимацию. Например <code>!аватар</code> — случайный аватар, <code>!герой самурай</code> — выбрать по названию, <code>!прыжок</code> — прыжок. Ответ в чат отправляет подключённый бот (с правом <code>user:write:chat</code>); без бота команды всё равно работают на оверлее. Слова не должны совпадать с «Командами бота». В ответах можно использовать <code>{user}</code> — ник, <code>{hero}</code> — название героя, <code>{level}</code> — уровень, <code>{anim}</code> — название анимации.</p></details>
+        <div class="form-message" id="avatarCmdWarning"></div>
+        <div class="avatar-cmd-list" id="avatarCmdList"><p class="card-hint">Загружаем…</p></div>
+        <div class="avatar-unlock" id="avatarUnlock">
+          <div class="avatar-unlock-title">Разблокировка аватаров за баллы канала</div>
+          <p class="card-hint">Зритель тратит баллы на награду — сервер сам узнаёт, кто это, открывает ему <b>случайный закрытый аватар</b> (это герой, у которого на списке плиток <b>снята галочка «выдавать»</b>; обычным чаттерам такие не достаются) и пишет в чат (от имени бота), какой аватар он получил и какой командой на него сменить. Награду создайте в Twitch (Панель управления → Баллы канала → Награды) с <b>точно таким же названием</b>, как ниже. Нужен вход через Twitch на вкладке «Авторизация» (событие баллов канала).</p>
+          <div class="toggle-row">
+            <span class="toggle-row-label">Закрыть аватары<small class="toggle-row-hint">Менять аватар командами можно только на открытые: тот, что выдан при первом сообщении, выбранные из админки и полученные за баллы. Выключено — как раньше, любой аватар доступен всем.</small></span>
+            <label class="toggle-switch"><input type="checkbox" id="unlockLock"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="avatar-unlock-row"><label for="unlockReward">Название награды</label><input type="text" id="unlockReward" maxlength="60" placeholder="Разблокировать аватар" autocomplete="off"></div>
+          <div class="avatar-unlock-row avatar-unlock-row-wide"><label for="unlockText">Сообщение бота</label><input type="text" id="unlockText" maxlength="300" autocomplete="off"></div>
+          <p class="card-hint" style="margin:4px 0 8px;">Подстановки: <code>{user}</code> — ник, <code>{hero}</code> — открытый аватар, <code>{command}</code> — команда выбора аватара.</p>
+          <div class="actions"><button class="btn btn-primary" id="btnUnlockSave" type="button">Сохранить</button></div>
+          <div class="avatar-unlock-row avatar-unlock-give"><label for="unlockGiveLogin">Выдать вручную</label><input type="text" id="unlockGiveLogin" maxlength="40" placeholder="ник зрителя" autocomplete="off"><button class="btn btn-secondary" id="btnUnlockGive" type="button">Открыть случайный</button></div>
+          <div class="form-message" id="unlockMessage"></div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" id="btnAvatarCmdSave" type="button">Сохранить</button>
+          <button class="btn btn-secondary" id="btnAvatarCmdReset" type="button">По умолчанию</button>
+        </div>
+        <div class="form-message" id="avatarCmdMessage"></div>
+      </div>
+
+</div>
+          <div class="bot-pane" data-pane="auth" hidden>
+      <div class="chatbot-auth-panel" id="chatBotAuthPanel" >
+      <div class="card">
         <h2 class="section-title">Данные бота</h2>
         <p class="card-hint">Боту нужен отдельный Twitch-аккаунт (не твой основной) и его токен.</p>
         <div class="field">
@@ -1139,7 +1205,7 @@
         <div class="form-message" id="chatBotRefreshStatus"></div>
       </div>
 
-      <div class="card" style="max-width:640px;">
+      <div class="card">
         <h2 class="section-title">Где взять токен</h2>
         <p class="card-hint">Токен бота должен включать scopes: <code>user:read:chat</code> (читать сообщения), <code>user:write:chat</code> (писать в чат), <code>user:bot</code> (разрешение быть ботом в EventSub). Для чтения сейчас обязателен только <code>user:read:chat</code>; остальные пригодятся, когда бот начнёт отвечать.</p>
         <p class="card-hint"><b>Быстрый способ для теста — Twitch CLI:</b></p>
@@ -1152,141 +1218,14 @@
 
       </div>
 
-      <div class="chatbot-cols">
-        <div class="chatbot-col-main">
-      <!-- Конструктор команд: ниже блока авторизации. Бот отвечает на сообщения зрителей, которые начинаются с команды из этого списка. -->
-      <div class="card" id="botCommandsCard" style="max-width:640px;">
-        <div class="chat-card-head">
-          <h2 class="section-title" style="margin:0;">Команды бота</h2>
-          <button class="btn btn-primary" id="btnBotCommandAdd" type="button">Добавить команду</button>
+</div>
         </div>
-        <p class="card-hint">Если сообщение зрителя начинается с команды из списка, бот отвечает в чат. Команды, которых нет в списке, бот игнорирует. Отвечает только подключённый бот (индикатор «Чат бот» вверху) с токеном, у которого есть право <code>user:write:chat</code>; одну и ту же команду — не чаще раза в 3 секунды.</p>
-
-        <div class="bot-cmd-form" id="botCommandForm" style="display:none;">
-          <div class="field">
-            <label for="botCmdCommand" id="botCmdFormTitle">Команда</label>
-            <input type="text" id="botCmdCommand" maxlength="32" placeholder="!привет" autocomplete="off">
-          </div>
-          <div class="field">
-            <label for="botCmdResponse">Ответ</label>
-            <textarea id="botCmdResponse" rows="3" maxlength="500" placeholder="Привет, {user}!"></textarea>
-            <p class="card-hint" style="margin-top:6px;">
-              Плейсхолдеры: <code>{user}</code> — ник того, кто написал, <code>{channel}</code> — название канала. Вставить:
-              <button class="btn-tiny" type="button" data-bot-placeholder="{user}">{user}</button>
-              <button class="btn-tiny" type="button" data-bot-placeholder="{channel}">{channel}</button><br>
-              В чате Twitch нет переноса строк — если в ответе несколько строк, бот склеит их пробелом. До 500 символов.
-            </p>
-          </div>
-          <div class="actions">
-            <button class="btn btn-primary" id="btnBotCmdSave" type="button">Сохранить</button>
-            <button class="btn btn-secondary" id="btnBotCmdCancel" type="button">Отмена</button>
-          </div>
-          <div class="form-message" id="botCmdMessage"></div>
-        </div>
-
-        <table class="bot-cmd-table">
-          <thead><tr><th>Команда</th><th>Ответ</th><th></th></tr></thead>
-          <tbody id="botCommandsBody"><tr><td colspan="3" class="card-hint">Загружаем…</td></tr></tbody>
-        </table>
-        <div class="form-message" id="botCommandsStatus"></div>
-      </div>
-
-      <!-- Автомодерация: сам список слов на странице НЕ показывается — он открывается только в модальном окне кнопкой «Автомодерация». -->
-      <div class="card" id="autoModCard" style="max-width:640px;">
-        <div class="chat-card-head">
-          <h2 class="section-title" style="margin:0;">Модерация чата</h2>
-          <button class="btn btn-primary" id="btnAutoMod" type="button">Автомодерация</button>
-        </div>
-        <p class="card-hint">Бот сам удаляет сообщения, в которых есть слово из списка (оскорбления по расе и ориентации). Список открывается кнопкой «Автомодерация» и на этой странице не показывается. Нужно, чтобы аккаунт бота был <b>модератором канала</b>, а у токена бота было право <code>moderator:manage:chat_messages</code> (не <code>channel:moderate</code> — для удаления сообщений Twitch требует именно первое). Сообщения стримера, модераторов и самого бота не проверяются.</p>
-        <div class="form-message" id="autoModStatus"></div>
-        <div class="form-message" id="autoModWarning"></div>
-      </div>
-
-      <!-- Сообщения по таймеру: бот сам повторяет ваши сообщения в чате раз в 15–60 минут, пока подключён. -->
-      <div class="card" id="botTimersCard" style="max-width:640px;">
-        <div class="chat-card-head">
-          <h2 class="section-title" style="margin:0;">Сообщения по таймеру</h2>
-          <button class="btn btn-primary" id="btnBotTimerAdd" type="button">Добавить сообщение</button>
-        </div>
-        <p class="card-hint">Бот сам отправляет ваши сообщения в чат раз в 15–60 минут (свой интервал у каждого сообщения), пока он подключён. Первая отправка — через один интервал после подключения. Нужен токен бота с правом <code>user:write:chat</code>. В тексте можно использовать <code>{channel}</code> — название канала.</p>
-        <div class="toggle-row">
-          <span class="toggle-row-label">Отправлять только пока идёт стрим</span>
-          <label class="toggle-switch">
-            <input type="checkbox" id="botTimersOnlyLive">
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-
-        <div class="bot-cmd-form" id="botTimerForm" style="display:none;">
-          <div class="field">
-            <label for="botTimerText" id="botTimerFormTitle">Сообщение</label>
-            <textarea id="botTimerText" rows="3" maxlength="500" placeholder="Например: Подписывайтесь на канал и заходите в Discord!"></textarea>
-            <p class="card-hint" style="margin-top:6px;">До 500 символов. В чате Twitch нет переноса строк — строки текста бот склеит пробелом.</p>
-          </div>
-          <div class="field">
-            <label for="botTimerInterval">Раз в (минут, от 15 до 60)</label>
-            <input type="number" id="botTimerInterval" min="15" max="60" step="1" value="20" style="max-width:140px;">
-          </div>
-          <div class="toggle-row">
-            <span class="toggle-row-label">Сообщение включено</span>
-            <label class="toggle-switch">
-              <input type="checkbox" id="botTimerEnabled" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-          <div class="actions">
-            <button class="btn btn-primary" id="btnBotTimerSave" type="button">Сохранить</button>
-            <button class="btn btn-secondary" id="btnBotTimerCancel" type="button">Отмена</button>
-          </div>
-          <div class="form-message" id="botTimerMessage"></div>
-        </div>
-
-        <table class="bot-cmd-table">
-          <thead><tr><th>Сообщение</th><th>Раз в</th><th>Следующее</th><th>Вкл.</th><th></th></tr></thead>
-          <tbody id="botTimersBody"><tr><td colspan="5" class="card-hint">Загружаем…</td></tr></tbody>
-        </table>
-        <div class="form-message" id="botTimersStatus"></div>
-      </div>
-
-      <div class="card" style="max-width:640px;">
+        <aside class="ui3-col">
+          <div class="card ui3-card"><div class="ui3-row"><div class="ui3-ico" id="botSideIco"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg></div><div class="l"><b id="botSideTitle">Бот не подключён</b><span id="botSideSub">Подключи бота, чтобы он отвечал в чате</span></div><button class="btn btn-secondary btn-sm" type="button" data-botpane="auth">Настроить</button></div></div>
+      <div class="card">
         <h2 class="section-title">Последние сообщения чата</h2>
         <div class="chatbot-log" id="chatBotLog"><p class="card-hint">Подключи бота — здесь появятся сообщения.</p></div>
       </div>
-        </div>
-        <aside class="chatbot-col-side">
-      <!-- Команды чат-аватаров: действия над героем зрителя («!аватар» — случайный герой, «!прыжок»…). Отдельно от «Команд бота»: те — «слово → текст ответа». -->
-      <div class="card" id="avatarCommandsCard">
-        <div class="chat-card-head">
-          <h2 class="section-title" style="margin:0;">Команды чат-аватаров</h2>
-          <label class="toggle-switch" title="Включить команды аватаров">
-            <input type="checkbox" id="avatarCmdEnabled" checked>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
-        <p class="card-hint">Зритель пишет команду — и его герой на оверлее меняется или играет анимацию. Например <code>!аватар</code> — случайный аватар, <code>!герой самурай</code> — выбрать по названию, <code>!прыжок</code> — прыжок. Ответ в чат отправляет подключённый бот (с правом <code>user:write:chat</code>); без бота команды всё равно работают на оверлее. Слова не должны совпадать с «Командами бота». В ответах можно использовать <code>{user}</code> — ник, <code>{hero}</code> — название героя, <code>{level}</code> — уровень, <code>{anim}</code> — название анимации.</p>
-        <div class="form-message" id="avatarCmdWarning"></div>
-        <div class="avatar-cmd-list" id="avatarCmdList"><p class="card-hint">Загружаем…</p></div>
-        <div class="avatar-unlock" id="avatarUnlock">
-          <div class="avatar-unlock-title">Разблокировка аватаров за баллы канала</div>
-          <p class="card-hint">Зритель тратит баллы на награду — сервер сам узнаёт, кто это, открывает ему <b>случайный закрытый аватар</b> (это герой, у которого на списке плиток <b>снята галочка «выдавать»</b>; обычным чаттерам такие не достаются) и пишет в чат (от имени бота), какой аватар он получил и какой командой на него сменить. Награду создайте в Twitch (Панель управления → Баллы канала → Награды) с <b>точно таким же названием</b>, как ниже. Нужен вход через Twitch на вкладке «Авторизация» (событие баллов канала).</p>
-          <div class="toggle-row">
-            <span class="toggle-row-label">Закрыть аватары<small class="toggle-row-hint">Менять аватар командами можно только на открытые: тот, что выдан при первом сообщении, выбранные из админки и полученные за баллы. Выключено — как раньше, любой аватар доступен всем.</small></span>
-            <label class="toggle-switch"><input type="checkbox" id="unlockLock"><span class="toggle-slider"></span></label>
-          </div>
-          <div class="avatar-unlock-row"><label for="unlockReward">Название награды</label><input type="text" id="unlockReward" maxlength="60" placeholder="Разблокировать аватар" autocomplete="off"></div>
-          <div class="avatar-unlock-row avatar-unlock-row-wide"><label for="unlockText">Сообщение бота</label><input type="text" id="unlockText" maxlength="300" autocomplete="off"></div>
-          <p class="card-hint" style="margin:4px 0 8px;">Подстановки: <code>{user}</code> — ник, <code>{hero}</code> — открытый аватар, <code>{command}</code> — команда выбора аватара.</p>
-          <div class="actions"><button class="btn btn-primary" id="btnUnlockSave" type="button">Сохранить</button></div>
-          <div class="avatar-unlock-row avatar-unlock-give"><label for="unlockGiveLogin">Выдать вручную</label><input type="text" id="unlockGiveLogin" maxlength="40" placeholder="ник зрителя" autocomplete="off"><button class="btn btn-secondary" id="btnUnlockGive" type="button">Открыть случайный</button></div>
-          <div class="form-message" id="unlockMessage"></div>
-        </div>
-        <div class="actions">
-          <button class="btn btn-primary" id="btnAvatarCmdSave" type="button">Сохранить</button>
-          <button class="btn btn-secondary" id="btnAvatarCmdReset" type="button">По умолчанию</button>
-        </div>
-        <div class="form-message" id="avatarCmdMessage"></div>
-      </div>
-
         </aside>
       </div>
     </section>
@@ -3201,10 +3140,10 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=140"></script>
+<script src="app.js?v=143"></script>
 <script src="guides-data.js?v=5"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=3"></script>
-<script src="ui3.js?v=2"></script>
+<script src="ui3.js?v=5"></script>
 </body>
 </html>

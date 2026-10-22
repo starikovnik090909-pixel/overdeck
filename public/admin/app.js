@@ -2497,7 +2497,7 @@
         const row = document.createElement('div');
         row.className = 'donor-manage-row';
         row.innerHTML = `
-          <span class="donor-manage-name">${donor.username}</span>
+          <span class="donor-manage-name">${String(donor.username).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]))}</span>
           <span class="donor-manage-amount">${Math.round(donor.amount)}</span>
           <button class="btn-tiny" type="button">Удалить</button>
         `;
@@ -3347,23 +3347,27 @@
     const item = document.createElement('div');
     item.className = 'donation-item';
     item.dataset.platform = donation.platform;
+    // ник и сообщение пишет донатер — только как текст, без HTML
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     item.innerHTML = `
       <div class="donation-icon">${PLATFORM_LABELS[donation.platform] || '?'}</div>
       <div class="donation-body">
         <div class="donation-top">
-          <span class="donation-username">${donation.username}</span>
-          <span class="donation-amount">${donation.amount} ${donation.currency}</span>
+          <span class="donation-username">${esc(donation.username)}</span>
+          <span class="donation-amount">${esc(Number(donation.amount).toLocaleString('ru-RU'))} ${donation.currency === 'RUB' || !donation.currency ? '₽' : esc(donation.currency)}</span>
           <span class="donation-time">${formatDonationTime(donation.ts)}</span>
         </div>
-        ${donation.message ? `<div class="donation-message">${donation.message}</div>` : ''}
+        ${donation.message ? `<div class="donation-message">${esc(donation.message)}</div>` : ''}
       </div>
     `;
+    item.dataset.ts = donation.ts; item.dataset.amount = donation.amount; item.dataset.currency = donation.currency || 'RUB'; item.dataset.user = donation.username || '';
     return item;
   }
 
   function onDonationReceived(donation) {
     if (donationsFeedEmpty.parentNode) donationsFeedEmpty.remove();
     donationsFeed.insertBefore(renderDonationItem(donation), donationsFeed.firstChild);
+    if (window.ui3DonationsChanged) window.ui3DonationsChanged();
   }
 
   async function loadDonationHistory() {
@@ -8746,19 +8750,41 @@
     } catch (e) { msg('Сетевая ошибка.', 'error'); }
   };
   document.getElementById('btnTtsVoicePreview').addEventListener('click', () => window.previewTtsVoice(document.getElementById('ttsVoice').value));
+  document.getElementById('ttsVoice').addEventListener('change', () => setTimeout(load, 50));
+  window.reloadTtsCatalog = () => load();
   let timer = null;
   async function load() {
     let d;
     try { d = await (await fetch('/api/tts/catalog')).json(); } catch (e) { return; }
+    const curVoice = (document.getElementById('ttsVoice') || {}).value;
+    const PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>';
     box.innerHTML = d.catalog.map((c) => {
       const st = c.install;
+      const ready = c.online || c.installed;
+      const on = ready && c.id === curVoice;
       let right;
-      if (c.online) right = `<span class="card-hint" style="margin:0">Онлайн</span> <button class="btn-tiny" data-pv="${c.id}" type="button">▶ Прослушать</button>`;
-      else if (c.installed) right = `<span class="card-hint" style="margin:0">Установлен</span> <button class="btn-tiny" data-pv="${c.id}" type="button">▶ Прослушать</button>`;
-      else if (st && st.state === 'run') right = `<span class="card-hint" style="margin:0">Скачивается… ${Math.min(99, Math.round(st.done / st.total * 100))}%</span>`;
-      else right = `${st && st.state === 'error' ? `<span class="card-hint" style="margin:0;color:#e0675f">Ошибка: ${st.error}</span> ` : ''}<button class="btn-tiny" data-dl="${c.id}" type="button">Скачать</button>`;
-      return `<div class="toggle-row"><span class="toggle-row-label"><span class="voice-tag voice-tag-${c.engine.toLowerCase()}" title="${c.engine === 'Edge' ? 'Microsoft Edge (онлайн)' : c.engine === 'Silero' ? 'Silero (офлайн, Python)' : 'Piper (офлайн)'}">${c.engine}</span><span class="voice-tag voice-tag-lang" title="${c.lang === 'ru' ? 'Родной русский голос' : 'Многоязычный (общий) голос'}">${c.lang === 'ru' ? 'RU' : 'ОБ'}</span> <b>${c.label}</b> · ${c.gender}${c.online ? ' · <i>онлайн</i>' : ''}${c.experimental ? ' · <i>экспериментальный</i>' : ''}<br><span class="card-hint" style="margin:0">${c.note}</span></span><div class="toggle-row-extra" style="gap:8px">${right}</div></div>`;
+      if (on) right = '<span class="ui3-chip acc">Выбран</span>';
+      else if (ready) right = `<button class="btn btn-secondary btn-sm" data-use="${c.id}" type="button">Выбрать</button>`;
+      else if (st && st.state === 'run') right = `<span class="ui3-chip">Скачивается… ${Math.min(99, Math.round(st.done / st.total * 100))}%</span>`;
+      else right = `<button class="btn btn-secondary btn-sm" data-dl="${c.id}" type="button">Скачать</button>`;
+      const eng = c.engine.toLowerCase();
+      const tags = [c.engine === 'Edge' ? 'Edge · онлайн' : c.engine === 'Silero' ? 'Silero · нужен Python' : 'Piper · без интернета', c.lang === 'ru' ? 'Русский' : 'Многоязычный'];
+      if (c.experimental) tags.push('Экспериментальный');
+      return `<div class="ui3-voice${on ? ' on' : ''}" data-engine="${eng}" data-search="${(c.label + ' ' + c.gender + ' ' + c.engine + ' ' + (c.note || '')).toLowerCase().replace(/"/g, '')}">
+        <div class="ui3-voice-top"><button class="ui3-play" type="button" ${ready ? `data-pv="${c.id}"` : 'disabled'} title="${ready ? 'Прослушать' : 'Сначала скачай голос'}">${PLAY}</button>
+        <div class="l"><b>${c.label}</b><span>${c.gender}</span></div>${right}</div>
+        <div class="ui3-voice-tags">${tags.map((t) => `<span class="ui3-chip">${t}</span>`).join('')}</div>
+        ${st && st.state === 'error' ? `<div class="ui3-voice-err">Ошибка: ${st.error}</div>` : c.note ? `<div class="ui3-voice-note">${c.note}</div>` : ''}
+      </div>`;
     }).join('');
+    box.querySelectorAll('[data-use]').forEach((b) => b.addEventListener('click', () => {
+      const sel = document.getElementById('ttsVoice');
+      if (!sel) return;
+      if (![...sel.options].some((o) => o.value === b.dataset.use)) { const o = document.createElement('option'); o.value = b.dataset.use; o.textContent = b.dataset.use; sel.appendChild(o); }
+      sel.value = b.dataset.use;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      load();
+    }));
     box.querySelectorAll('[data-dl]').forEach((b) => b.addEventListener('click', async () => {
       b.disabled = true;
       await fetch('/api/tts/voices/install', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: b.dataset.dl }) });
