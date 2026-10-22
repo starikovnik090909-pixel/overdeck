@@ -105,7 +105,7 @@
     });
     adminThemeList.querySelectorAll('[data-delete-theme]').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        if (!confirm('Удалить эту тему?')) return;
+        if (!await ui3Confirm('Удалить эту тему?')) return;
         try {
           const { ok, data } = await postJSON(`/api/admin-themes/${btn.dataset.deleteTheme}/delete`, {});
           if (ok && data.success) { renderAdminThemeList(data.adminThemes); applyActiveAdminTheme(data.adminThemes); }
@@ -901,7 +901,7 @@
       });
       const edit = mkBtn('Изменить', () => startAwardEdit(a));
       const del = mkBtn('Удалить', async () => {
-        if (!confirm(`Удалить награду «${a.title}»? Она пропадёт и у всех, кто её получил (${a.holders}).`)) return;
+        if (!await ui3Confirm(`Удалить награду «${a.title}»? Она пропадёт и у всех, кто её получил (${a.holders}).`)) return;
         try { const r = await pixelHeroRequest('/api/awards/delete', { id: a.id }); awdState.awards = r.awards; renderAwards(); awdMsg('Награда удалена.', 'success'); } catch (e) { awdMsg(e.message, 'error'); }
       });
       row.append(toggle, edit, del);
@@ -964,7 +964,7 @@
   awdEl('btnAwdGrantAll').addEventListener('click', async () => {
     const id = awdEl('awdGrantAward').value; if (!id) { awdMsg('Сначала создайте награду.', 'error'); return; }
     const a = awdState.awards.find((x) => x.id === id);
-    if (!confirm(`Выдать награду «${a ? a.title : ''}» ВСЕМ, у кого есть профиль (весь список игроков)?`)) return;
+    if (!await ui3Confirm(`Выдать награду «${a ? a.title : ''}» ВСЕМ, у кого есть профиль (весь список игроков)?`)) return;
     try { const r = await pixelHeroRequest('/api/awards/grant-all', { awardId: id }); awdMsg(`Выдано: ${r.granted} из ${r.total}` + (r.granted < r.total ? ' (у остальных награда уже была).' : '.'), 'success'); await loadAwards(); }
     catch (e) { awdMsg(e.message, 'error'); }
   });
@@ -1031,7 +1031,7 @@
       $('extSecret').placeholder = c.hasSecret ? 'Key сохранён (введите новый, чтобы заменить)' : 'Вставьте Key расширения';
       $('extSecretStatus').textContent = c.hasSecret ? 'сохранён' : 'не задан';
       $('extOwnerId').value = c.ownerId || '';
-      $('extOwnerHint').textContent = c.ownerIdEffective ? 'Сейчас используется ID канала: ' + c.ownerIdEffective + '.' : 'ID канала пока неизвестен: выполните вход через Twitch на вкладке «Авторизация» или впишите ID вручную.';
+      $('extOwnerHint').textContent = c.ownerIdEffective ? 'Сейчас используется ID канала: ' + c.ownerIdEffective + '.' : 'ID канала пока неизвестен: выполните вход через Twitch на вкладке «Подключения» или впишите ID вручную.';
       $('extTopSize').value = c.topSize; $('extInterval').value = c.intervalSec; $('extMaxBytes').value = c.maxBytes;
     }
     function renderState(d) {
@@ -1219,7 +1219,7 @@
         setOauthUI(data.twitch.oauth);
         setCredentialsSourceUI(data.twitch.credentialsSource);
         applyStatusPills(data.twitch.connected, data.streamLive);
-        if (data.chatBot) applyChatBotIndicators(data.chatBot); // индикатор «Чат бот» в шапке + точка на кнопке авторизации
+        if (data.chatBot) applyChatBotIndicators(data.chatBot); // индикатор «Чат-бот» в шапке + точка на кнопке авторизации
 
         // Живое превью на вкладке "Виджеты оверлея" — свежие данные зрителей
         // и текущие настройки содержимого виджетов (определены ниже по файлу,
@@ -1888,7 +1888,7 @@
       btn.dataset.tip = `${w.label}\n${on ? 'Включён — нажмите, чтобы убрать' : 'Выключен — нажмите, чтобы показать'}\nПКМ — настройки виджета`;
       btn.setAttribute('aria-label', w.label);
       btn.setAttribute('aria-pressed', String(on));
-      btn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WIDGET_ICONS[w.id] || WIDGET_ICON_FALLBACK}</svg>`;
+      btn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WIDGET_ICONS[w.id] || WIDGET_ICON_FALLBACK}</svg><span class="wlab">${w.label}</span><span class="wstate">${on ? 'на сцене' : 'скрыт'}</span>`;
       btn.addEventListener('click', () => {
         const nowOn = layoutState[w.id].enabled === false; // был выключен → включаем
         layoutState[w.id].enabled = nowOn;
@@ -1932,7 +1932,7 @@
         // Настоящее содержимое вместо ярлыка — реально реагирует на изменение
         // размера блока (см. refreshActivityPreview), как и на оверлее в OBS.
         el.classList.add('preview-widget-live');
-        el.innerHTML = `<div class="pv-activity-list"></div>${RESIZE_HANDLES_HTML}`;
+        el.innerHTML = `<div class="preview-widget-label pv-live-label">${w.label}</div><div class="pv-activity-list"></div>${RESIZE_HANDLES_HTML}`;
       } else {
         el.innerHTML = `<div class="preview-widget-label">${w.label}</div>${RESIZE_HANDLES_HTML}`;
       }
@@ -2302,7 +2302,7 @@
     if (card.imageUrl) actions.appendChild(mk('Убрать картинку', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/image/remove`), 'Картинка убрана.')));
     actions.appendChild(mk('↑ Выше', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/move`, { dir: -1 })), index === 0));
     actions.appendChild(mk('↓ Ниже', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/move`, { dir: 1 })), index === total - 1));
-    actions.appendChild(mk('Удалить', 'btn-tiny-danger', () => { if (confirm('Удалить эту карточку?')) runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/remove`), 'Карточка удалена.'); }));
+    actions.appendChild(mk('Удалить', 'btn-tiny-danger', async () => { if (await ui3Confirm('Удалить эту карточку?')) runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/remove`), 'Карточка удалена.'); }));
 
     row.append(thumb, fields, actions);
     return row;
@@ -2502,7 +2502,7 @@
           <button class="btn-tiny" type="button">Удалить</button>
         `;
         row.querySelector('button').addEventListener('click', async () => {
-          if (!confirm(`Удалить «${donor.username}» из топа ${scope === 'session' ? 'за стрим' : 'за всё время'}?`)) return;
+          if (!await ui3Confirm(`Удалить «${donor.username}» из топа ${scope === 'session' ? 'за стрим' : 'за всё время'}?`)) return;
           try {
             const { ok } = await postJSON('/api/donortop/delete', { scope, username: donor.username });
             if (ok) {
@@ -2533,7 +2533,7 @@
     loadManageLists();
 
     wrap.querySelector('#btnDonorClearAllTime').addEventListener('click', async () => {
-      if (!confirm('Полностью стереть топ донатеров за всё время? Это необратимо, файл donations_alltime.json будет очищен.')) return;
+      if (!await ui3Confirm('Полностью стереть топ донатеров за всё время? Это необратимо, файл donations_alltime.json будет очищен.')) return;
       try {
         const { ok } = await postJSON('/api/donortop/clear-alltime', {});
         showMessage(ok ? 'Топ за всё время очищен.' : 'Не удалось очистить.', ok ? 'success' : 'error');
@@ -2544,7 +2544,7 @@
     });
 
     wrap.querySelector('#btnDonorTopResetSession').addEventListener('click', async () => {
-      if (!confirm('Сбросить топ донатеров за стрим? Топ «за всё время» не тронется.')) return;
+      if (!await ui3Confirm('Сбросить топ донатеров за стрим? Топ «за всё время» не тронется.')) return;
       try {
         const { ok } = await postJSON('/api/donortop/reset-session', {});
         showMessage(ok ? 'Топ за стрим сброшен.' : 'Не удалось сбросить.', ok ? 'success' : 'error');
@@ -2711,7 +2711,7 @@
   /* --- Сохранить / Сбросить всё --- */
 
   btnLayoutResetAll.addEventListener('click', async () => {
-    if (!confirm('Вернуть расположение и размер ВСЕХ виджетов к значениям по умолчанию?')) return;
+    if (!await ui3Confirm('Вернуть расположение и размер ВСЕХ виджетов к значениям по умолчанию?')) return;
     btnLayoutResetAll.disabled = true;
     showLayoutMessage('Сбрасываем всё…', '');
     try {
@@ -2968,7 +2968,7 @@
         showStreamControlMessage('Запускаем фейк-режим…', '');
         let { ok, data } = await postJSON('/api/fake/start', {});
         if (!ok && data && data.needConfirm) {
-          if (!confirm('Сейчас идёт настоящий стрим.\n\nФейк-данные заменят живые на оверлее в OBS, зрители увидят их. Всё равно запустить?')) { showStreamControlMessage('', ''); return; }
+          if (!await ui3Confirm('Сейчас идёт настоящий стрим.\n\nФейк-данные заменят живые на оверлее в OBS, зрители увидят их. Всё равно запустить?')) { showStreamControlMessage('', ''); return; }
           ({ ok, data } = await postJSON('/api/fake/start', { force: true }));
         }
         if (ok && data.success) {
@@ -3000,7 +3000,7 @@
   });
 
   btnStreamReset.addEventListener('click', async () => {
-    const confirmed = confirm(
+    const confirmed = await ui3Confirm(
       'Точно сбросить статистику текущего стрима?\n\n' +
       'Топ зрителей, таймлайн, счётчики эмодзи и облако слов обнулятся. Отменить это нельзя.'
     );
@@ -3388,7 +3388,7 @@
   loadDonationHistory();
 
   btnDonationsReset.addEventListener('click', async () => {
-    if (!confirm('Точно очистить всю историю донатов? Отменить это нельзя.')) return;
+    if (!await ui3Confirm('Точно очистить всю историю донатов? Отменить это нельзя.')) return;
     btnDonationsReset.disabled = true;
     try {
       const { ok } = await postJSON('/api/donations/reset', {});
@@ -3898,7 +3898,7 @@
           }
         });
         deleteBtn.addEventListener('click', async () => {
-          if (!confirm(`Удалить сохранённую команду «${preset.name}» навсегда?`)) return;
+          if (!await ui3Confirm(`Удалить сохранённую команду «${preset.name}» навсегда?`)) return;
           try {
             await postJSON('/api/team/presets/delete', { id: preset.id });
             row.remove();
@@ -3963,7 +3963,7 @@
     });
     Object.entries(teamColorPickers).forEach(([key, input]) => { input.value = settings[key]; });
     teamVerticalLayout.checked = !!settings.verticalLayout;
-    if (teamTextOverlay.style.display === 'flex') fillTeamTextForm(settings); // окно открыто — обновляем и его (например, после «Сбросить к дефолту»)
+    if (teamTextOverlay.style.display === 'flex') fillTeamTextForm(settings); // окно открыто — обновляем и его (например, после «Сбросить»)
   }
 
   function applyRecommendedSize(size) {
@@ -3998,7 +3998,7 @@
   });
 
   btnTeamSizeReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить размеры и цвета панели команды к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить размеры и цвета панели команды к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/team/settings/reset', {});
       if (ok && data.success) {
@@ -4012,10 +4012,10 @@
 
   const btnTeamSizeSaveDefault = document.getElementById('btnTeamSizeSaveDefault');
   btnTeamSizeSaveDefault.addEventListener('click', async () => {
-    if (!confirm('Сохранить текущие размеры и цвета как новый стандарт по умолчанию? Именно они будут применяться по кнопке «Сбросить к дефолту».')) return;
+    if (!await ui3Confirm('Сохранить текущие размеры и цвета как новый стандарт по умолчанию? Именно они будут применяться по кнопке «Сбросить».')) return;
     try {
       const { ok } = await postJSON('/api/team/settings/save-as-default', {});
-      if (ok) alert('Сохранено как стандартные значения.');
+      if (ok) ui3Alert('Сохранено как стандартные значения.');
     } catch (e) {
       // не критично — можно повторить позже
     }
@@ -4088,7 +4088,7 @@
   });
 
   document.getElementById('btnTeamTextSaveDefault').addEventListener('click', async () => {
-    if (!confirm('Сохранить текущие шрифты и размеры текста как новый стандарт по умолчанию? Именно они будут применяться по кнопке «Сбросить к дефолту».')) return;
+    if (!await ui3Confirm('Сохранить текущие шрифты и размеры текста как новый стандарт по умолчанию? Именно они будут применяться по кнопке «Сбросить».')) return;
     try {
       await saveTeamTextFields();
       await postJSON('/api/team/settings/save-as-default', {});
@@ -4432,7 +4432,7 @@
   });
 
   btnMvpSizeReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить размеры, анимацию и надпись MVP к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить размеры, анимацию и надпись MVP к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/mvp/settings/reset', {});
       if (ok && data.success) {
@@ -4622,7 +4622,7 @@
   factSlideSide.addEventListener('change', scheduleFactSizeSave);
 
   btnFactSizeReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить размеры и анимацию панели «Факт» к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить размеры и анимацию панели «Факт» к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/fact/settings/reset', {});
       if (ok && data.success) {
@@ -4735,7 +4735,7 @@
         }
       });
       deleteBtn.addEventListener('click', async () => {
-        if (!confirm(`Удалить плашку «${preset.title}» навсегда?`)) return;
+        if (!await ui3Confirm(`Удалить плашку «${preset.title}» навсегда?`)) return;
         try {
           await postJSON(`/api/fact/presets/${preset.id}/delete`, {});
           await loadFactPresets();
@@ -4794,7 +4794,7 @@
       await postJSON('/api/fact/presets', { title: title.trim(), text });
       await loadFactPresets();
     } catch (e) {
-      alert('Не удалось добавить плашку.');
+      ui3Alert('Не удалось добавить плашку.');
     }
   });
 
@@ -4991,7 +4991,7 @@
   });
 
   btnFundSizeReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить размеры и цвета плашки «Сбор» к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить размеры и цвета плашки «Сбор» к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/fund/settings/reset', {});
       if (ok && data.success) {
@@ -5023,7 +5023,7 @@
   });
 
   btnFundReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить сбор до нуля? Действие необратимо.')) return;
+    if (!await ui3Confirm('Сбросить сбор до нуля? Действие необратимо.')) return;
     try {
       const { ok, data } = await postJSON('/api/fund/reset', {});
       if (ok && data.success) {
@@ -5169,7 +5169,7 @@
   });
 
   btnFundAlertReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить настройки алерта о донате к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить настройки алерта о донате к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/fund/alert/settings/reset', {});
       if (ok && data.success) {
@@ -5322,7 +5322,7 @@
   });
 
   btnFundBoxReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить коробочку к начальному уровню? Собранный прогресс текущего уровня будет потерян.')) return;
+    if (!await ui3Confirm('Сбросить коробочку к начальному уровню? Собранный прогресс текущего уровня будет потерян.')) return;
     try {
       await postJSON('/api/fundbox/reset', {});
       showFundBoxMessage('Коробочка сброшена к начальному уровню.', 'success');
@@ -5332,7 +5332,7 @@
   });
 
   btnFundBoxSizeReset.addEventListener('click', async () => {
-    if (!confirm('Сбросить размеры и цвета коробочки к стандартным значениям?')) return;
+    if (!await ui3Confirm('Сбросить размеры и цвета коробочки к стандартным значениям?')) return;
     try {
       const { ok, data } = await postJSON('/api/fundbox/settings/reset', {});
       if (ok && data.success) {
@@ -5521,7 +5521,7 @@
   document.getElementById('btnGoalTestFinale').addEventListener('click', () => runGoalTest('finale'));
 
   document.getElementById('btnGoalReset').addEventListener('click', async () => {
-    if (!confirm('Обнулить собранную сумму цели? Планка и текст останутся.')) return;
+    if (!await ui3Confirm('Обнулить собранную сумму цели? Планка и текст останутся.')) return;
     try {
       const { ok, data } = await postJSON('/api/goal/reset', {});
       if (ok && data.success) { goalEls.amount.value = 0; showGoalMessage('Сумма обнулена.', 'success'); }
@@ -5809,7 +5809,7 @@
   /** Короткая версия ошибки для тесных панелей: длинное объяснение про вход через Twitch сводим к одной строке (полный текст — во всплывающей подсказке). */
   function shortenGameError(message) {
     if (!message) return 'Не удалось получить статус.';
-    if (/войди через Twitch/i.test(message)) return 'Нужен вход через Twitch («Авторизация» → «Войти через Twitch»). Если входил раньше — войди ещё раз: нужно новое право доступа.';
+    if (/войди через Twitch/i.test(message)) return 'Нужен вход через Twitch («Подключения» → «Войти через Twitch»). Если входил раньше — войди ещё раз: нужно новое право доступа.';
     return message;
   }
 
@@ -5965,7 +5965,7 @@
         showPredictionMessage('Шаблон загружен в форму — проверь и нажми «Запустить».', 'success');
       });
       deleteBtn.addEventListener('click', async () => {
-        if (!confirm(`Удалить шаблон «${tpl.title}» навсегда?`)) return;
+        if (!await ui3Confirm(`Удалить шаблон «${tpl.title}» навсегда?`)) return;
         try {
           await postJSON('/api/predictions/templates/delete', { id: tpl.id });
           loadPredictionTemplates();
@@ -6107,7 +6107,7 @@
     try {
       const win = await openDetachedWindow();
       if (!win) {
-        alert('Браузер не дал открыть окно чата. Разреши всплывающие окна для этого адреса и попробуй ещё раз.');
+        ui3Alert('Браузер не дал открыть окно чата. Разреши всплывающие окна для этого адреса и попробуй ещё раз.');
         return;
       }
       detachedWin = win;
@@ -6841,7 +6841,7 @@
         }
       });
       deleteBtn.addEventListener('click', async () => {
-        if (!confirm(`Удалить фон «${bg.file}» навсегда?`)) return;
+        if (!await ui3Confirm(`Удалить фон «${bg.file}» навсегда?`)) return;
         try {
           const { ok, data } = await postJSON('/api/background/delete', { file: bg.file });
           if (ok && data.success) {
@@ -7177,7 +7177,7 @@
 
   /** Double Elimination: отдельная отрисовка (public/bracket-de.js, общая с виджетом OBS). Клик по плашке — победитель, правая кнопка по сыгранному матчу — отмена результата. */
   async function resetBracketMatchResult(matchId) {
-    if (!confirm('Отменить результат этого матча? Всё, что из него вытекало (дальнейшие матчи этих команд), тоже будет сброшено.')) return;
+    if (!await ui3Confirm('Отменить результат этого матча? Всё, что из него вытекало (дальнейшие матчи этих команд), тоже будет сброшено.')) return;
     try {
       const { ok, data } = await postJSON(`/api/bracket/match/${matchId}/reset`, {});
       if (ok && data.success) { bracketState = data.bracket; renderBracketContent(); }
@@ -7452,7 +7452,7 @@
       ? Math.max(4, Math.min(16, Math.round(Number(bracketTeamCount.value) || 4)))
       : Math.max(3, Math.min(32, Math.round(Number(bracketTeamCount.value) || 3)));
     bracketTeamCount.value = teamCount;
-    if (bracketState.nodes.length && !confirm('Сгенерировать новую сетку? Текущая (если не сохранена) будет потеряна.')) return;
+    if (bracketState.nodes.length && !await ui3Confirm('Сгенерировать новую сетку? Текущая (если не сохранена) будет потеряна.')) return;
     showBracketMessage('Генерируем…', '');
     try {
       const { ok, data } = await postJSON('/api/bracket/generate', { mode, teamCount });
@@ -7473,7 +7473,7 @@
   });
 
   btnBracketResetSeeding.addEventListener('click', async () => {
-    if (!confirm('Вернуть все команды на исходные места (как при генерации)? Результаты всех матчей будут сброшены.')) return;
+    if (!await ui3Confirm('Вернуть все команды на исходные места (как при генерации)? Результаты всех матчей будут сброшены.')) return;
     try {
       const { ok, data } = await postJSON('/api/bracket/reset-seeding', {});
       if (ok && data.success) { bracketState = data.bracket; renderBracketGrid(); renderBracketTeamList(); showBracketMessage('Расположение возвращено к исходному.', 'success'); }
@@ -7710,7 +7710,7 @@
           }
         });
         delBtn.addEventListener('click', async () => {
-          if (!confirm(`Удалить сохранённую сетку «${saved.name}» навсегда?`)) return;
+          if (!await ui3Confirm(`Удалить сохранённую сетку «${saved.name}» навсегда?`)) return;
           await postJSON(`/api/bracket/saved/${saved.id}/delete`, {});
           refreshBracketSavedModal();
         });
@@ -7726,7 +7726,7 @@
   });
 
   btnBracketClear.addEventListener('click', async () => {
-    if (!confirm('Полностью очистить текущую сетку? Несохранённые изменения потеряются.')) return;
+    if (!await ui3Confirm('Полностью очистить текущую сетку? Несохранённые изменения потеряются.')) return;
     try {
       const { ok, data } = await postJSON('/api/bracket/clear', {});
       if (ok && data.success) {
@@ -7794,7 +7794,7 @@
 
   const CHAT_BOT_STATE_TITLES = { disconnected: 'не подключён', connecting: 'подключается…', connected: 'подключён', error: 'ошибка' };
 
-  /** Один источник правды для трёх индикаторов: пилюля «Чат бот» в шапке, точка на свёрнутой кнопке «Авторизация бота» и статус внутри панели. */
+  /** Один источник правды для трёх индикаторов: пилюля «Чат-бот» в шапке, точка на свёрнутой кнопке «Авторизация бота» и статус внутри панели. */
   function applyChatBotIndicators(bot) {
     const title = `Чат бот: ${CHAT_BOT_STATE_TITLES[bot.status] || bot.status}${bot.statusMessage ? ' — ' + bot.statusMessage : ''}`;
     chatBotStatusPill.dataset.state = bot.status;
@@ -7859,7 +7859,7 @@
       chatBotClientSecret.value = '';
       chatBotClientHint.textContent = bot.hasBotClientSecret
         ? `Секрет сохранён (${bot.botClientSecretPreview}). Оставь поле пустым, чтобы не менять. Чтобы вернуться к общим данным из «Авторизации» — очисти Bot Client ID и сохрани (секрет сбросится вместе с ним).`
-        : 'Оба поля пусты — токен бота обновляется общими Client ID/Secret из вкладки «Авторизация». Если токен бота получен другим приложением — впиши его Client ID и Secret (заполни оба).';
+        : 'Оба поля пусты — токен бота обновляется общими Client ID/Secret из вкладки «Подключения». Если токен бота получен другим приложением — впиши его Client ID и Secret (заполни оба).';
       chatBotRefreshHint.textContent = bot.hasRefreshToken
         ? `Refresh Token сохранён (${bot.refreshTokenPreview}). Оставь поле пустым, чтобы не менять.`
         : 'Refresh Token не указан — когда access-токен истечёт, его придётся вставлять заново.';
@@ -8041,7 +8041,7 @@
   });
 
   async function deleteBotCommand(item) {
-    if (!item || !confirm(`Удалить команду ${item.command}?`)) return;
+    if (!item || !await ui3Confirm(`Удалить команду ${item.command}?`)) return;
     try {
       const { ok, data } = await postJSON(`/api/bot-commands/${item.id}/delete`, {});
       if (ok && data.success) {
@@ -8322,7 +8322,7 @@
   }
 
   async function deleteBotTimer(item) {
-    if (!item || !confirm('Удалить это сообщение по таймеру?')) return;
+    if (!item || !await ui3Confirm('Удалить это сообщение по таймеру?')) return;
     try {
       const { ok, data } = await postJSON(`/api/bot-timers/${item.id}/delete`, {});
       if (ok && data.success) {
@@ -8414,7 +8414,7 @@
       autoModOverlay.style.display = 'flex';
       autoModWords.focus();
     } catch (e) {
-      alert('Не удалось загрузить список автомодерации.');
+      ui3Alert('Не удалось загрузить список автомодерации.');
     }
   }
 
@@ -8894,7 +8894,7 @@
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
       <div class="da-mid"><div class="card" data-a="cfgcard" hidden><h2 class="section-title">Настройки события</h2><p class="card-hint">${esc(cfg.note)}</p>${rows}
         <p class="card-hint" style="margin-top:10px">${esc(cfg.hint)}</p>
-        <div class="actions"><button class="btn btn-primary" type="button" data-a="save">Сохранить</button><button class="btn btn-secondary" type="button" data-a="reset">Сбросить к дефолту</button></div>
+        <div class="actions"><button class="btn btn-primary" type="button" data-a="save">Сохранить</button><button class="btn btn-secondary" type="button" data-a="reset">Сбросить</button></div>
         <div class="form-message" data-a="msg"></div></div></div>
       <div class="da-side"><div class="da-prev"><iframe src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe></div>
         <div class="da-ctrl"><button class="dbtn" data-a="cfg" type="button" aria-pressed="false" data-tip="Настройки алерта"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button><button class="dbtn" data-a="obs" type="button" data-tip="Скопировать ссылку для OBS&#10;Источник «Браузер» 1920×1080, фон прозрачный"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1-1"/></svg></button><span class="da-ctrl-gap"></span><button class="btn-tiny" type="button" data-a="play">▶ Анимация</button><label class="da-loop"><input type="checkbox" data-a="loop"> ↻</label></div></div>`;

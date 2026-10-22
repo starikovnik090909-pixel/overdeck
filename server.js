@@ -435,7 +435,7 @@ async function validateStoredCredentials() {
 validateStoredCredentials();
 
 // Если позже Twitch перестал принимать ключи приложения канала (секрет пересоздан и т.п.), показываем это в админке: пилюля «Twitch» гаснет,
-// причина видна на вкладке «Авторизация Twitch». Когда токен снова получается — статус возвращается. twitchAuthState только отображается.
+// причина видна на вкладке «Подключения». Когда токен снова получается — статус возвращается. twitchAuthState только отображается.
 twitch.setAppTokenListener((event) => {
   twitchAuthState = event.ok
     ? { connected: true, validatedAt: Date.now(), error: null }
@@ -618,7 +618,7 @@ const avatarCommands = createAvatarCommands({ botHas: (name) => !!botCommands.fi
 botCommands.setReservedChecker((name) => avatarCommands.hasName(name));
 botTimers.init(); // сообщения по таймеру — из bot_timers.json
 autoMod.init(); // список автомодерации — из banned_words.json (нет файла — создаётся со списком по умолчанию)
-// Автообновление токена бота использует Client ID/Secret приложения из вкладки «Авторизация» (те же, что для входа в админку).
+// Автообновление токена бота использует Client ID/Secret приложения из вкладки «Подключения» (те же, что для входа в админку).
 chatBot.setAppCredentialsProvider(() => ({ clientId: config.twitch.clientId || '', clientSecret: config.twitch.clientSecret || '' }));
 chatBot.setLiveProvider(() => streamIsLive); // нужно только настройке «отправлять сообщения по таймеру, пока идёт стрим»
 chatBot.init();
@@ -1711,10 +1711,10 @@ app.post('/api/fundbox/preview-size', (req, res) => {
 /** broadcaster_id для Predictions ДОЛЖЕН совпадать с владельцем OAuth-токена — поэтому берём именно config.twitchAuth, а не общий resolvedBroadcasterId. */
 function getPredictionCredentials() {
   if (!config.twitch.clientId) {
-    return { ok: false, error: 'Не заполнен Client ID Twitch на вкладке «Авторизация».' };
+    return { ok: false, error: 'Не заполнен Client ID Twitch на вкладке «Подключения».' };
   }
   if (!config.twitchAuth || !config.twitchAuth.accessToken || !config.twitchAuth.userId) {
-    return { ok: false, error: 'Сначала войди через Twitch (вкладка «Авторизация» → «Войти через Twitch») — ставкам нужен твой личный токен с правом channel:manage:predictions. Если уже входил раньше, войди ещё раз: старое подключение могло быть выдано без этого права.' };
+    return { ok: false, error: 'Сначала войди через Twitch (вкладка «Подключения» → «Войти через Twitch») — ставкам нужен твой личный токен с правом channel:manage:predictions. Если уже входил раньше, войди ещё раз: старое подключение могло быть выдано без этого права.' };
   }
   return {
     ok: true,
@@ -1787,17 +1787,17 @@ app.get('/api/predictions/active', async (req, res) => {
 /** Как и у ставок: broadcaster_id должен совпадать с владельцем OAuth-токена, поэтому берём config.twitchAuth. */
 function getPollCredentials() {
   if (!config.twitch.clientId) {
-    return { ok: false, error: 'Не заполнен Client ID Twitch на вкладке «Авторизация».' };
+    return { ok: false, error: 'Не заполнен Client ID Twitch на вкладке «Подключения».' };
   }
   if (!config.twitchAuth || !config.twitchAuth.accessToken || !config.twitchAuth.userId) {
-    return { ok: false, error: 'Сначала войди через Twitch (вкладка «Авторизация» → «Войти через Twitch») — опросам нужен твой личный токен с правом channel:manage:polls. Если уже входил раньше, войди ещё раз: старое подключение выдано без этого права.' };
+    return { ok: false, error: 'Сначала войди через Twitch (вкладка «Подключения» → «Войти через Twitch») — опросам нужен твой личный токен с правом channel:manage:polls. Если уже входил раньше, войди ещё раз: старое подключение выдано без этого права.' };
   }
   return { ok: true, clientId: config.twitch.clientId, accessToken: config.twitchAuth.accessToken, broadcasterId: config.twitchAuth.userId };
 }
 
 /** 401/403 от Twitch почти всегда значит "у токена нет права channel:manage:polls" — говорим об этом прямо, а не голым текстом Twitch. */
 function pollErrorMessage(e) {
-  const hint = (e.status === 401 || e.status === 403) ? ' Похоже, токен выдан без права channel:manage:polls — войди через Twitch ещё раз (вкладка «Авторизация»).' : '';
+  const hint = (e.status === 401 || e.status === 403) ? ' Похоже, токен выдан без права channel:manage:polls — войди через Twitch ещё раз (вкладка «Подключения»).' : '';
   return `Twitch отклонил запрос: ${e.message}.${hint}`;
 }
 
@@ -3239,7 +3239,7 @@ app.post('/api/event-alerts/:kind/test', (req, res) => {
 app.get('/api/follow-wall', (req, res) => { res.json({ success: true, ...followRegistry.stats() }); });
 app.post('/api/follow-wall/sync', async (req, res) => {
   const a = config.twitchAuth;
-  if (!config.twitch.clientId || !a || !a.accessToken || !a.userId) return res.status(400).json({ success: false, error: 'Сначала войди через Twitch (вкладка «Авторизация»).' });
+  if (!config.twitch.clientId || !a || !a.accessToken || !a.userId) return res.status(400).json({ success: false, error: 'Сначала войди через Twitch (вкладка «Подключения»).' });
   try {
     const r = await followRegistry.syncFrom(async (cursor) => {
       const qs = new URLSearchParams({ broadcaster_id: a.userId, first: '100' }); if (cursor) qs.set('after', cursor);
@@ -3250,7 +3250,7 @@ app.post('/api/follow-wall/sync', async (req, res) => {
     });
     res.json({ success: true, ...r, count: followRegistry.count() });
   } catch (e) {
-    const hint = (e.status === 401 || e.status === 403) ? ' Похоже, токен выдан без права moderator:read:followers — войди через Twitch заново (вкладка «Авторизация»).' : '';
+    const hint = (e.status === 401 || e.status === 403) ? ' Похоже, токен выдан без права moderator:read:followers — войди через Twitch заново (вкладка «Подключения»).' : '';
     res.status(500).json({ success: false, error: 'Twitch отклонил запрос: ' + e.message + '.' + hint });
   }
 });

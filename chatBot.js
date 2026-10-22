@@ -1,5 +1,5 @@
 // chatBot.js
-// Вкладка «Чат бот»: отдельный Twitch-аккаунт бота + его User Access Token.
+// Вкладка «Чат-бот»: отдельный Twitch-аккаунт бота + его User Access Token.
 // Сейчас — только подключение и ЧТЕНИЕ сообщений (без команд и ответов).
 //
 // Как это работает (по официальному руководству Twitch по чат-ботам):
@@ -44,7 +44,7 @@ const REFRESH_MARGIN_MS = (Number(process.env.CHATBOT_REFRESH_MARGIN_SEC) || 300
 const MIN_TIMER_MS = Number(process.env.CHATBOT_MIN_TIMER_MS) || 30000; // нижняя граница задержки таймера обновления (тоже настраивается только для тестов)
 
 // botToken — access-токен бота (живёт около часа), refreshToken — им обновляется; tokenExpiresAt — когда access-токен истекает (мс, 0 = неизвестно).
-// botClientId/botClientSecret — приложение, которым получен токен БОТА (может отличаться от приложения канала из вкладки «Авторизация»).
+// botClientId/botClientSecret — приложение, которым получен токен БОТА (может отличаться от приложения канала из вкладки «Подключения»).
 // Пусто → для обновления токена используются общие Client ID/Secret (см. effectiveCredentials()).
 let data = { botUsername: '', botToken: '', refreshToken: '', tokenExpiresAt: 0, botClientId: '', botClientSecret: '', channelName: '', channelId: '' };
 
@@ -61,7 +61,7 @@ const recentMessages = [];
 let lastCommand = null; // { command, user, ok, error?, at } — что бот ответил на последнюю команду (для админки)
 const commandCooldowns = new Map(); // id команды -> время последней отправки
 
-// Автообновление токена: Client ID/Secret берём у приложения из вкладки «Авторизация» (их даёт server.js), а не заводим второй раз.
+// Автообновление токена: Client ID/Secret берём у приложения из вкладки «Подключения» (их даёт server.js), а не заводим второй раз.
 let appCredentials = () => ({ clientId: '', clientSecret: '' });
 let refreshInFlight = null; // одновременные обновления схлопываются в один запрос (иначе при ротации refresh-токена второй запрос мог бы его «сжечь»)
 let refreshTimer = null;
@@ -222,7 +222,7 @@ async function validateToken(token) {
 /**
  * Чьи Client ID/Secret использовать для обновления токена БОТА. Если заполнено хоть одно из полей Bot Client ID/Secret — используем ТОЛЬКО их
  * (source 'bot'; половинки разных приложений не смешиваем — неполная пара считается ошибкой заполнения, а не тихо дополняется общими).
- * Оба пусты — откат на общие данные приложения канала из вкладки «Авторизация» (source 'shared'), как было раньше.
+ * Оба пусты — откат на общие данные приложения канала из вкладки «Подключения» (source 'shared'), как было раньше.
  */
 function effectiveCredentials() {
   if (data.botClientId || data.botClientSecret) {
@@ -237,15 +237,15 @@ function refreshBlockReason() {
   if (!data.refreshToken) return 'не указан Refresh Token';
   const c = effectiveCredentials();
   if (c.source === 'bot' && (!c.clientId || !c.clientSecret)) {
-    return 'заполни оба поля Bot Client ID и Bot Client Secret (или очисти Bot Client ID — тогда будут использоваться общие данные из вкладки «Авторизация»)';
+    return 'заполни оба поля Bot Client ID и Bot Client Secret (или очисти Bot Client ID — тогда будут использоваться общие данные из вкладки «Подключения»)';
   }
   if (!c.clientId || !c.clientSecret) {
-    return 'не заданы Client ID и Client Secret: заполни Bot Client ID и Bot Client Secret приложения бота (или общие данные во вкладке «Авторизация»)';
+    return 'не заданы Client ID и Client Secret: заполни Bot Client ID и Bot Client Secret приложения бота (или общие данные во вкладке «Подключения»)';
   }
   if (session && session.clientId && session.clientId !== c.clientId) {
     return c.source === 'bot'
       ? `токен бота выдан приложением ${session.clientId}, а в поле Bot Client ID указано ${c.clientId}`
-      : `токен бота выдан приложением ${session.clientId}, а во вкладке «Авторизация» указано ${c.clientId} — заполни Bot Client ID и Bot Client Secret приложения бота`;
+      : `токен бота выдан приложением ${session.clientId}, а во вкладке «Подключения» указано ${c.clientId} — заполни Bot Client ID и Bot Client Secret приложения бота`;
   }
   return '';
 }
@@ -279,7 +279,7 @@ function refreshAccessToken() {
     if (!res.ok || !body || !body.access_token) {
       const detail = (body && (body.message || body.error_description)) || `HTTP ${res.status}`;
       // Называем, ЧЬИ данные использовались: самая частая причина «Invalid refresh token» — токен бота получен одним приложением, а обновляют его данными другого.
-      const used = c.source === 'bot' ? `Bot Client ID ${c.clientId}` : 'общие Client ID/Secret из вкладки «Авторизация» (Bot Client ID не заполнен)';
+      const used = c.source === 'bot' ? `Bot Client ID ${c.clientId}` : 'общие Client ID/Secret из вкладки «Подключения» (Bot Client ID не заполнен)';
       const advice = c.source === 'bot'
         ? 'Проверь, что Bot Client ID/Secret — от того же приложения, которым получен токен бота, и что Refresh Token от этой же пары; если доступ отозван — получи новую пару токенов.'
         : 'Если токен бота получен другим приложением (не тем, что для канала) — заполни Bot Client ID и Bot Client Secret этого приложения в панели «Авторизация бота». Иначе проверь Refresh Token; если доступ отозван — получи новую пару токенов.';

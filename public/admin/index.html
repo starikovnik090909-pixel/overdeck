@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=125">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=7">
+<link rel="stylesheet" href="ui3.css?v=11">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -483,8 +483,8 @@
     </section>
 
     <section class="tab-section" id="tab-settings">
-      <h1 class="tab-title">Стиль</h1>
-      <p class="tab-description">Цвета, шрифты и размеры оверлея — применяются сразу на оверлее, без перезагрузки.</p>
+      <div class="page-head"><div><h1 class="tab-title">Стиль</h1><p class="tab-description">Цвета, шрифты и размеры для всех виджетов. Изменения сразу видны в оверлее и сохраняются сами.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="themeSaved"></span><a class="btn btn-secondary" href="/overlay.html" target="_blank" rel="noopener">Открыть оверлей</a></div></div>
 
       <div class="settings-columns">
         <div class="settings-col">
@@ -568,7 +568,7 @@
 
       <div class="actions">
         <button class="btn btn-primary" id="btnThemeSave" type="button">Сохранить</button>
-        <button class="btn btn-secondary" id="btnThemeReset" type="button">Сбросить к дефолту</button>
+        <button class="btn btn-secondary" id="btnThemeReset" type="button">Сбросить</button>
       </div>
       <div class="form-message" id="themeFormMessage"></div>
     </section>
@@ -715,7 +715,7 @@
             <div class="widget-content-fields" id="widgetContentFields"></div>
             <div class="actions">
               <button class="btn btn-primary" id="btnWidgetSettingsSave" type="button">Сохранить</button>
-              <button class="btn btn-secondary" id="btnWidgetSettingsReset" type="button">Сбросить к дефолту</button>
+              <button class="btn btn-secondary" id="btnWidgetSettingsReset" type="button">Сбросить</button>
             </div>
             <div class="form-message" id="widgetSettingsMessage"></div>
           </div>
@@ -1031,7 +1031,7 @@
           <h2 class="section-title" style="margin:0;">Команды бота</h2>
           <button class="btn btn-primary" id="btnBotCommandAdd" type="button">Добавить команду</button>
         </div>
-        <p class="card-hint">Зритель пишет команду — бот отвечает в чат. Одна команда — не чаще раза в 3 секунды.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Если сообщение зрителя начинается с команды из списка, бот отвечает в чат. Команды, которых нет в списке, бот игнорирует. Отвечает только подключённый бот (индикатор «Чат бот» вверху) с токеном, у которого есть право <code>user:write:chat</code>; одну и ту же команду — не чаще раза в 3 секунды.</p></details>
+        <p class="card-hint">Зритель пишет команду — бот отвечает в чат. Одна команда — не чаще раза в 3 секунды.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Если сообщение зрителя начинается с команды из списка, бот отвечает в чат. Команды, которых нет в списке, бот игнорирует. Отвечает только подключённый бот (индикатор «Чат-бот» вверху) с токеном, у которого есть право <code>user:write:chat</code>; одну и ту же команду — не чаще раза в 3 секунды.</p></details>
 
         <div class="bot-cmd-form" id="botCommandForm" style="display:none;">
           <div class="field">
@@ -1136,7 +1136,7 @@
         <div class="avatar-cmd-list" id="avatarCmdList"><p class="card-hint">Загружаем…</p></div>
         <div class="avatar-unlock" id="avatarUnlock">
           <div class="avatar-unlock-title">Разблокировка аватаров за баллы канала</div>
-          <p class="card-hint">Зритель тратит баллы на награду — сервер сам узнаёт, кто это, открывает ему <b>случайный закрытый аватар</b> (это герой, у которого на списке плиток <b>снята галочка «выдавать»</b>; обычным чаттерам такие не достаются) и пишет в чат (от имени бота), какой аватар он получил и какой командой на него сменить. Награду создайте в Twitch (Панель управления → Баллы канала → Награды) с <b>точно таким же названием</b>, как ниже. Нужен вход через Twitch на вкладке «Авторизация» (событие баллов канала).</p>
+          <p class="card-hint">Зритель тратит баллы на награду — сервер сам узнаёт, кто это, открывает ему <b>случайный закрытый аватар</b> (это герой, у которого на списке плиток <b>снята галочка «выдавать»</b>; обычным чаттерам такие не достаются) и пишет в чат (от имени бота), какой аватар он получил и какой командой на него сменить. Награду создайте в Twitch (Панель управления → Баллы канала → Награды) с <b>точно таким же названием</b>, как ниже. Нужен вход через Twitch на вкладке «Подключения» (событие баллов канала).</p>
           <div class="toggle-row">
             <span class="toggle-row-label">Закрыть аватары<small class="toggle-row-hint">Менять аватар командами можно только на открытые: тот, что выдан при первом сообщении, выбранные из админки и полученные за баллы. Выключено — как раньше, любой аватар доступен всем.</small></span>
             <label class="toggle-switch"><input type="checkbox" id="unlockLock"><span class="toggle-slider"></span></label>
@@ -1213,7 +1213,7 @@
         <p class="card-hint">Если нужна <b>автомодерация</b> (удаление сообщений), добавь ещё право <code>moderator:manage:chat_messages</code>, а аккаунт бота сделай модератором канала (в чате канала: <code>/mod имя_бота</code>):</p>
         <pre class="chatbot-code">twitch token --user-token --scopes "user:read:chat user:write:chat user:bot moderator:manage:chat_messages"</pre>
         <p class="card-hint">Авторизоваться нужно <b>под бот-аккаунтом</b> (войди в Twitch под ним, например, в отдельном окне инкогнито) — токен привязывается к тому аккаунту, под которым дали разрешение, и его логин должен совпасть с полем Bot Username.</p>
-        <p class="card-hint"><b>Автообновление токена.</b> Access-токен живёт недолго (около часа–нескольких часов), поэтому вставь и <b>Refresh Token</b> — Twitch выдаёт его вместе с access-токеном, когда токен получен через Authorization Code flow вашим приложением (в Implicit flow refresh-токена нет). Тогда сервер сам обновляет токен заранее, до истечения, и при ошибке 401 — и сохраняет новую пару в <code>chat_bot.json</code>, так что после перезапуска сервера ничего вставлять заново не нужно. Обновление идёт с Client ID и Client Secret <b>того приложения, которым получен токен бота</b>. Если это то же приложение, что для канала, оставь <b>Bot Client ID / Bot Client Secret</b> пустыми — возьмутся данные из вкладки «Авторизация». Если токен бота получен другим приложением (частый случай: ошибка <code>Invalid refresh token</code>), впиши сюда Client ID и Client Secret этого приложения — они используются только для обновления токена бота и никак не влияют на вход через Twitch для канала. Токен из приложения Twitch CLI по умолчанию обновить нельзя — секрета этого приложения у тебя нет. Если refresh-токен отозван или недействителен, статус станет красным с причиной, и нужно получить новую пару токенов.</p>
+        <p class="card-hint"><b>Автообновление токена.</b> Access-токен живёт недолго (около часа–нескольких часов), поэтому вставь и <b>Refresh Token</b> — Twitch выдаёт его вместе с access-токеном, когда токен получен через Authorization Code flow вашим приложением (в Implicit flow refresh-токена нет). Тогда сервер сам обновляет токен заранее, до истечения, и при ошибке 401 — и сохраняет новую пару в <code>chat_bot.json</code>, так что после перезапуска сервера ничего вставлять заново не нужно. Обновление идёт с Client ID и Client Secret <b>того приложения, которым получен токен бота</b>. Если это то же приложение, что для канала, оставь <b>Bot Client ID / Bot Client Secret</b> пустыми — возьмутся данные из вкладки «Подключения». Если токен бота получен другим приложением (частый случай: ошибка <code>Invalid refresh token</code>), впиши сюда Client ID и Client Secret этого приложения — они используются только для обновления токена бота и никак не влияют на вход через Twitch для канала. Токен из приложения Twitch CLI по умолчанию обновить нельзя — секрета этого приложения у тебя нет. Если refresh-токен отозван или недействителен, статус станет красным с причиной, и нужно получить новую пару токенов.</p>
       </div>
 
       </div>
@@ -1490,7 +1490,7 @@
         </div>
 
         <div class="actions" style="margin-top:14px;">
-          <button class="btn btn-secondary" id="btnTeamSizeReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnTeamSizeReset" type="button">Сбросить</button>
           <button class="btn btn-secondary" id="btnTeamSizeSaveDefault" type="button">Сохранить по умолчанию</button>
         </div>
         <p class="team-obs-size-hint">Рекомендуемый размер источника «Браузер» в OBS: <span id="teamObsSizeValue">—</span></p>
@@ -1663,7 +1663,7 @@
 
         <div class="actions" style="margin-top:14px;">
           <button class="btn btn-primary" id="btnMvpSaveAll" type="button">Сохранить настройки</button>
-          <button class="btn btn-secondary" id="btnMvpSizeReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnMvpSizeReset" type="button">Сбросить</button>
         </div>
         <p class="card-hint">Сохраняет разом всё текущее состояние (фото уже сохранено при загрузке, ник/герой/K-D/крипы/роль и размеры панели) — чтобы после перезапуска сервера всё осталось на месте.</p>
 
@@ -1740,7 +1740,7 @@
           </div>
         </div>
         <div class="actions" style="margin-top:14px;">
-          <button class="btn btn-secondary" id="btnFactSizeReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnFactSizeReset" type="button">Сбросить</button>
         </div>
 
         <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/fact.html</code> (прозрачный фон, обновляется сразу через WebSocket).</p>
@@ -1840,7 +1840,7 @@
           </div>
         </div>
         <div class="actions" style="margin-top:14px;">
-          <button class="btn btn-secondary" id="btnFundSizeReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnFundSizeReset" type="button">Сбросить</button>
         </div>
 
         <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/fund.html</code> (прозрачный фон, обновляется сразу через WebSocket при новых донатах).</p>
@@ -1920,7 +1920,7 @@
         <div class="actions" style="margin-top:14px;">
           <button class="btn btn-primary" id="btnFundAlertSave" type="button">Сохранить настройки</button>
           <button class="btn btn-secondary" id="btnFundAlertTest" type="button">Тест</button>
-          <button class="btn btn-secondary" id="btnFundAlertReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnFundAlertReset" type="button">Сбросить</button>
         </div>
         <div class="form-message" id="fundAlertMessage"></div>
         <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/fund-alert.html</code> (прозрачный фон, обновляется через WebSocket).</p>
@@ -2066,7 +2066,7 @@
         </div>
 
         <h3 class="section-title theme-block-title">Шрифты</h3>
-        <p class="card-hint">Beaufort for LOL и Spiegel — фирменные шрифты Riot, в проекте не поставляются. Если положить файлы в папку <code>fonts/</code> (та же, что и для своих шрифтов на вкладке «Основные настройки») с «beaufort»/«spiegel» в имени файла — сервер сам их подхватит без перезапуска. Если файлов там нет — используется фоллбэк (Cinzel/Marcellus/serif и Inter/Roboto/sans-serif).</p>
+        <p class="card-hint">Beaufort for LOL и Spiegel — фирменные шрифты Riot, в проекте не поставляются. Если положить файлы в папку <code>fonts/</code> (та же, что и для своих шрифтов на вкладке «Стиль») с «beaufort»/«spiegel» в имени файла — сервер сам их подхватит без перезапуска. Если файлов там нет — используется фоллбэк (Cinzel/Marcellus/serif и Inter/Roboto/sans-serif).</p>
         <div class="team-size-settings-grid">
           <div class="field">
             <label for="themeTitleFont">Основной шрифт (заголовки)</label>
@@ -2905,9 +2905,8 @@
     </section>
 
     <section class="tab-section" id="tab-donalerts">
-      <h1 class="tab-title">Алерты</h1>
-      <p class="tab-description">Свои алерты вместо алертов DonationAlerts и DonateX и других сервисов: события приходят на сервер, а карточка и озвучка выводятся прямо в оверлее. Источники алертов этих сервисов в OBS можно отключить.</p>
-
+      <div class="page-head"><div><h1 class="tab-title">Алерты</h1><p class="tab-description">Что появляется на экране при донатах, подписках, рейдах и других событиях. Источники алертов DonationAlerts и DonateX в OBS можно отключить.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="daSaved"></span><button class="btn btn-secondary" type="button" data-copy-alerts>Ссылка для OBS</button></div></div>
       <div class="pixel-subtabs" role="tablist" aria-label="Разделы алертов">
         <button class="pixel-subtab active" type="button" role="tab" aria-selected="true" data-da-pane="donation">Донат</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-da-pane="goal">Цель сбора</button>
@@ -2935,7 +2934,7 @@
             <button class="btn btn-primary" id="btnDaTest" type="button">Тест алерта</button>
             <button class="btn btn-secondary" id="btnDaSkip" type="button">Пропустить текущий</button>
           </div>
-          <p class="card-hint" style="margin:8px 0 0">Тестовый алерт появится на оверлее; в историю донатов и «Топ донатеров» не попадает. Сначала нажми «Сохранить» в настройках, если менял их.</p>
+          <p class="card-hint" style="margin:8px 0 0">Тестовый алерт появится на оверлее; в историю донатов и «Топ донатеров» не попадает.</p>
         </div>
 
       </div>
@@ -2944,15 +2943,15 @@
         <label for="da_font">Шрифт алерта</label>
         <select id="da_font"><option value="">Как в теме / стиле оверлея</option></select>
         <div class="da-fontpreview" id="daFontPreview">MrFrost 500 ₽ Лучший стрим!</div>
-        <p class="card-hint" style="margin:6px 0 0">Сохраняется сразу. Свои шрифты добавляются во вкладке «Основные настройки».</p>
+        <p class="card-hint" style="margin:6px 0 0">Сохраняется сразу. Свои шрифты добавляются во вкладке «Стиль».</p>
       </div>
       <div class="card" id="daCfgCard" hidden>
         <h2 class="section-title">Настройки алерта</h2>
-        <p class="card-hint">Звуки выбираются из библиотеки: свои файлы .ogg/.mp3/.wav можно положить в папку <code>public/alert-sounds</code>. Голос по умолчанию берётся из вкладки «Озвучка чата»; включать озвучку чата для алерта не нужно.</p>
+        <p class="card-hint">Звуки выбираются из библиотеки: свои файлы .ogg/.mp3/.wav можно положить в папку <code>public/alert-sounds</code>. Голос по умолчанию берётся из вкладки «Озвучка»; включать озвучку чата для алерта не нужно.</p>
         <div id="daForm"></div>
         <div class="actions">
           <button class="btn btn-primary" id="btnDaSave" type="button">Сохранить</button>
-          <button class="btn btn-secondary" id="btnDaReset" type="button">Сбросить к дефолту</button>
+          <button class="btn btn-secondary" id="btnDaReset" type="button">Сбросить</button>
         </div>
         <div class="form-message" id="daMessage"></div>
       </div>
@@ -3140,10 +3139,10 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=143"></script>
-<script src="guides-data.js?v=5"></script>
+<script src="app.js?v=146"></script>
+<script src="guides-data.js?v=6"></script>
 <script src="guides.js?v=4"></script>
-<script src="keyfile.js?v=3"></script>
-<script src="ui3.js?v=5"></script>
+<script src="keyfile.js?v=4"></script>
+<script src="ui3.js?v=8"></script>
 </body>
 </html>

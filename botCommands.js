@@ -40,7 +40,7 @@ function validate(rawCommand, rawResponse, excludeId) {
   if (/\s/.test(command)) return { ok: false, error: 'В команде не должно быть пробелов.' };
   if (!response) return { ok: false, error: 'Укажи текст ответа.' };
   if (response.length > RESPONSE_MAX_LENGTH) return { ok: false, error: `Ответ длиннее ${RESPONSE_MAX_LENGTH} символов (лимит одного сообщения Twitch).` };
-  if (isReserved(command)) return { ok: false, error: `Команда ${command} занята командами чат-аватаров (вкладка «Чат бот» → «Команды чат-аватаров»).` };
+  if (isReserved(command)) return { ok: false, error: `Команда ${command} занята командами чат-аватаров (вкладка «Чат-бот» → «Команды чат-аватаров»).` };
   if (commands.some((c) => c.command === command && c.id !== excludeId)) {
     return { ok: false, error: `Команда ${command} уже есть в списке.` };
   }

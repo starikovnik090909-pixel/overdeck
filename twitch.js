@@ -68,8 +68,8 @@ function setAppTokenListener(fn) {
 function appTokenErrorText(status, message) {
   const base = `Twitch не принимает Client ID/Secret приложения канала (${status ? status + ': ' : ''}${message}).`;
   return /client secret/i.test(String(message))
-    ? `${base} Client ID верный, но секрет не подходит — его могли пересоздать в консоли Twitch или вставить секрет другого приложения. Проверь ключи во вкладке «Авторизация Twitch».`
-    : `${base} Проверь Client ID и Client Secret во вкладке «Авторизация Twitch».`;
+    ? `${base} Client ID верный, но секрет не подходит — его могли пересоздать в консоли Twitch или вставить секрет другого приложения. Проверь ключи во вкладке «Подключения».`
+    : `${base} Проверь Client ID и Client Secret во вкладке «Подключения».`;
 }
 
 function recordAppTokenFailure(key, message, retryMs) {

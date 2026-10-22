@@ -54,13 +54,13 @@
     for (;;) {
       const r = await fetch('/api/key/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, password, dryRun: true }) }).then((x) => x.json()).catch(() => ({ error: 'Сетевая ошибка.' }));
       if (r.needPassword) {
-        const p = window.prompt(password ? 'Неверный пароль. Введи пароль файла ещё раз:' : 'Файл защищён паролем. Введи пароль:');
+        const p = await ui3Prompt(password ? 'Неверный пароль. Введи пароль файла ещё раз:' : 'Файл защищён паролем. Введи пароль:');
         if (p === null) { say('Отменено.'); return; }
         password = p; continue;
       }
       if (!r.success) { say(r.error || 'Не удалось открыть файл.', 'error'); return; }
       const s = r.summary;
-      const ok = window.confirm('Применить файл авторизации?\n\nКанал: ' + (s.channel || '—') + '\nФайлов: ' + s.count + '\nСоздан: ' + new Date(s.created).toLocaleString('ru-RU') +
+      const ok = await ui3Confirm('Применить файл авторизации?\n\nКанал: ' + (s.channel || '—') + '\nФайлов: ' + s.count + '\nСоздан: ' + new Date(s.created).toLocaleString('ru-RU') +
         '\n\nТекущие данные этого оверлея будут заменены (копия старых сохранится в папке backup_before_import).');
       if (!ok) { say('Отменено.'); return; }
       say('Применяем… (большой файл может занять минуту)');

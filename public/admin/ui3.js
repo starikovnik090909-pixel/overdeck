@@ -478,3 +478,115 @@
   document.querySelectorAll('.nav-item[data-tab="donations"]').forEach((n) => n.addEventListener('click', load));
   load();
 })();
+
+// ---------- Этап 3: общее автосохранение + Алерты, Чат, Стиль ----------
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  let loaded = false; setTimeout(() => { loaded = true; }, 2500); // пока app.js заполняет формы — не сохраняем
+
+  /** Автосохранение: изменения внутри box → через 600 мс нажимается saveBtn; результат — по msg (form-message) в метку mark. */
+  function autosave(box, saveBtn, msg, mark, skip) {
+    if (!box || !saveBtn) return;
+    saveBtn.classList.add('ui3-hide');
+    let t = 0;
+    const set = (txt, cls) => { if (mark) { mark.textContent = txt; mark.className = 'ui3-saved ' + (cls || ''); } };
+    const go = () => { if (!loaded) return; clearTimeout(t); set('Сохраняем…', 'busy'); t = setTimeout(() => { if (saveBtn.disabled) { go(); return; } saveBtn.click(); }, 600); };
+    box.addEventListener('change', (e) => { if (!skip || !skip(e.target)) go(); });
+    box.addEventListener('input', (e) => { const ty = e.target.type; if ((ty === 'range' || ty === 'color') && (!skip || !skip(e.target))) go(); });
+    if (msg) new MutationObserver(() => {
+      if (/success/.test(msg.className) && /сохран/i.test(msg.textContent)) { set('Сохранено', 'ok'); msg.textContent = ''; msg.className = 'form-message'; }
+      else if (/error/.test(msg.className)) set(msg.textContent || 'Не сохранилось', 'err');
+    }).observe(msg, { childList: true, characterData: true, subtree: true, attributes: true });
+  }
+  window.ui3Autosave = autosave;
+
+  /* --- Стиль --- */
+  const st = document.getElementById('tab-settings');
+  if (st) autosave(st, document.getElementById('btnThemeSave'), document.getElementById('themeFormMessage'), document.getElementById('themeSaved'),
+    (el) => el.id === 'themePresetSelect' || el.id === 'fontUploadInput');
+
+  /* --- Алерты --- */
+  const al = document.getElementById('tab-donalerts');
+  if (al) {
+    const mark = document.getElementById('daSaved');
+    // донат
+    autosave(document.getElementById('daCfgCard'), document.getElementById('btnDaSave'), document.getElementById('daMessage'), mark);
+    // события (подписки, рейд, фоллоу, Hype Train, баллы) — карточки строит app.js
+    const wire = () => $$('.da-evpane', al).forEach((p) => {
+      if (p.dataset.ui3) return;
+      const card = $('[data-a="cfgcard"]', p), save = $('[data-a="save"]', p), msg = $('[data-a="msg"]', p);
+      if (!card || !save) return;
+      p.dataset.ui3 = '1';
+      autosave(card, save, msg, mark, (el) => el.closest('.ev-test, [data-a="testbox"]'));
+    });
+    wire(); setTimeout(wire, 1500); setTimeout(wire, 4000);
+    // цель сбора (сумма меняется отдельной кнопкой)
+    const gs = document.getElementById('btnGoalSave');
+    if (gs) autosave(gs.closest('.card'), gs, document.getElementById('goalMessage'), mark, (el) => el.id === 'goalAmount');
+    // настройки алерта открыты сразу, а не за кнопкой-шестерёнкой
+    setTimeout(() => {
+      const c = document.getElementById('daCfgCard'), b = document.getElementById('btnDaCfg');
+      if (c && c.hidden && b) b.click();
+      $$('.da-evpane', al).forEach((p) => { const cc = $('[data-a="cfgcard"]', p), cb = $('[data-a="cfg"]', p); if (cc && cc.hidden && cb) cb.click(); });
+      document.getElementById('tab-donalerts').scrollTop = 0;
+      const content = document.querySelector('.content'); if (content && !document.getElementById('tab-donalerts').classList.contains('active')) content.scrollTop = 0;
+    }, 1800);
+    // подписи под иконками предпросмотра
+    const label = () => $$('.dbtn', al).forEach((b) => {
+      if (b.querySelector('.dlab')) return;
+      const tip = (b.dataset.tip || b.title || '').split('\n')[0].replace(/^Скопировать ссылку для OBS$/, 'Ссылка OBS').replace('Привязка к теме оверлея', 'Как тема').replace('Озвучка алерта', 'Озвучка').replace('Печать текста', 'Печать').replace('Шрифт алерта', 'Шрифт').replace('Настройки алерта', 'Настройки');
+      const s = document.createElement('span'); s.className = 'dlab'; s.textContent = tip; b.appendChild(s);
+    });
+    label(); setTimeout(label, 1500); setTimeout(label, 4000);
+    const ob = $('[data-copy-alerts]');
+    if (ob) ob.addEventListener('click', async () => { const u = location.origin + '/overlay.html?only=donation'; try { await navigator.clipboard.writeText(u); } catch (e) {} if (window.ui3Toast) window.ui3Toast('Ссылка на алерты скопирована'); });
+  }
+
+  /* --- Чат: подписи на кнопках «+» --- */
+  [['btnToggleCreatePrediction', 'Новая ставка'], ['btnToggleCreatePoll', 'Новый опрос']].forEach(([id, txt]) => {
+    const b = document.getElementById(id); if (!b) return;
+    b.classList.add('ui3-addbtn'); b.innerHTML = '<span class="a">+ ' + txt + '</span><span class="c">Закрыть</span>';
+  });
+})();
+
+// ---------- Свои окна вместо confirm / alert / prompt браузера ----------
+(function () {
+  'use strict';
+  const ov = document.createElement('div');
+  ov.className = 'ui3-dlg-ov';
+  ov.innerHTML = '<div class="ui3-dlg" role="dialog" aria-modal="true"><div class="ui3-dlg-text"></div><input class="ui3-dlg-in" type="password" autocomplete="off"><div class="ui3-dlg-act"><button class="btn btn-ghost" type="button" data-r="0">Отмена</button><button class="btn btn-primary" type="button" data-r="1">ОК</button></div></div>';
+  document.body.appendChild(ov);
+  const text = ov.querySelector('.ui3-dlg-text'), inp = ov.querySelector('.ui3-dlg-in'), ok = ov.querySelector('[data-r="1"]'), no = ov.querySelector('[data-r="0"]');
+  let done = null;
+  function open(kind, msg) {
+    if (done) done(kind === 'prompt' ? null : false);
+    const parts = String(msg || '').split('\n\n');
+    text.innerHTML = '';
+    parts.forEach((p, i) => { const el = document.createElement(i === 0 ? 'b' : 'p'); el.textContent = p; text.appendChild(el); });
+    inp.style.display = kind === 'prompt' ? '' : 'none'; inp.value = '';
+    no.style.display = kind === 'alert' ? 'none' : '';
+    const danger = kind === 'confirm' && /удал|стер|сброс|очист|обнул|необратим/i.test(msg);
+    ok.textContent = kind === 'alert' ? 'Понятно' : danger ? (/удал/i.test(msg) ? 'Удалить' : /сброс|обнул/i.test(msg) ? 'Сбросить' : 'Да, очистить') : 'Да';
+    ok.classList.toggle('ui3-danger', danger);
+    ov.classList.add('open');
+    setTimeout(() => (kind === 'prompt' ? inp : ok).focus(), 20);
+    return new Promise((res) => { done = (v) => { done = null; ov.classList.remove('open'); res(v); }; ov.dataset.kind = kind; });
+  }
+  const finish = (yes) => { if (!done) return; const k = ov.dataset.kind; done(k === 'prompt' ? (yes ? inp.value : null) : k === 'alert' ? true : yes); };
+  ok.addEventListener('click', () => finish(true));
+  no.addEventListener('click', () => finish(false));
+  ov.addEventListener('click', (e) => { if (e.target === ov) finish(false); });
+  document.addEventListener('keydown', (e) => { if (!ov.classList.contains('open')) return; if (e.key === 'Escape') { e.stopPropagation(); finish(false); } if (e.key === 'Enter') { e.preventDefault(); finish(true); } }, true);
+  window.ui3Confirm = (m) => open('confirm', m);
+  window.ui3Alert = (m) => open('alert', m);
+  window.ui3Prompt = (m) => open('prompt', m);
+})();
+
+// ---------- Сцена: подписи у кнопок панели ----------
+(function () {
+  'use strict';
+  const L = { btnAutoRecord: 'Автозапись', btnReplayStart: 'Повтор', btnStreamReset: 'Новый стрим', btnLayoutResetAll: 'Сбросить всё', btnFakeMode: 'Демо-стрим', btnWidgetsWide: 'На весь экран', btnGridPop: 'Сетка', btnCopyOverlayWidgetUrl: 'Ссылка OBS', btnStylePop: 'Стиль' };
+  Object.keys(L).forEach((id) => { const b = document.getElementById(id); if (!b || b.querySelector('.wtl')) return; const s = document.createElement('span'); s.className = 'wtl'; s.textContent = L[id]; b.appendChild(s); });
+})();
