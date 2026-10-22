@@ -3195,6 +3195,7 @@ app.post('/api/nowplaying/browser', express.json({ limit: '200kb' }), (req, res)
   try { nowPlaying.setBrowser(req.body || {}); res.json({ success: true, enabled: !!config.eventAlerts.nowplaying.enabled }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 // кнопка «Установить расширение» в админке: открывает страницу расширений браузера и папку с расширением (Windows). Магазин — если задан extensionStoreUrl в config.json.
+app.get('/api/nowplaying/extension', (req, res) => { res.json({ success: true, dir: path.join(__dirname, 'browser-extension'), store: /^https:\/\//.test(String(config.nowplayingExtensionStoreUrl || '')) ? config.nowplayingExtensionStoreUrl : '' }); });
 app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (req, res) => {
   const dir = path.join(__dirname, 'browser-extension');
   const b = String((req.body && req.body.browser) || '');
@@ -3202,9 +3203,10 @@ app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (r
   const store = String(config.nowplayingExtensionStoreUrl || '');
   if (/^https:\/\//.test(store)) return res.json({ success: true, store, dir });
   let opened = false;
+  const what = String((req.body && req.body.what) || 'both');
   if (process.platform === 'win32') {
-    try { require('child_process').spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore' }).unref(); } catch (e) { /* не критично */ }
-    if (BR[b]) { try { require('child_process').spawn('cmd.exe', ['/c', 'start', '', BR[b][0], BR[b][1]], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); opened = true; } catch (e) { /* откроют сами */ } }
+    if (what !== 'page') { try { require('child_process').spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore' }).unref(); } catch (e) { /* не критично */ } }
+    if (what !== 'folder' && BR[b]) { try { require('child_process').spawn('cmd.exe', ['/c', 'start', '', BR[b][0], BR[b][1]], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); opened = true; } catch (e) { /* откроют сами */ } }
   }
   res.json({ success: true, dir, opened, page: BR[b] ? BR[b][1] : 'chrome://extensions' });
 });

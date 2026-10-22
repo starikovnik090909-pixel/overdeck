@@ -8756,7 +8756,7 @@
       hint: PH + ' Ещё: {streak} — стримов подряд, {streamsWord} — «стрим/стрима/стримов», {points} — баллы.',
     },
     nowplaying: {
-      note: 'Закреплённая карточка «Сейчас играет»: обложка, название, сколько прошло и сколько всего. Данные берутся из медиа-сессий Windows: их публикуют браузеры (Chrome, Edge, Firefox, Яндекс Браузер), Spotify, VLC и другие плееры, поэтому карточка понимает, что именно сейчас играет, и показывает остальные открытые источники. Работает только на Windows 10/11 и только пока включено.',
+      note: 'Закреплённая карточка «Сейчас играет»: обложка, название, сколько прошло и сколько всего. Данные берутся из медиа-сессий Windows (Chrome, Edge, Яндекс Браузер, Spotify, VLC и другие плееры) и из расширения браузера, которое читает видео и аудио на любом сайте (установка — в блоке «Расширение браузера» выше). Системное чтение работает только на Windows 10/11, расширение — на любой системе.',
       test: [],
       preview: '/nowplaying-preview.html',
       fields: [['enabled', 'toggle', 'Показывать «Сейчас играет»'], ['style', 'select', 'Вид', [['card', 'Широкая лента (обложка, название, время)'], ['cols', 'Две колонки (крупное время слева)'], ['mini', 'Мини: скраббер (название, время, шкала)'], ['vbar', 'Мини: вертикальный акцент'], ['bigtime', 'Мини: крупное время'], ['corners', 'Мини: уголки']]], ['bgOpacity', 'range', 'Непрозрачность фона (лента и две колонки), % (0 — без фона)'], ['corner', 'select', 'Угол экрана', [['bl', 'Слева внизу'], ['br', 'Справа внизу'], ['tl', 'Слева вверху'], ['tr', 'Справа вверху']]], ['size', 'number', 'Размер карточки, % (50–200)'], ['showCover', 'toggle', 'Показывать обложку (если у трека/фильма она есть)'], ['showSource', 'toggle', 'Показывать, откуда играет (Chrome, Spotify…)'], ['showOthers', 'toggle', 'Показывать «Ещё открыто» (другие источники)'], ['hideWhenPaused', 'toggle', 'Прятать, когда ничего не играет (пауза)'], ['hideDelaySec', 'number', 'Через сколько секунд прятать'], ['minDurationSec', 'number', 'Не показывать короче N секунд (0 — всё)'], ['color', 'color', 'Цвет полоски и акцентов'],
@@ -8796,8 +8796,13 @@
     root.innerHTML = `
       <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
           <p class="card-hint" style="margin:4px 0 8px" data-a="extst">Проверяю…</p>
-          <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Установить расширение</button></div>
-          <p class="card-hint" style="margin:8px 0 0">Читает видео и аудио на любом сайте. Нужно один раз.</p></div>` : ''}
+          <ol class="card-hint" style="margin:0 0 8px;padding-left:18px;line-height:1.6">
+            <li>Нажми «Открыть страницу расширений» и включи там «Режим разработчика» (переключатель вверху справа).</li>
+            <li>Нажми «Загрузить распакованное».</li>
+            <li>Выбери папку с расширением. Её путь:</li></ol>
+          <div class="toggle-row-extra" style="margin:0 0 8px"><input type="text" readonly data-a="extdir" style="flex:1;min-width:0" value="…"><button class="btn-tiny" type="button" data-a="extcopy">Копировать</button><button class="btn-tiny" type="button" data-a="extfolder">Открыть папку</button></div>
+          <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Открыть страницу расширений</button></div>
+          <p class="card-hint" style="margin:8px 0 0">В другом браузере открой страницу расширений сам (Яндекс: browser://extensions, Opera: opera://extensions, Brave: brave://extensions). Расширение ставится один раз, потом статус выше станет «подключено».</p></div>` : ''}
         <div class="actions"><button class="btn btn-primary" type="button" data-a="test">Тест алерта</button><button class="btn btn-secondary" type="button" data-a="skip">Пропустить текущий</button></div>
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
       <div class="da-mid"><div class="card" data-a="cfgcard" hidden><h2 class="section-title">Настройки события</h2><p class="card-hint">${esc(cfg.note)}</p>${rows}
@@ -8820,12 +8825,16 @@
       const est = $('[data-a="extst"]');
       const refreshExt = () => { if (!root.isConnected) return; fetch('/api/nowplaying').then((r) => r.json()).then((d) => { const x = d.state && d.state.diag && d.state.diag.ext; est.textContent = x && x.fresh ? 'Расширение подключено' + (x.browser ? ' (' + x.browser + ')' : '') + ', видео и аудио на вкладках: ' + x.count + '.' : 'Расширение не подключено.'; est.style.color = x && x.fresh ? '#4cc38a' : ''; }).catch(() => {}); };
       refreshExt(); setInterval(refreshExt, 2500);
+      let extDir = '';
+      fetch('/api/nowplaying/extension').then((r) => r.json()).then((d) => { extDir = d.dir || ''; $('[data-a="extdir"]').value = extDir; if (d.store) { const bt = btn('extinstall'); bt.textContent = 'Открыть магазин расширений'; bt.dataset.store = d.store; } }).catch(() => {});
+      btn('extcopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(extDir); } catch (e) { $('[data-a="extdir"]').select(); } btn('extcopy').textContent = 'Скопировано'; setTimeout(() => { btn('extcopy').textContent = 'Копировать'; }, 1500); });
+      btn('extfolder').addEventListener('click', async () => { let d = {}; try { d = await api('/api/nowplaying/extension/install', { what: 'folder' }); } catch (e) { d = {}; } if (!d.dir && !extDir) say('Не удалось открыть папку', 'error'); else if (!d.opened && window.navigator.platform && !/win/i.test(window.navigator.platform)) say('Путь к папке скопируй из поля выше.'); });
       btn('extinstall').addEventListener('click', async () => {
+        const bt = btn('extinstall');
+        if (bt.dataset.store) { window.open(bt.dataset.store, '_blank', 'noopener'); return; }
         const b = btn('extbr').value;
-        let d = {}; try { d = await api('/api/nowplaying/extension/install', { browser: b }); } catch (e) { d = {}; }
-        if (d.store) { window.open(d.store, '_blank', 'noopener'); return; }
-        try { await navigator.clipboard.writeText(d.page || 'chrome://extensions'); } catch (e) { /* без буфера — вручную */ }
-        window.ui3Alert('Установка расширения\n\n' + (d.opened ? 'Открыл страницу расширений браузера и папку с расширением. ' : 'Открыл папку с расширением. Адрес ' + (d.page || 'chrome://extensions') + ' скопирован в буфер — вставь его в адресную строку браузера. ') + 'Дальше три шага:\n1. Включи «Режим разработчика» (переключатель вверху справа).\n2. Нажми «Загрузить распакованное».\n3. Выбери папку browser-extension' + (d.dir ? ' (' + d.dir + ')' : '') + '.\n\nПосле этого здесь появится «Расширение подключено».');
+        let d = {}; try { d = await api('/api/nowplaying/extension/install', { browser: b, what: 'page' }); } catch (e) { d = {}; }
+        if (!d.opened) { try { await navigator.clipboard.writeText(d.page || 'chrome://extensions'); } catch (e) { /* вручную */ } window.ui3Alert('Страницу расширений браузер открыть не позволяет\n\nАдрес ' + (d.page || 'chrome://extensions') + ' скопирован в буфер: вставь его в адресную строку браузера и нажми Enter. Дальше идут шаги 1–3 из списка.'); }
       });
     }
     if (kind === 'follow') {
