@@ -154,7 +154,7 @@
     store.del(LOCK_KEY); unlocked = false; refreshLockUi();
     if (LOCKED.includes(activeTab())) gotoSafe();
   }
-  function gotoSafe() { const a = $('.nav-item[data-tab="auth"]'); if (a) a.click(); }
+  function gotoSafe() { const a = $('.nav-item[data-tab="home"]'); if (a) a.click(); }
 
   // перехват клика по закрытой вкладке до обработчиков app.js
   const sidebar = $('.sidebar');

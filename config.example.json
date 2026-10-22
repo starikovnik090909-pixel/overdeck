@@ -1,6 +1,7 @@
 {
   "channel": "ВСТАВЬ_СВОЙ_КАНАЛ",
   "port": 3001,
+  "allowLan": false,
   "twitch": {
     "clientId": "ВСТАВЬ_CLIENT_ID",
     "clientSecret": "ВСТАВЬ_CLIENT_SECRET"

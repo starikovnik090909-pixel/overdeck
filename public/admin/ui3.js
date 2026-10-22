@@ -1,0 +1,347 @@
+// ui3.js — Overdeck 3.0: шапка (путь, поиск Ctrl+K, «Тест события»), версия в меню,
+// вкладки «Главная» и «Ссылки для OBS». Работает поверх app.js и ничего в нём не меняет.
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ORIGIN = location.origin;
+  const P = {
+    check: '<path d="M20 6 9 17l-5-5"/>', heart: '<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
+    star: '<path d="m12 2 3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>', users: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',
+    user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', gift: '<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v9H5v-9"/>',
+    coin: '<circle cx="12" cy="12" r="9"/><path d="M14.5 9.5A2.5 2 0 0 0 12 8c-1.5 0-2.5.8-2.5 2s1 1.6 2.5 2 2.5.8 2.5 2-1 2-2.5 2a2.5 2 0 0 1-2.5-1.5"/>',
+    activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', bot: '<rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/>',
+    target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>', train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>', ext: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
+    chev: '<path d="m9 18 6-6-6-6"/>', zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+  };
+  const I = (n) => '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none">' + (P[n] || '') + '</svg>';
+  const IC = (n) => '<svg viewBox="0 0 24 24">' + (P[n] || '') + '</svg>';
+
+  /* ---------- тост ---------- */
+  const toastEl = document.createElement('div'); toastEl.className = 'ui3-toast'; document.body.appendChild(toastEl);
+  let toastT = 0;
+  function toast(text, err) { toastEl.textContent = text; toastEl.classList.toggle('err', !!err); toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2600); }
+  window.ui3Toast = toast;
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+    toast('Ссылка скопирована');
+  }
+  const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).then((r) => r.json().catch(() => ({}))).catch(() => ({ success: false }));
+  const goTab = (t) => { const n = $('.nav-item[data-tab="' + t + '"]'); if (n) n.click(); };
+
+  /* ---------- путь в шапке ---------- */
+  const crumb = $('#topCrumb');
+  function syncCrumb() {
+    if (!crumb) return;
+    const a = $('.nav-item.active span');
+    if (a) { crumb.textContent = a.textContent.trim(); return; }
+    const s = $('.tab-section.active .tab-title');
+    crumb.textContent = s ? s.textContent.trim() : '';
+  }
+  new MutationObserver(syncCrumb).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  syncCrumb();
+
+  /* ---------- «Тест события» ---------- */
+  const TESTS = {
+    donation: () => post('/api/donation-alert/test', {}),
+    follow: () => post('/api/event-alerts/follow/test', {}), sub: () => post('/api/event-alerts/sub/test', {}),
+    raid: () => post('/api/event-alerts/raid/test', {}), hype: () => post('/api/event-alerts/hype/test', {}),
+    points: () => post('/api/event-alerts/points/test', {}), goal: () => post('/api/goal/test', { kind: 'donation' }),
+  };
+  const NAMES = { donation: 'Донат', follow: 'Фоллов', sub: 'Подписка', raid: 'Рейд', hype: 'Hype Train', points: 'Награда за баллы', goal: 'Взнос в цель' };
+  async function runTest(k) {
+    if (!TESTS[k]) return;
+    const r = await TESTS[k]();
+    toast(r && r.success === false ? 'Не получилось: ' + (r.error || 'сервер не ответил') : 'Тест «' + NAMES[k] + '» отправлен в оверлей', r && r.success === false);
+  }
+  const tBtn = $('#testMenuBtn'), tPop = $('#testMenuPop');
+  if (tBtn && tPop) {
+    tBtn.addEventListener('click', (e) => { e.stopPropagation(); tPop.hidden = !tPop.hidden; });
+    document.addEventListener('click', (e) => { if (!tPop.hidden && !tPop.contains(e.target)) tPop.hidden = true; });
+    $$('button[data-test]', tPop).forEach((b) => b.addEventListener('click', () => { tPop.hidden = true; runTest(b.dataset.test); }));
+  }
+
+  /* ---------- поиск Ctrl+K ---------- */
+  const pal = document.createElement('div');
+  pal.className = 'ui3-palette-ov';
+  pal.innerHTML = '<div class="ui3-palette"><input type="text" placeholder="Вкладка или настройка: «голос», «донат», «ссылка»…" autocomplete="off"><ul></ul></div>';
+  document.body.appendChild(pal);
+  const palIn = $('input', pal), palList = $('ul', pal);
+  let palItems = [], palSel = 0;
+  function buildIndex() {
+    const out = [];
+    $$('.nav-item[data-tab]').forEach((n) => {
+      const tab = n.dataset.tab, name = (n.querySelector('span') || n).textContent.trim();
+      out.push({ tab, title: name, sub: 'Вкладка', el: null });
+      const sec = document.getElementById('tab-' + tab);
+      if (!sec || n.classList.contains('tab-locked')) return;
+      $$('.section-title, .card h2, .card h3, .ui3-ch h3', sec).forEach((h) => {
+        const t = h.textContent.replace(/\s+/g, ' ').trim();
+        if (t && t.length < 60) out.push({ tab, title: t, sub: name, el: h });
+      });
+    });
+    return out;
+  }
+  function renderPal() {
+    const q = palIn.value.trim().toLowerCase();
+    const all = buildIndex();
+    palItems = (q ? all.filter((x) => (x.title + ' ' + x.sub).toLowerCase().includes(q)) : all.filter((x) => !x.el)).slice(0, 40);
+    palSel = Math.min(palSel, Math.max(0, palItems.length - 1));
+    palList.innerHTML = palItems.length ? palItems.map((x, i) => '<li class="' + (i === palSel ? 'sel' : '') + '" data-i="' + i + '"><b>' + esc(x.title) + '</b><span>' + esc(x.sub) + '</span></li>').join('') : '<div class="none">Ничего не нашлось</div>';
+  }
+  function openPal() { pal.classList.add('open'); palIn.value = ''; palSel = 0; renderPal(); palIn.focus(); }
+  function closePal() { pal.classList.remove('open'); }
+  function pick(i) {
+    const x = palItems[i]; if (!x) return;
+    closePal(); goTab(x.tab);
+    if (x.el) setTimeout(() => { x.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); const c = x.el.closest('.card') || x.el; c.animate([{ boxShadow: '0 0 0 2px #D84B55' }, { boxShadow: '0 0 0 2px transparent' }], { duration: 1400 }); }, 80);
+  }
+  palIn.addEventListener('input', () => { palSel = 0; renderPal(); });
+  palIn.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { palSel = Math.min(palItems.length - 1, palSel + 1); renderPal(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { palSel = Math.max(0, palSel - 1); renderPal(); e.preventDefault(); }
+    else if (e.key === 'Enter') pick(palSel);
+    else if (e.key === 'Escape') closePal();
+  });
+  palList.addEventListener('click', (e) => { const li = e.target.closest('li'); if (li) pick(+li.dataset.i); });
+  pal.addEventListener('click', (e) => { if (e.target === pal) closePal(); });
+  const sBtn = $('#topSearch'); if (sBtn) sBtn.addEventListener('click', openPal);
+  document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K' || e.key === 'л' || e.key === 'Л')) { e.preventDefault(); pal.classList.contains('open') ? closePal() : openPal(); } });
+
+  /* ---------- данные ---------- */
+  let home = null;
+  async function loadHome() {
+    try { home = await (await fetch('/api/home')).json(); } catch (e) { home = null; }
+    if (!home) return;
+    const v = $('#sideVersion'); if (v) v.textContent = 'v' + home.version;
+    if (isActive('home')) renderHome();
+    if (isActive('obs')) renderObs();
+  }
+  const isActive = (t) => { const s = document.getElementById('tab-' + t); return s && s.classList.contains('active'); };
+  const rub = (n) => (Number(n) || 0).toLocaleString('ru-RU') + ' ₽';
+  const plural = (n, a, b, c) => { n = Math.abs(n) % 100; const d = n % 10; return n > 10 && n < 20 ? c : d > 1 && d < 5 ? b : d === 1 ? a : c; };
+  function ago(ts) {
+    const m = Math.round((Date.now() - ts) / 60000);
+    if (m < 1) return 'сейчас'; if (m < 60) return m + ' мин'; const h = Math.round(m / 60); if (h < 24) return h + ' ч';
+    return new Date(ts).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+  }
+  function greet() { const h = new Date().getHours(); return h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер'; }
+
+  /* ---------- Главная ---------- */
+  function renderHome() {
+    const d = home; if (!d) return;
+    const o = d.twitch.oauth || {};
+    const name = o.displayName || d.channel || '';
+    $('#homeHello').textContent = name ? greet() + ', ' + name : 'Добро пожаловать в Overdeck';
+    const left = Object.values(d.checklist).filter((x) => !x).length;
+    $('#homeSub').textContent = d.setup ? 'Overdeck ещё не настроен — начни с подключения Twitch.' : left ? 'Осталось настроить: ' + left + ' ' + plural(left, 'шаг', 'шага', 'шагов') + '.' : 'Всё готово к стриму.';
+    const st = (ic, cls, label, val, sub, tab) => '<div class="ui3-stat" data-go="' + tab + '"><div class="ui3-ico ' + cls + '">' + IC(ic) + '</div><div><small>' + label + '</small><b>' + val + '</b><span>' + sub + '</span></div></div>';
+    const botOk = d.bot.status === 'connected';
+    $('#homeStats').innerHTML =
+      st('activity', o.connected ? 'ok' : 'warn', 'Twitch', o.connected ? 'Подключён' : 'Не подключён', o.connected ? esc(o.login || d.channel) : 'Нужно войти через Twitch', 'auth') +
+      st('clock', d.streamLive ? 'acc' : '', 'Стрим', d.streamLive ? 'В эфире' : 'Офлайн', esc(d.channel || '—'), 'chat') +
+      st('heart', 'acc', 'Донаты за 7 дней', rub(d.donations.week), d.donations.weekCount + ' ' + plural(d.donations.weekCount, 'донат', 'доната', 'донатов') + ' · сегодня ' + rub(d.donations.today), 'donations') +
+      st('bot', botOk ? 'ok' : '', 'Чат-бот', botOk ? 'В чате' : 'Не подключён', d.bot.commands + ' ' + plural(d.bot.commands, 'команда', 'команды', 'команд') + ' · ' + d.bot.timers + ' ' + plural(d.bot.timers, 'таймер', 'таймера', 'таймеров'), 'chatbot');
+    const c = d.checklist;
+    const steps = [
+      ['twitch', 'Подключить Twitch', c.twitch ? 'Вход выполнен' : 'Вкладка «Подключения» → «Войти через Twitch»', 'auth'],
+      ['obs', 'Добавить оверлей в OBS', c.obs ? 'Виджет открыт в OBS' : 'Источник «Браузер», 1920×1080', 'obs'],
+      ['donations', 'Подключить донаты', c.donations ? (d.donations.daConnected ? 'DonationAlerts' : 'DonateX') : 'DonationAlerts или DonateX', 'donations'],
+      ['tts', 'Включить озвучку чата', c.tts ? 'Включена' : 'Выбери голос — 1 минута', 'voice'],
+      ['alerts', 'Настроить алерты', c.alerts ? 'Хотя бы один алерт включён' : 'Звук и текст для доната и событий', 'donalerts'],
+    ];
+    const done = steps.filter((s) => c[s[0]]).length;
+    $('#homeChecklist').innerHTML = '<div class="ui3-ch"><div><h3>Настройка Overdeck</h3><div class="sub">' + (done === steps.length ? 'Всё настроено' : 'Осталось ' + (steps.length - done)) + '</div></div><div class="r"><span class="ui3-chip ' + (done === steps.length ? 'ok' : 'acc') + '">' + done + ' из ' + steps.length + '</span></div></div>' +
+      steps.map((s) => '<div class="ui3-row ' + (c[s[0]] ? 'done' : '') + '"><span class="ui3-check">' + (c[s[0]] ? IC('check') : '') + '</span><div class="l"><b>' + s[1] + '</b><span>' + s[2] + '</span></div>' + (c[s[0]] ? '' : '<button class="btn btn-secondary btn-sm" type="button" data-go="' + s[3] + '">Настроить</button>') + '</div>').join('');
+    const EV = { donation: ['heart', 'acc', 'задонатил'], sub: ['star', 'tw', 'подписка'], giftsub: ['gift', 'tw', 'подарил подписки'], raid: ['users', 'ok', 'рейд'], follow: ['user', '', 'подписался на канал'], channelpoints: ['coin', 'warn', 'награда за баллы'] };
+    const evs = d.events || [];
+    $('#homeEvents').innerHTML = '<div class="ui3-ch"><div><h3>Последние события</h3><div class="sub">С момента запуска Overdeck</div></div><div class="r"><button class="btn btn-ghost btn-sm" type="button" data-go="donations">Донаты ' + I('chev') + '</button></div></div>' +
+      (evs.length ? evs.map((e) => { const m = EV[e.type] || ['activity', '', e.type]; const amt = e.type === 'donation' ? rub(e.amount) : e.type === 'raid' ? e.count + ' ' + plural(e.count, 'зритель', 'зрителя', 'зрителей') : e.type === 'giftsub' ? '× ' + e.count : e.type === 'channelpoints' ? esc(e.text) : '';
+        return '<div class="ui3-row ui3-ev"><div class="ui3-ico ' + m[1] + '">' + IC(m[0]) + '</div><div class="l"><b>' + esc(e.username || 'Аноним') + ' <span style="font-weight:400;color:var(--text-secondary)">' + m[2] + '</span></b></div>' + (amt ? '<span class="amt">' + amt + '</span>' : '') + '<span class="t">' + ago(e.ts) + '</span></div>'; }).join('')
+        : '<div class="ui3-empty"><b>Пока тихо</b>Здесь появятся донаты, подписки и рейды.<br>Проверь, как они выглядят, кнопками «Тест события».</div>');
+    $('#homeTests').innerHTML = '<div class="ui3-ch"><div><h3>Тестовые события</h3><div class="sub">Видны только в оверлее, в статистику не попадают</div></div></div><div class="ui3-tests">' +
+      [['donation', 'heart', 'Донат'], ['follow', 'user', 'Фоллов'], ['sub', 'star', 'Подписка'], ['raid', 'users', 'Рейд'], ['hype', 'train', 'Hype Train'], ['goal', 'target', 'Цель сбора']].map((x) => '<button class="btn btn-secondary" type="button" data-test="' + x[0] + '">' + I(x[1]) + ' ' + x[2] + '</button>').join('') + '</div>';
+    $('#homeLinks').innerHTML = '<div class="ui3-ch"><h3>Ссылки для OBS</h3><div class="r"><button class="btn btn-ghost btn-sm" type="button" data-go="obs">Все ' + I('chev') + '</button></div></div>' +
+      WIDGETS.slice(0, 3).map((w) => '<div class="ui3-row"><div class="l"><b>' + w.name + '</b></div><button class="btn btn-secondary btn-sm" type="button" data-copy="' + ORIGIN + '/' + w.url + '">' + I('copy') + ' Копировать</button></div>').join('');
+  }
+
+  /* ---------- Ссылки для OBS ---------- */
+  const WIDGETS = [
+    { name: 'Основной оверлей', desc: 'Активность чата, таймлайн, топ донатеров, эмодзи, слова эфира', url: 'overlay.html', size: '1920 × 1080', key: 'overlay', tab: 'widgets', th: 'left:6px;right:6px;top:6px;height:16px;background:rgba(216,75,85,.45)' },
+    { name: 'Алерты', desc: 'Донаты, подписки, рейды, цель сбора — общий источник', url: 'overlay.html?only=donation', size: '1920 × 1080', key: 'alerts', tab: 'donalerts', th: 'left:26px;right:26px;top:16px;height:22px;background:rgba(216,75,85,.6)' },
+    { name: 'Чат', desc: 'Сообщения зрителей с эмодзи и бейджами', url: 'chat-widget.html', size: 'любой, например 400 × 800', key: 'chat', tab: 'chat', th: 'left:30px;width:36px;top:5px;bottom:5px;background:rgba(255,255,255,.18)' },
+    { name: 'Цель сбора отдельно', desc: 'Только если в «Алертах» выключен общий источник', url: 'goal.html', size: '680 × 250', key: 'goal', tab: 'donalerts', th: 'left:10px;right:10px;top:22px;height:10px;background:linear-gradient(90deg,#D84B55 62%,#333 62%)' },
+  ];
+  function renderObs() {
+    const obs = (home && home.obs) || {};
+    const t = $('#obsTable'); if (!t) return;
+    t.innerHTML = '<thead><tr><th style="width:130px">Превью</th><th>Виджет</th><th style="width:200px">Размер источника</th><th style="width:420px">Ссылка</th><th style="width:150px">Статус</th><th style="width:240px"></th></tr></thead><tbody>' +
+      WIDGETS.map((w) => { const on = (obs[w.key] || 0) > 0; const full = ORIGIN + '/' + w.url;
+        return '<tr><td><div class="ui3-thumb"><i style="' + w.th + '"></i></div></td><td><b style="font-weight:600">' + w.name + '</b><div class="card-hint" style="margin:2px 0 0">' + w.desc + '</div></td><td class="mono">' + w.size + '</td>' +
+          '<td><div class="ui3-url"><i>' + esc(ORIGIN.replace(/^https?:\/\//, '')) + '/</i>' + esc(w.url) + '</div></td>' +
+          '<td>' + (on ? '<span class="ui3-chip ok">Открыт в OBS</span>' : '<span class="ui3-chip">Не открыт</span>') + '</td>' +
+          '<td style="text-align:right;white-space:nowrap"><button class="btn btn-secondary btn-sm" type="button" data-copy="' + full + '">' + I('copy') + ' Копировать</button> <a class="btn btn-ghost btn-sm" href="' + full + '" target="_blank" rel="noopener" title="Открыть в браузере">' + I('ext') + '</a> <button class="btn btn-ghost btn-sm" type="button" data-go="' + w.tab + '">Настроить</button></td></tr>'; }).join('') + '</tbody>';
+  }
+
+  /* ---------- общие клики ---------- */
+  document.addEventListener('click', (e) => {
+    const g = e.target.closest('[data-go]'); if (g && (g.closest('#tab-home') || g.closest('#tab-obs'))) { goTab(g.dataset.go); return; }
+    const c = e.target.closest('[data-copy]'); if (c) { copy(c.dataset.copy); return; }
+    const t = e.target.closest('#tab-home [data-test]'); if (t) { runTest(t.dataset.test); return; }
+  });
+  const all = $('#homeTestAll');
+  if (all) all.addEventListener('click', async () => { for (const k of ['donation', 'follow', 'sub', 'raid']) { await TESTS[k](); await new Promise((r) => setTimeout(r, 400)); } toast('Отправлены тесты: донат, фоллов, подписка, рейд'); });
+
+  // обновление при переключении на вкладку и раз в 5 секунд, пока она открыта
+  $$('.nav-item[data-tab="home"], .nav-item[data-tab="obs"]').forEach((n) => n.addEventListener('click', () => setTimeout(loadHome, 0)));
+  setInterval(() => { if (!document.hidden && (isActive('home') || isActive('obs'))) loadHome(); }, 5000);
+  loadHome();
+  renderObs();
+})();
+
+// ---------- Вход по коду (общее приложение Overdeck) + мастер первого запуска ----------
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} }, del: (k) => { try { localStorage.removeItem(k); } catch (e) {} } };
+  const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) }).then((r) => r.json().catch(() => ({}))).catch(() => ({ success: false, error: 'Сервер не отвечает' }));
+  const TW = '<svg viewBox="0 0 24 24" style="width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M21 2H3v16h5v4l4-4h5l4-4z"/><path d="M11 7v4M16 7v4"/></svg>';
+  const toast = (t, e) => window.ui3Toast && window.ui3Toast(t, e);
+  let mode = null;
+
+  /* общий блок «код + кнопки», рисуется в карточку вкладки и в мастер */
+  function deviceBlock(host, onDone) {
+    let timer = 0, stopped = false;
+    host.innerHTML = '<button class="btn btn-primary ui3-tw" type="button" data-dv="start">' + TW + ' Войти через Twitch</button><div class="card-hint" style="margin-top:10px">Откроется twitch.tv — подтверди вход. Пароль Overdeck не видит, ключи создавать не нужно.</div>';
+    const render = (st) => {
+      if (st.state === 'pending') {
+        const m = Math.floor(st.left / 60), sec = String(st.left % 60).padStart(2, '0');
+        host.innerHTML = '<div class="ui3-code"><div><div class="card-hint" style="margin:0 0 6px">Твой код</div><div class="ui3-code-val">' + esc(st.userCode) + '</div></div>' +
+          '<div class="ui3-code-steps"><div>1. Открой страницу Twitch кнопкой ниже</div><div>2. Проверь, что код совпадает, и нажми «Активировать» / «Authorize»</div><div class="card-hint" style="margin:0">3. Вернись сюда — всё продолжится само</div></div></div>' +
+          '<div class="ui3-code-act"><a class="btn btn-primary ui3-tw" href="' + esc(st.uri) + '" target="_blank" rel="noopener">' + TW + ' Открыть Twitch</a><button class="btn btn-ghost" type="button" data-dv="copy">Скопировать код</button><button class="btn btn-ghost" type="button" data-dv="cancel">Отмена</button><span class="ui3-wait"><span class="status-dot" style="background:var(--warn)"></span> Ждём подтверждения… ' + m + ':' + sec + '</span></div>';
+      } else if (st.state === 'done') {
+        host.innerHTML = '<div class="ui3-ok">Готово — вход выполнен: <b>' + esc(st.displayName || st.login) + '</b>' + (st.restart === 'auto' ? '. Перезапускаю Overdeck с твоим каналом…' : st.restart === 'manual' ? '. Закрой окно сервера и запусти Overdeck снова, чтобы подключить чат канала.' : '') + '</div>';
+      } else if (st.state === 'expired' || st.state === 'error') {
+        host.innerHTML = '<div class="ui3-err">' + (st.state === 'expired' ? 'Код устарел.' : esc(st.error || 'Не получилось войти.')) + '</div><button class="btn btn-primary ui3-tw" type="button" data-dv="start" style="margin-top:10px">' + TW + ' Попробовать снова</button>';
+      }
+    };
+    async function poll() {
+      if (stopped) return;
+      const st = await fetch('/api/twitch/device/status').then((r) => r.json()).catch(() => null);
+      if (!st) { timer = setTimeout(poll, 2000); return; }
+      render(st);
+      if (st.state === 'pending') timer = setTimeout(poll, 1000);
+      else if (st.state === 'done') { if (onDone) onDone(st); if (st.restart === 'auto') waitRestart(); }
+    }
+    function waitRestart() {
+      let n = 0;
+      const t = setInterval(async () => { n++; const ok = await fetch('/api/twitch/mode').then((r) => r.ok).catch(() => false); if (ok && n > 3) { clearInterval(t); location.reload(); } if (n > 60) clearInterval(t); }, 1000);
+    }
+    host.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-dv]'); if (!b) return;
+      const a = b.dataset.dv;
+      if (a === 'start') {
+        b.disabled = true;
+        const r = await post('/api/twitch/device/start');
+        if (!r.success) { b.disabled = false; toast(r.error || 'Twitch не ответил', true); return; }
+        window.open(r.uri, '_blank', 'noopener');
+        clearTimeout(timer); poll();
+      } else if (a === 'copy') {
+        const v = $('.ui3-code-val', host); if (v) { try { await navigator.clipboard.writeText(v.textContent); toast('Код скопирован'); } catch (err) {} }
+      } else if (a === 'cancel') {
+        clearTimeout(timer); await post('/api/twitch/device/cancel'); deviceBlock(host, onDone);
+      }
+    });
+    fetch('/api/twitch/device/status').then((r) => r.json()).then((st) => { if (st.state === 'pending') poll(); }).catch(() => {});
+    return { stop: () => { stopped = true; clearTimeout(timer); } };
+  }
+
+  /* карточка на вкладке «Подключения» */
+  function mountAuthCard() {
+    const sec = document.getElementById('tab-auth'); if (!sec) return;
+    const oldCard = $('#oauthConnected', sec) && $('#oauthConnected', sec).closest('.card');
+    const cred = $('#credentialsCard', sec);
+    const card = document.createElement('div');
+    card.className = 'card ui3-device-card';
+    const summary = $('#authStatusSummary', sec);
+    (summary || sec.querySelector('.tab-description')).insertAdjacentElement('afterend', card);
+    const adv = document.createElement('button');
+    adv.type = 'button'; adv.className = 'btn btn-ghost btn-sm ui3-adv'; adv.textContent = 'Расширенный режим: свои Client ID и Secret';
+    card.insertAdjacentElement('afterend', adv);
+    let advOpen = false;
+    const setAdv = (open) => { advOpen = open; [oldCard, cred, document.getElementById('envCredentialsCard')].forEach((c) => c && c.classList.toggle('ui3-hide', !open)); adv.textContent = open ? 'Скрыть расширенный режим' : 'Расширенный режим: свои Client ID и Secret'; };
+    adv.addEventListener('click', () => setAdv(!advOpen));
+    setAdv(false);
+    const draw = () => {
+      if (mode.loggedIn) {
+        card.innerHTML = '<div class="ui3-ch" style="padding:0 0 14px;border:0"><div class="ui3-ico tw">' + TW + '</div><div><h3>Канал Twitch</h3><div class="sub" id="ui3TwLogin">Вход выполнен</div></div><div class="r"><button class="btn btn-secondary" type="button" id="ui3Relogin">Войти заново</button><button class="btn btn-ghost" type="button" id="ui3Logout">Выйти</button></div></div><div id="ui3DevHost"></div>';
+        fetch('/api/home').then((r) => r.json()).then((d) => { const o = d.twitch && d.twitch.oauth; if (o && o.connected) $('#ui3TwLogin').textContent = (o.displayName || o.login) + ' · чат, события, баллы канала'; }).catch(() => {});
+        $('#ui3Logout').addEventListener('click', async () => { await post('/api/twitch/logout'); mode.loggedIn = false; draw(); toast('Вы вышли из Twitch'); });
+        $('#ui3Relogin').addEventListener('click', () => { const h = $('#ui3DevHost'); deviceBlock(h, () => { mode.loggedIn = true; }); $('[data-dv="start"]', h).click(); });
+      } else {
+        card.innerHTML = '<div class="ui3-ch" style="padding:0 0 14px;border:0"><div class="ui3-ico tw">' + TW + '</div><div><h3>Вход через Twitch</h3><div class="sub">Нужен, чтобы Overdeck получал чат, фолловы, подписки, рейды и баллы канала</div></div></div><div id="ui3DevHost"></div>';
+        deviceBlock($('#ui3DevHost'), () => { mode.loggedIn = true; setTimeout(draw, 2500); });
+      }
+    };
+    draw();
+    if ((window.__ovQuery || '').indexOf('device=1') > -1 && !mode.loggedIn) setTimeout(() => { const b = $('[data-dv="start"]', card); if (b) b.click(); }, 300);
+  }
+
+  /* мастер первого запуска */
+  function wizard(step) {
+    const ov = document.createElement('div');
+    ov.className = 'ui3-wizard';
+    document.body.appendChild(ov);
+    const steps = ['Вход через Twitch', 'OBS', 'Проверка'];
+    const close = (done) => {
+      if (done) store.set('ov3WizardDone', '1');
+      store.del('ov3WizardStep');
+      try { const m = JSON.parse(store.get('guideHidden_v1') || '{}'); m.home = 1; store.set('guideHidden_v1', JSON.stringify(m)); } catch (e) {} // после мастера мини-гайд «Главной» не нужен
+      document.querySelectorAll('.guide-overlay.open').forEach((g) => g.classList.remove('open'));
+      ov.remove();
+    };
+    const origin = location.origin;
+    function draw() {
+      const bar = '<div class="ui3-wz-steps">' + steps.map((t, i) => '<div class="' + (i < step ? 'done' : i === step ? 'on' : '') + '"><i></i><span>' + (i + 1) + '. ' + t + '</span></div>').join('') + '</div>';
+      let body = '';
+      if (step === 0) body = '<h1>Подключим Twitch</h1><p>Overdeck будет получать чат, фолловы, подписки, рейды и баллы канала. Займёт минуту.</p><div id="wzDev"></div>';
+      if (step === 1) body = '<h1>Добавь Overdeck в OBS</h1><p>В OBS: <b>Источники → + → Браузер</b>. Вставь ссылку, размер <b>1920 × 1080</b>, сними галочку «Отключать источник, когда он не виден».</p>' +
+        ['Основной оверлей|overlay.html', 'Алерты|overlay.html?only=donation'].map((x) => { const [n, u] = x.split('|'); return '<div class="ui3-wz-link"><b>' + n + '</b><code>' + origin + '/' + u + '</code><button class="btn btn-secondary btn-sm" type="button" data-wcopy="' + origin + '/' + u + '">Копировать</button></div>'; }).join('') +
+        '<div class="ui3-wz-act"><button class="btn btn-primary" type="button" data-wz="next">Добавил, дальше</button><button class="btn btn-ghost" type="button" data-wz="next">Сделаю позже</button></div>';
+      if (step === 2) body = '<h1>Проверим</h1><p>Нажми — в OBS должен появиться алерт. В статистику тестовые события не попадают.</p><div class="ui3-tests" style="padding:0;margin:16px 0 0">' +
+        [['donation', 'Донат'], ['follow', 'Фоллов'], ['sub', 'Подписка'], ['raid', 'Рейд']].map((x) => '<button class="btn btn-secondary" type="button" data-wtest="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
+        '<div class="ui3-wz-act"><button class="btn btn-primary" type="button" data-wz="finish">Всё работает — в админку</button></div>';
+      ov.innerHTML = '<div class="ui3-wz-box"><div class="ui3-wz-brand"><img src="assets/overdeck-icon.svg" width="30" height="30" alt=""><b>Overdeck</b></div>' + bar + '<div class="card ui3-wz-card">' + body + '</div>' +
+        '<div class="ui3-wz-foot"><button class="btn btn-ghost btn-sm" type="button" data-wz="skip">Пропустить мастер</button>' + (step === 0 ? '<button class="btn btn-ghost btn-sm" type="button" data-wz="key">Уже настраивал на другом ПК? Открыть файл авторизации</button>' : '') + '</div></div>';
+      if (step === 0) deviceBlock($('#wzDev', ov), (st) => { store.set('ov3WizardStep', '1'); if (!st.restart) setTimeout(() => { step = 1; draw(); }, 1200); });
+    }
+    ov.addEventListener('click', async (e) => {
+      const w = e.target.closest('[data-wz]');
+      if (w) {
+        const a = w.dataset.wz;
+        if (a === 'next') { step++; store.set('ov3WizardStep', String(step)); draw(); }
+        else if (a === 'finish') close(true);
+        else if (a === 'skip') close(true);
+        else if (a === 'key') { close(false); store.set('ov3WizardDone', '1'); const g = document.getElementById('adminSettingsGear'); if (g) g.click(); setTimeout(() => { const k = document.getElementById('keyCard'); if (k) k.scrollIntoView({ block: 'center' }); }, 120); }
+        return;
+      }
+      const c = e.target.closest('[data-wcopy]'); if (c) { try { await navigator.clipboard.writeText(c.dataset.wcopy); toast('Ссылка скопирована'); } catch (err) {} return; }
+      const t = e.target.closest('[data-wtest]');
+      if (t) { const k = t.dataset.wtest; await post(k === 'donation' ? '/api/donation-alert/test' : '/api/event-alerts/' + k + '/test'); toast('Тест отправлен в оверлей'); }
+    });
+    draw();
+  }
+
+  fetch('/api/twitch/mode').then((r) => r.json()).then((m) => {
+    mode = m;
+    if (!m.publicApp || m.ownKeys) return; // своя пара ключей или сборка без общего приложения — всё как раньше
+    mountAuthCard();
+    const ws = store.get('ov3WizardStep');
+    if (ws && m.loggedIn) wizard(+ws);
+    else if (!store.get('ov3WizardDone') && (m.setup || !m.loggedIn)) wizard(0);
+  }).catch(() => {});
+})();

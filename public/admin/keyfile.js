@@ -24,6 +24,7 @@
   }
 
   $('btnKeyCreate').addEventListener('click', async () => {
+    if (($('keyPassword').value || '').length < 6) { say('Сначала задай пароль для файла — минимум 6 символов. В файле лежат все ключи и токены.', 'error'); $('keyPassword').focus(); return; }
     say('Собираем файл…');
     try {
       const r = await fetch('/api/key/export', { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -37,7 +38,7 @@
       a.href = URL.createObjectURL(blob); a.download = m ? m[1] : 'overdeck-key.overdeckkey';
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      say('Файл создан (' + n + ' файлов, ' + mb(blob.size) + ')' + ($('keyPassword').value ? ', защищён паролем.' : ' — без пароля, береги его.'), 'success');
+      say('Файл создан (' + n + ' файлов, ' + mb(blob.size) + ')' + ', защищён паролем.', 'success');
     } catch (e) { say('Не удалось создать файл: ' + e.message, 'error'); }
   });
 
@@ -82,7 +83,7 @@
     $('keyChannelRow').style.display = '';
     const bar = document.createElement('div');
     bar.className = 'setup-bar';
-    bar.innerHTML = '<b>Оверлей ещё не настроен.</b> Открой файл авторизации с другого ПК — или впиши имя канала. <button type="button" class="btn btn-primary" id="setupGo">Открыть ключ авторизации</button>';
+    bar.innerHTML = '<b>Overdeck ещё не настроен.</b> Начни с вкладки «Подключения» — или открой файл авторизации с другого ПК. <button type="button" class="btn btn-secondary" id="setupGo">Открыть файл авторизации</button>';
     document.body.insertBefore(bar, document.body.firstChild);
     $('setupGo').addEventListener('click', () => { const g = $('adminSettingsGear'); if (g) g.click(); setTimeout(() => $('keyCard').scrollIntoView({ block: 'center' }), 100); });
   });

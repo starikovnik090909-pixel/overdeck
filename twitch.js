@@ -32,9 +32,22 @@ function connectChat(channel, onMessage, onConnected) {
 let appToken = null;
 let appTokenExpiresAt = 0;
 
+const ID_URL = process.env.TWITCH_ID_URL || 'https://id.twitch.tv'; // переменные — только для тестов
+const API_URL = process.env.TWITCH_API_URL || 'https://api.twitch.tv';
+
+// Публичное приложение (без Client Secret): вместо токена приложения Helix-запросы идут с токеном стримера.
+let userTokenProvider = null;
+function setUserTokenProvider(fn) { userTokenProvider = fn; }
+function isPublicMode(config) {
+  const { clientId, clientSecret } = config.twitch || {};
+  return !!(clientId && !clientSecret);
+}
+
 function hasCredentials(config) {
   const { clientId, clientSecret } = config.twitch || {};
-  return !!(clientId && clientSecret && !clientId.startsWith('ВСТАВЬ'));
+  if (!clientId || clientId.startsWith('ВСТАВЬ')) return false;
+  if (clientSecret) return true;
+  return !!(config.twitchAuth && config.twitchAuth.accessToken);
 }
 
 // Если Twitch отверг Client ID/Secret (например, секрет пересоздан в консоли), каждый следующий вызов helixGet (проверка стрима,
@@ -72,7 +85,7 @@ function recordAppTokenFailure(key, message, retryMs) {
 async function requestAppToken(config, key) {
   const { clientId, clientSecret } = config.twitch;
   try {
-    const url = `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`;
+    const url = `${ID_URL}/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`;
     const res = await fetch(url, { method: 'POST' });
     const data = await res.json();
     if (!data.access_token) {
@@ -96,6 +109,9 @@ async function requestAppToken(config, key) {
 
 async function getAppAccessToken(config) {
   if (!hasCredentials(config)) return null;
+  if (isPublicMode(config)) {
+    try { return userTokenProvider ? await userTokenProvider() : config.twitchAuth.accessToken; } catch (e) { return null; }
+  }
   if (appToken && Date.now() < appTokenExpiresAt - 60000) return appToken;
 
   const key = `${config.twitch.clientId}|${config.twitch.clientSecret}`;
@@ -118,7 +134,7 @@ async function helixGet(config, endpoint, params) {
   if (!token) return null;
   try {
     const qs = params instanceof URLSearchParams ? params.toString() : new URLSearchParams(params).toString();
-    const res = await fetch(`https://api.twitch.tv/helix/${endpoint}?${qs}`, {
+    const res = await fetch(`${API_URL}/helix/${endpoint}?${qs}`, {
       headers: {
         'Client-ID': config.twitch.clientId,
         'Authorization': `Bearer ${token}`,
@@ -197,7 +213,7 @@ async function validateCredentials(clientId, clientSecret) {
     return { valid: false, error: 'Заполните Client ID и Client Secret' };
   }
   try {
-    const url = `https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`;
+    const url = `${ID_URL}/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`;
     const res = await fetch(url, { method: 'POST' });
     const data = await res.json();
     if (!data.access_token) {
@@ -213,6 +229,33 @@ async function validateCredentials(clientId, clientSecret) {
 // Используется для подтверждения подключения конкретного канала (аватарка,
 // имя) — отдельно от App Access Token (client_credentials), который нужен
 // для чтения публичных данных (аватарки чаттеров, категории).
+
+const SCOPES = 'channel:read:redemptions channel:read:subscriptions channel:manage:predictions channel:read:predictions channel:manage:polls channel:read:hype_train moderator:read:followers';
+
+// ---------- Device Code Flow (вход по коду для публичного приложения) ----------
+async function postForm(url, params) {
+  try {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(params).toString() });
+    const data = await res.json().catch(() => ({}));
+    return { status: res.status, data };
+  } catch (e) {
+    return { status: 0, data: { message: e.message } };
+  }
+}
+/** → { device_code, user_code, verification_uri, expires_in, interval } */
+function startDeviceAuth(clientId) {
+  return postForm(`${ID_URL}/oauth2/device`, { client_id: clientId, scopes: SCOPES });
+}
+/** → { status, data }: data.access_token при успехе; data.message === 'authorization_pending', пока стример не ввёл код */
+function pollDeviceAuth(clientId, deviceCode) {
+  return postForm(`${ID_URL}/oauth2/token`, { client_id: clientId, scopes: SCOPES, device_code: deviceCode, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' });
+}
+/** Обновление токена стримера; у публичного приложения — без секрета. */
+function refreshUserToken(clientId, clientSecret, refreshToken) {
+  const p = { client_id: clientId, grant_type: 'refresh_token', refresh_token: refreshToken };
+  if (clientSecret) p.client_secret = clientSecret;
+  return postForm(`${ID_URL}/oauth2/token`, p);
+}
 
 function buildAuthorizeUrl(clientId, redirectUri, state) {
   const params = new URLSearchParams({
@@ -230,7 +273,7 @@ function buildAuthorizeUrl(clientId, redirectUri, state) {
     // channel:manage:polls — создание/завершение опросов (вкладка "Чат"); покрывает и чтение опросов. Как и с прогнозами —
     // уже подключённым каналам нужно войти через Twitch ещё раз, чтобы получить токен с этим правом.
     // channel:read:hype_train и moderator:read:followers — для алертов Hype Train и фоллоу (нужен повторный вход через Twitch).
-    scope: 'channel:read:redemptions channel:read:subscriptions channel:manage:predictions channel:read:predictions channel:manage:polls channel:read:hype_train moderator:read:followers',
+    scope: SCOPES,
     state,
   });
   return `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
@@ -245,7 +288,7 @@ async function exchangeCodeForToken(clientId, clientSecret, code, redirectUri) {
     redirect_uri: redirectUri,
   });
   try {
-    const res = await fetch(`https://id.twitch.tv/oauth2/token?${params.toString()}`, { method: 'POST' });
+    const res = await fetch(`${ID_URL}/oauth2/token?${params.toString()}`, { method: 'POST' });
     return await res.json();
   } catch (e) {
     return { error: 'network_error', message: e.message };
@@ -255,7 +298,7 @@ async function exchangeCodeForToken(clientId, clientSecret, code, redirectUri) {
 /** С пользовательским access token'ом (без ?login=) — вернёт данные ВЛАДЕЛЬЦА токена. */
 async function getOwnUser(clientId, userAccessToken) {
   try {
-    const res = await fetch('https://api.twitch.tv/helix/users', {
+    const res = await fetch(`${API_URL}/helix/users`, {
       headers: { 'Client-ID': clientId, 'Authorization': `Bearer ${userAccessToken}` },
     });
     const data = await res.json();
@@ -267,13 +310,14 @@ async function getOwnUser(clientId, userAccessToken) {
 
 async function revokeToken(clientId, token) {
   try {
-    await fetch(`https://id.twitch.tv/oauth2/revoke?client_id=${encodeURIComponent(clientId)}&token=${encodeURIComponent(token)}`, { method: 'POST' });
+    await fetch(`${ID_URL}/oauth2/revoke?client_id=${encodeURIComponent(clientId)}&token=${encodeURIComponent(token)}`, { method: 'POST' });
   } catch (e) {
     // best effort — если Twitch недоступен, просто забываем токен локально
   }
 }
 
 module.exports = {
+  SCOPES, startDeviceAuth, pollDeviceAuth, refreshUserToken, setUserTokenProvider, isPublicMode,
   connectChat,
   hasCredentials,
   fetchAvatars,

@@ -738,7 +738,7 @@
   }
 
   function connect() {
-    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/?type=chat`);
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/?type=chat&view=pixel`);
     ws.onmessage = (event) => {
       let data;
       try { data = JSON.parse(event.data); } catch (e) { return; }

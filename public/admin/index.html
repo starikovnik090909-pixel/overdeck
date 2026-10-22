@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=125">
 <link rel="stylesheet" href="skin.css?v=2">
+<link rel="stylesheet" href="ui3.css?v=2">
+<script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
 <body>
@@ -19,22 +21,23 @@
     <span class="brand-name">Overdeck</span>
     <span class="brand-by">by Starikov</span>
   </div>
-
+  <div class="top-crumb"><span>Overdeck</span><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg><b id="topCrumb">Главная</b></div>
   <div class="header-settings-group">
-    <div class="status-pills">
-      <div class="status-pill" id="twitchStatusPill">
-        <span class="status-dot"></span>
-        <span class="status-pill-text">Не подключён</span>
-      </div>
-      <div class="status-pill" id="streamStatusPill">
-        <span class="status-dot"></span>
-        <span class="status-pill-text">Офлайн</span>
-      </div>
-      <div class="status-pill" id="chatBotStatusPill" data-state="disconnected" title="Чат бот: не подключён">
-        <span class="status-dot"></span>
-        <span class="status-pill-text">Чат бот</span>
+    <button class="top-search" id="topSearch" type="button"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Поиск вкладок и настроек</span><kbd>Ctrl K</kbd></button>
+    <div class="test-menu">
+      <button class="btn btn-secondary top-test" id="testMenuBtn" type="button"><svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>Тест события<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      <div class="test-menu-pop" id="testMenuPop" hidden>
+        <div class="test-menu-hint">Видно только в оверлее, в статистику не попадает</div>
+        <button type="button" data-test="donation">Донат</button>
+        <button type="button" data-test="follow">Фоллов</button>
+        <button type="button" data-test="sub">Подписка</button>
+        <button type="button" data-test="raid">Рейд</button>
+        <button type="button" data-test="hype">Hype Train</button>
+        <button type="button" data-test="points">Награда за баллы</button>
+        <button type="button" data-test="goal">Взнос в цель сбора</button>
       </div>
     </div>
+    <button class="top-icon" id="helpFab" type="button" title="Помощь по этой вкладке"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></svg></button>
     <div class="theme-toggle" id="themeToggle" title="Переключить тему">
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/>
@@ -54,10 +57,7 @@
   </div>
 </header>
 
-<button class="help-fab" id="helpFab" type="button" title="Помощь">
-  <span class="help-fab-icon">?</span>
-  <span class="help-fab-text">Помощь</span>
-</button>
+
 
 <div class="help-modal-overlay" id="autoModOverlay">
   <div class="help-modal">
@@ -263,59 +263,39 @@
 <div class="app-body">
   <nav class="sidebar">
     <div class="nav-list">
-      <div class="nav-item active" data-tab="auth">
+      <div class="nav-item active" data-tab="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <span>Главная</span>
+      </div>
+      <div class="nav-group">Настройка</div><div class="nav-item" data-tab="auth">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="8" cy="15" r="4" stroke-width="1.5"/>
           <path d="M11.5 11.5L20 3M16 6L18.5 8.5M13 9L15 11" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>Авторизация Twitch</span>
+        <span>Подключения</span>
+      </div><div class="nav-item" data-tab="obs">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" stroke-width="1.5" stroke-linecap="round"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span>Ссылки для OBS</span>
       </div>
-      <div class="nav-item" data-tab="settings">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 6H20M8 6V6C8 7.1 7.1 8 6 8V8C4.9 8 4 7.1 4 6V6" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M4 12H20M16 12V12C16 13.1 15.1 14 14 14V14C12.9 14 12 13.1 12 12V12" stroke-width="1.5" stroke-linecap="round"/>
-          <path d="M4 18H20M10 18V18C10 19.1 9.1 20 8 20V20C6.9 20 6 19.1 6 18V18" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>Основные настройки</span>
-      </div>
-      <div class="nav-item" data-tab="voice">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 10V14H7L12 18V6L7 10H4Z" stroke-width="1.5" stroke-linejoin="round"/>
-          <path d="M16 9C16.8 9.8 17.3 10.9 17.3 12C17.3 13.1 16.8 14.2 16 15M18.5 6.5C20 8 20.8 10 20.8 12C20.8 14 20 16 18.5 17.5" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <span>Озвучка чата</span>
-      </div>
-      <div class="nav-item" data-tab="widgets">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="4" y="4" width="7" height="7" rx="1.5" stroke-width="1.5"/>
-          <rect x="13" y="4" width="7" height="7" rx="1.5" stroke-width="1.5"/>
-          <rect x="4" y="13" width="7" height="7" rx="1.5" stroke-width="1.5"/>
-          <rect x="13" y="13" width="7" height="7" rx="1.5" stroke-width="1.5"/>
-        </svg>
-        <span>Виджеты оверлея</span>
-      </div>
-      <div class="nav-item" data-tab="chat">
+      <div class="nav-group">На стриме</div><div class="nav-item" data-tab="chat">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 5H20V16H9L4 20V16H4V5Z" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M8 9H16M8 12.5H13" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         <span>Чат</span>
-      </div>
-      <div class="nav-item" data-tab="donations">
+      </div><div class="nav-item" data-tab="donations">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="12" cy="12" r="8.5" stroke-width="1.5"/>
           <path d="M12 7.5V16.5M9.5 9.7C9.5 8.6 10.6 7.7 12 7.7C13.4 7.7 14.5 8.6 14.5 9.7C14.5 10.9 13.4 11.5 12 11.7C10.6 11.9 9.5 12.5 9.5 13.7C9.5 14.8 10.6 15.7 12 15.7C13.4 15.7 14.5 14.8 14.5 13.7" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <span>Донатный хаб</span>
-      </div>
-      <div class="nav-item" data-tab="donalerts">
+        <span>Донаты</span>
+      </div><div class="nav-item" data-tab="donalerts">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="6.5" y="3.5" width="11" height="17" rx="2" stroke-width="1.5" transform="rotate(8 12 12)"/>
           <path d="M10 10.5h4M12 8.5v6" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
         <span>Алерты</span>
-      </div>
-      <div class="nav-item" data-tab="chatbot">
+      </div><div class="nav-item" data-tab="chatbot">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="8" width="16" height="11" rx="3" stroke-width="1.5"/>
           <path d="M12 8V4.5M12 4.5h0" stroke-width="1.5" stroke-linecap="round"/>
@@ -324,23 +304,43 @@
           <circle cx="15" cy="13" r="1.2" fill="currentColor" stroke="none"/>
           <path d="M9.5 16.2h5" stroke-width="1.5" stroke-linecap="round"/>
         </svg>
-        <span>Чат бот</span>
+        <span>Чат-бот</span>
+      </div><div class="nav-item" data-tab="voice">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 10V14H7L12 18V6L7 10H4Z" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M16 9C16.8 9.8 17.3 10.9 17.3 12C17.3 13.1 16.8 14.2 16 15M18.5 6.5C20 8 20.8 10 20.8 12C20.8 14 20 16 18.5 17.5" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>Озвучка</span>
       </div>
-      <div class="nav-item" data-tab="event">
+      <div class="nav-group">Оформление</div><div class="nav-item" data-tab="widgets">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="7" height="7" rx="1.5" stroke-width="1.5"/>
+          <rect x="13" y="4" width="7" height="7" rx="1.5" stroke-width="1.5"/>
+          <rect x="4" y="13" width="7" height="7" rx="1.5" stroke-width="1.5"/>
+          <rect x="13" y="13" width="7" height="7" rx="1.5" stroke-width="1.5"/>
+        </svg>
+        <span>Сцена</span>
+      </div><div class="nav-item" data-tab="settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 6H20M8 6V6C8 7.1 7.1 8 6 8V8C4.9 8 4 7.1 4 6V6" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M4 12H20M16 12V12C16 13.1 15.1 14 14 14V14C12.9 14 12 13.1 12 12V12" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M4 18H20M10 18V18C10 19.1 9.1 20 8 20V20C6.9 20 6 19.1 6 18V18" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>Стиль</span>
+      </div>
+      <div class="nav-group">Модули</div><div class="nav-item" data-tab="event">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 4h8l1.5 4L12 20 4.5 8 8 4Z" stroke-width="1.5" stroke-linejoin="round"/>
           <path d="M4.5 8h15M9.5 4l2.5 16M14.5 4l-2.5 16" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
-        <span>Ивент</span>
-      </div>
-      <div class="nav-item" data-tab="chatavatars">
+        <span>Турнир</span>
+      </div><div class="nav-item" data-tab="chatavatars">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- пиксельный герой: голова и тело из квадратов -->
           <path d="M9 3h6v6H9zM6 11h12v5H6zM6 16h4v5H6zM14 16h4v5h-4z" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
-        <span>ЧатАватары</span>
-      </div>
-      <div class="nav-item" data-tab="twitchext">
+        <span>Чат-аватары</span>
+      </div><div class="nav-item" data-tab="twitchext">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <!-- расширение: окно с кнопкой сбоку плеера -->
           <rect x="3" y="5" width="18" height="14" rx="2.5" stroke-width="1.5"/>
@@ -350,18 +350,52 @@
         <span>Расширение Twitch</span>
       </div>
     </div>
-
-    <div class="sidebar-status">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Оверлей: онлайн</span>
+    <div class="side-status">
+      <div class="status-pills">
+      <div class="status-pill" id="twitchStatusPill">
+        <span class="status-dot"></span>
+        <span class="status-pill-text">Не подключён</span>
+      </div>
+      <div class="status-pill" id="streamStatusPill">
+        <span class="status-dot"></span>
+        <span class="status-pill-text">Офлайн</span>
+      </div>
+      <div class="status-pill" id="chatBotStatusPill" data-state="disconnected" title="Чат бот: не подключён">
+        <span class="status-dot"></span>
+        <span class="status-pill-text">Чат бот</span>
+      </div>
     </div>
+      <div class="side-overlay"><span class="status-dot" id="statusDot"></span><span id="statusText">Оверлей: онлайн</span></div>
+    </div>
+    <div class="side-ver"><span id="sideVersion">v—</span><span id="sideUpdate"></span></div>
   </nav>
 
   <main class="content">
 
-    <section class="tab-section active" id="tab-auth">
-      <h1 class="tab-title">Авторизация Twitch</h1>
-      <p class="tab-description">Подключите приложение Twitch, чтобы оверлей мог получать аватарки, эмодзи и категории трансляции.</p>
+    <section class="tab-section active" id="tab-home">
+      <div class="page-head"><div><h1 class="tab-title" id="homeHello">Главная</h1><p class="tab-description" id="homeSub">Загружаем сводку…</p></div>
+        <div class="page-actions"><a class="btn btn-secondary" href="/overlay.html" target="_blank" rel="noopener">Открыть оверлей</a><button class="btn btn-primary" id="homeTestAll" type="button">Проверить алерты тестом</button></div></div>
+      <div class="ui3-stats" id="homeStats"></div>
+      <div class="ui3-grid home-grid">
+        <div class="card ui3-card" id="homeChecklist"></div>
+        <div class="card ui3-card" id="homeEvents"></div>
+        <div class="ui3-col">
+          <div class="card ui3-card" id="homeTests"></div>
+          <div class="card ui3-card" id="homeLinks"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="tab-section" id="tab-obs">
+      <div class="page-head"><div><h1 class="tab-title">Ссылки для OBS</h1><p class="tab-description">Добавь нужные виджеты в OBS: Источник → Браузер → вставь ссылку и размер.</p></div></div>
+      <div class="ui3-hint">В свойствах источника сними галочку <b>«Отключать источник, когда он не виден»</b> — иначе виджет теряет соединение при смене сцены.</div>
+      <div class="card ui3-card ui3-table-card"><table class="ui3-table" id="obsTable"></table></div>
+      <p class="card-hint" style="margin-top:12px">Статус «Открыт в OBS» появляется, когда виджет подключился к Overdeck из источника «Браузер» в OBS.</p>
+    </section>
+
+    <section class="tab-section" id="tab-auth">
+      <h1 class="tab-title">Подключения</h1>
+      <p class="tab-description">Вход в Twitch: через него Overdeck получает чат, события, аватарки и категории трансляции.</p>
 
       <div class="status-summary" id="authStatusSummary">
         <div class="status-summary-dot" id="authStatusDot"></div>
@@ -449,7 +483,7 @@
     </section>
 
     <section class="tab-section" id="tab-settings">
-      <h1 class="tab-title">Основные настройки</h1>
+      <h1 class="tab-title">Стиль</h1>
       <p class="tab-description">Цвета, шрифты и размеры оверлея — применяются сразу на оверлее, без перезагрузки.</p>
 
       <div class="settings-columns">
@@ -540,7 +574,7 @@
     </section>
 
     <section class="tab-section" id="tab-voice">
-      <h1 class="tab-title">Озвучка чата</h1>
+      <h1 class="tab-title">Озвучка</h1>
       <p class="tab-description">Локальная озвучка сообщений чата через Piper TTS (офлайн, без облачных API). Настройки применяются на оверлее сразу после «Сохранить».</p>
 
       <div class="card">
@@ -667,7 +701,7 @@
     <section class="tab-section" id="tab-widgets">
       <div class="wtool-head">
         <div class="wtool-head-text">
-          <h1 class="tab-title">Виджеты оверлея</h1>
+          <h1 class="tab-title">Сцена</h1>
           <p class="tab-description">Размер, положение и видимость каждого блока. Всё применяется на оверлее сразу, пока вы двигаете, — сохранять отдельно не нужно.</p>
         </div>
         <div class="wtool-bar" id="wtoolBar">
@@ -955,7 +989,7 @@
     </section>
 
     <section class="tab-section" id="tab-donations">
-      <h1 class="tab-title">Донатный хаб</h1>
+      <h1 class="tab-title">Донаты</h1>
       <p class="tab-description">Донаты с DonationAlerts и DonateX в реальном времени, с историей на диске.</p>
 
       <div class="donations-layout">
@@ -1046,8 +1080,8 @@
     </section>
 
     <section class="tab-section" id="tab-chatbot">
-      <h1 class="tab-title">Чат бот</h1>
-      <p class="tab-description">Подключение бота к чату Twitch. Пока без команд — только подключение и чтение сообщений.</p>
+      <h1 class="tab-title">Чат-бот</h1>
+      <p class="tab-description">Команды, сообщения по таймеру и защита чата от оскорблений.</p>
 
       <!-- Вся авторизация бота спрятана за одной кнопкой справа (слева останется место под будущие функции бота). -->
       <div class="chatbot-toolbar">
@@ -1258,7 +1292,7 @@
     </section>
 
     <section class="tab-section" id="tab-event">
-      <h1 class="tab-title">Ивент</h1>
+      <h1 class="tab-title">Турнир</h1>
       <p class="tab-description">Турнирные виджеты и алерты.</p>
 
       <!-- Обложка ивента: большая плашка с фотографией. По клику сворачивается в плашечку с названием, а под ней
@@ -2718,7 +2752,7 @@
         <h2 class="section-title">Ключ авторизации</h2>
         <p class="card-hint">Файл со всеми твоими данными и настройками: вход в Twitch и донаты, токены бота, раскладка виджетов, команды, алерты, шрифты, загруженные фото. Скачал оверлей на другом ПК — открой этот файл в пустом приложении, и всё подтянется. <b>В файле лежат ключи и токены — храни его как пароль, никому не отправляй.</b></p>
         <div class="field">
-          <label for="keyPassword">Пароль для файла (необязательно, но лучше задать)</label>
+          <label for="keyPassword">Пароль для файла (обязательно, минимум 6 символов)</label>
           <input type="password" id="keyPassword" autocomplete="new-password" placeholder="Пароль нужно будет ввести при открытии файла">
         </div>
         <label class="key-check"><input type="checkbox" id="keyMedia"> Включить фоны трансляции (картинки/видео — файл станет заметно больше)</label>
@@ -2773,7 +2807,7 @@
     </section>
 
     <section class="tab-section" id="tab-chatavatars">
-      <h1 class="tab-title">ЧатАватары</h1>
+      <h1 class="tab-title">Чат-аватары</h1>
       <p class="tab-description">Полноэкранный алерт с прозрачным фоном: пиксельные герои бродят по экрану, над головой у каждого — ник и уровень, сообщения чата звучат в пиксельных облаках.</p>
 
       <div class="obs-url-compact">
@@ -3167,9 +3201,10 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=139"></script>
-<script src="guides-data.js?v=3"></script>
-<script src="guides.js?v=3"></script>
-<script src="keyfile.js?v=1"></script>
+<script src="app.js?v=140"></script>
+<script src="guides-data.js?v=5"></script>
+<script src="guides.js?v=4"></script>
+<script src="keyfile.js?v=3"></script>
+<script src="ui3.js?v=2"></script>
 </body>
 </html>

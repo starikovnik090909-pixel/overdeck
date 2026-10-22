@@ -863,7 +863,8 @@ class Launcher : Form
     {
         int[] a = ParseVer(remote), b = ParseVer(local);
         for (int i = 0; i < 3; i++) { if (a[i] > b[i]) return true; if (a[i] < b[i]) return false; }
-        return false;
+        // те же цифры: 3.0.0 новее, чем 3.0.0-beta
+        return (local ?? "").IndexOf('-') >= 0 && (remote ?? "").IndexOf('-') < 0;
     }
 
     static string JsonStr(string json, string key)

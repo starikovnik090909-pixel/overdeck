@@ -3215,7 +3215,7 @@
   }
 
   function connectChatMirror() {
-    const ws = new WebSocket(`ws://${location.host}/?type=chat`);
+    const ws = new WebSocket(`ws://${location.host}/?type=chat&view=admin`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'chat_history') {

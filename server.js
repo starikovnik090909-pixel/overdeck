@@ -81,6 +81,8 @@ if (!fs.existsSync(CONFIG_FILE)) {
   }
 }
 const config = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+// заглушки из config.example.json («ВСТАВЬ_…») — это подсказки, а не значения
+if (config.twitch) ['clientId', 'clientSecret'].forEach((k) => { if (/^ВСТАВЬ/.test(String(config.twitch[k] || ''))) config.twitch[k] = ''; });
 
 // Пустое приложение (канал не задан): сервер всё равно стартует, чтобы в админке можно было открыть файл авторизации (⚙ → «Ключ авторизации»).
 const SETUP_MODE = !config.channel || config.channel === 'ВСТАВЬ_СВОЙ_КАНАЛ';
@@ -123,6 +125,12 @@ if (!CREDENTIALS_FROM_ENV) {
     });
   }
 }
+
+// Общее приложение Overdeck (публичное, без секрета): если своих ключей нет — работаем через него, вход по коду.
+const overdeckApp = require('./overdeckApp');
+const PUBLIC_CLIENT_ID = overdeckApp.twitchClientId();
+if (PUBLIC_CLIENT_ID && !CREDENTIALS_FROM_ENV && !config.twitch.clientId && !config.twitch.clientSecret) config.twitch.clientId = PUBLIC_CLIENT_ID;
+const usingPublicApp = () => !!PUBLIC_CLIENT_ID && config.twitch.clientId === PUBLIC_CLIENT_ID && !config.twitch.clientSecret;
 
 const TOP_CHATTERS_COUNT = config.topChattersCount || 10;
 const WORD_CLOUD_SIZE = config.wordCloudSize || 50;
@@ -375,11 +383,45 @@ if (!config.ttsEngine) {
 }
 tts.configurePaths(config.ttsEngine);
 
+// ---------- Токен стримера: автообновление (оба режима; у публичного приложения — без секрета) ----------
+let userTokenRefreshing = null;
+async function ensureUserToken(force) {
+  const a = config.twitchAuth;
+  if (!a || !a.accessToken) return null;
+  const soon = !a.expiresAt || a.expiresAt - Date.now() < 10 * 60 * 1000;
+  if (!force && !soon) return a.accessToken;
+  if (!a.refreshToken) return a.expiresAt && a.expiresAt > Date.now() ? a.accessToken : (a.expiresAt ? null : a.accessToken);
+  if (userTokenRefreshing) return userTokenRefreshing;
+  userTokenRefreshing = (async () => {
+    const r = await twitch.refreshUserToken(config.twitch.clientId, config.twitch.clientSecret || '', a.refreshToken);
+    if (r.data && r.data.access_token) {
+      a.accessToken = r.data.access_token;
+      if (r.data.refresh_token) a.refreshToken = r.data.refresh_token;
+      a.expiresAt = Date.now() + (r.data.expires_in || 3600) * 1000;
+      saveConfigToDisk();
+      return a.accessToken;
+    }
+    console.warn('[Twitch] Не удалось обновить токен входа:', (r.data && r.data.message) || r.status, '— нужно войти через Twitch ещё раз.');
+    if (r.status === 400 || r.status === 401) { twitchAuthState = { connected: false, validatedAt: null, error: 'Вход через Twitch устарел — войди ещё раз.' }; broadcastAdminStatus(); }
+    return null;
+  })();
+  try { return await userTokenRefreshing; } finally { userTokenRefreshing = null; }
+}
+twitch.setUserTokenProvider(() => ensureUserToken());
+setInterval(() => { if (config.twitchAuth && config.twitchAuth.refreshToken) ensureUserToken(); }, 5 * 60 * 1000);
+
 // ---------- Авторизация Twitch: состояние + проверка при старте ----------
 
 let twitchAuthState = { connected: false, validatedAt: null, error: null };
 
 async function validateStoredCredentials() {
+  await null; // рассылка статуса — только после того, как сервер целиком инициализирован
+  if (usingPublicApp()) {
+    const tok = config.twitchAuth ? await ensureUserToken() : null;
+    twitchAuthState = tok ? { connected: true, validatedAt: Date.now(), error: null } : { connected: false, validatedAt: null, error: config.twitchAuth ? 'Вход через Twitch устарел — войди по коду ещё раз.' : null };
+    broadcastAdminStatus();
+    return;
+  }
   if (!twitch.hasCredentials(config)) {
     twitchAuthState = { connected: false, validatedAt: null, error: null };
     return;
@@ -927,6 +969,9 @@ function buildSnapshot() {
 // ---------- HTTP + WebSocket ----------
 
 const app = express();
+const netGuard = require('./netGuard');
+app.disable('x-powered-by');
+app.use(netGuard.middleware(() => config)); // доступ только с этого ПК + защита от чужих сайтов (см. netGuard.js)
 // ---------- Ключ авторизации (файл со всеми данными и настройками) ----------
 // Маршруты стоят ДО общего express.json(): у файла свой, большой лимит тела запроса.
 const keyBundle = require('./keyBundle');
@@ -939,6 +984,7 @@ app.get('/api/key/status', (req, res) => res.json({ setup: SETUP_MODE, channel: 
 app.post('/api/key/export', express.json({ limit: '1mb' }), (req, res) => {
   try {
     const { password, includeMedia } = req.body || {};
+    if (!password || String(password).length < 6) return res.status(400).json({ success: false, error: 'Задай пароль для файла — минимум 6 символов. В файле лежат все ключи и токены.' });
     const r = keyBundle.create({ password: password ? String(password) : '', includeMedia: !!includeMedia, appVersion: require('./package.json').version });
     const d = new Date();
     const name = 'overdeck-key-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.overdeckkey';
@@ -2567,6 +2613,7 @@ app.post('/api/twitch/logout', async (req, res) => {
 // ---------- OAuth: "Войти через Twitch" (подтверждение подключения канала) ----------
 
 app.get('/auth/twitch/login', (req, res) => {
+  if (usingPublicApp() || (PUBLIC_CLIENT_ID && !config.twitch.clientSecret)) return res.redirect('/admin?tab=auth&device=1'); // публичное приложение: вход по коду
   if (!twitch.hasCredentials(config)) {
     return res.redirect('/admin?tab=auth&authError=' + encodeURIComponent('Сначала укажи Client ID и Client Secret'));
   }
@@ -2613,6 +2660,69 @@ app.get('/auth/twitch/callback', async (req, res) => {
   res.redirect('/admin?tab=auth');
 });
 
+// ---------- Вход по коду (Device Code Flow, общее приложение Overdeck) ----------
+let deviceSession = null; // { deviceCode, userCode, uri, expiresAt, interval, state, error, login, restart }
+function finishTwitchLogin(tokenData, user, clientId) {
+  config.twitchAuth = {
+    accessToken: tokenData.access_token,
+    refreshToken: tokenData.refresh_token || null,
+    expiresAt: Date.now() + (tokenData.expires_in || 0) * 1000,
+    userId: user.id, login: user.login, displayName: user.display_name, avatarUrl: user.profile_image_url,
+    connectedAt: Date.now(), clientId,
+  };
+}
+async function pollDevice(sess) {
+  while (deviceSession === sess && sess.state === 'pending') {
+    await new Promise((r) => setTimeout(r, Math.max(1, sess.interval) * 1000));
+    if (deviceSession !== sess) return;
+    if (Date.now() > sess.expiresAt) { sess.state = 'expired'; return; }
+    const r = await twitch.pollDeviceAuth(config.twitch.clientId, sess.deviceCode);
+    const d = r.data || {};
+    if (d.access_token) {
+      const user = await twitch.getOwnUser(config.twitch.clientId, d.access_token);
+      if (!user) { sess.state = 'error'; sess.error = 'Twitch не отдал данные канала — попробуй ещё раз.'; return; }
+      finishTwitchLogin(d, user, config.twitch.clientId);
+      twitchAuthState = { connected: true, validatedAt: Date.now(), error: null };
+      sess.login = user.login; sess.displayName = user.display_name;
+      if (SETUP_MODE) {
+        config.channel = user.login; // пустое приложение: канал = аккаунт, которым вошли
+        sess.restart = process.env.OVERDECK_LAUNCHER ? 'auto' : 'manual';
+      } else {
+        if (!resolvedBroadcasterId) resolvedBroadcasterId = user.id;
+        attemptEventSubConnect();
+      }
+      saveConfigToDisk();
+      broadcastAdminStatus();
+      sess.state = 'done';
+      if (sess.restart === 'auto') setTimeout(() => process.exit(75), 2500); // лаунчер перезапустит сервер уже с каналом
+      return;
+    }
+    const msg = String(d.message || '');
+    if (/pending/i.test(msg)) continue;
+    if (/slow_down/i.test(msg)) { sess.interval += 5; continue; }
+    if (/expired|invalid device code/i.test(msg)) { sess.state = 'expired'; return; }
+    if (r.status === 0) continue; // сеть моргнула — пробуем дальше
+    sess.state = 'error'; sess.error = msg || ('Twitch ответил ' + r.status); return;
+  }
+}
+app.post('/api/twitch/device/start', async (req, res) => {
+  if (!config.twitch.clientId) return res.status(400).json({ success: false, error: 'В этой сборке нет общего приложения Overdeck — используй свои ключи («Расширенный режим»).' });
+  if (config.twitch.clientSecret) return res.status(400).json({ success: false, error: 'Указаны свои ключи приложения — входи кнопкой «Войти через Twitch».' });
+  const r = await twitch.startDeviceAuth(config.twitch.clientId);
+  const d = r.data || {};
+  if (!d.device_code) return res.status(502).json({ success: false, error: 'Twitch не выдал код: ' + (d.message || r.status) });
+  deviceSession = { deviceCode: d.device_code, userCode: d.user_code, uri: d.verification_uri, expiresAt: Date.now() + (d.expires_in || 1800) * 1000, interval: d.interval || 5, state: 'pending' };
+  pollDevice(deviceSession);
+  res.json({ success: true, userCode: d.user_code, uri: d.verification_uri, expiresIn: d.expires_in || 1800 });
+});
+app.get('/api/twitch/device/status', (req, res) => {
+  const s = deviceSession;
+  if (!s) return res.json({ state: 'none' });
+  res.json({ state: s.state, error: s.error || null, login: s.login || null, displayName: s.displayName || null, restart: s.restart || null, userCode: s.userCode, uri: s.uri, left: Math.max(0, Math.round((s.expiresAt - Date.now()) / 1000)) });
+});
+app.post('/api/twitch/device/cancel', (req, res) => { deviceSession = null; res.json({ success: true }); });
+app.get('/api/twitch/mode', (req, res) => res.json({ publicApp: !!PUBLIC_CLIENT_ID, usingPublicApp: usingPublicApp(), ownKeys: !!config.twitch.clientSecret, setup: SETUP_MODE, loggedIn: !!(config.twitchAuth && config.twitchAuth.accessToken), launcher: !!process.env.OVERDECK_LAUNCHER }));
+
 // ---------- Донатный хаб: статус, история, сброс ----------
 
 app.get('/api/donations/status', (req, res) => {
@@ -2630,6 +2740,51 @@ app.get('/api/donations/status', (req, res) => {
       connected: dx.connected,
       available: donateX.isAvailable(),
       remembered: authCredentials.isRemembered('donateX'),
+    },
+  });
+});
+
+// ---------- Главная (3.0): сводка для первого экрана админки ----------
+app.get('/api/home', (req, res) => {
+  const now = Date.now(), day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  const hist = donations.getHistory();
+  const rub = (d) => (!d.currency || d.currency === 'RUB') ? Number(d.amount) || 0 : 0;
+  const week = hist.filter((d) => now - d.ts < 7 * 864e5);
+  const today = hist.filter((d) => d.ts >= day0.getTime());
+  const sum = (arr) => Math.round(arr.reduce((a, d) => a + rub(d), 0));
+  const live = (set) => [...set].filter((c) => c.readyState === 1 && c.isObs).length; // только источники OBS, не превью в админке
+  const dc = donationCredentials.get();
+  const bot = chatBot.getPublic ? chatBot.getPublic() : {};
+  let cmds = 0, tmrs = 0;
+  try { cmds = botCommands.list().length; } catch (e) {}
+  try { tmrs = botTimers.list().length; } catch (e) {}
+  const obs = {
+    overlay: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view !== 'preview' && c.view !== 'alerts').length,
+    alerts: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view === 'alerts').length,
+    chat: [...chatClients].filter((c) => c.readyState === 1 && c.isObs && !c.view).length, goal: live(goalClients), fundbox: live(fundBoxClients), fundalert: live(fundAlertClients),
+    fund: live(fundClients), timer: live(timerClients), fact: live(factClients), background: live(backgroundClients),
+    mvp: live(mvpClients), bracket: live(bracketClients), team: live(teamClients.left) + live(teamClients.right),
+  };
+  const oauth = getOauthStatusPayload();
+  res.json({
+    version: require('./package.json').version,
+    setup: SETUP_MODE,
+    channel: SETUP_MODE ? '' : config.channel,
+    twitch: { appOk: !!twitchAuthState.connected, oauth },
+    streamLive: !!streamIsLive,
+    bot: { status: chatBot.getStatus().status, username: bot.botUsername || '', commands: cmds, timers: tmrs },
+    donations: {
+      today: sum(today), todayCount: today.length, week: sum(week), weekCount: week.length,
+      daConnected: !!(dc.donationAlerts && dc.donationAlerts.connected), dxConnected: !!(dc.donateX && dc.donateX.connected),
+    },
+    events: eventFeed.getList(8),
+    obs,
+    checklist: {
+      twitch: !!oauth.connected,
+      obs: Object.values(obs).some((n) => n > 0),
+      donations: !!((dc.donationAlerts && dc.donationAlerts.connected) || (dc.donateX && dc.donateX.connected)),
+      tts: !!(config.tts && config.tts.enabled),
+      alerts: !!(config.donationAlert && config.donationAlert.enabled) || eventAlerts.KINDS.some((k) => config.eventAlerts && config.eventAlerts[k] && config.eventAlerts[k].enabled),
     },
   });
 });
@@ -3304,7 +3459,7 @@ async function runReplay() {
 }
 
 const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, verifyClient: (info) => netGuard.wsAllowed(info.req, config) });
 
 const overlayClients = new Set();
 const adminClients = new Set();
@@ -3363,13 +3518,16 @@ chatBot.setOnStatusChange(() => { if (adminClients.size > 0) broadcastAdminStatu
 
 wss.on('connection', (ws, req) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
+  ws.isObs = /\bOBS\//.test(String(req.headers['user-agent'] || '')); // браузер-источник OBS добавляет «OBS/версия» в User-Agent — для статуса «Открыт в OBS»
   const clientType = url.searchParams.get('type');
 
   if (clientType === 'admin') {
+    if (!netGuard.isLoopback(req.socket.remoteAddress)) { ws.close(1008, 'admin only on this PC'); return; }
     adminClients.add(ws);
     ws.send(JSON.stringify(getAdminStatusPayload()));
     ws.on('close', () => adminClients.delete(ws));
   } else if (clientType === 'chat') {
+    ws.view = url.searchParams.get('view') || ''; // '' — виджет чата в OBS, 'admin' — зеркало в админке, 'pixel' — пиксельные аватары
     chatClients.add(ws);
     ws.send(JSON.stringify({ type: 'chat_history', messages: chatHistory, settings: config.chatSettings }));
     ws.send(JSON.stringify({ type: 'pixel_heroes', ...pixelHeroes.getPayload() })); // страница пиксельного алерта (она тоже слушает чат) получает, каких героев показать
@@ -3710,8 +3868,8 @@ setInterval(() => {
 }, 2000);
 
 const port = config.port || 3001;
-server.listen(port, '0.0.0.0', () => {
-  console.log(`\ntwitch-overlay-v2 запущен: http://localhost:${port}`);
+server.listen(port, netGuard.listenHost(config), () => {
+  console.log(`\nOverdeck запущен: http://localhost:${port}` + (config.allowLan ? '  (виджеты доступны из локальной сети)' : ''));
   console.log(`Оверлей (OBS Browser Source): http://localhost:${port}/overlay.html  (1920x1080)`);
   console.log(`Панель управления: http://localhost:${port}/admin`);
   console.log('Остановить сервер — закрой это окно или нажми Ctrl+C.\n');
