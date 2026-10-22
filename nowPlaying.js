@@ -11,6 +11,8 @@ const STALE_MS = 6000;      // нет свежих данных дольше —
 
 let child = null;
 let wantRunning = false;
+let wins = [];              // заголовки окон браузеров (запасной источник)
+let scriptErrs = [];
 let sessions = [];          // последний снимок, уже с локальным временем получения (at)
 let lastLineAt = 0;
 let lastError = '';
@@ -38,6 +40,27 @@ function appName(id) {
 }
 const isBrowser = (id) => BROWSERS.some(([k]) => String(id || '').toLowerCase().includes(k));
 
+// сайты, которые распознаём по заголовку вкладки, когда браузер не отдал Windows данные о воспроизведении
+const DEFAULT_SITES = ['youtube', 'twitch', 'rutube', 'vk video', 'vkvideo', 'kinopoisk', 'кинопоиск', 'netflix', 'ivi', 'okko', 'kion', 'wink', 'premier', 'more.tv', 'hdrezka', 'rezka', 'lordfilm', 'soundcloud', 'yandex music', 'яндекс музыка', 'music.youtube', 'bandcamp', 'dailymotion', 'vimeo', 'kodik', 'animego', 'anilibria', 'crunchyroll', 'disney', 'hbo', 'max.com', 'prime video'];
+const WIN_SUFFIX = /\s[-–—]\s(google chrome|microsoft\u200b? edge|microsoft edge|mozilla firefox|firefox|opera|brave|vivaldi|яндекс браузер|yandex)(\s[-–—]\s.*)?$/i;
+function winApp(p) { for (const [k, n] of BROWSERS) if (p.includes(k)) return n; return p === 'browser' ? 'Яндекс Браузер' : p; }
+function winSessions(cfg, have) {
+  if (cfg.byTitle === false) return [];
+  const extra = parseIgnore(cfg.sites);
+  const kw = DEFAULT_SITES.concat(extra);
+  const out = [];
+  for (const w of wins) {
+    const full = w.t.trim(); if (!full) continue;
+    const low = full.toLowerCase();
+    if (!kw.some((k) => low.includes(k))) continue;
+    const title = full.replace(WIN_SUFFIX, '').replace(/^\(\d+\)\s*/, '').trim();
+    if (!title || /^(youtube|twitch|вк видео)$/i.test(title)) continue;
+    const id = w.p === 'browser' ? 'yandex' : w.p;
+    if (have.some((s) => s.title && (s.title === title || s.title.includes(title) || title.includes(s.title)))) continue;   // уже есть из Windows
+    out.push({ id, title, artist: '', album: '', status: 'Playing', pos: 0, dur: 0, rate: 1, key: 'win|' + id + '|' + title, current: false, at: lastLineAt, byTitle: true });
+  }
+  return out;
+}
 function parseIgnore(s) { return String(s || '').split(/[,;\n]/).map((x) => x.trim().toLowerCase()).filter(Boolean); }
 
 function handleLine(line) {
@@ -56,6 +79,8 @@ function handleLine(line) {
   if (m.t === 's') {
     lastLineAt = Date.now(); lastError = '';
     const arr = Array.isArray(m.sessions) ? m.sessions : (m.sessions ? [m.sessions] : []);
+    wins = (Array.isArray(m.wins) ? m.wins : (m.wins ? [m.wins] : [])).map((w) => ({ p: String(w.p || '').toLowerCase(), t: String(w.t || '') }));
+    scriptErrs = (Array.isArray(m.errs) ? m.errs : (m.errs ? [m.errs] : [])).map(String).slice(0, 3);
     sessions = arr.map((s) => ({ id: String(s.id || ''), title: String(s.title || ''), artist: String(s.artist || ''), album: String(s.album || ''), status: String(s.status || ''),
       pos: Number(s.pos) || 0, dur: Number(s.dur) || 0, rate: Number(s.rate) || 1, key: String(s.key || ''), current: !!s.current, at: lastLineAt }));
     onChange();
@@ -75,7 +100,7 @@ function start(cb) {
   child.stderr.on('data', (d) => { lastError = String(d).slice(0, 300); });
   child.on('error', (e) => { lastError = 'PowerShell: ' + e.message; });
   child.on('exit', () => {
-    child = null; sessions = [];
+    child = null; sessions = []; wins = [];
     if (wantRunning) { clearTimeout(restartTimer); restartTimer = setTimeout(() => { if (wantRunning) start(); }, 5000); }
     onChange();
   });
@@ -84,7 +109,7 @@ function start(cb) {
 function stop() {
   wantRunning = false; clearTimeout(restartTimer);
   if (child) { try { child.kill(); } catch (_) {} child = null; }
-  sessions = [];
+  sessions = []; wins = [];
 }
 
 function setDemo(sec) {
@@ -102,13 +127,19 @@ const demoActive = () => !!(demo && demo.until > Date.now());
 function getState(cfg) {
   cfg = cfg || {};
   const isDemo = demoActive();
-  const src = isDemo ? demo.sessions : sessions;
+  let src = isDemo ? demo.sessions : sessions;
+  const brs = parseIgnore(cfg.browsers);
+  if (!isDemo) {
+    const fb = winSessions(cfg, src);
+    src = src.concat(fb);
+    if (brs.length) src = src.filter((s) => !isBrowser(s.id) || brs.some((x) => String(s.id).toLowerCase().includes(x) || appName(s.id).toLowerCase().includes(x)));
+  }
   const ignore = parseIgnore(cfg.ignoreApps);
   const minDur = Number(cfg.minDurationSec) || 0;
   const list = src.filter((s) => (s.title || s.artist) && !ignore.some((x) => (s.id + ' ' + appName(s.id)).toLowerCase().includes(x))
     && !(minDur > 0 && s.dur > 0 && s.dur < minDur)).map((s) => {
     const c = covers.get(s.key);
-    return { id: s.id, app: appName(s.id), browser: isBrowser(s.id), title: s.title, artist: s.artist, album: s.album, status: s.status, playing: s.status === 'Playing',
+    return { byTitle: !!s.byTitle, id: s.id, app: appName(s.id), browser: isBrowser(s.id), title: s.title, artist: s.artist, album: s.album, status: s.status, playing: s.status === 'Playing',
       pos: s.pos, dur: s.dur, rate: s.rate, cover: c ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) + '&v=' + c.v : (isDemo ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) : ''), current: s.current, key: s.key, at: s.at };
   });
   // текущая: играющая, которую Windows считает главной → любая играющая → (если не скрываем паузу) главная/последняя
@@ -117,6 +148,7 @@ function getState(cfg) {
   return {
     supported: process.platform === 'win32' || isDemo, demo: isDemo, error: lastError,
     fresh: isDemo || (lastLineAt > 0 && Date.now() - lastLineAt < STALE_MS),
+    diag: { win: process.platform === 'win32', running: !!child, lastLineAgoSec: lastLineAt ? Math.round((Date.now() - lastLineAt) / 1000) : null, raw: sessions.length, titles: sessions.slice(0, 4).map((s) => (appName(s.id) + ': ' + (s.title || '(без названия)') + ' [' + s.status + ']')), windows: wins.length, errs: scriptErrs },
     now: Date.now(), current: cur, others: list.filter((s) => cur && s !== cur), count: list.length,
   };
 }

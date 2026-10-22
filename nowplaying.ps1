@@ -22,7 +22,7 @@ while ($true) {
   try {
     $curS = $mgr.GetCurrentSession()
     $curId = if ($curS) { $curS.SourceAppUserModelId } else { '' }
-    $list = @()
+    $list = @(); $errs = @()
     foreach ($s in $mgr.GetSessions()) {
       try {
         $id = $s.SourceAppUserModelId
@@ -47,9 +47,12 @@ while ($true) {
           if ($sent.Count -gt 200) { $sent = @{} }
         }
         $list += @{ id = $id; title = [string]$props.Title; artist = [string]$props.Artist; album = [string]$props.AlbumTitle; status = $status; pos = [math]::Round($pos, 1); dur = [math]::Round($dur, 1); rate = $rate; key = $key; current = ($id -eq $curId) }
-      } catch { }
+      } catch { $errs += ([string]$_.Exception.Message).Substring(0, [math]::Min(120, ([string]$_.Exception.Message).Length)) }
     }
-    [Console]::Out.WriteLine((@{ t = 's'; sessions = $list } | ConvertTo-Json -Compress -Depth 4))
+    # заголовки окон браузеров — запасной источник для сайтов, которые не отдают Windows данные о воспроизведении
+    $wins = @()
+    try { foreach ($w in (Get-Process -Name chrome, msedge, firefox, opera, brave, vivaldi, browser, yandex -ErrorAction SilentlyContinue | Where-Object { $_.MainWindowTitle })) { $wins += @{ p = $w.ProcessName; t = [string]$w.MainWindowTitle } } } catch { }
+    [Console]::Out.WriteLine((@{ t = 's'; sessions = $list; wins = $wins; errs = $errs } | ConvertTo-Json -Compress -Depth 4))
   } catch { }
   Start-Sleep -Milliseconds 1000
 }
