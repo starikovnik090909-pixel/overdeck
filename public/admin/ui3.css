@@ -437,18 +437,75 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-donalerts .pixel-subtab:hover { color: var(--text-primary); }
 #tab-donalerts .pixel-subtab.active { color: var(--text-primary); }
 #tab-donalerts .pixel-subtab.active::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; background: var(--accent); border-radius: 2px; }
-#tab-donalerts .da-layout { display: grid !important; grid-template-columns: 340px minmax(0, 1fr) 520px; gap: 16px; align-items: start; }
-#tab-donalerts .da-main, #tab-donalerts .da-mid, #tab-donalerts .da-side { width: auto !important; flex: none !important; min-width: 0; }
-#tab-donalerts .da-main .card, #tab-donalerts .da-mid .card { max-width: none; margin: 0 0 16px; }
-#tab-donalerts .da-side { position: sticky; top: 0; }
-#tab-donalerts .da-ctrl { flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+#tab-donalerts .da-ctrl { flex-wrap: wrap; gap: 6px; }
 #tab-donalerts .dbtn { width: auto; height: 34px; padding: 0 10px; gap: 6px; border-radius: 8px; background: var(--bg-card2); border-color: var(--line2); }
 #tab-donalerts .dbtn svg { width: 16px; height: 16px; }
 #tab-donalerts .dbtn .dlab { font-size: 12.5px; font-weight: 500; }
 #tab-donalerts .dbtn.on { background: var(--accent-soft); color: var(--accent2); border-color: rgba(216,75,85,.45); }
 #tab-donalerts .dbtn::after { top: calc(100% + 6px); }
 #tab-donalerts .toggle-row { border-color: var(--divider); }
-@media (max-width: 1500px) { #tab-donalerts .da-layout { grid-template-columns: 320px minmax(0, 1fr); } #tab-donalerts .da-side { grid-column: 1 / -1; position: static; max-width: 760px; } }
+
+/* раскладка как в макете: список алертов | настройки | предпросмотр и тест */
+#tab-donalerts .pixel-subtabs { display: none !important; }
+#tab-donalerts .da-shell { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 16px; align-items: start; }
+#tab-donalerts .da-nav { padding: 8px !important; position: sticky; top: 0; }
+.da-nav-it { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 4px; border-radius: 10px; cursor: pointer; position: relative; }
+.da-nav-it:last-child { margin-bottom: 0; }
+.da-nav-it:hover { background: var(--bg-hover); }
+.da-nav-it.on { background: var(--bg-card2); }
+.da-nav-it.on::before { content: ""; position: absolute; left: -9px; top: 10px; bottom: 10px; width: 3px; border-radius: 2px; background: var(--accent); }
+.da-nav-it .ic { width: 20px; height: 20px; flex: none; color: var(--text-mute); }
+.da-nav-it.on .ic { color: var(--accent2); }
+.da-nav-it .tx { flex: 1; min-width: 0; }
+.da-nav-it .t { color: var(--text-primary); font-weight: 500; font-size: 14px; }
+.da-nav-it .d { font-size: 12px; color: var(--text-mute); min-height: 16px; }
+.da-nav-it .toggle-switch { transform: scale(.9); transform-origin: right center; }
+#tab-donalerts .da-layout { display: grid !important; grid-template-columns: minmax(0, 1fr) 540px; gap: 16px; align-items: start; }
+#tab-donalerts .da-mid, #tab-donalerts .da-main { width: auto !important; flex: none !important; min-width: 0; }
+#tab-donalerts .da-mid .card { max-width: none; margin: 0; }
+#tab-donalerts .da-right { padding: 0 !important; overflow: hidden; position: sticky; top: 0; }
+#tab-donalerts .da-right .ch { padding: 15px 20px; border-bottom: 1px solid var(--divider); }
+#tab-donalerts .da-right .ch h3 { margin: 0; font-size: 15px; font-weight: 600; }
+#tab-donalerts .da-right .da-side { position: static !important; width: auto !important; flex: none !important; }
+#tab-donalerts .da-right .da-prev { border: 0; border-radius: 0; box-shadow: none; max-width: none; background: repeating-conic-gradient(#19191d 0 25%, #141417 0 50%) 0 0 / 20px 20px; }
+#tab-donalerts .da-right .da-prev iframe { z-index: 1; }
+#tab-donalerts .da-right .da-ctrl { padding: 12px 16px; margin: 0; border-top: 1px solid var(--divider); border-bottom: 1px solid var(--divider); }
+#tab-donalerts .da-right .da-fontpop { margin: 12px 16px 0; }
+#tab-donalerts .da-right .da-main > .card { border: 0 !important; border-radius: 0 !important; margin: 0 !important; padding: 16px 20px 18px !important; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: end; }
+#tab-donalerts .da-right .da-main .field { margin: 0; }
+#tab-donalerts .da-right .da-main .field:has(#daAlertSel) { display: none; }
+#tab-donalerts .da-right .da-main .field:has(#daTestMsg), #tab-donalerts .da-right .da-main .field:has(input[id$="_t_input"]), #tab-donalerts .da-right .da-main .field:has(input[id$="_t_title"]) { grid-column: 1 / -1; }
+#tab-donalerts .da-right .da-main .card > .actions, #tab-donalerts .da-right .da-main .card > .card-hint { grid-column: 1 / -1; margin: 0; }
+#tab-donalerts .da-right .da-main .card > .card-hint { font-size: 12px; }
+/* настройки доната: открытые карточки-группы вместо раскрывашек */
+#daCfgCard { background: transparent !important; border: 0 !important; padding: 0 !important; }
+#daCfgCard > .section-title { display: none; }
+#daCfgCard > .card-hint { margin: 0 0 14px; }
+#daCfgCard > .actions { margin-top: 4px; }
+#daForm .da-group { background: var(--bg-card); border: 1px solid var(--divider); border-radius: 16px; margin: 0 0 16px; overflow: hidden; }
+#daForm .da-group > summary { pointer-events: none; padding: 15px 20px; display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--divider); }
+#daForm .da-group > summary::before { display: none; }
+#daForm .da-group-t { font-size: 15px; font-weight: 600; }
+#daForm .da-group-s { font-size: 12px; color: var(--text-mute); }
+#daForm .da-group-body { border: 0; padding: 0; }
+#daForm .toggle-row, [data-a="cfgcard"] .toggle-row { padding: 13px 20px; }
+/* настройки событий: одна карточка с рядами */
+[data-a="cfgcard"] { padding: 0 !important; overflow: hidden; }
+[data-a="cfgcard"] > .section-title { padding: 15px 20px !important; margin: 0; border-bottom: 1px solid var(--divider); }
+[data-a="cfgcard"] > .card-hint { padding: 12px 20px 4px; margin: 0; }
+[data-a="cfgcard"] > .field { padding: 0 20px; }
+[data-a="cfgcard"] > .actions, [data-a="cfgcard"] > .form-message { padding: 0 20px 16px; }
+#tab-donalerts .toggle-row-extra select { height: 34px; padding: 0 28px 0 10px; border-radius: 8px; background-color: var(--bg-app); border: 1px solid var(--line2); color: var(--text-primary); font: inherit; font-size: 13px; max-width: 260px; }
+#tab-donalerts .toggle-row-extra input[type="number"], #tab-donalerts .toggle-row-extra input[type="text"] { height: 34px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg-app); color: var(--text-primary); }
+#tab-donalerts .da-right .da-side > .card-hint, #tab-donalerts .da-right #goalSeparateBox { margin: 0 !important; padding: 12px 20px; }
+/* цель сбора */
+#tab-donalerts .da-pane[data-da-pane="goal"] .da-main { width: auto !important; flex: none !important; }
+#tab-donalerts .da-pane[data-da-pane="goal"] .da-main > .card { max-width: none; }
+@media (max-width: 1650px) {
+  #tab-donalerts .da-layout { grid-template-columns: minmax(0, 1fr); }
+  #tab-donalerts .da-right { position: static; order: -1; max-width: 640px; }
+}
+@media (max-width: 1100px) { #tab-donalerts .da-shell { grid-template-columns: 1fr; } #tab-donalerts .da-nav { position: static; } }
 
 /* ---------- Чат ---------- */
 #tab-chat .chat-games-col { flex: 0 0 400px; }

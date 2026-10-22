@@ -533,6 +533,77 @@
       document.getElementById('tab-donalerts').scrollTop = 0;
       const content = document.querySelector('.content'); if (content && !document.getElementById('tab-donalerts').classList.contains('active')) content.scrollTop = 0;
     }, 1800);
+    // раскладка как в макете: слева список алертов с переключателями, посередине настройки, справа предпросмотр и тест
+    (function () {
+      const sub = $('.pixel-subtabs', al); if (!sub || $('.da-shell', al)) return;
+      const IC = {
+        heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.5-7 10-7 10z"/>',
+        target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+        star: '<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>',
+        users: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5a3 3 0 010 6M18 14c2 .6 3.5 2.6 3.5 5"/>',
+        user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
+        train: '<rect x="5" y="3.5" width="14" height="13" rx="2.5"/><path d="M5 10.5h14M8 20l2-3.5M16 20l-2-3.5"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/>',
+        coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.6h3.4a1.6 1.6 0 010 3.2h-1.8a1.6 1.6 0 000 3.2H15"/>',
+      };
+      const gv = (id) => { const e = document.getElementById(id); return e ? Number(e.value) : 0; };
+      const NAV = [
+        ['donation', 'heart', 'Донат', () => (gv('da_minAmount') > 0 ? 'от ' + gv('da_minAmount') + ' ₽' : 'любая сумма'), 'da_enabled'],
+        ['goal', 'target', 'Цель сбора', () => 'при каждом взносе', 'goalEnabled'],
+        ['sub', 'star', 'Подписка', () => 'и подарочные', 'ev_sub_enabled'],
+        ['raid', 'users', 'Рейд', () => (gv('ev_raid_minViewers') > 0 ? 'от ' + gv('ev_raid_minViewers') + ' зр.' : 'любой рейд'), 'ev_raid_enabled'],
+        ['follow', 'user', 'Фоллоу', () => 'новые фолловеры', 'ev_follow_enabled'],
+        ['hype', 'train', 'Hype Train', () => 'начало, уровни, финал', 'ev_hype_enabled'],
+        ['points', 'coin', 'Баллы канала', () => 'выбранные награды', 'ev_points_enabled'],
+      ];
+      const shell = document.createElement('div'); shell.className = 'da-shell';
+      const nav = document.createElement('div'); nav.className = 'card da-nav';
+      const body = document.createElement('div'); body.className = 'da-body';
+      sub.after(shell); shell.append(nav, body);
+      $$('.da-pane', al).forEach((p) => body.appendChild(p));
+      nav.innerHTML = NAV.map(([id, ic, t]) => `<div class="da-nav-it" data-p="${id}"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[ic]}</svg><div class="tx"><div class="t">${t}</div><div class="d"></div></div><label class="toggle-switch"><input type="checkbox" disabled><span class="toggle-slider"></span></label></div>`).join('');
+      const kick = (id) => setTimeout(() => {
+        const pane = $('.da-pane[data-da-pane="' + id + '"]', al); if (!pane) return;
+        const b = id === 'donation' ? document.getElementById('btnDaPrevPlay') : id === 'goal' ? document.getElementById('btnGoalTestDonation') : $('[data-a="play"]', pane);
+        if (b) b.click();
+      }, 450);
+      $$('.da-nav-it', nav).forEach((it) => {
+        it.addEventListener('click', (e) => {
+          if (e.target.closest('.toggle-switch')) return;
+          const b = $('.pixel-subtab[data-da-pane="' + it.dataset.p + '"]', al); if (b) { b.click(); sync(); kick(it.dataset.p); }
+        });
+        const inp = $('input', it);
+        inp.addEventListener('change', () => {
+          const real = document.getElementById(NAV.find((n) => n[0] === it.dataset.p)[4]); if (!real) return;
+          real.checked = inp.checked; real.dispatchEvent(new Event('change', { bubbles: true })); sync();
+        });
+      });
+      function sync() {
+        if (!al.classList.contains('active')) return;
+        $$('.da-nav-it', nav).forEach((it) => {
+          const n = NAV.find((x) => x[0] === it.dataset.p), real = document.getElementById(n[4]), inp = $('input', it);
+          const tab = $('.pixel-subtab[data-da-pane="' + n[0] + '"]', al);
+          it.classList.toggle('on', !!(tab && tab.classList.contains('active')));
+          $('.d', it).textContent = n[3]();
+          if (real) { inp.disabled = false; if (inp.checked !== real.checked) inp.checked = real.checked; } else inp.disabled = true;
+        });
+      }
+      setInterval(sync, 700); sync();
+      // каждая панель: справа карточка «Предпросмотр» (картинка, кнопки, тест); настройки раскрыты сразу
+      const layout = () => $$('.da-pane', al).forEach((p) => {
+        if (p.dataset.ui3l) return;
+        const lay = $('.da-layout', p), side = $('.da-side', p), main = $('.da-main', p), mid = $('.da-mid', p);
+        if (!lay || !side) return;
+        p.dataset.ui3l = '1';
+        const right = document.createElement('div'); right.className = 'card da-right';
+        right.innerHTML = '<div class="ch"><h3>Предпросмотр</h3></div>';
+        right.appendChild(side); if (mid && main) right.appendChild(main);
+        lay.appendChild(right);
+        const cc = $('#daCfgCard', p) || $('[data-a="cfgcard"]', p); if (cc) cc.hidden = false;
+        $$('#btnDaCfg, [data-a="cfg"]', p).forEach((b) => { b.classList.add('ui3-hide'); });
+        $$('.da-group', p).forEach((g) => { g.open = true; g.addEventListener('toggle', () => { g.open = true; }); });
+      });
+      layout(); setTimeout(layout, 600); setTimeout(layout, 1800); setTimeout(layout, 4000);
+    })();
     // подписи под иконками предпросмотра
     const label = () => $$('.dbtn', al).forEach((b) => {
       if (b.querySelector('.dlab')) return;
