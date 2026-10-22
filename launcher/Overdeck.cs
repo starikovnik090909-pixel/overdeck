@@ -591,7 +591,7 @@ class Launcher : Form
         string path = Environment.GetEnvironmentVariable("PATH") ?? "";
         foreach (string p in path.Split(new char[] { Path.PathSeparator }))
         {
-            try { string f = Path.Combine(p.Trim().Trim('"'), "node.exe"); if (File.Exists(f)) return f; } catch { }
+            try { string f = Path.Combine(p.Trim().Trim(new char[] { '"' }), "node.exe"); if (File.Exists(f)) return f; } catch { }
         }
         return null;
     }
@@ -855,7 +855,7 @@ class Launcher : Form
     static string CleanNotes(string md)
     {
         List<string> lines = new List<string>();
-        foreach (string raw in md.Split('\n'))
+        foreach (string raw in md.Split(new char[] { '\n' }))
         {
             string l = raw.TrimEnd();
             l = Regex.Replace(l, "^#+\\s*", "");
