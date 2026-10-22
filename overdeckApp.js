@@ -5,7 +5,7 @@
 // Client ID публичного приложения — не секрет, его можно хранить в коде.
 // Свои ключи (вкладка «Подключения» → «Расширенный режим») по-прежнему работают и имеют приоритет.
 
-const TWITCH_PUBLIC_CLIENT_ID = '';
+const TWITCH_PUBLIC_CLIENT_ID = 'co4jjp30rehmamtaxaz8p6a6gw73fe';
 
 function twitchClientId() {
   return String(process.env.OVERDECK_TWITCH_CLIENT_ID || TWITCH_PUBLIC_CLIENT_ID || '').trim();
