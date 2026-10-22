@@ -73,6 +73,11 @@
     <div class="donor-top-list" id="donorTopList"></div>
   </div>
 
+  <!-- Чат на сцене: без заголовка и фона панели, внутри тот же chat-widget.html (его настройки — во вкладке «Чат»). Адрес iframe подставляется, когда блок включён (public/app.js). -->
+  <div class="panel chat-panel" data-widget="chat">
+    <iframe id="chatWidgetFrame" title="Чат" data-src="chat-widget.html" allowtransparency="true"></iframe>
+  </div>
+
   <div class="panel" data-widget="eventfeed">
     <div class="panel-title-row">
       <div class="panel-title">События</div>

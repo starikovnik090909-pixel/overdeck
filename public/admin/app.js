@@ -1874,6 +1874,7 @@
     emotebox: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.5 2.2 2.2 3.5 2.2s2.5-.7 3.5-2.2"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.6"/>',
     wordcloud: '<path d="M4 5h16v11H9.5L5 19.5V16H4z"/><path d="M8 9h8M8 12.3h5"/>',
     eventfeed: '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><path d="M6 8v8M11 6h9M11 18h9M11 12h6"/>',
+    chat: '<path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>',
     donortop: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
   };
   const WIDGET_ICON_FALLBACK = '<rect x="4" y="4" width="16" height="16" rx="3"/>';
@@ -8714,7 +8715,7 @@
         T('months', 'Месяцев всего (продление)', 6, { t: 'number' }), T('streak', 'Месяцев подряд (продление)', 6, { t: 'number' }), T('count', 'Сколько подарено', 5, { t: 'number' }), T('no', '№ подписчика', 147, { t: 'number' })],
       fields: [['enabled', 'toggle', 'Показывать алерты подписок'], ['style', 'select', 'Вид алерта', [['ticket', 'Билет-абонемент'], ['card', 'Карточка']]], ['showNumber', 'toggle', '№ подписчика на билете'], ['numberStart', 'number', 'Нумерация после № (0 — с первого)'], ['holdSec', 'number', 'Сколько секунд билет на экране (3–30)'],
         ['soundPre', 'sound', 'Звук перед вылетом (оповещение)'], ['soundFly', 'sound', 'Звук вылета билета'], ['soundStamp', 'sound', 'Звук штампа'], ['soundTear', 'sound', 'Звук отрыва корешка'], ['showNew', 'toggle', 'Новая подписка'], ['showResub', 'toggle', 'Продление подписки'], ['showGift', 'toggle', 'Подарок подписки'],
-        ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
+        ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
         ['speechNew', 'text', 'Текст озвучки: новая подписка'], ['speechResub', 'text', 'Текст озвучки: продление'], ['speechGift', 'text', 'Текст озвучки: подарок']],
       hint: PH + ' Ещё: {tier}, {months}, {monthsWord}, {streak}, {count}, {subsWord}.',
     },
@@ -8722,32 +8723,32 @@
       note: 'К вам пришёл рейд. Событие Twitch: channel.raid.',
       test: [T('username', 'Канал рейдера', 'NeoSamurai'), T('viewers', 'Зрителей', 127, { t: 'number' }), T('game', 'Во что играли', 'Elden Ring'), T('title', 'Название стрима', 'Первое прохождение без смертей')],
       fields: [['enabled', 'toggle', 'Показывать алерт рейда'], ['style', 'select', 'Вид алерта', [['radar', 'Радар (зрители — точки на радаре)'], ['card', 'Табло (HUD-карточка с «толпой» зрителей)'], ['plain', 'Простая карточка']]], ['minViewers', 'number', 'Показывать от (зрителей)'], ['holdSec', 'number', 'Сколько секунд держать после подсчёта (3–30)'], ['showGame', 'toggle', 'Показывать, во что играл рейдер'], ['siren', 'toggle', 'Радар: тихая сирена-тревога в начале'],
-        ['soundSiren', 'sound', 'Радар: звук сирены'], ['soundPing', 'sound', 'Радар: звук пинга'], ['soundIn', 'sound', 'Табло: звук появления'], ['soundDone', 'sound', 'Табло: звук, когда счётчик досчитал'], ['soundTick', 'sound', 'Звук счётчика (оба вида)'], ['soundVolume', 'number', 'Громкость звуков, % (0–100)'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет (пусто — зелёный у радара, оранжевый у билета)'], ['speech', 'text', 'Текст озвучки']],
+        ['soundSiren', 'sound', 'Радар: звук сирены'], ['soundPing', 'sound', 'Радар: звук пинга'], ['soundIn', 'sound', 'Табло: звук появления'], ['soundDone', 'sound', 'Табло: звук, когда счётчик досчитал'], ['soundTick', 'sound', 'Звук счётчика (оба вида)'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет (пусто — зелёный у радара, оранжевый у билета)'], ['speech', 'text', 'Текст озвучки']],
       hint: PH + ' Ещё: {viewers}, {viewersWord}.',
     },
     follow: {
       note: 'Новый фолловер. Все фолловеры и даты фоллоу хранятся навсегда (follow_registry.json): новые добавляются по событию, уже существующих можно подтянуть кнопкой. Событие Twitch: channel.follow (v2). Нужно право moderator:read:followers — после обновления войдите через Twitch заново.',
       test: [T('username', 'Ник', 'MrFrost')],
-      fields: [['enabled', 'toggle', 'Показывать алерт фоллоу'], ['style', 'select', 'Вид алерта', [['wall', 'Стена стикеров (все фолловеры)'], ['badge', 'Пропуск на ленте (с аватаркой)'], ['card', 'Карточка']]], ['holdSec', 'number', 'Сколько секунд на экране (3–30)'], ['soundFly', 'sound', 'Звук появления (пропуск)'], ['soundStick', 'sound', 'Звук шлепка стикера / штампа'], ['wallsync', 'sync', 'Фолловеры в стене'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'], ['big', 'text', 'Крупный текст на карточке'], ['speech', 'text', 'Текст озвучки']],
+      fields: [['enabled', 'toggle', 'Показывать алерт фоллоу'], ['style', 'select', 'Вид алерта', [['wall', 'Стена стикеров (все фолловеры)'], ['badge', 'Пропуск на ленте (с аватаркой)'], ['card', 'Карточка']]], ['holdSec', 'number', 'Сколько секунд на экране (3–30)'], ['soundFly', 'sound', 'Звук появления (пропуск)'], ['soundStick', 'sound', 'Звук шлепка стикера / штампа'], ['wallsync', 'sync', 'Фолловеры в стене'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'], ['big', 'text', 'Крупный текст на карточке'], ['speech', 'text', 'Текст озвучки']],
       hint: PH,
     },
     hype: {
       note: 'Hype Train: начало, новый уровень и завершение. События Twitch: channel.hype_train.begin / progress / end (v2). Нужно право channel:read:hype_train — после обновления войдите через Twitch заново.',
       test: [T('phase', 'Этап', 'begin', { t: 'select', opts: [['begin', 'Начало'], ['level', 'Новый уровень'], ['end', 'Завершение']] }), T('level', 'Уровень', 2, { t: 'number' }), T('total', 'Всего очков', 1800, { t: 'number' })],
-      fields: [['enabled', 'toggle', 'Показывать алерты Hype Train'], ['onBegin', 'toggle', 'Начало'], ['onLevel', 'toggle', 'Новый уровень'], ['onEnd', 'toggle', 'Завершение'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
+      fields: [['enabled', 'toggle', 'Показывать алерты Hype Train'], ['onBegin', 'toggle', 'Начало'], ['onLevel', 'toggle', 'Новый уровень'], ['onEnd', 'toggle', 'Завершение'], ['soundFly', 'sound', 'Звук появления карточки'], ['soundLand', 'sound', 'Звук приземления карточки'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
         ['speechBegin', 'text', 'Текст озвучки: начало'], ['speechLevel', 'text', 'Текст озвучки: уровень'], ['speechEnd', 'text', 'Текст озвучки: завершение']],
       hint: 'Подстановки: {level} — уровень, {points} — очки.',
     },
     points: {
       note: 'Награды за баллы канала. Событие Twitch: channel.channel_points_custom_reward_redemption.add.',
       test: [T('username', 'Ник', 'MrFrost'), T('reward', 'Награда', 'Выпей воды'), T('cost', 'Стоимость, баллов', 500, { t: 'number' }), T('input', 'Сообщение зрителя', 'Пей воду!')],
-      fields: [['enabled', 'toggle', 'Показывать алерты наград'], ['minCost', 'number', 'Показывать от (баллов)'], ['rewards', 'textarea', 'Только эти награды (по строке; пусто — все)'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['readMessage', 'toggle', 'Читать сообщение зрителя'], ['color', 'color', 'Цвет карточки'], ['speech', 'text', 'Текст озвучки']],
+      fields: [['enabled', 'toggle', 'Показывать алерты наград'], ['minCost', 'number', 'Показывать от (баллов)'], ['rewards', 'textarea', 'Только эти награды (по строке; пусто — все)'], ['soundFly', 'sound', 'Звук появления карточки'], ['soundLand', 'sound', 'Звук приземления карточки'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['readMessage', 'toggle', 'Читать сообщение зрителя'], ['color', 'color', 'Цвет карточки'], ['speech', 'text', 'Текст озвучки']],
       hint: PH + ' Ещё: {reward} — название награды, {cost} — стоимость.',
     },
     streak: {
       note: 'Серия просмотров зрителя (watch streak): Twitch пишет в чат, когда зритель смотрит стримы подряд, и даёт ему баллы. Алерт показывается, когда зритель сам делится серией в чате. Событие приходит из чата, отдельный вход через Twitch не нужен.',
       test: [T('username', 'Ник', 'MrFrost'), T('streak', 'Стримов подряд', 7, { t: 'number' }), T('points', 'Баллов канала', 450, { t: 'number' })],
-      fields: [['enabled', 'toggle', 'Показывать алерты серий просмотров'], ['minStreak', 'number', 'Показывать от (стримов подряд)'], ['showPoints', 'toggle', 'Показывать полученные баллы'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
+      fields: [['enabled', 'toggle', 'Показывать алерты серий просмотров'], ['minStreak', 'number', 'Показывать от (стримов подряд)'], ['showPoints', 'toggle', 'Показывать полученные баллы'], ['soundFly', 'sound', 'Звук появления карточки'], ['soundLand', 'sound', 'Звук приземления карточки'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
         ['speech', 'text', 'Текст озвучки']],
       hint: PH + ' Ещё: {streak} — стримов подряд, {streamsWord} — «стрим/стрима/стримов», {points} — баллы.',
     },
@@ -8768,6 +8769,7 @@
       const id = `ev_${kind}_${k}`; let ctl = '';
       if (t === 'toggle') ctl = `<label class="toggle-switch"><input type="checkbox" id="${id}"><span class="toggle-slider"></span></label>`;
       else if (t === 'number') ctl = `<div class="toggle-row-extra"><input type="number" id="${id}" min="0"></div>`;
+      else if (t === 'range') ctl = `<div class="toggle-row-extra"><input type="range" id="${id}" min="0" max="100" step="5" style="width:170px"><span id="${id}_v" style="min-width:42px;text-align:right;font-variant-numeric:tabular-nums"></span></div>`;
       else if (t === 'text') return `<div class="field" style="margin:10px 0 0"><label for="${id}">${l}</label><input type="text" id="${id}" maxlength="200"></div>`;
       else if (t === 'textarea') return `<div class="field" style="margin:10px 0 0"><label for="${id}">${l}</label><textarea id="${id}" rows="3" style="width:100%"></textarea></div>`;
       else if (t === 'sync') ctl = `<div class="toggle-row-extra"><span class="card-hint" id="${id}_st" style="margin:0 10px 0 0"></span><button class="btn-tiny" type="button" id="${id}">Подтянуть всех из Twitch</button></div>`;
@@ -8794,9 +8796,9 @@
     const testData = () => { const o = {}; cfg.test.forEach((f) => { const v = document.getElementById(`ev_${kind}_t_${f.k}`).value; o[f.k] = f.t === 'number' ? Number(v) : v; }); return o; };
     const apply = (s) => cfg.fields.forEach(([k, t]) => {
       const e = el(k); if (!e) return; const v = s[k];
-      if (t === 'toggle') e.checked = !!v; else if (t === 'color') { e.dataset.empty = v ? '' : '1'; e.value = v || '#b14846'; } else e.value = v == null ? '' : v;
+      if (t === 'toggle') e.checked = !!v; else if (t === 'range') { e.value = v == null ? 100 : v; const lv = document.getElementById(`ev_${kind}_${k}_v`); if (lv) lv.textContent = e.value + '%'; } else if (t === 'color') { e.dataset.empty = v ? '' : '1'; e.value = v || '#b14846'; } else e.value = v == null ? '' : v;
     });
-    const collect = () => { const o = {}; cfg.fields.forEach(([k, t]) => { const e = el(k); o[k] = t === 'toggle' ? e.checked : t === 'number' ? Number(e.value) : t === 'color' ? (e.dataset.empty === '1' ? '' : e.value) : e.value; }); return o; };
+    const collect = () => { const o = {}; cfg.fields.forEach(([k, t]) => { const e = el(k); o[k] = t === 'toggle' ? e.checked : (t === 'number' || t === 'range') ? Number(e.value) : t === 'color' ? (e.dataset.empty === '1' ? '' : e.value) : e.value; }); return o; };
     if (kind === 'follow') {
       const sb = el('wallsync'), st = document.getElementById('ev_follow_wallsync_st');
       const showStat = () => fetch('/api/follow-wall').then((r) => r.json()).then((d) => { st.textContent = d.count ? `в базе: ${d.count}` + (d.syncedAt ? '' : ' (из Twitch ещё не подтягивали)') : 'пока пусто'; }).catch(() => {});
@@ -8808,6 +8810,7 @@
         sb.disabled = false;
       });
     }
+    cfg.fields.filter((f) => f[1] === 'range').forEach(([k]) => { const e = el(k), lv = document.getElementById(`ev_${kind}_${k}_v`); e.addEventListener('input', () => { if (lv) lv.textContent = e.value + '%'; }); });
     const sndKeys = cfg.fields.filter((f) => f[1] === 'sound').map((f) => f[0]);
     if (sndKeys.length) {
       let sa = null;

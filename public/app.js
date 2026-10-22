@@ -115,6 +115,10 @@ function applyLayout(layout) {
     el.style.width = rect.w + 'px';
     el.style.height = rect.h + 'px';
     el.style.display = rect.enabled === false ? 'none' : 'flex';
+    if (el.dataset.widget === 'chat' && rect.enabled !== false) { // чат подключается к серверу только пока блок включён
+      const f = el.querySelector('iframe');
+      if (f && !f.getAttribute('src')) f.setAttribute('src', f.dataset.src);
+    }
   });
 }
 

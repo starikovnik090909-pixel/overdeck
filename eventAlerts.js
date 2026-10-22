@@ -15,34 +15,34 @@ const DEFAULTS = {
     enabled: true, showNew: true, showResub: true, showGift: true,
     style: 'ticket', showNumber: true, numberStart: 0, holdSec: 6,
     soundPre: 'tk-pre-1.ogg', soundFly: 'tk-fly-1.ogg', soundStamp: 'tk-stamp-1.ogg', soundTear: 'tk-tear-1.ogg',
-    speak: true, voice: '', color: '#9146ff',
+    speak: true, voice: '', color: '#9146ff', soundVolume: 70, voiceVolume: 100,
     speechNew: '{user} оформил{а} подписку! Спасибо!',
     speechResub: '{user} продлил{а} подписку на {months} {monthsWord}!',
     speechGift: '{user} подарил{а} {count} {subsWord}! Спасибо!',
   },
   raid: {
-    enabled: true, speak: true, voice: '', color: '#ff8a1f', minViewers: 1,
+    enabled: true, speak: true, voice: '', color: '#ff8a1f', minViewers: 1, voiceVolume: 100,
     style: 'radar', holdSec: 7, showGame: true, siren: true, soundVolume: 70,
     soundPing: 'rd-ping-1.ogg', soundTick: 'rd-tick-1.ogg', soundSiren: 'rd-siren-1.ogg', soundIn: 'tk-fly-3.ogg', soundDone: 'tk-pre-3.ogg',
     speech: 'К нам пришёл рейд от {user}: {viewers} {viewersWord}! Добро пожаловать!',
   },
   follow: {
-    enabled: true, speak: false, voice: '', color: '#3ba7ff',
+    enabled: true, speak: false, voice: '', color: '#3ba7ff', soundVolume: 70, voiceVolume: 100,
     style: 'wall', holdSec: 7, soundStick: 'tk-stamp-3.ogg', soundFly: 'tk-fly-2.ogg',
     big: 'Добро пожаловать!', speech: '{user}, добро пожаловать на канал!',
   },
   hype: {
-    enabled: true, speak: true, voice: '', color: '#ff5a1f',
+    enabled: true, speak: true, voice: '', color: '#ff5a1f', soundFly: 'power-up.ogg', soundLand: 'bell.ogg', soundVolume: 70, voiceVolume: 100,
     onBegin: true, onLevel: true, onEnd: true,
     speechBegin: 'Начался хайп-трейн!', speechLevel: 'Хайп-трейн, уровень {level}!', speechEnd: 'Хайп-трейн завершён на {level} уровне!',
   },
   points: {
-    enabled: true, speak: true, voice: '', color: '#00c8a0', readMessage: true, minCost: 0,
+    enabled: true, speak: true, voice: '', color: '#00c8a0', readMessage: true, minCost: 0, soundFly: 'power-up.ogg', soundLand: 'bell.ogg', soundVolume: 70, voiceVolume: 100,
     rewards: '',
     speech: '{user} получил{а} награду {reward}.',
   },
   streak: {
-    enabled: true, speak: true, voice: '', color: '#a970ff', minStreak: 2, showPoints: true,
+    enabled: true, speak: true, voice: '', color: '#a970ff', minStreak: 2, showPoints: true, soundFly: 'power-up.ogg', soundLand: 'bell.ogg', soundVolume: 70, voiceVolume: 100,
     speech: '{user} с нами уже {streak} {streamsWord} подряд!',
   },
 };
@@ -68,8 +68,8 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'voice') out[k] = voiceOf(r[k], b[k]);
     else if (k === 'style' && kind === 'raid') out[k] = ['radar', 'card', 'plain'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style') out[k] = (r[k] === 'card' || r[k] === 'ticket' || r[k] === 'wall' || r[k] === 'badge') && (kind === 'follow' ? r[k] !== 'ticket' : (r[k] !== 'wall' && r[k] !== 'badge')) ? r[k] : b[k];
-    else if (/^sound(Pre|Fly|Stamp|Tear|Stick|Ping|Tick|Siren|In|Done)$/.test(k)) out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\- ]{1,80}\.(ogg|mp3|wav)$/i.test(r[k]) ? r[k] : b[k]);
-    else if (k === 'soundVolume') out[k] = Math.round(num(r[k], 0, 100, b[k]));
+    else if (/^sound(Pre|Fly|Land|Stamp|Tear|Stick|Ping|Tick|Siren|In|Done)$/.test(k)) out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\- ]{1,80}\.(ogg|mp3|wav)$/i.test(r[k]) ? r[k] : b[k]);
+    else if (k === 'soundVolume' || k === 'voiceVolume') out[k] = Math.round(num(r[k], 0, 100, b[k]));
     else if (k === 'holdSec') out[k] = Math.round(num(r[k], 3, 30, b[k]) * 10) / 10;
     else if (k === 'numberStart') out[k] = Math.round(num(r[k], 0, 10000000, b[k]));
     else if (k === 'minViewers') out[k] = Math.round(num(r[k], 0, 1000000, b[k]));
@@ -234,6 +234,11 @@ function buildCard(kind, data, cfg, s) {
   base.source = '';
   base.color = cfg.color || s.cardColor || '';
   base.eventKind = kind;
+  // громкости: звуки и озвучка у каждого события свои
+  if (typeof cfg.soundVolume === 'number') base.soundVolume = cfg.soundVolume;
+  if (typeof cfg.voiceVolume === 'number') base.volume = cfg.voiceVolume;
+  // свои звуки подлёта/приземления карточки — у событий без собственного оформления звука (Hype Train, баллы, серия просмотров)
+  if (kind === 'hype' || kind === 'points' || kind === 'streak') { base.soundFly = cfg.soundFly || ''; base.soundLand = cfg.soundLand || ''; }
   if (kind === 'sub' && cfg.style === 'ticket' && info.ticket) base.ticket = info.ticket;
   if (kind === 'follow' && cfg.style === 'wall' && info.wall) base.wall = info.wall;
   if (kind === 'follow' && cfg.style === 'badge' && info.badge) base.badge = info.badge;
