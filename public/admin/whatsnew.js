@@ -1,0 +1,54 @@
+// whatsnew.js — красные мигающие точки «новое» после обновления.
+// Каждая запись WHATSNEW.items привязана к вкладке (tab) и, при желании, к разделу внутри «Алертов» (pane).
+// Пока запись не открыта, у вкладки/раздела мигает точка; по клику показывается окно с текстом, и точка пропадает.
+// Что уже показано, хранится в localStorage этого браузера. Новые записи добавляются в конец списка при каждом обновлении (id — уникальный).
+(function () {
+  'use strict';
+  window.WHATSNEW = { items: [
+    { id: '3.0.10-streak', tab: 'donalerts', pane: 'streak', title: 'Серия просмотров — плашка в углу',
+      text: 'Вместо большой карточки теперь небольшая плашка в углу экрана. Есть 6 видов на выбор (плашка, чат, кольцо, чек-ин, флип, стекло), настройки угла, размера и времени показа.' },
+    { id: '3.0.9-tts-cmd', tab: 'voice', title: 'Озвучка чата по команде',
+      text: 'В озвучке появился переключатель «Только по команде». Тогда читаются только сообщения, которые начинаются с «!!».' },
+    { id: '3.0.14-np', tab: 'donalerts', pane: 'nowplaying', title: 'Сейчас играет — новые виды и настройки',
+      text: 'Алерт показывает, что играет на компьютере: название, обложку, сколько прошло и общую длительность.\n\nВидов шесть: широкая лента, две колонки и четыре мини (скраббер, вертикальный акцент, крупное время, уголки).\n\nЕсли браузер не отдаёт данные о воспроизведении, сайт распознаётся по заголовку вкладки. Можно выбрать браузеры и добавить свои сайты. Если ничего не находится, предпросмотр покажет, что именно видит Windows.\n\nТолько Windows.' },
+    { id: '3.0.18-sources', tab: 'obs', title: 'Отдельный источник OBS для каждого алерта',
+      text: 'Теперь у каждого алерта своя ссылка: донаты, подписки, рейды, фоллоу, Hype Train, баллы, серия просмотров и «Сейчас играет». Их можно разложить по разным сценам и источникам OBS.\n\nСтрока «Все алерты вместе» — один источник на весь экран, где играют все алерты сразу.\n\nРазмер источника во всех случаях 1920 × 1080: положение алерта на экране задаётся в его настройках.' },
+  ] };
+  const KEY = 'ovd_whatsnew_seen';
+  let seen = {};
+  try { seen = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { seen = {}; }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(seen)); } catch (e) { /* без localStorage точки просто вернутся */ } };
+  const unseen = (f) => window.WHATSNEW.items.filter((i) => !seen[i.id] && f(i));
+
+  const st = document.createElement('style');
+  st.textContent = '.wn-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b4a;box-shadow:0 0 0 0 rgba(255,59,74,.7);animation:wnPulse 1.4s infinite;flex:none;margin-left:6px;vertical-align:middle;pointer-events:none}' +
+    '.nav-item>.wn-dot{position:absolute;right:10px;top:50%;margin-top:-4px;margin-left:0}.da-nav-it>.wn-dot{position:absolute;right:56px;top:50%;margin-top:-4px}.da-nav-it{position:relative}' +
+    '@keyframes wnPulse{0%{box-shadow:0 0 0 0 rgba(255,59,74,.7)}70%{box-shadow:0 0 0 7px rgba(255,59,74,0)}100%{box-shadow:0 0 0 0 rgba(255,59,74,0)}}';
+  document.head.appendChild(st);
+
+  function put(el, on) {
+    const d = el.querySelector(':scope > .wn-dot');
+    if (on && !d) { const s = document.createElement('span'); s.className = 'wn-dot'; s.title = 'Есть новое'; el.appendChild(s); }
+    else if (!on && d) d.remove();
+  }
+  function paint() {
+    const items = window.WHATSNEW.items;
+    document.querySelectorAll('.nav-item[data-tab]').forEach((el) => put(el, items.some((i) => !seen[i.id] && i.tab === el.dataset.tab)));
+    document.querySelectorAll('.pixel-subtab[data-da-pane]').forEach((el) => put(el, items.some((i) => !seen[i.id] && i.pane === el.dataset.daPane)));
+    document.querySelectorAll('.da-nav-it[data-p]').forEach((el) => put(el, items.some((i) => !seen[i.id] && i.pane === el.dataset.p)));
+  }
+  function show(list) {
+    if (!list.length) return;
+    list.forEach((i) => { seen[i.id] = 1; });
+    save(); paint();
+    const msg = list.map((i) => 'Что нового: ' + i.title + '\n\n' + i.text).join('\n\n');
+    if (window.ui3Alert) window.ui3Alert(msg); else alert(msg);
+  }
+  document.addEventListener('click', (e) => {
+    const pane = e.target.closest('.pixel-subtab[data-da-pane], .da-nav-it[data-p]');
+    if (pane && !e.target.closest('.toggle-switch')) { const p = pane.dataset.daPane || pane.dataset.p; setTimeout(() => show(unseen((i) => i.pane === p)), 150); return; }
+    const nav = e.target.closest('.nav-item[data-tab]');
+    if (nav) { const t = nav.dataset.tab; setTimeout(() => show(unseen((i) => i.tab === t && !i.pane)), 150); }
+  }, true);
+  paint(); setInterval(paint, 1500);
+})();

@@ -326,6 +326,7 @@ body.show-header-icons .panel-icon { display: inline-flex; }
 
 /* Отдельный источник «только алерт» и предпросмотр: скрываем все виджеты */
 body.only-donation .panel { display: none !important; }
+body.kind-only #gStage { display: none !important; }   /* цель сбора — только в общем источнике алертов */
 body.da-preview { background: transparent; }
 
 /* Алерт доната: текстура фона, статистика, полоска времени, уровни, конфетти */

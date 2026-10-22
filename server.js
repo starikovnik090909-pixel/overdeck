@@ -358,6 +358,7 @@ function broadcastNowPlaying(force) {
   overlayClients.forEach((ws) => {
     if (ws.readyState !== ws.OPEN || ws.view === 'preview') return;
     if (!ws.view && !config.donationAlert.inMain) return;      // как у алертов: в основной оверлей — только если там включены алерты
+    if (ws.view === 'alerts' && ws.kind && ws.kind !== 'nowplaying') return;
     ws.send(json);
   });
 }
@@ -2718,7 +2719,8 @@ app.get('/api/home', (req, res) => {
   try { tmrs = botTimers.list().length; } catch (e) {}
   const obs = {
     overlay: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view !== 'preview' && c.view !== 'alerts').length,
-    alerts: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view === 'alerts').length,
+    alerts: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view === 'alerts' && !c.kind).length,
+    ...Object.fromEntries(['donation', 'sub', 'raid', 'follow', 'hype', 'points', 'streak', 'nowplaying'].map((k) => ['k_' + k, [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view === 'alerts' && c.kind === k).length])),
     chat: [...chatClients].filter((c) => c.readyState === 1 && c.isObs && !c.view).length, goal: live(goalClients), fundbox: live(fundBoxClients), fundalert: live(fundAlertClients),
     fund: live(fundClients), timer: live(timerClients), fact: live(factClients), background: live(backgroundClients),
     mvp: live(mvpClients), bracket: live(bracketClients), team: live(teamClients.left) + live(teamClients.right),
@@ -3542,10 +3544,11 @@ wss.on('connection', (ws, req) => {
     ws.send(JSON.stringify({ type: 'bracket_data', bracket: bracketWithTheme() }));
     ws.on('close', () => bracketClients.delete(ws));
   } else {
+    ws.kind = url.searchParams.get('kind') || ''; // для view=alerts: источник одного вида алертов (donation, sub, raid, follow, hype, points, streak, nowplaying); пусто — все алерты вместе
     ws.view = url.searchParams.get('view') || ''; // '' — основной оверлей, 'alerts' — отдельный источник алертов, 'preview' — предпросмотр в админке
     overlayClients.add(ws);
     ws.send(JSON.stringify(buildSnapshot()));
-    if (ws.view !== 'preview' && (ws.view || config.donationAlert.inMain)) { try { ws.send(JSON.stringify(nowPlayingPayload())); } catch (e) { /* не критично */ } }
+    if (ws.view !== 'preview' && (ws.view || config.donationAlert.inMain) && !(ws.view === 'alerts' && ws.kind && ws.kind !== 'nowplaying')) { try { ws.send(JSON.stringify(nowPlayingPayload())); } catch (e) { /* не критично */ } }
     ws.on('close', () => { overlayClients.delete(ws); broadcastAdminStatus(); });
     broadcastAdminStatus(); // новый оверлей-клиент — статус в админке меняется на "онлайн"
   }
@@ -3566,6 +3569,7 @@ function sendToOverlay(payload) {
     if (ws.readyState !== ws.OPEN) return;
     if (ws.view === 'preview') return;                                  // предпросмотр в админке получает только снапшоты (тему)
     if (ws.view === 'alerts' && !isAlert) return;                       // источник «только алерты» не играет озвучку чата и т.п.
+    if (ws.view === 'alerts' && ws.kind && payload.type === 'donation_alert' && ((payload.card && payload.card.eventKind) || 'donation') !== ws.kind) return;   // отдельный источник одного вида
     if (!ws.view && isAlert && !config.donationAlert.inMain) return;    // основной оверлей не дублирует отдельный источник
     ws.send(json);
   });

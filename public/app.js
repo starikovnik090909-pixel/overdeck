@@ -215,7 +215,9 @@ const ONLY_DONATION = PAGE_Q.get('only') === 'donation';        // отдель�
 const DA_PREVIEW = PAGE_Q.get('preview') === '1';               // предпросмотр в админке (алерты приходят через postMessage)
 if (ONLY_DONATION || DA_PREVIEW) document.body.classList.add('only-donation');
 if (DA_PREVIEW) document.body.classList.add('da-preview');
-const ws = new WebSocket(`ws://${location.host}/?type=overlay${DA_PREVIEW ? '&view=preview' : ONLY_DONATION ? '&view=alerts' : ''}`);
+const ALERT_KIND = ONLY_DONATION ? (PAGE_Q.get('kind') || '').replace(/[^a-z]/g, '') : '';   // overlay.html?only=donation&kind=sub — источник одного вида алертов
+if (ALERT_KIND) document.body.classList.add('kind-only');
+const ws = new WebSocket(`ws://${location.host}/?type=overlay${DA_PREVIEW ? '&view=preview' : ONLY_DONATION ? '&view=alerts' + (ALERT_KIND ? '&kind=' + ALERT_KIND : '') : ''}`);
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
 
