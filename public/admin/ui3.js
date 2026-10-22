@@ -173,6 +173,7 @@
     { name: 'Основной оверлей', desc: 'Активность чата, таймлайн, топ донатеров, эмодзи, слова эфира', url: 'overlay.html', size: '1920 × 1080', key: 'overlay', tab: 'widgets', th: 'left:6px;right:6px;top:6px;height:16px;background:rgba(216,75,85,.45)' },
     { name: 'Алерты', desc: 'Донаты, подписки, рейды, цель сбора — общий источник', url: 'overlay.html?only=donation', size: '1920 × 1080', key: 'alerts', tab: 'donalerts', th: 'left:26px;right:26px;top:16px;height:22px;background:rgba(216,75,85,.6)' },
     { name: 'Чат', desc: 'Сообщения зрителей с эмодзи и бейджами', url: 'chat-widget.html', size: 'любой, например 400 × 800', key: 'chat', tab: 'chat', th: 'left:30px;width:36px;top:5px;bottom:5px;background:rgba(255,255,255,.18)' },
+    { name: 'Чат — док-панель OBS', desc: 'Чат с полем «написать от имени бота» внутри OBS: Вид → Док-панели → Пользовательские док-панели браузера', url: 'chat-dock.html', size: 'панель OBS', key: 'chatdock', dock: 1, tab: 'chat', th: 'left:8px;width:30px;top:5px;bottom:5px;background:rgba(216,75,85,.6)' },
     { name: 'Цель сбора отдельно', desc: 'Только если в «Алертах» выключен общий источник', url: 'goal.html', size: '680 × 250', key: 'goal', tab: 'donalerts', th: 'left:10px;right:10px;top:22px;height:10px;background:linear-gradient(90deg,#D84B55 62%,#333 62%)' },
   ];
   function renderObs() {
@@ -182,10 +183,19 @@
       WIDGETS.map((w) => { const on = (obs[w.key] || 0) > 0; const full = ORIGIN + '/' + w.url;
         return '<tr><td><div class="ui3-thumb"><i style="' + w.th + '"></i></div></td><td><b style="font-weight:600">' + w.name + '</b><div class="card-hint" style="margin:2px 0 0">' + w.desc + '</div></td><td class="mono">' + w.size + '</td>' +
           '<td><div class="ui3-url"><i>' + esc(ORIGIN.replace(/^https?:\/\//, '')) + '/</i>' + esc(w.url) + '</div></td>' +
-          '<td>' + (on ? '<span class="ui3-chip ok">Открыт в OBS</span>' : '<span class="ui3-chip">Не открыт</span>') + '</td>' +
+          '<td>' + (w.dock ? '<span class="ui3-chip">Док-панель</span>' : on ? '<span class="ui3-chip ok">Открыт в OBS</span>' : '<span class="ui3-chip">Не открыт</span>') + '</td>' +
           '<td style="text-align:right;white-space:nowrap"><button class="btn btn-secondary btn-sm" type="button" data-copy="' + full + '">' + I('copy') + ' Копировать</button> <a class="btn btn-ghost btn-sm" href="' + full + '" target="_blank" rel="noopener" title="Открыть в браузере">' + I('ext') + '</a> <button class="btn btn-ghost btn-sm" type="button" data-go="' + w.tab + '">Настроить</button></td></tr>'; }).join('') + '</tbody>';
   }
 
+
+  /* ---------- Чат: «Док для OBS» ---------- */
+  const dockBtn = document.getElementById('btnChatDock');
+  if (dockBtn) dockBtn.addEventListener('click', async () => {
+    const url = location.origin + '/chat-dock.html';
+    try { await navigator.clipboard.writeText(url); } catch (e) {}
+    toast('Ссылка на док скопирована');
+    window.ui3Alert('Ссылка на чат скопирована — осталось добавить её в OBS:\n\n1. В OBS: Вид → Док-панели → Пользовательские док-панели браузера.\n2. Название: Чат. URL: ' + url + '\n3. Нажми «Применить» — панель появится, её можно перетащить на место чата Twitch.\n\nВ панели есть поле, чтобы писать в чат от имени бота (бот должен быть подключён на вкладке «Чат-бот»).');
+  });
   /* ---------- общие клики ---------- */
   document.addEventListener('click', (e) => {
     const g = e.target.closest('[data-go]'); if (g && (g.closest('#tab-home') || g.closest('#tab-obs'))) { goTab(g.dataset.go); return; }

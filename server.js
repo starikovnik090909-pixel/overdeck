@@ -1346,6 +1346,17 @@ app.post('/api/automod', (req, res) => {
   res.json({ success: true, wordCount: result.wordCount, enabled: autoMod.isEnabled() });
 });
 
+// Написать в чат от имени бота (поле ввода в доке чата для OBS и в админке)
+app.post('/api/chat-bot/say', async (req, res) => {
+  const text = String((req.body && req.body.text) || '').replace(/\s+/g, ' ').trim().slice(0, 450);
+  if (!text) return res.status(400).json({ success: false, error: 'Пустое сообщение.' });
+  try {
+    const ok = await chatBot.say(text);
+    if (!ok) return res.status(409).json({ success: false, error: 'Бот не подключён к чату. Подключи его на вкладке «Чат-бот».' });
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: 'Не удалось отправить: ' + (e && e.message || 'ошибка') }); }
+});
+
 app.post('/api/chat-bot/disconnect', (req, res) => {
   chatBot.disconnect();
   res.json({ success: true, chatBot: chatBot.getPublic() });
