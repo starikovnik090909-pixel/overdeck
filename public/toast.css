@@ -1,0 +1,50 @@
+/* Серия просмотров: небольшая плашка в углу экрана (public/donationalert.js → runToast). 6 видов: pill, chat, ring, checkin, flip, glass. */
+.ts-layer { position: fixed; display: none; z-index: 31; pointer-events: none; --ts-k: 1; --dx: -60px; --dy: 0px; font-family: 'TkSans', 'Manrope', 'Inter', sans-serif; color: #fff; }
+.ts-layer.ts-bl { left: 48px; bottom: 48px; }
+.ts-layer.ts-br { right: 48px; bottom: 48px; --dx: 60px; }
+.ts-layer.ts-tl { left: 48px; top: 48px; }
+.ts-layer.ts-tr { right: 48px; top: 48px; --dx: 60px; }
+.ts-box { display: flex; align-items: center; gap: 12px; zoom: calc(2.2 * var(--ts-k)); opacity: 0; transform: translate(var(--dx), var(--dy)); transition: opacity .45s ease, transform .5s cubic-bezier(.2, .9, .3, 1.15); }
+.ts-layer.ts-br .ts-box, .ts-layer.ts-tr .ts-box { flex-direction: row-reverse; }
+.ts-box.ts-in { opacity: 1; transform: none; }
+.ts-box.ts-out { opacity: 0; transform: translate(var(--dx), var(--dy)); transition: opacity .5s ease, transform .5s ease-in; }
+.ts-box b { font-weight: 800; }
+.ts-box em { font-style: normal; font-size: 11px; color: #ffd98a; }
+@keyframes ts-fk { 0% { transform: scale(1) rotate(-3deg); } 100% { transform: scale(1.12) rotate(3deg); } }
+.ts-fl { flex: none; animation: ts-fk .8s ease-in-out infinite alternate; transform-origin: 50% 90%; filter: drop-shadow(0 0 6px rgba(255, 150, 60, .7)); }
+/* 1. Огонёк-пилюля */
+.ts-pill { display: flex; align-items: center; gap: 10px; padding: 10px 18px 10px 12px; border-radius: 999px; background: rgba(20, 16, 36, .9); border: 1px solid rgba(169, 112, 255, .55); font-size: 15px; white-space: nowrap; }
+.ts-pill span { color: #cfc2ee; }
+/* 9. Реплика в чате */
+.ts-bub { display: flex; align-items: center; gap: 10px; padding: 12px 16px 12px 12px; border-radius: 18px 18px 18px 4px; background: #fff; color: #1a1a2e; box-shadow: 0 6px 18px rgba(0, 0, 0, .4); max-width: 300px; }
+.ts-layer.ts-br .ts-bub, .ts-layer.ts-tr .ts-bub { border-radius: 18px 18px 4px 18px; }
+.ts-av { flex: none; width: 38px; height: 38px; border-radius: 50%; background: #a970ff; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+.ts-bubT { display: flex; flex-direction: column; font-size: 14px; line-height: 1.3; }
+.ts-bubT b { color: #6a3de8; }
+.ts-bub em { color: #a05a00; }
+/* 3. Кольцо серии */
+.ts-ringBox { position: relative; width: 72px; height: 72px; flex: none; }
+.ts-ringNum { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 700 26px 'Oswald', 'TkSans', sans-serif; }
+@keyframes ts-rg { 0% { stroke-dashoffset: 182.2; } 100% { stroke-dashoffset: var(--off); } }
+.ts-rg { stroke-dashoffset: 182.2; animation: ts-rg 1.4s .4s ease-out forwards; }
+.ts-tx { display: flex; flex-direction: column; gap: 2px; font-size: 15px; padding: 8px 14px; border-radius: 12px; background: rgba(20, 16, 36, .82); }
+.ts-tx span { font-size: 13px; color: #d6d6ea; }
+/* 11. Чек-ин */
+.ts-chk { display: flex; align-items: center; gap: 12px; padding: 12px 18px 16px 12px; border-radius: 14px; background: rgba(20, 22, 40, .92); border: 1px solid rgba(255, 255, 255, .14); position: relative; overflow: hidden; white-space: nowrap; }
+.ts-chkC { width: 38px; height: 38px; border-radius: 50%; background: #2ecc71; display: flex; align-items: center; justify-content: center; flex: none; }
+.ts-chk b { display: block; font-size: 15px; }
+.ts-chk span { font-size: 12px; color: #b6b9d4; display: block; }
+@keyframes ts-bar { 0% { width: 100%; } 100% { width: 0; } }
+.ts-chkBar, .ts-glassBar { position: absolute; left: 0; bottom: 0; height: 4px; background: #2ecc71; animation: ts-bar linear forwards; }
+/* 12. Табло с цифрами */
+.ts-flip { display: flex; align-items: center; gap: 10px; }
+.ts-dg { width: 46px; height: 64px; border-radius: 8px; background: #15162a; border: 1px solid rgba(255, 255, 255, .2); overflow: hidden; font: 700 48px/64px 'Oswald', 'TkSans', sans-serif; text-align: center; box-shadow: 0 6px 16px rgba(0, 0, 0, .4); flex: none; }
+@keyframes ts-roll { 0% { transform: translateY(0); } 35% { transform: translateY(0); } 55%, 100% { transform: translateY(-64px); } }
+.ts-dgCol { animation: ts-roll 1.6s ease-in-out forwards; }
+.ts-lb { font-size: 13px; line-height: 1.3; color: #d6d6ea; padding: 8px 14px; border-radius: 12px; background: rgba(20, 16, 36, .82); white-space: nowrap; }
+.ts-lb b { display: block; color: #fff; font-size: 15px; }
+/* 20. Матовое стекло */
+.ts-glass { position: relative; display: flex; align-items: center; gap: 10px; padding: 12px 18px 14px 14px; border-radius: 12px; background: rgba(255, 255, 255, .14); border: 1px solid rgba(255, 255, 255, .28); backdrop-filter: blur(10px); overflow: hidden; font-size: 14px; white-space: nowrap; }
+.ts-glass span { color: #e4e4f2; }
+.ts-glassBar { height: 2px; background: #fff; }
+.ts-lb em, .ts-tx em, .ts-bubT em, .ts-chk em { display: block; }

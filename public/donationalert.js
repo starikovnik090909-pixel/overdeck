@@ -367,6 +367,49 @@
   }
 
 
+  // ---------- серия просмотров: небольшая плашка в углу ----------
+  const tsL = document.getElementById('tsLayer');
+  const FLAME = '<svg class="ts-fl" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1.5c.9 3.6-3.2 5.6-3.2 10.1 0 1.3.5 2.3 1.3 3-.1-1.6.7-2.8 1.9-3.6 0 2.6 2.6 3 2.6 5.6 0 1.5-.9 2.6-2.3 3 3.4-.2 6.2-2.6 6.2-6.4 0-2.4-1.1-4-2.4-5.6-.2 1.3-.8 2-1.6 2.4.4-3-.8-6.5-4.5-8.5z" fill="#ff9a3d"></path></svg>';
+  function toastHtml(t) {
+    const nick = escH(t.nick), n = t.n, word = escH(t.word), pts = t.points ? '<em>+' + Number(t.points).toLocaleString('ru-RU') + ' баллов</em>' : '';
+    switch (t.style) {
+      case 'chat': return `<div class="ts-bub"><div class="ts-av">${escH((t.nick || '?').trim().charAt(0).toUpperCase())}</div><div class="ts-bubT"><b>${nick}</b><span>с нами уже ${n} ${word} подряд!</span>${pts}</div></div>`;
+      case 'ring': {
+        const off = (182.2 * (1 - (((n - 1) % 10) + 1) / 10)).toFixed(1);
+        return `<div class="ts-ringBox"><svg width="72" height="72" viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="29" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="6"></circle><circle class="ts-rg" style="--off:${off}" cx="36" cy="36" r="29" fill="none" stroke="${escH(t.color)}" stroke-width="6" stroke-linecap="round" stroke-dasharray="182.2" transform="rotate(-90 36 36)"></circle></svg><div class="ts-ringNum">${n}</div></div><div class="ts-tx"><b>${nick}</b><span>серия просмотров</span>${pts}</div>`;
+      }
+      case 'checkin': return `<div class="ts-chk"><div class="ts-chkC"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div><b>${nick}</b><span>чек-ин: ${n} ${word} подряд</span>${pts}</div><div class="ts-chkBar" style="animation-duration:${t.hold}s"></div></div>`;
+      case 'flip': {
+        const cur = n % 10, prev = (n + 9) % 10, head = String(n).slice(0, -1).split('').map((d) => `<div class="ts-dg">${d}</div>`).join('');
+        return `<div class="ts-flip">${head}<div class="ts-dg"><div class="ts-dgCol"><div>${prev}</div><div>${cur}</div></div></div><div class="ts-lb"><b>${nick}</b>${word} подряд${pts}</div></div>`;
+      }
+      case 'glass': return `<div class="ts-glass">${FLAME}<b>${nick}</b><span>${n}-й стрим подряд</span>${pts}<div class="ts-glassBar" style="animation-duration:${t.hold}s"></div></div>`;
+      default: return `<div class="ts-pill">${FLAME}<b>${nick}</b><span>${n} ${word} подряд</span>${pts}</div>`;
+    }
+  }
+  async function runToast(item) {
+    const c = item.card, t = c.toast, L = tsL;
+    L.className = 'ts-layer ts-' + (['bl', 'br', 'tl', 'tr'].includes(t.corner) ? t.corner : 'bl');
+    L.style.setProperty('--ts-k', String(clamp((t.size || 100) / 100, 0.5, 2)));
+    L.innerHTML = '<div class="ts-box ts-s-' + escH(t.style) + '">' + toastHtml(t) + '</div>';
+    L.style.display = 'block';
+    const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
+    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    const hold = clamp(Math.max(t.hold || 6, dur ? dur + 0.9 : 0), 3, 40);
+    skipFlag = false;
+    const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
+    const box = L.firstChild; void box.offsetWidth; box.classList.add('ts-in'); sfx(c.soundFly);
+    let skipped = await wait(0.6);
+    if (!skipped) {
+      sfx(c.soundLand);
+      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      skipped = await wait(hold);
+    }
+    box.classList.remove('ts-in'); box.classList.add('ts-out'); await sleep(550);
+    if (audio) { try { audio.pause(); } catch (_) {} audio = null; }
+    L.innerHTML = '';
+  }
+
   // ---------- алерт доната «Чек» ----------
   const rcL = document.getElementById('rcLayer');
   async function runReceipt(item) {
@@ -556,12 +599,13 @@
     busy = true;
     while (queue.length) {
       const item = queue.shift();
-      try { if (item.card && item.card.ticket) await runTicket(item); else if (item.card && item.card.wall) await runWall(item); else if (item.card && item.card.badge) await runBadge(item); else if (item.card && item.card.receipt) await runReceipt(item); else if (item.card && item.card.slots) await runSlots(item); else if (item.card && item.card.raid && item.card.raid.style === 'card') await runRaidCard(item); else if (item.card && item.card.raid) await runRadar(item); else await run(item); } catch (e) { /* алерт не должен ломать оверлей */ }
+      try { if (item.card && item.card.ticket) await runTicket(item); else if (item.card && item.card.wall) await runWall(item); else if (item.card && item.card.toast) await runToast(item); else if (item.card && item.card.badge) await runBadge(item); else if (item.card && item.card.receipt) await runReceipt(item); else if (item.card && item.card.slots) await runSlots(item); else if (item.card && item.card.raid && item.card.raid.style === 'card') await runRaidCard(item); else if (item.card && item.card.raid) await runRadar(item); else await run(item); } catch (e) { /* алерт не должен ломать оверлей */ }
       if (item.onEnd) item.onEnd();
       layer.style.display = 'none';
       if (tk.layer) tk.layer.style.display = 'none';
       if (fwL) fwL.style.display = 'none';
       if (bdL) bdL.style.display = 'none';
+      if (tsL) tsL.style.display = 'none';
       if (rcL) rcL.style.display = 'none';
       if (slL) slL.style.display = 'none';
       if (rdL) rdL.style.display = 'none';

@@ -42,6 +42,7 @@ const DEFAULTS = {
     speech: '{user} получил{а} награду {reward}.',
   },
   streak: {
+    style: 'pill', corner: 'bl', holdSec: 6, size: 100,
     enabled: true, speak: true, voice: '', color: '#a970ff', minStreak: 2, showPoints: true, soundFly: 'power-up.ogg', soundLand: 'bell.ogg', soundVolume: 70, voiceVolume: 100,
     speech: '{user} с нами уже {streak} {streamsWord} подряд!',
   },
@@ -66,6 +67,9 @@ function sanitizeKind(kind, raw, base) {
     if (typeof def === 'boolean') out[k] = bool(r[k], b[k]);
     else if (k === 'color') out[k] = colorOf(r[k], b[k]);
     else if (k === 'voice') out[k] = voiceOf(r[k], b[k]);
+    else if (k === 'style' && kind === 'streak') out[k] = ['pill', 'chat', 'ring', 'checkin', 'flip', 'glass'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'corner') out[k] = ['bl', 'br', 'tl', 'tr'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
     else if (k === 'style' && kind === 'raid') out[k] = ['radar', 'card', 'plain'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style') out[k] = (r[k] === 'card' || r[k] === 'ticket' || r[k] === 'wall' || r[k] === 'badge') && (kind === 'follow' ? r[k] !== 'ticket' : (r[k] !== 'wall' && r[k] !== 'badge')) ? r[k] : b[k];
     else if (/^sound(Pre|Fly|Land|Stamp|Tear|Stick|Ping|Tick|Siren|In|Done)$/.test(k)) out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\- ]{1,80}\.(ogg|mp3|wav)$/i.test(r[k]) ? r[k] : b[k]);
@@ -239,6 +243,11 @@ function buildCard(kind, data, cfg, s) {
   if (typeof cfg.voiceVolume === 'number') base.volume = cfg.voiceVolume;
   // свои звуки подлёта/приземления карточки — у событий без собственного оформления звука (Hype Train, баллы, серия просмотров)
   if (kind === 'hype' || kind === 'points' || kind === 'streak') { base.soundFly = cfg.soundFly || ''; base.soundLand = cfg.soundLand || ''; }
+  if (kind === 'streak') { // небольшая плашка в углу вместо большой карточки (public/donationalert.js → runToast)
+    const n = Math.max(1, Math.round(Number(data.streak) || 1));
+    base.toast = { style: cfg.style || 'pill', corner: cfg.corner || 'bl', size: cfg.size || 100, hold: cfg.holdSec || 6, color: cfg.color || '#a970ff',
+      nick: info.nick, n, word: streamsWord(n), points: cfg.showPoints !== false ? Math.max(0, Math.round(Number(data.points) || 0)) : 0 };
+  }
   if (kind === 'sub' && cfg.style === 'ticket' && info.ticket) base.ticket = info.ticket;
   if (kind === 'follow' && cfg.style === 'wall' && info.wall) base.wall = info.wall;
   if (kind === 'follow' && cfg.style === 'badge' && info.badge) base.badge = info.badge;
