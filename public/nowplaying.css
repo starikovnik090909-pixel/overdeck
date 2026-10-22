@@ -43,3 +43,35 @@
 .np-mini .np-bar i:after { content: ''; position: absolute; right: -5px; top: -3.5px; width: 10px; height: 10px; border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(0, 0, 0, .6); }
 .np-bar.np-live i { width: 30% !important; animation: np-live 2.4s ease-in-out infinite alternate; }
 @keyframes np-live { 0% { margin-left: 0; } 100% { margin-left: 70%; } }
+
+/* две колонки (cols) */
+.np-swap { animation: np-swap .6s ease; }
+.np-cols { display: flex; border-radius: 6px; overflow: hidden; background: rgba(14, 14, 18, var(--np-bga)); border: 1px solid rgba(255, 255, 255, calc(.12 * var(--np-bga))); }
+.np-cl { flex: none; width: 128px; box-sizing: border-box; padding: 14px 12px; border-right: 1px solid rgba(255, 255, 255, .14); display: flex; flex-direction: column; justify-content: center; }
+.np-cl b { font: 600 30px/1 'Oswald', 'TkSans', sans-serif; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.np-cl small { font-size: 10px; color: #bdb8d8; letter-spacing: .14em; margin-top: 5px; text-transform: uppercase; }
+.np-cr { flex: 1; min-width: 0; padding: 14px 16px; }
+.np-k { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: var(--np-acc); }
+.np-cr .np-title { font-size: 15px; font-weight: 700; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-m { font-size: 11px; color: #bdb8d8; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-cr .np-bar { height: 2px; margin-top: 10px; background: rgba(255, 255, 255, .18); }
+.np-cr .np-bar i { display: block; height: 100%; width: 0; background: var(--np-acc); transition: width .3s linear; }
+.np-thin .np-cols { text-shadow: 0 1px 4px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .6); }
+/* миниатюрные: вертикальный акцент (vbar), крупное время (bigtime), уголки (corners) */
+.np-vb, .np-bt, .np-cn { text-shadow: 0 1px 4px rgba(0, 0, 0, .95), 0 0 8px rgba(0, 0, 0, .6); }
+.np-vb { display: flex; gap: 9px; }
+.np-v { flex: none; width: 2px; background: rgba(255, 255, 255, .3); position: relative; }
+.np-vf { position: absolute; left: 0; bottom: 0; width: 2px; height: 0; background: var(--np-acc); transition: height .3s linear; }
+.np-vt { min-width: 0; }
+.np-vb .np-title, .np-cn .np-title, .np-bt .np-title { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np-s { font-size: 10px; letter-spacing: .1em; color: #e8e4d8; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.np-bt { display: flex; align-items: center; gap: 10px; }
+.np-bt b { font: 600 22px/1 'Oswald', 'TkSans', sans-serif; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.np-d { width: 1px; align-self: stretch; background: rgba(255, 255, 255, .4); }
+.np-bt .np-s { text-transform: uppercase; margin-top: 2px; }
+.np-cn { position: relative; padding: 10px 14px; }
+.np-cn i { position: absolute; width: 10px; height: 10px; border: 1px solid rgba(255, 255, 255, .85); }
+.np-cn i.a { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+.np-cn i.b { right: 0; top: 0; border-left: 0; border-bottom: 0; }
+.np-cn i.c { left: 0; bottom: 0; border-right: 0; border-top: 0; }
+.np-cn i.d { right: 0; bottom: 0; border-left: 0; border-top: 0; }

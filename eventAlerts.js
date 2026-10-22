@@ -70,7 +70,7 @@ function sanitizeKind(kind, raw, base) {
     if (typeof def === 'boolean') out[k] = bool(r[k], b[k]);
     else if (k === 'color') out[k] = colorOf(r[k], b[k]);
     else if (k === 'voice') out[k] = voiceOf(r[k], b[k]);
-    else if (k === 'style' && kind === 'nowplaying') out[k] = ['card', 'mini'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'style' && kind === 'nowplaying') out[k] = ['card', 'cols', 'mini', 'vbar', 'bigtime', 'corners'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style' && kind === 'streak') out[k] = ['pill', 'chat', 'ring', 'checkin', 'flip', 'glass'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'corner') out[k] = ['bl', 'br', 'tl', 'tr'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
