@@ -58,7 +58,9 @@ function middleware(getConfig) {
         return;
       }
     }
-    if (MUTATING.has(req.method) && !originOk(req.headers.origin)) {
+    // расширение браузера «Overdeck — Сейчас играет» шлёт данные с Origin chrome-extension://… — разрешаем только этот один адрес
+    const extOk = /^(chrome|moz)-extension:\/\//.test(String(req.headers.origin || '')) && req.path === '/api/nowplaying/browser' && local;
+    if (MUTATING.has(req.method) && !originOk(req.headers.origin) && !extOk) {
       res.status(403).json({ success: false, error: 'Запрос с чужого сайта отклонён.' });
       return;
     }

@@ -22,7 +22,7 @@ async function poll() {
     else if (!x) dg.textContent = '';
     else if (!x.win) dg.textContent = 'Показан пример. Чтение медиа-сессий работает только в Windows.';
     else if (!x.running) dg.textContent = 'Показан пример. Читалка Windows не запущена' + (st.error ? ': ' + st.error : '. Включи алерт и сохрани.');
-    else dg.textContent = 'Показан пример — реальных источников нет. Windows видит сессий: ' + x.raw + (x.titles.length ? ' (' + x.titles.join('; ') + ')' : '') + ', окон браузера: ' + x.windows + (x.errs.length ? '. Ошибки: ' + x.errs.join('; ') : '') + '. Запусти видео и подожди 2–3 секунды.';
+    else dg.textContent = 'Показан пример — реальных источников нет. Windows видит сессий: ' + x.raw + (x.titles.length ? ' (' + x.titles.join('; ') + ')' : '') + ', окон браузера: ' + x.windows + (x.errs.length ? '. Ошибки: ' + x.errs.join('; ') : '') + '. ' + (x.ext && x.ext.fresh ? 'Расширение браузера подключено, но видео не найдено — запусти видео.' : 'Расширение браузера не подключено: chrome://extensions → «Режим разработчика» → «Загрузить распакованное» → папка browser-extension в папке Overdeck. Оно видит видео и аудио на любом сайте.');
     window.NowPlayingModule.set({ enabled: true, settings: d.settings, state });
   } catch (e) { /* сервер недоступен */ }
 }

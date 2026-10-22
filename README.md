@@ -2382,3 +2382,9 @@ pip install piper-tts
 - Строка «Все алерты вместе» (`overlay.html?only=donation`) — один источник на весь экран со всеми алертами сразу, как раньше.
 - После обновления у вкладок и разделов, где что-то изменилось, мигает красная точка. По клику открывается окно с описанием, после этого точка пропадает (запоминается в браузере). Список записей — `public/admin/whatsnew.js`: в каждый релиз добавляется новая запись с уникальным id.
 - Изменил: `server.js`, `public/app.js`, `public/style.css`, `public/admin/ui3.js`, `public/admin/index.html`; новый `public/admin/whatsnew.js`.
+
+## 169. Версия 3.0.19-beta — расширение браузера для «Сейчас играет»
+- Новая папка `browser-extension/` — расширение для Chromium-браузеров (Chrome, Edge, Яндекс, Opera, Brave). Читает video/audio на любой странице и шлёт название, время, длительность и обложку в Overdeck (`POST /api/nowplaying/browser`). Установка — в `РАСШИРЕНИЕ.md`.
+- Сервер принимает такие запросы с Origin `chrome-extension://…`/`moz-extension://…` только на этот один адрес и только с этого ПК (`netGuard.js`).
+- Данные расширения важнее системных сессий Windows и заголовка окна, работает и без Windows. В предпросмотре диагностика говорит, подключено ли расширение.
+- Изменил: `nowPlaying.js`, `server.js`, `netGuard.js`, `public/nowplaying-preview.html`, `public/admin/whatsnew.js`.

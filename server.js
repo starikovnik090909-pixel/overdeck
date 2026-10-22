@@ -3190,6 +3190,10 @@ app.post('/api/event-alerts/:kind/reset', (req, res) => {
   if (k === 'nowplaying') applyNowPlayingConfig();
   res.json({ success: true, settings: config.eventAlerts[k] });
 });
+// данные от расширения браузера: что играет на открытых вкладках (video/audio на любом сайте)
+app.post('/api/nowplaying/browser', express.json({ limit: '200kb' }), (req, res) => {
+  try { nowPlaying.setBrowser(req.body || {}); res.json({ success: true, enabled: !!config.eventAlerts.nowplaying.enabled }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
 app.get('/api/nowplaying', (req, res) => { res.json({ success: true, ...nowPlayingPayload() }); });
 app.get('/api/nowplaying/cover', (req, res) => {
   const c = nowPlaying.getCover(req.query.k);

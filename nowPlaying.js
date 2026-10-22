@@ -13,6 +13,7 @@ let child = null;
 let wantRunning = false;
 let wins = [];              // заголовки окон браузеров (запасной источник)
 let scriptErrs = [];
+let extItems = []; let extAt = 0; let extBrowser = '';   // данные от расширения браузера
 let sessions = [];          // последний снимок, уже с локальным временем получения (at)
 let lastLineAt = 0;
 let lastError = '';
@@ -87,6 +88,19 @@ function handleLine(line) {
   }
 }
 
+const EXT_STALE_MS = 5000;
+/** Данные от расширения: { browser, items: [{ id, title, artist, site, playing, pos, dur, rate, cover, tabActive }] } */
+function setBrowser(b) {
+  const items = Array.isArray(b.items) ? b.items : [];
+  extBrowser = String(b.browser || '').slice(0, 40);
+  extAt = Date.now();
+  extItems = items.slice(0, 20).map((s, i) => ({ id: String(s.id || extBrowser || 'browser').slice(0, 60), title: String(s.title || '').slice(0, 300), artist: String(s.artist || '').slice(0, 200), album: '', site: String(s.site || '').slice(0, 100),
+    status: s.playing ? 'Playing' : 'Paused', pos: Math.max(0, Number(s.pos) || 0), dur: Number.isFinite(Number(s.dur)) && Number(s.dur) > 0 ? Number(s.dur) : 0, rate: Number(s.rate) || 1,
+    key: 'ext|' + String(s.id || '') + '|' + String(s.title || '').slice(0, 80) + '|' + i, current: !!s.tabActive && !!s.playing, at: extAt, cover: /^https?:\/\//.test(String(s.cover || '')) ? String(s.cover).slice(0, 600) : '', ext: true }));
+  onChange();
+}
+const extFresh = () => extAt > 0 && Date.now() - extAt < EXT_STALE_MS;
+
 function start(cb) {
   if (cb) onChange = cb;
   wantRunning = true;
@@ -128,9 +142,15 @@ function getState(cfg) {
   cfg = cfg || {};
   const isDemo = demoActive();
   let src = isDemo ? demo.sessions : sessions;
+  if (!isDemo && extFresh() && extItems.length) {
+    // расширение знает точное время и название видео на странице — его данные важнее заголовка окна/системных сессий того же видео
+    const same = (a, b) => a && b && (a === b || a.includes(b) || b.includes(a));
+    src = src.filter((s) => !(isBrowser(s.id) && extItems.some((e) => same(e.title.toLowerCase(), s.title.toLowerCase()))));
+    src = src.concat(extItems);
+  }
   const brs = parseIgnore(cfg.browsers);
   if (!isDemo) {
-    const fb = winSessions(cfg, src);
+    const fb = winSessions(cfg, src.filter((s) => s.title || s.ext));
     src = src.concat(fb);
     if (brs.length) src = src.filter((s) => !isBrowser(s.id) || brs.some((x) => String(s.id).toLowerCase().includes(x) || appName(s.id).toLowerCase().includes(x)));
   }
@@ -138,17 +158,17 @@ function getState(cfg) {
   const minDur = Number(cfg.minDurationSec) || 0;
   const list = src.filter((s) => (s.title || s.artist) && !ignore.some((x) => (s.id + ' ' + appName(s.id)).toLowerCase().includes(x))
     && !(minDur > 0 && s.dur > 0 && s.dur < minDur)).map((s) => {
-    const c = covers.get(s.key);
-    return { byTitle: !!s.byTitle, id: s.id, app: appName(s.id), browser: isBrowser(s.id), title: s.title, artist: s.artist, album: s.album, status: s.status, playing: s.status === 'Playing',
-      pos: s.pos, dur: s.dur, rate: s.rate, cover: c ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) + '&v=' + c.v : (isDemo ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) : ''), current: s.current, key: s.key, at: s.at };
+    const c = s.ext ? null : covers.get(s.key);
+    return { byTitle: !!s.byTitle, ext: !!s.ext, site: s.site || '', id: s.id, app: s.ext && s.site ? appName(s.id) + ' · ' + s.site : appName(s.id), browser: isBrowser(s.id) || !!s.ext, title: s.title, artist: s.artist, album: s.album, status: s.status, playing: s.status === 'Playing',
+      pos: s.pos, dur: s.dur, rate: s.rate, cover: s.ext ? s.cover : c ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) + '&v=' + c.v : (isDemo ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) : ''), current: s.current, key: s.key, at: s.at };
   });
   // текущая: играющая, которую Windows считает главной → любая играющая → (если не скрываем паузу) главная/последняя
   let cur = list.find((s) => s.playing && s.current) || list.find((s) => s.playing) || null;
   if (!cur && !cfg.hideWhenPaused) cur = list.find((s) => s.current) || list[0] || null;
   return {
-    supported: process.platform === 'win32' || isDemo, demo: isDemo, error: lastError,
-    fresh: isDemo || (lastLineAt > 0 && Date.now() - lastLineAt < STALE_MS),
-    diag: { win: process.platform === 'win32', running: !!child, lastLineAgoSec: lastLineAt ? Math.round((Date.now() - lastLineAt) / 1000) : null, raw: sessions.length, titles: sessions.slice(0, 4).map((s) => (appName(s.id) + ': ' + (s.title || '(без названия)') + ' [' + s.status + ']')), windows: wins.length, errs: scriptErrs },
+    supported: process.platform === 'win32' || isDemo || extFresh(), demo: isDemo, error: lastError,
+    fresh: isDemo || extFresh() || (lastLineAt > 0 && Date.now() - lastLineAt < STALE_MS),
+    diag: { ext: { fresh: extFresh(), count: extItems.length, browser: extBrowser }, win: process.platform === 'win32', running: !!child, lastLineAgoSec: lastLineAt ? Math.round((Date.now() - lastLineAt) / 1000) : null, raw: sessions.length, titles: sessions.slice(0, 4).map((s) => (appName(s.id) + ': ' + (s.title || '(без названия)') + ' [' + s.status + ']')), windows: wins.length, errs: scriptErrs },
     now: Date.now(), current: cur, others: list.filter((s) => cur && s !== cur), count: list.length,
   };
 }
@@ -160,4 +180,4 @@ function getCover(key) {
   return covers.get(key) || null;
 }
 
-module.exports = { start, stop, setDemo, getState, getCover, appName, _handleLine: handleLine, _setSessions: (s) => { sessions = s; lastLineAt = Date.now(); } };
+module.exports = { setBrowser, start, stop, setDemo, getState, getCover, appName, _handleLine: handleLine, _setSessions: (s) => { sessions = s; lastLineAt = Date.now(); } };
