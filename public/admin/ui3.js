@@ -507,6 +507,40 @@
   if (st) autosave(st, document.getElementById('btnThemeSave'), document.getElementById('themeFormMessage'), document.getElementById('themeSaved'),
     (el) => el.id === 'themePresetSelect' || el.id === 'fontUploadInput');
 
+  /* --- Стиль: раскладка «темы и цвета | шрифты | предпросмотр» --- */
+  (function () {
+    if (!st) return;
+    const cols = $('.settings-columns', st); if (!cols || cols.dataset.ui3) return;
+    const cards = $$('.card', cols); if (cards.length < 5) return;
+    cols.dataset.ui3 = '1';
+    const [cColors, cOpac, cThemes, cFonts, cSize] = cards;
+    const mk = () => { const d = document.createElement('div'); d.className = 'ui3-st-col'; return d; };
+    const A = mk(), B = mk(), C = mk();
+    // готовые темы — карточками; настоящий список (select) остаётся скрытым и работает как раньше
+    const ttl = $('.section-title', cThemes); if (ttl) ttl.textContent = 'Готовые темы';
+    const sel = document.getElementById('themePresetSelect');
+    const fld = sel && sel.closest('.field'); if (fld) fld.classList.add('ui3-hide');
+    const grid = document.createElement('div'); grid.className = 'ui3-themes';
+    if (fld) fld.after(grid);
+    let themes = [];
+    const draw = () => {
+      grid.innerHTML = themes.map((t) => {
+        const c = (t.params && t.params.colors) || {};
+        return '<button type="button" class="ui3-theme' + (sel && sel.value === t.id ? ' on' : '') + '" data-id="' + t.id + '"><span class="sw" style="background:linear-gradient(135deg,' + (c.panelBg || '#141419') + ' 45%,' + (c.accent || '#B14846') + ')"></span><span class="nm">' + String(t.name).replace(/[<>&]/g, '') + '</span></button>';
+      }).join('');
+    };
+    fetch('/api/themes').then((r) => r.json()).then((d) => { themes = d.themes || []; draw(); }).catch(() => {});
+    grid.addEventListener('click', (e) => { const b = e.target.closest('.ui3-theme'); if (!b || !sel) return; sel.value = b.dataset.id; sel.dispatchEvent(new Event('change', { bubbles: true })); draw(); });
+    if (sel) { sel.addEventListener('change', draw); new MutationObserver(draw).observe(sel, { childList: true }); setInterval(draw, 2500); }
+    // предпросмотр: настоящий оверлей в уменьшенном виде
+    C.innerHTML = '<div class="card ui3-st-prev"><div class="ch"><h3>Предпросмотр</h3><span class="ui3-st-note">Оверлей в реальном времени</span></div><div class="ui3-st-box"><iframe src="/overlay.html" title="Предпросмотр оверлея" tabindex="-1"></iframe></div><p class="card-hint">Цвета, шрифты и размеры применяются сразу. Чтобы увидеть виджеты с данными, включи «Демо-стрим» на вкладке «Сцена».</p></div>';
+    const box = $('.ui3-st-box', C), fr = $('iframe', C);
+    const fit = () => { const k = box.clientWidth / 1920; fr.style.transform = 'scale(' + k + ')'; box.style.height = (1080 * k) + 'px'; };
+    new ResizeObserver(fit).observe(box); fit();
+    A.append(cThemes, cColors, cOpac); B.append(cFonts, cSize);
+    cols.replaceChildren(A, B, C);
+  })();
+
   /* --- Алерты --- */
   const al = document.getElementById('tab-donalerts');
   if (al) {

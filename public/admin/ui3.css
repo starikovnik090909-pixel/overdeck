@@ -508,7 +508,8 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 @media (max-width: 1100px) { #tab-donalerts .da-shell { grid-template-columns: 1fr; } #tab-donalerts .da-nav { position: static; } }
 
 /* ---------- Чат ---------- */
-#tab-chat .chat-games-col { flex: 0 0 400px; }
+#tab-chat .chat-games-col { flex: 0 0 740px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+@media (max-width: 1750px) { #tab-chat .chat-games-col { flex: 0 0 400px; grid-template-columns: 1fr; } }
 #tab-chat .chat-games-col .card { max-width: none; padding: 16px 18px; }
 #tab-chat .chat-card-head { display: flex; align-items: center; gap: 10px; }
 #tab-chat .chat-card-head .section-title { display: flex; align-items: center; gap: 8px; }
@@ -520,6 +521,26 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-chat .ui3-addbtn[aria-expanded="true"] .c { display: inline; }
 #tab-chat .game-form { background: var(--bg-card); border: 1px solid var(--divider); border-radius: 12px; }
 
+#tab-chat .chat-games-col > .card, #tab-chat .chat-games-col > .card + .card { margin: 0 !important; }
+/* ---------- Стиль: три колонки ---------- */
+#tab-settings .ui3-themes + .card-hint, #tab-settings .ui3-themes ~ .card-hint { margin-top: 14px; }
+#tab-settings .settings-columns { display: grid !important; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; align-items: start; }
+#tab-settings .ui3-st-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+#tab-settings .ui3-st-col > .card { margin: 0 !important; }
+.ui3-themes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ui3-theme { text-align: left; padding: 0; border: 1px solid var(--line2); border-radius: 12px; background: var(--bg-card2); color: var(--text-primary); cursor: pointer; overflow: hidden; font: inherit; }
+.ui3-theme:hover { border-color: var(--text-mute); }
+.ui3-theme.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.ui3-theme .sw { display: block; height: 62px; }
+.ui3-theme .nm { display: block; padding: 9px 12px; font-size: 13px; font-weight: 500; }
+.ui3-st-prev { padding: 0 !important; overflow: hidden; position: sticky; top: 0; }
+.ui3-st-prev .ch { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--divider); }
+.ui3-st-prev .ch h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.ui3-st-note { font-size: 12px; color: var(--text-mute); }
+.ui3-st-box { position: relative; overflow: hidden; background: repeating-conic-gradient(#19191d 0 25%, #141417 0 50%) 0 0 / 20px 20px; }
+.ui3-st-box iframe { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; background: transparent; pointer-events: none; }
+.ui3-st-prev .card-hint { padding: 12px 20px 16px; margin: 0; }
+@media (max-width: 1650px) { #tab-settings .settings-columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } #tab-settings .ui3-st-col:nth-child(3) { grid-column: 1 / -1; } .ui3-st-prev { position: static; max-width: 760px; } }
 /* ---------- Стиль ---------- */
 #tab-settings .settings-columns { gap: 16px; }
 #tab-settings .card { max-width: none; }
@@ -539,6 +560,30 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .ui3-dlg-act { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
 .btn.ui3-danger { background: #C2353F !important; }
 
+/* ---------- Сцена: слои | холст | свойства ---------- */
+#tab-widgets .wtool-msg:empty, #tab-widgets .fake-banner[hidden] { display: none !important; }
+#tab-widgets .widgets-preview-col > .wtool-bar { row-gap: 8px; }
+#tab-widgets .wtool-head { margin-bottom: 14px; }
+#tab-widgets .widgets-layout { display: grid !important; grid-template-columns: 260px minmax(0, 1fr) 290px; gap: 16px; align-items: start; max-width: none; }
+#tab-widgets .widgets-layers-col, #tab-widgets .widgets-side-col { width: auto !important; flex: none !important; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+#tab-widgets .widgets-preview-col { min-width: 0; }
+#tab-widgets .widgets-preview-col > .wtool-bar { justify-content: flex-start !important; padding-top: 8px !important; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; padding: 8px; background: var(--bg-card); border: 1px solid var(--divider); border-radius: 12px; }
+#tab-widgets .widgets-preview-col > .wtool-bar .wtool-group { display: flex; gap: 6px; padding: 0 8px 0 0; margin: 0 2px 0 0; border: 0; border-right: 1px solid var(--divider); background: none; }
+#tab-widgets .widgets-preview-col > .wtool-bar .wtool-group:last-of-type { border-right: 0; }
+#tab-widgets .preview-stage { background: var(--bg-card); border: 1px solid var(--divider); border-radius: 14px; padding: 14px; }
+#tab-widgets .side-block { background: var(--bg-card) !important; border: 1px solid var(--divider) !important; border-radius: 14px !important; padding: 14px !important; }
+#tab-widgets .wicon-head { display: flex; align-items: center; justify-content: space-between; }
+#tab-widgets .wicon .wstate { cursor: pointer; padding: 3px 8px; border-radius: 999px; }
+#tab-widgets .wicon .wstate:hover { background: var(--bg-hover); }
+#widgetProps .wp-head { display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px; }
+#widgetProps .wp-title { font-size: 15px; font-weight: 600; }
+#widgetProps .wp-sub { font-size: 12px; color: var(--text-mute); }
+#widgetProps .wp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+#widgetProps label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--text-mute); }
+#widgetProps input { width: 100%; box-sizing: border-box; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--line2); background: var(--bg-app); color: var(--text-primary); font: 500 13px 'JetBrains Mono', monospace; min-width: 0; }
+#widgetProps input:disabled { opacity: .45; }
+@media (max-width: 1500px) { #tab-widgets .widgets-layout { grid-template-columns: 230px minmax(0, 1fr); } #tab-widgets .widgets-side-col { grid-column: 1 / -1; } }
+@media (max-width: 1000px) { #tab-widgets .widgets-layout { grid-template-columns: 1fr; } }
 /* ---------- Сцена ---------- */
 #tab-widgets .wtool-bar { gap: 6px; flex-wrap: wrap; }
 #tab-widgets .wtool-btn { width: auto !important; height: 32px !important; padding: 0 10px !important; gap: 6px; border-radius: 8px !important; background: var(--bg-card2) !important; border: 1px solid var(--line2) !important; display: inline-flex; align-items: center; }

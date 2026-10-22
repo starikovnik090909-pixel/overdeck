@@ -1851,13 +1851,16 @@
     const fs = document.fullscreenElement === previewStage;
     const col = previewStage.parentElement;
     const maxByHeight = fs ? (window.innerHeight - 64) * (SCENE_W / SCENE_H) : Math.max(480, (window.innerHeight - 170) * (SCENE_W / SCENE_H)); // кадр целиком помещается в окно по высоте
-    const frameWidth = Math.floor(Math.min(fs ? window.innerWidth - 24 : col.clientWidth, maxByHeight));
+    const cs = getComputedStyle(previewStage);
+    const inner = fs ? window.innerWidth - 24 : (previewStage.clientWidth || col.clientWidth) - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const frameWidth = Math.floor(Math.max(200, Math.min(inner, maxByHeight)));
     previewFrame.style.width = frameWidth + 'px';
     previewScale = frameWidth / SCENE_W;
     previewScene.style.transform = `scale(${previewScale})`;
     previewFrame.style.height = (SCENE_H * previewScale) + 'px';
   }
   window.addEventListener('resize', () => { computeScale(); });
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => computeScale()).observe(previewStage.parentElement);
 
   function widgetLabel(id) {
     const def = widgetDefs.find((w) => w.id === id);
@@ -1885,11 +1888,14 @@
       btn.type = 'button';
       btn.className = 'wicon' + (on ? ' on' : '') + (selectedWidgetId === w.id ? ' sel' : '');
       btn.dataset.id = w.id;
-      btn.dataset.tip = `${w.label}\n${on ? 'Включён — нажмите, чтобы убрать' : 'Выключен — нажмите, чтобы показать'}\nПКМ — настройки виджета`;
+      btn.dataset.tip = `${w.label}\n${on ? 'Нажми — выбрать блок. «на сцене» справа — скрыть' : 'Скрыт — нажми, чтобы показать на сцене'}`;
       btn.setAttribute('aria-label', w.label);
       btn.setAttribute('aria-pressed', String(on));
       btn.innerHTML = `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WIDGET_ICONS[w.id] || WIDGET_ICON_FALLBACK}</svg><span class="wlab">${w.label}</span><span class="wstate">${on ? 'на сцене' : 'скрыт'}</span>`;
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (ev) => {
+        // клик по строке выбирает блок (редактируется положение и размер); «глаз» справа — показать/скрыть
+        const eye = ev.target.closest && ev.target.closest('.wstate');
+        if (!eye && layoutState[w.id].enabled !== false) { selectWidget(w.id); return; }
         const nowOn = layoutState[w.id].enabled === false; // был выключен → включаем
         layoutState[w.id].enabled = nowOn;
         if (!nowOn && selectedWidgetId === w.id) {
@@ -1957,7 +1963,28 @@
     widgetListEl.querySelectorAll('.wicon').forEach((el) => el.classList.toggle('sel', el.dataset.id === selectedWidgetId));
     const rb = document.getElementById('btnWidgetResetSel');
     if (rb) rb.disabled = !selectedWidgetId;
+    syncWidgetProps();
   }
+  // панель «Положение и размер»: числа выбранного блока, правятся с клавиатуры и обновляются при перетаскивании
+  const wpIds = { x: 'wpX', y: 'wpY', w: 'wpW', h: 'wpH' };
+  function syncWidgetProps() {
+    const box = document.getElementById('widgetProps'); if (!box) return;
+    const rect = selectedWidgetId && layoutState[selectedWidgetId];
+    const def = rect && widgetDefs.find((w) => w.id === selectedWidgetId);
+    document.getElementById('wpTitle').textContent = def ? def.label : 'Выберите блок на сцене';
+    document.getElementById('wpSub').textContent = def ? 'Положение и размер на экране 1920 × 1080' : 'Нажмите на блок или на строку в списке слоёв';
+    Object.keys(wpIds).forEach((k) => { const el = document.getElementById(wpIds[k]); if (!el) return; el.disabled = !rect; if (rect && document.activeElement !== el) el.value = Math.round(rect[k]); if (!rect) el.value = ''; });
+  }
+  Object.keys(wpIds).forEach((k) => {
+    const el = document.getElementById(wpIds[k]); if (!el) return;
+    el.addEventListener('change', () => {
+      const id = selectedWidgetId; if (!id || !layoutState[id]) return;
+      const cur = layoutState[id];
+      const next = normalizeRect({ x: Number(document.getElementById('wpX').value), y: Number(document.getElementById('wpY').value), w: Number(document.getElementById('wpW').value), h: Number(document.getElementById('wpH').value) });
+      if (Object.values(next).some((v) => Number.isNaN(v))) { syncWidgetProps(); return; }
+      Object.assign(cur, next); updateWidgetDiv(id); syncWidgetProps(); scheduleLayoutSave();
+    });
+  });
   document.getElementById('btnWidgetResetSel').addEventListener('click', () => { if (selectedWidgetId) resetSingleWidget(selectedWidgetId); });
 
   function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
@@ -1989,6 +2016,7 @@
     el.style.width = rect.w + 'px';
     el.style.height = rect.h + 'px';
     refreshLivePreview(id); // содержимое (например, число видимых строк) может зависеть от размера
+    if (id === selectedWidgetId && typeof syncWidgetProps === 'function') syncWidgetProps();
   }
 
   /** Изменение размера за любую из 8 ручек: двигаются только те края, за которые тянут; край «прилипает» к сетке и к границам сцены. */
