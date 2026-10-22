@@ -114,6 +114,8 @@ function setDemo(sec) {
 }
 const demoActive = () => !!(demo && demo.until > Date.now());
 
+const diag = () => ({ ext: { fresh: extFresh(), count: extItems.length, browser: extBrowser }, win: process.platform === 'win32', running: !!child, lastLineAgoSec: lastLineAt ? Math.round((Date.now() - lastLineAt) / 1000) : null, raw: sessions.length, titles: sessions.slice(0, 4).map((s) => (appName(s.id) + ': ' + (s.title || '(без названия)') + ' [' + s.status + ']')), errs: scriptErrs });
+
 /** Состояние для оверлея по настройкам cfg (config.eventAlerts.nowplaying). */
 function getState(cfg) {
   cfg = cfg || {};
@@ -137,13 +139,22 @@ function getState(cfg) {
     return { ext: !!s.ext, site: s.site || '', id: s.id, app: s.ext && s.site ? appName(s.id) + ' · ' + s.site : appName(s.id), browser: isBrowser(s.id) || !!s.ext, title: s.title, artist: s.artist, album: s.album, status: s.status, playing: s.status === 'Playing',
       pos: s.pos, dur: s.dur, rate: s.rate, cover: s.ext ? s.cover : c ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) + '&v=' + c.v : (isDemo ? '/api/nowplaying/cover?k=' + encodeURIComponent(s.key) : ''), current: s.current, key: s.key, at: s.at };
   });
+  const pickKey = (s) => s.app + '|' + (s.site || '') + '|' + s.title;
+  const sources = list.map((s) => ({ key: pickKey(s), app: s.app, site: s.site, title: s.title, artist: s.artist, status: s.status, playing: s.playing, pos: s.pos, dur: s.dur, ext: s.ext, at: s.at }));
+  if (cfg.sourceMode === 'manual') {
+    // ручной выбор: показываем только выбранный источник (по сайту и названию; если название сменилось — тот же сайт и браузер)
+    const [pa, ps, ...pt] = String(cfg.pick || '').split('|'); const ptitle = pt.join('|');
+    const m = list.find((s) => pickKey(s) === cfg.pick) || list.find((s) => s.app === pa && (s.site || '') === ps && ps) || null;
+    return { supported: process.platform === 'win32' || isDemo || extFresh(), demo: isDemo, error: lastError, fresh: isDemo || extFresh() || (lastLineAt > 0 && Date.now() - lastLineAt < STALE_MS),
+      diag: diag(), now: Date.now(), current: m, others: [], count: list.length, sources, picked: m ? pickKey(m) : '' };
+  }
   // текущая: играющая, которую Windows считает главной → любая играющая → (если не скрываем паузу) главная/последняя
   let cur = list.find((s) => s.playing && s.current) || list.find((s) => s.playing) || null;
   if (!cur && !cfg.hideWhenPaused) cur = list.find((s) => s.current) || list[0] || null;
   return {
     supported: process.platform === 'win32' || isDemo || extFresh(), demo: isDemo, error: lastError,
     fresh: isDemo || extFresh() || (lastLineAt > 0 && Date.now() - lastLineAt < STALE_MS),
-    diag: { ext: { fresh: extFresh(), count: extItems.length, browser: extBrowser }, win: process.platform === 'win32', running: !!child, lastLineAgoSec: lastLineAt ? Math.round((Date.now() - lastLineAt) / 1000) : null, raw: sessions.length, titles: sessions.slice(0, 4).map((s) => (appName(s.id) + ': ' + (s.title || '(без названия)') + ' [' + s.status + ']')), errs: scriptErrs },
+    diag: diag(), sources, picked: cur ? pickKey(cur) : '',
     now: Date.now(), current: cur, others: list.filter((s) => cur && s !== cur), count: list.length,
   };
 }

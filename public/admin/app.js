@@ -8792,7 +8792,11 @@
       return `<div class="toggle-row"><span class="toggle-row-label">${l}</span>${ctl}</div>`;
     }).join('');
     root.innerHTML = `
-      <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div class="actions" style="margin:0 0 12px"><button class="btn btn-primary" type="button" data-a="npapply">Сохранить и обновить</button><span class="card-hint" data-a="npapplyst" style="margin:0 0 0 10px">Изменения тоже сохраняются сами через секунду.</span></div><div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
+      <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div style="grid-column:1/-1;min-width:0"><div class="actions" style="margin:0 0 12px"><button class="btn btn-primary" type="button" data-a="npapply">Сохранить и обновить</button><span class="card-hint" data-a="npapplyst" style="margin:0 0 0 10px">Изменения тоже сохраняются сами через секунду.</span></div><div class="np-srcbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Источники из браузера</b> <span class="card-hint" data-a="srccnt" style="margin:0 0 0 6px"></span>
+          <p class="card-hint" style="margin:4px 0 6px">Что сейчас открыто с видео или аудио. Обновляется само.</p>
+          <div class="actions" style="margin:0 0 6px"><button class="btn btn-secondary" type="button" data-mode="auto">Автоматически (то, что играет)</button><button class="btn btn-secondary" type="button" data-mode="manual">Выбрать вручную</button></div>
+          <div data-a="srclist"></div>
+          <p class="card-hint" style="margin:6px 0 0" data-a="srchint"></p></div><div class="np-extbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Расширение браузера</b>
           <p class="card-hint" style="margin:4px 0 8px" data-a="extst">Проверяю…</p>
           <ol class="card-hint" style="margin:0 0 8px;padding-left:18px;line-height:1.6">
             <li>Нажми «Открыть страницу расширений» и включи там «Режим разработчика» (переключатель вверху справа).</li>
@@ -8800,7 +8804,7 @@
             <li>Выбери папку с расширением. Лучше выбрать вручную: в окне выбора папки перейди в папку Overdeck и выбери <b>browser-extension</b> (не вставляй путь, если не сработало). Путь для справки:</li></ol>
           <div class="toggle-row-extra" style="margin:0 0 8px"><input type="text" readonly data-a="extdir" style="flex:1;min-width:0" value="…"><button class="btn-tiny" type="button" data-a="extcopy">Копировать</button><button class="btn-tiny" type="button" data-a="extfolder">Открыть папку</button></div>
           <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="yandex">Яндекс Браузер</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Открыть страницу расширений</button></div>
-          <p class="card-hint" style="margin:8px 0 0">Если страница не открылась, вставь адрес в адресную строку сам: Яндекс — browser://extensions/, Opera — opera://extensions, Brave — brave://extensions. Расширение ставится один раз, потом статус выше станет «подключено».</p></div>` : ''}
+          <p class="card-hint" style="margin:8px 0 0">Если страница не открылась, вставь адрес в адресную строку сам: Яндекс — browser://extensions/, Opera — opera://extensions, Brave — brave://extensions. Расширение ставится один раз, потом статус выше станет «подключено».</p></div></div>` : ''}
         <div class="actions"><button class="btn btn-primary" type="button" data-a="test">Тест алерта</button><button class="btn btn-secondary" type="button" data-a="skip">Пропустить текущий</button></div>
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
       <div class="da-mid"><div class="card" data-a="cfgcard" hidden><h2 class="section-title">Настройки события</h2><p class="card-hint">${esc(cfg.note)}</p>${rows}
@@ -8832,7 +8836,28 @@
       let saveTimer = null;
       root.querySelectorAll('.da-mid [id^="ev_nowplaying_"]').forEach((f) => { const go = () => { clearTimeout(saveTimer); ast.textContent = 'Сохраняю…'; ast.style.color = ''; saveTimer = setTimeout(() => doSave(false), 900); }; f.addEventListener('change', go); if (f.type === 'text' || f.type === 'number') f.addEventListener('input', go); });
       const est = $('[data-a="extst"]');
-      const refreshExt = () => { if (!root.isConnected) return; fetch('/api/nowplaying').then((r) => r.json()).then((d) => { const x = d.state && d.state.diag && d.state.diag.ext; est.textContent = x && x.fresh ? 'Расширение подключено' + (x.browser ? ' (' + x.browser + ')' : '') + ', видео и аудио на вкладках: ' + x.count + '.' : 'Расширение не подключено.'; est.style.color = x && x.fresh ? '#4cc38a' : ''; }).catch(() => {}); };
+      const srcList = $('[data-a="srclist"]'), srcHint = $('[data-a="srchint"]'), srcCnt = $('[data-a="srccnt"]');
+      const fmt = (t) => { t = Math.max(0, Math.round(t || 0)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), s2 = t % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s2).padStart(2, '0'); };
+      let srcMode = 'auto';
+      const saveSrc = async (o) => { try { const d = await api('/api/event-alerts/nowplaying', o); if (d.success) { ast.textContent = 'Сохранено и применено.'; ast.style.color = '#4cc38a'; } } catch (e) { /* список обновится сам */ } refreshExt(); };
+      root.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { const m = b.dataset.mode; const picked = srcList.dataset.picked || ''; saveSrc(m === 'manual' ? { sourceMode: 'manual', pick: srcList.dataset.curpick || picked } : { sourceMode: 'auto' }); }));
+      srcList.addEventListener('click', (e) => { const r = e.target.closest('[data-pick]'); if (r && srcMode === 'manual') saveSrc({ sourceMode: 'manual', pick: r.dataset.pick }); });
+      const esc2 = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const drawSrc = (d) => {
+        const st = d.state || {}, set = d.settings || {}, list = st.sources || [];
+        srcMode = set.sourceMode === 'manual' ? 'manual' : 'auto';
+        srcList.dataset.curpick = set.pick || ''; srcList.dataset.picked = st.picked || '';
+        root.querySelectorAll('[data-mode]').forEach((b) => { const on = b.dataset.mode === srcMode; b.className = 'btn ' + (on ? 'btn-primary' : 'btn-secondary'); });
+        srcCnt.textContent = list.length ? 'найдено: ' + list.length : '';
+        srcList.innerHTML = list.length ? list.map((s) => { const sel = s.key === st.picked; const click = srcMode === 'manual';
+          return `<div data-pick="${esc2(s.key)}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;margin-top:6px;border-radius:9px;border:1px solid ${sel ? '#d14e56' : 'rgba(255,255,255,.12)'};background:${sel ? 'rgba(209,78,86,.12)' : 'transparent'};${click ? 'cursor:pointer' : ''}">
+            <span style="width:14px;height:14px;border-radius:50%;border:2px solid ${sel ? '#d14e56' : '#666'};flex:none;${sel ? 'background:radial-gradient(#d14e56 45%,transparent 50%)' : ''}"></span>
+            <span style="flex:1;min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc2(s.title)}</div><div class="card-hint" style="margin:0">${esc2(s.app)}</div></span>
+            <span style="text-align:right;white-space:nowrap"><div style="font-size:11px;color:${s.playing ? '#4cc38a' : '#999'}">${s.playing ? 'Играет' : 'Пауза'}</div><div class="card-hint" style="margin:0">${s.dur > 0 ? fmt(s.pos) + ' / ' + fmt(s.dur) : (s.ext ? 'прямой эфир' : '')}</div></span></div>`; }).join('')
+          : '<div class="card-hint" style="margin:6px 0 0">Пока ничего нет. Открой видео или музыку в браузере с расширением.</div>';
+        srcHint.textContent = srcMode === 'manual' ? (st.picked ? 'Показывается выбранный источник. Нажми на другой в списке, чтобы переключить.' : 'Выбранный источник сейчас не найден — алерт скрыт. Нажми на источник в списке.') : 'Показывается играющее видео. Если играет несколько, берётся из активной вкладки.';
+      };
+      const refreshExt = () => { if (!root.isConnected) return; fetch('/api/nowplaying').then((r) => r.json()).then((d) => { drawSrc(d); const x = d.state && d.state.diag && d.state.diag.ext; est.textContent = x && x.fresh ? 'Расширение подключено' + (x.browser ? ' (' + x.browser + ')' : '') + ', видео и аудио на вкладках: ' + x.count + '.' : 'Расширение не подключено.'; est.style.color = x && x.fresh ? '#4cc38a' : ''; }).catch(() => {}); };
       refreshExt(); setInterval(refreshExt, 2500);
       let extDir = '';
       fetch('/api/nowplaying/extension').then((r) => r.json()).then((d) => { extDir = d.dir || ''; $('[data-a="extdir"]').value = extDir; if (d.store) { const bt = btn('extinstall'); bt.textContent = 'Открыть магазин расширений'; bt.dataset.store = d.store; } }).catch(() => {});
