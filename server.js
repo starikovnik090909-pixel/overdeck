@@ -42,7 +42,6 @@ const fundBoxData = require('./fundBoxData');
 const goalData = require('./goalData');
 const timerData = require('./timerData');
 const eventCover = require('./eventCover');
-const infoCardData = require('./infoCardData');
 const chatRoles = require('./chatRoles').createTracker();
 const pixelHeroesModule = require('./pixelHeroes');
 const twitchExtensionModule = require('./extension');
@@ -528,6 +527,7 @@ function timelineWeightFor(type) {
     raid: w.weightRaid,
     category: w.weightCategory,
     donation: w.weightDonation,
+    watchstreak: w.weightStreak,
   };
   return typeof weightByType[type] === 'number' ? weightByType[type] : 1;
 }
@@ -603,7 +603,6 @@ fundBoxData.init();
 goalData.init();
 timerData.init();
 eventCover.init();
-infoCardData.init();
 predictions.init();
 eventTheme.init();
 overlayStyle.init();
@@ -912,7 +911,15 @@ function onChatMessage(tags, message) {
     dirty = true;
 }
 
-if (!SETUP_MODE) twitch.connectChat(config.channel, onChatMessage, () => console.log(`Подключено к чату канала "${config.channel}".`));
+const seenMilestones = new Set();
+/** Серия просмотров зрителя (watch streak) из чата: линия активности, лента «События» и алерт. */
+function handleWatchStreak(m) {
+  if (!m || !(m.streak > 0)) return;
+  if (m.id) { if (seenMilestones.has(m.id)) return; seenMilestones.add(m.id); if (seenMilestones.size > 200) seenMilestones.delete(seenMilestones.values().next().value); }
+  handleTimelineWeightedEvent({ type: 'watchstreak', username: m.username, login: m.login, meta: { streak: m.streak, points: m.points } });
+  fireEventAlert('streak', { username: m.username, streak: m.streak, points: m.points });
+}
+if (!SETUP_MODE) twitch.connectChat(config.channel, onChatMessage, () => console.log(`Подключено к чату канала "${config.channel}".`), handleWatchStreak);
 
 
 // ---------- Сборка снапшота для клиентов ----------
@@ -935,7 +942,6 @@ function buildSnapshot() {
       session: donorLeaderboard.getTop('session', 10),
       allTime: donorLeaderboard.getTop('allTime', 10),
     },
-    infoCards: infoCardData.get(),
     layout: config.layout,
     widgetSettings: config.widgetSettings,
     overlayStyle: overlayStyle.get(),
@@ -1017,6 +1023,7 @@ app.use(express.json());
 
 // Тестовый вход для автотестов (только при OVERLAY_TEST=1; в обычной работе маршрута нет): подставляет сообщение так, как будто оно пришло из чата Twitch.
 if (process.env.OVERLAY_TEST === '1') {
+  app.post('/__test/streak', (req, res) => { const b = req.body || {}; handleWatchStreak({ id: b.id ? String(b.id) : '', username: String(b.username || 'MrFrost'), login: String(b.username || 'mrfrost').toLowerCase(), streak: Number(b.streak) || 7, points: Number(b.points) || 450 }); res.json({ success: true }); });
   app.post('/__test/redeem', (req, res) => { const b = req.body || {}; handleTimelineWeightedEvent({ type: 'channelpoints', id: b.id ? String(b.id) : undefined, username: String(b.name || b.login), login: String(b.login || ''), meta: { reward: String(b.reward || '') } }); res.json({ success: true }); });
   app.post('/__test/chat', (req, res) => {
     const b = req.body || {};
@@ -1162,33 +1169,6 @@ function deleteOldEventCoverFile() {
   const prevUrl = eventCover.get().imageUrl;
   if (!prevUrl) return;
   fs.unlink(path.join(EVENT_COVER_DIR, path.basename(prevUrl)), () => {}); // не критично, если файла уже нет
-}
-
-// Картинки карточек виджета «Инфо-карточка» — uploads/infocard/, у каждой карточки не больше одной картинки.
-const INFOCARD_DIR = path.join(__dirname, 'uploads', 'infocard');
-fs.mkdirSync(INFOCARD_DIR, { recursive: true });
-app.use('/uploads/infocard', express.static(INFOCARD_DIR));
-
-const INFOCARD_ALLOWED_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-const INFOCARD_MAX_BYTES = 10 * 1024 * 1024;
-const infoCardUpload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, INFOCARD_DIR),
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
-    },
-  }),
-  fileFilter: (req, file, cb) => {
-    cb(null, INFOCARD_ALLOWED_EXT.includes(path.extname(file.originalname).toLowerCase()));
-  },
-  limits: { fileSize: INFOCARD_MAX_BYTES },
-});
-
-/** Стирает файл картинки карточки с диска по её пути (если он есть). */
-function deleteInfoCardFile(url) {
-  if (!url) return;
-  fs.unlink(path.join(INFOCARD_DIR, path.basename(url)), () => {}); // не критично, если файла уже нет
 }
 
 /** Старый файл фона плашек (если был) удаляем с диска при замене/сбросе — та же логика, что и у остальных "один файл в любой момент" загрузок в проекте. */
@@ -2104,69 +2084,6 @@ app.post('/api/pixel-heroes/hide', (req, res) => {
   if (!pixelHeroes.hide(req.body && req.body.id)) return res.status(404).json({ success: false, error: 'Такого героя нет.' });
   broadcastPixelHeroes();
   res.json({ success: true, active: pixelHeroes.getActive() });
-});
-
-// ---------- REST API: виджет «Инфо-карточка» (содержимое карточек и «показать сейчас») ----------
-
-app.get('/api/infocards', (req, res) => {
-  res.json({ success: true, infoCards: infoCardData.get() });
-});
-
-app.post('/api/infocards/add', (req, res) => {
-  const card = infoCardData.addCard(req.body);
-  if (!card) return res.status(400).json({ success: false, error: `Больше ${infoCardData.MAX_CARDS} карточек не поместится — удалите ненужные.` });
-  dirty = true;
-  res.json({ success: true, card, infoCards: infoCardData.get() });
-});
-
-app.post('/api/infocards/:id/update', (req, res) => {
-  const card = infoCardData.updateCard(req.params.id, req.body);
-  if (!card) return res.status(404).json({ success: false, error: 'Такой карточки нет.' });
-  dirty = true;
-  res.json({ success: true, card, infoCards: infoCardData.get() });
-});
-
-app.post('/api/infocards/:id/remove', (req, res) => {
-  const removed = infoCardData.removeCard(req.params.id);
-  if (!removed) return res.status(404).json({ success: false, error: 'Такой карточки нет.' });
-  deleteInfoCardFile(removed.imageUrl);
-  dirty = true;
-  res.json({ success: true, infoCards: infoCardData.get() });
-});
-
-app.post('/api/infocards/:id/move', (req, res) => {
-  if (!infoCardData.moveCard(req.params.id, req.body && req.body.dir)) return res.status(400).json({ success: false, error: 'Сдвинуть некуда.' });
-  dirty = true;
-  res.json({ success: true, infoCards: infoCardData.get() });
-});
-
-app.post('/api/infocards/:id/image', (req, res) => {
-  infoCardUpload.single('file')(req, res, (err) => {
-    if (err) {
-      const tooBig = err.code === 'LIMIT_FILE_SIZE';
-      return res.status(400).json({ success: false, error: tooBig ? 'Файл больше 10 МБ — выберите картинку поменьше.' : (err.message || 'Не удалось загрузить картинку.') });
-    }
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не принят — нужна картинка png, jpg, webp или gif.' });
-    const prev = infoCardData.setCardImage(req.params.id, `/uploads/infocard/${req.file.filename}`);
-    if (prev === undefined) { deleteInfoCardFile(`/uploads/infocard/${req.file.filename}`); return res.status(404).json({ success: false, error: 'Такой карточки нет.' }); }
-    deleteInfoCardFile(prev);
-    dirty = true;
-    res.json({ success: true, infoCards: infoCardData.get() });
-  });
-});
-
-app.post('/api/infocards/:id/image/remove', (req, res) => {
-  const prev = infoCardData.setCardImage(req.params.id, null);
-  if (prev === undefined) return res.status(404).json({ success: false, error: 'Такой карточки нет.' });
-  deleteInfoCardFile(prev);
-  dirty = true;
-  res.json({ success: true, infoCards: infoCardData.get() });
-});
-
-// «Показать сейчас» — карточка выезжает на оверлее немедленно, не дожидаясь таймера.
-app.post('/api/infocard/show', (req, res) => {
-  sendToOverlay({ type: 'infocard_show' });
-  res.json({ success: true });
 });
 
 app.post('/api/fundbox/save', (req, res) => {

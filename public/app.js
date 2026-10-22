@@ -219,7 +219,6 @@ ws.onmessage = (event) => {
   if (data.type === 'tts_stop') { stopTts(); return; }
   if (data.type === 'donation_alert') { if (window.DonationAlertModule) window.DonationAlertModule.show(data); return; }
   if (data.type === 'donation_alert_skip') { if (window.DonationAlertModule) window.DonationAlertModule.skip(); return; }
-  if (data.type === 'infocard_show') { if (window.InfoCardModule) window.InfoCardModule.showNow(); return; } // «Показать сейчас» из админки
 
   // Ускоренное воспроизведение истории стрима ("Воспроизвести историю" в админке):
   // сервер на время останавливает обычные живые тики и шлёт только эти кадры —
@@ -246,7 +245,6 @@ ws.onmessage = (event) => {
   if (window.WordcloudModule) window.WordcloudModule.render(data.wordCloud || []);
   if (window.EmoteBoxModule) window.EmoteBoxModule.render(data);
   if (window.DonorTopModule) window.DonorTopModule.render(data);
-  if (window.InfoCardModule) window.InfoCardModule.render(data);
   if (window.EventFeedModule) window.EventFeedModule.render(data);
 };
 

@@ -10,7 +10,6 @@ const WIDGET_DEFS = [
   { id: 'emotebox', label: 'Топ эмодзи' },
   { id: 'wordcloud', label: 'Слова эфира' },
   { id: 'donortop', label: 'Топ донатеров' },
-  { id: 'infocard', label: 'Инфо-карточка' },
   { id: 'eventfeed', label: 'События' },
 ];
 
@@ -22,7 +21,6 @@ const DEFAULT_LAYOUT = {
   wordcloud:  { x: 1090, y: 558, w: 790,  h: 482,  enabled: true },
   donortop:   { x: 1520, y: 40,  w: 360,  h: 494,  enabled: true },
   // Выезжает по таймеру поверх остальных, поэтому перекрытие с другими блоками допустимо; пока карточек нет, на сцене ничего не показывается.
-  infocard:   { x: 1500, y: 700, w: 380,  h: 340,  enabled: true },
   // По умолчанию выключен: стоит на месте слов эфира; включается и двигается в админке.
   eventfeed:  { x: 1520, y: 558, w: 360,  h: 482,  enabled: false },
 };
@@ -102,6 +100,7 @@ const WIDGET_SETTINGS_SCHEMA = {
     pointsColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Точки: траты баллов канала', default: '#00D4FF' },
     subColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Маркеры: подписки / гифт-сабы', default: '#FFD700' },
     raidColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Маркеры: рейды', default: '#FF3B3B' },
+    streakColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Маркеры: серии просмотров зрителей', default: '#A970FF' },
     categoryColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Маркеры: смена категории (тонкая линия между обложками)', default: '#00D4B8' },
     donationColor: { type: 'color', group: 'Цвета виджета Таймлайн', label: 'Маркеры: донаты (денежно-зелёная плашка с суммой в ₽)', default: '#4FAE5A' },
     // --- Веса событий (влияют на высоту линии активности) ---
@@ -109,6 +108,7 @@ const WIDGET_SETTINGS_SCHEMA = {
     weightPoints: { type: 'range', group: 'Веса событий', label: 'Вес: трата баллов канала', min: 0, max: 20, step: 1, default: 3 },
     weightSub: { type: 'range', group: 'Веса событий', label: 'Вес: подписка / гифт-саб', min: 0, max: 20, step: 1, default: 3 },
     weightRaid: { type: 'range', group: 'Веса событий', label: 'Вес: рейд', min: 0, max: 20, step: 1, default: 3 },
+    weightStreak: { type: 'range', group: 'Веса событий', label: 'Вес: серия просмотров зрителя', min: 0, max: 20, step: 1, default: 2 },
     weightCategory: { type: 'range', group: 'Веса событий', label: 'Вес: смена категории', min: 0, max: 20, step: 1, default: 2 },
     weightDonation: { type: 'range', group: 'Веса событий', label: 'Вес: донат', min: 0, max: 20, step: 1, default: 4 },
     windowSec: { type: 'range', group: 'Веса событий', label: 'Окно сглаживания линии', unit: ' с', min: 10, max: 180, step: 10, default: 60 },
@@ -154,27 +154,6 @@ const WIDGET_SETTINGS_SCHEMA = {
     top3Color: { type: 'color', group: 'Цвета мест', label: 'Топ-3 (бронза)', default: '#CD7F32' },
     defaultCircleColor: { type: 'color', group: 'Цвета мест', label: 'Обычный кружок (места 4+)', default: '#B14846' },
   },
-  // Инфо-карточка: картинка + текст, переворачивается на следующую карточку и выезжает на сцену по таймеру. Сами карточки
-  // (картинка/заголовок/текст) хранятся отдельно (infoCardData.js) — здесь только поведение и вид.
-  // Значения select-полей уникальны на весь проект (подписи лежат в одной общей таблице в админке), поэтому с префиксами from-/flip-/img-/fit-.
-  infocard: {
-    autoShow: { type: 'toggle', group: 'Выезд и таймер', label: 'Выезжать по таймеру (выключено — карточка всегда на экране)', default: true },
-    intervalMin: { type: 'range', group: 'Выезд и таймер', label: 'Выезжать раз в … минут', unit: ' мин', min: 1, max: 60, step: 1, default: 10 },
-    visibleSec: { type: 'range', group: 'Выезд и таймер', label: 'Сколько секунд оставаться на экране', unit: ' с', min: 5, max: 300, step: 5, default: 30 },
-    showOnStart: { type: 'toggle', group: 'Выезд и таймер', label: 'Выехать сразу при запуске оверлея (дальше — по таймеру)', default: false },
-    slideFrom: { type: 'select', group: 'Выезд и таймер', label: 'С какой стороны выезжает', options: ['from-left', 'from-right', 'from-top', 'from-bottom', 'from-cycle', 'from-random'], default: 'from-left' },
-    slideMs: { type: 'range', group: 'Выезд и таймер', label: 'Длительность выезда', unit: ' мс', min: 300, max: 2000, step: 50, default: 800 },
-    flipEverySec: { type: 'range', group: 'Переворот', label: 'Переворачивать на следующую карточку каждые', unit: ' с', min: 2, max: 120, step: 1, default: 8 },
-    flipAxis: { type: 'select', group: 'Переворот', label: 'Как переворачивается', options: ['flip-horizontal', 'flip-vertical', 'flip-alternate'], default: 'flip-horizontal' },
-    flipMs: { type: 'range', group: 'Переворот', label: 'Длительность переворота', unit: ' мс', min: 400, max: 2000, step: 50, default: 900 },
-    imageLayout: { type: 'select', group: 'Внешний вид', label: 'Где картинка', options: ['img-top', 'img-left', 'img-right', 'img-bg'], default: 'img-top' },
-    imageOnly: { type: 'toggle', group: 'Внешний вид', label: 'Только картинка (без заголовка и текста; у карточки без картинки покажется текст)', default: false },
-    imageFit: { type: 'select', group: 'Внешний вид', label: 'Как вписывается картинка', options: ['fit-cover', 'fit-contain'], default: 'fit-cover' },
-    titleSize: { type: 'range', group: 'Внешний вид', label: 'Размер заголовка', unit: 'px', min: 12, max: 60, step: 1, default: 26 },
-    textSize: { type: 'range', group: 'Внешний вид', label: 'Размер текста', unit: 'px', min: 10, max: 40, step: 1, default: 16 },
-    titleColor: { type: 'color', group: 'Внешний вид', label: 'Цвет заголовка', default: '#ffffff' },
-    textColor: { type: 'color', group: 'Внешний вид', label: 'Цвет текста', default: '#d9d9d9' },
-  },
   // События: карточка последнего события + вертикальная линия с предыдущими. Размеры и оформление подстраиваются под блок и стиль оверлея.
   eventfeed: {
     maxRows: { type: 'range', label: 'Сколько событий всего (с главной карточкой; при малой высоте блока — меньше)', min: 2, max: 10, step: 1, default: 5 },
@@ -184,6 +163,7 @@ const WIDGET_SETTINGS_SCHEMA = {
     showRaid: { type: 'toggle', group: 'Какие события показывать', label: 'Рейды', default: true },
     showDonation: { type: 'toggle', group: 'Какие события показывать', label: 'Донаты', default: true },
     showPoints: { type: 'toggle', group: 'Какие события показывать', label: 'Траты баллов канала', default: false },
+    showStreak: { type: 'toggle', group: 'Какие события показывать', label: 'Серии просмотров зрителей', default: true },
     minDonation: { type: 'range', group: 'Какие события показывать', label: 'Донаты от (₽)', unit: ' ₽', min: 0, max: 5000, step: 50, default: 0 },
     showTime: { type: 'toggle', group: 'Внешний вид', label: 'Показывать «N мин назад»', default: true },
   },

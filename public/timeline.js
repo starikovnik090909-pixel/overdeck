@@ -185,7 +185,7 @@
   // нём эмодзи по-прежнему учитываются в весе линии (см. backend timeline.js),
   // просто не рисуются отдельным дублирующим маркером поверх той же аватарки.
   // 'donation' — зелёный прямоугольник с суммой.
-  const FLOATING_TYPES = new Set(['message', 'channelpoints', 'sub', 'giftsub', 'raid', 'donation']);
+  const FLOATING_TYPES = new Set(['message', 'channelpoints', 'sub', 'giftsub', 'raid', 'donation', 'watchstreak']);
 
   /** Сверяет набор плавающих маркеров с присланными событиями — заводит новые, гасит лишние. */
   function syncMarkers() {
@@ -229,6 +229,7 @@
     if (type === 'channelpoints') return s.pointsColor;
     if (type === 'sub' || type === 'giftsub') return s.subColor;
     if (type === 'raid') return s.raidColor;
+    if (type === 'watchstreak') return s.streakColor || '#A970FF';
     return s.messageColor;
   }
 
@@ -383,7 +384,8 @@
     channelpoints: { path: new Path2D('M13.2 2.5 5 13.6h5.6L9.8 21.5 19 9.8h-5.7z'), fill: true },                                  // молния — «баллы»
     sub: { path: new Path2D('M12 2.8l2.8 5.9 6.4.9-4.7 4.5 1.2 6.4L12 17.4l-5.7 3.1 1.2-6.4L2.8 9.6l6.4-.9z'), fill: true },     // звезда — подписка
     giftsub: { path: new Path2D('M4 9.5h16v3H4zM5.2 12.5h13.6V20H5.2zM12 9.5V20M12 9.5c-2.6 0-4.4-.8-4.4-2.4S9.3 4.8 10.6 6c.8.7 1.4 2 1.4 3.5zM12 9.5c2.6 0 4.4-.8 4.4-2.4S14.7 4.8 13.4 6c-.8.7-1.4 2-1.4 3.5z'), fill: false }, // подарок
-    raid: { path: new Path2D('M5.5 6.5 11 12l-5.5 5.5M12.5 6.5 18 12l-5.5 5.5'), fill: false },                                      // стрелки вперёд — рейд
+    raid: { path: new Path2D('M5.5 6.5 11 12l-5.5 5.5M12.5 6.5 18 12l-5.5 5.5'), fill: false },
+    watchstreak: { path: new Path2D('M12 3c.5 3-1.6 4.6-3.2 6.6C7.4 11.3 7 12.6 7 14a5 5 0 0 0 10 0c0-1.8-.8-3.1-1.7-4.2-.3 1-.9 1.6-1.6 1.9.6-3-.2-6.2-1.7-8.7z'), fill: true }, // огонёк — серия просмотров                                      // стрелки вперёд — рейд
     // дополнительные иконки — их выбирают стили оформления вместо стандартных (см. MARKER_STYLES)
     heart: { path: new Path2D('M12 20.6 4 12.7a4.7 4.7 0 0 1 6.6-6.6L12 7.5l1.4-1.4A4.7 4.7 0 0 1 20 12.7z'), fill: true },
     gem: { path: new Path2D('M7.2 4h9.6l4.2 5.2L12 20.5 3 9.2z'), fill: true },
@@ -428,7 +430,7 @@
     }
     return mkCache.cfg ? Object.assign({}, mkCache.cfg, { _accent: mkCache.accent }) : null;
   }
-  const PAL_KEY = { channelpoints: 'p', sub: 's', giftsub: 'g', raid: 'r' };
+  const PAL_KEY = { channelpoints: 'p', sub: 's', giftsub: 'g', raid: 'r', watchstreak: 's' };
   const lum = (hex) => { const c = (hex || '#000').replace('#', ''); const n = parseInt(c.length === 3 ? c.replace(/(.)/g, '$1$1') : c.slice(0, 6), 16); return (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255; };
 
   /** Цвет маркера события с учётом стиля: палитра стиля, акцент темы или цвет из настроек виджета. */

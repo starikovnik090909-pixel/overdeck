@@ -7,7 +7,7 @@ const donationAlert = require('./donationAlert');
 const gender = require('./gender');
 const { plural, numberWords, cleanMessage } = donationAlert;
 
-const KINDS = ['sub', 'raid', 'follow', 'hype', 'points'];
+const KINDS = ['sub', 'raid', 'follow', 'hype', 'points', 'streak'];
 const TIER_NAMES = { '1000': 'Tier 1', '2000': 'Tier 2', '3000': 'Tier 3', prime: 'Prime' };
 
 const DEFAULTS = {
@@ -41,6 +41,10 @@ const DEFAULTS = {
     rewards: '',
     speech: '{user} получил{а} награду {reward}.',
   },
+  streak: {
+    enabled: true, speak: true, voice: '', color: '#a970ff', minStreak: 2, showPoints: true,
+    speech: '{user} с нами уже {streak} {streamsWord} подряд!',
+  },
 };
 
 const TEXT_MAX = 200;
@@ -69,6 +73,7 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'holdSec') out[k] = Math.round(num(r[k], 3, 30, b[k]) * 10) / 10;
     else if (k === 'numberStart') out[k] = Math.round(num(r[k], 0, 10000000, b[k]));
     else if (k === 'minViewers') out[k] = Math.round(num(r[k], 0, 1000000, b[k]));
+    else if (k === 'minStreak') out[k] = Math.round(num(r[k], 0, 100000, b[k]));
     else if (k === 'minCost') out[k] = Math.round(num(r[k], 0, 100000000, b[k]));
     else if (k === 'rewards') out[k] = str(r[k], b[k], 3000);
     else out[k] = str(r[k], b[k]);
@@ -98,6 +103,7 @@ function isFemale(nick, s) {
 const monthsWord = (n) => plural(n, 'месяц', 'месяца', 'месяцев');
 const subsWord = (n) => plural(n, 'подписку', 'подписки', 'подписок');
 const subsWordNom = (n) => plural(n, 'подписка', 'подписки', 'подписок');
+const streamsWord = (n) => plural(n, 'стрим', 'стрима', 'стримов');
 const viewersWord = (n) => plural(n, 'зритель', 'зрителя', 'зрителей');
 const ORD = ['', 'Первый', 'Второй', 'Третий', 'Четвёртый', 'Пятый', 'Шестой', 'Седьмой', 'Восьмой', 'Девятый', 'Десятый', 'Одиннадцатый', 'Двенадцатый'];
 const monthLabel = (n) => (n <= 12 ? `${ORD[n]} месяц` : `${n} ${monthsWord(n)} с нами`);
@@ -116,6 +122,7 @@ function shouldShow(kind, data, cfg) {
   if (kind === 'sub') return d.type === 'resub' ? cfg.showResub : d.type === 'gift' ? cfg.showGift : cfg.showNew;
   if (kind === 'raid') return (Number(d.viewers) || 0) >= cfg.minViewers;
   if (kind === 'hype') return d.phase === 'end' ? cfg.onEnd : d.phase === 'level' ? cfg.onLevel : cfg.onBegin;
+  if (kind === 'streak') return (Number(d.streak) || 0) >= cfg.minStreak;
   if (kind === 'points') {
     if ((Number(d.cost) || 0) < cfg.minCost) return false;
     const list = rewardList(cfg.rewards);
@@ -203,6 +210,11 @@ function describe(kind, data, cfg, s) {
     out = { kicker: 'награда за баллы', nick: user, big: reward, stat: cost ? `${cost.toLocaleString('ru-RU')} баллов` : '', message: msg,
       speech: say(cfg.speech, { reward, cost: numberWords(cost) }) };
     if (readMsg && out.message) out.speech = (out.speech + ' ' + out.message).trim();
+  } else if (kind === 'streak') {
+    const n = Math.max(1, Math.round(Number(d.streak) || 1));
+    const pts = Math.max(0, Math.round(Number(d.points) || 0));
+    out = { kicker: 'серия просмотров', nick: user, big: `${n} ${streamsWord(n)} подряд`, stat: cfg.showPoints !== false && pts ? `+${pts.toLocaleString('ru-RU')} баллов канала` : '', message: '',
+      speech: say(cfg.speech, { streak: numberWords(n), streamsWord: streamsWord(n), points: numberWords(pts) }) };
   } else return null;
   out.user = out.user || user;
   return out;

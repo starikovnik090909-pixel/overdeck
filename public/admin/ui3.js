@@ -156,10 +156,10 @@
     const done = steps.filter((s) => c[s[0]]).length;
     $('#homeChecklist').innerHTML = '<div class="ui3-ch"><div><h3>Настройка Overdeck</h3><div class="sub">' + (done === steps.length ? 'Всё настроено' : 'Осталось ' + (steps.length - done)) + '</div></div><div class="r"><span class="ui3-chip ' + (done === steps.length ? 'ok' : 'acc') + '">' + done + ' из ' + steps.length + '</span></div></div>' +
       steps.map((s) => '<div class="ui3-row ' + (c[s[0]] ? 'done' : '') + '"><span class="ui3-check">' + (c[s[0]] ? IC('check') : '') + '</span><div class="l"><b>' + s[1] + '</b><span>' + s[2] + '</span></div>' + (c[s[0]] ? '' : '<button class="btn btn-secondary btn-sm" type="button" data-go="' + s[3] + '">Настроить</button>') + '</div>').join('');
-    const EV = { donation: ['heart', 'acc', 'задонатил'], sub: ['star', 'tw', 'подписка'], giftsub: ['gift', 'tw', 'подарил подписки'], raid: ['users', 'ok', 'рейд'], follow: ['user', '', 'подписался на канал'], channelpoints: ['coin', 'warn', 'награда за баллы'] };
+    const EV = { donation: ['heart', 'acc', 'задонатил'], sub: ['star', 'tw', 'подписка'], giftsub: ['gift', 'tw', 'подарил подписки'], raid: ['users', 'ok', 'рейд'], follow: ['user', '', 'подписался на канал'], channelpoints: ['coin', 'warn', 'награда за баллы'], watchstreak: ['activity', 'tw', 'серия просмотров'] };
     const evs = d.events || [];
     $('#homeEvents').innerHTML = '<div class="ui3-ch"><div><h3>Последние события</h3><div class="sub">С момента запуска Overdeck</div></div><div class="r"><button class="btn btn-ghost btn-sm" type="button" data-go="donations">Донаты ' + I('chev') + '</button></div></div>' +
-      (evs.length ? evs.map((e) => { const m = EV[e.type] || ['activity', '', e.type]; const amt = e.type === 'donation' ? rub(e.amount) : e.type === 'raid' ? e.count + ' ' + plural(e.count, 'зритель', 'зрителя', 'зрителей') : e.type === 'giftsub' ? '× ' + e.count : e.type === 'channelpoints' ? esc(e.text) : '';
+      (evs.length ? evs.map((e) => { const m = EV[e.type] || ['activity', '', e.type]; const amt = e.type === 'donation' ? rub(e.amount) : e.type === 'raid' ? e.count + ' ' + plural(e.count, 'зритель', 'зрителя', 'зрителей') : e.type === 'giftsub' ? '× ' + e.count : e.type === 'channelpoints' ? esc(e.text) : e.type === 'watchstreak' ? e.count + ' ' + plural(e.count, 'стрим', 'стрима', 'стримов') : '';
         return '<div class="ui3-row ui3-ev"><div class="ui3-ico ' + m[1] + '">' + IC(m[0]) + '</div><div class="l"><b>' + esc(e.username || 'Аноним') + ' <span style="font-weight:400;color:var(--text-secondary)">' + m[2] + '</span></b></div>' + (amt ? '<span class="amt">' + amt + '</span>' : '') + '<span class="t">' + ago(e.ts) + '</span></div>'; }).join('')
         : '<div class="ui3-empty"><b>Пока тихо</b>Здесь появятся донаты, подписки и рейды.<br>Проверь, как они выглядят, кнопками «Тест события».</div>');
     $('#homeTests').innerHTML = '<div class="ui3-ch"><div><h3>Тестовые события</h3><div class="sub">Видны только в оверлее, в статистику не попадают</div></div></div><div class="ui3-tests">' +
@@ -588,6 +588,7 @@
         user: '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/>',
         train: '<rect x="5" y="3.5" width="14" height="13" rx="2.5"/><path d="M5 10.5h14M8 20l2-3.5M16 20l-2-3.5"/><circle cx="9" cy="13.5" r=".6"/><circle cx="15" cy="13.5" r=".6"/>',
         coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.6h3.4a1.6 1.6 0 010 3.2h-1.8a1.6 1.6 0 000 3.2H15"/>',
+        flame: '<path d="M12 3c.5 3-1.6 4.6-3.2 6.6C7.4 11.3 7 12.6 7 14a5 5 0 0010 0c0-1.8-.8-3.1-1.7-4.2-.3 1-.9 1.6-1.6 1.9.6-3-.2-6.2-1.7-8.7z"/>',
       };
       const gv = (id) => { const e = document.getElementById(id); return e ? Number(e.value) : 0; };
       const NAV = [
@@ -598,6 +599,7 @@
         ['follow', 'user', 'Фоллоу', () => 'новые фолловеры', 'ev_follow_enabled'],
         ['hype', 'train', 'Hype Train', () => 'начало, уровни, финал', 'ev_hype_enabled'],
         ['points', 'coin', 'Баллы канала', () => 'выбранные награды', 'ev_points_enabled'],
+        ['streak', 'flame', 'Серия просмотров', () => (gv('ev_streak_minStreak') > 1 ? 'от ' + gv('ev_streak_minStreak') + ' стримов' : 'любая серия'), 'ev_streak_enabled'],
       ];
       const shell = document.createElement('div'); shell.className = 'da-shell';
       const nav = document.createElement('div'); nav.className = 'card da-nav';

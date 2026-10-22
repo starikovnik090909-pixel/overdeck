@@ -13,7 +13,7 @@ const MAX_EVENTS = 20000;      // ограничение памяти на дл�
 
 // Какие события рисуются на виджете кружками/маркерами, плавающими вокруг линии. 'emote' и 'category' сюда не входят:
 // эмодзи уже учтены в весе линии и в маркере самого сообщения, а смена категории рисуется фоном-обложкой (см. categories.js).
-const BUBBLE_TYPES = new Set(['message', 'channelpoints', 'sub', 'giftsub', 'raid', 'donation']);
+const BUBBLE_TYPES = new Set(['message', 'channelpoints', 'sub', 'giftsub', 'raid', 'donation', 'watchstreak']);
 const DEFAULT_LIFETIME_MS = 10 * 60 * 1000; // сколько кружок живёт на таймлайне (в эфире и в повторе)
 const MAX_BUBBLES_PER_FRAME = 240;          // потолок кружков в одном снимке/кадре повтора — защита от спама чата (рассылка раз в секунду)
 const MAX_LINE_POINTS = 5000;

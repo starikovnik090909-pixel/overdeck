@@ -75,9 +75,6 @@ uploads/event/*
 !uploads/event/.gitkeep
 
 # Виджет «Инфо-карточка»: карточки (тексты) и их картинки — пользовательские данные
-info_cards.json
-uploads/infocard/*
-!uploads/infocard/.gitkeep
 
 # Пиксельные герои: настройки (выдавать чаттерам, режим 2D, галочки героев) — пользовательские данные
 pixel_heroes_settings.json

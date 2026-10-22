@@ -198,6 +198,7 @@ function step(ts, live) {
     counters.subs += 1;
     addEvent({ type: 'giftsub', username: pickUser().name, meta: { total: Math.floor(rnd(2, 11)) } }, ts);
   }
+  if (due('watchstreak', 45000, 110000)) addEvent({ type: 'watchstreak', username: pickUser().name, meta: { streak: Math.floor(rnd(2, 31)), points: pick([300, 450, 450, 500]) } }, ts);
   if (due('raid', 300000, 600000)) {
     counters.raids += 1;
     addEvent({ type: 'raid', username: pick(NAMES), meta: { viewers: Math.floor(rnd(8, 140)) } }, ts);
@@ -237,7 +238,7 @@ function start(d) {
   const first = pick(CATEGORIES);
   categoryHistory.unshift({ name: first.name, boxArtUrl: boxArt(first.art), startedAt: startedAtTs });
   addEvent({ type: 'category', meta: { name: first.name } }, startedAtTs);
-  nextAt = { points: startedAtTs + 5000, donation: startedAtTs + 30000, sub: startedAtTs + 40000, giftsub: startedAtTs + 100000, raid: startedAtTs + 150000, category: startedAtTs + 300000 };
+  nextAt = { points: startedAtTs + 5000, donation: startedAtTs + 30000, sub: startedAtTs + 40000, giftsub: startedAtTs + 100000, raid: startedAtTs + 150000, watchstreak: startedAtTs + 60000, category: startedAtTs + 300000 };
   // Досчитываем прошедшие 20 минут: события — с прошлыми метками времени, линия — каждые 2 с
   for (let t = startedAtTs + STEP_MS; t <= now; t += STEP_MS) {
     step(t, false);

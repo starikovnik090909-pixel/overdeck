@@ -1875,7 +1875,6 @@
     wordcloud: '<path d="M4 5h16v11H9.5L5 19.5V16H4z"/><path d="M8 9h8M8 12.3h5"/>',
     eventfeed: '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><path d="M6 8v8M11 6h9M11 18h9M11 12h6"/>',
     donortop: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
-    infocard: '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M12 11v4M12 8.5h.01" stroke-width="2.4"/>',
   };
   const WIDGET_ICON_FALLBACK = '<rect x="4" y="4" width="16" height="16" rx="3"/>';
 
@@ -2243,152 +2242,7 @@
     return field;
   }
 
-  /* ---------- Виджет «Инфо-карточка»: список карточек ----------
-     Тексты правятся прямо в списке и сохраняются сами (через 0.4 с после ввода); картинка — отдельной загрузкой на каждую карточку.
-     Список перерисовывается только при структурных изменениях (добавить / удалить / сдвинуть / картинка), а не при вводе текста —
-     иначе пропадал бы фокус. Перед структурным действием все отложенные сохранения текста отправляются сразу. */
-  const infoCardEditor = document.getElementById('infoCardEditor');
-  const infoCardList = document.getElementById('infoCardList');
-  const infoCardMessage = document.getElementById('infoCardMessage');
-  const infoCardFile = document.getElementById('infoCardFile');
-  const INFOCARD_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
-  const INFOCARD_MAX_BYTES = 10 * 1024 * 1024;
-  let infoCardsState = { rev: 0, cards: [] };
-  let infoCardUploadId = null;
-  let infoCardMessageTimer = null;
-  const infoCardSaveTimers = new Map(); // id -> { timer, send }
-
-  function showInfoCardMessage(text, kind) {
-    infoCardMessage.textContent = text;
-    infoCardMessage.className = 'form-message' + (kind ? ' ' + kind : '');
-    clearTimeout(infoCardMessageTimer);
-    if (kind === 'success') infoCardMessageTimer = setTimeout(() => { if (infoCardMessage.textContent === text) infoCardMessage.textContent = ''; }, 5000);
-  }
-
-  async function infoCardRequest(url, body) {
-    const opts = { method: 'POST' };
-    if (body instanceof FormData) opts.body = body;
-    else if (body !== undefined) { opts.headers = { 'Content-Type': 'application/json' }; opts.body = JSON.stringify(body); }
-    const res = await fetch(url, opts);
-    const data = await res.json();
-    if (!res.ok || !data.success) throw new Error((data && data.error) || 'Не удалось выполнить действие.');
-    return data;
-  }
-
-  /** Отправляет все отложенные сохранения текста немедленно и дожидается их — вызывается перед структурными действиями. */
-  async function flushInfoCardSaves() {
-    const pending = [...infoCardSaveTimers.values()];
-    infoCardSaveTimers.clear();
-    await Promise.all(pending.map((p) => { clearTimeout(p.timer); return p.send(); }));
-  }
-
-  function scheduleInfoCardSave(card, titleEl, textEl) {
-    const prev = infoCardSaveTimers.get(card.id);
-    if (prev) clearTimeout(prev.timer);
-    const send = async () => {
-      try {
-        const data = await infoCardRequest(`/api/infocards/${card.id}/update`, { title: titleEl.value, text: textEl.value });
-        infoCardsState = data.infoCards;
-      } catch (e) {
-        showInfoCardMessage(e.message, 'error');
-      }
-    };
-    const entry = { send, timer: setTimeout(() => { infoCardSaveTimers.delete(card.id); send(); }, 400) };
-    infoCardSaveTimers.set(card.id, entry);
-  }
-
-  function infoCardEl(tag, className, text) {
-    const e = document.createElement(tag);
-    if (className) e.className = className;
-    if (text !== undefined) e.textContent = text;
-    return e;
-  }
-
-  function buildInfoCardRow(card, index, total) {
-    const row = infoCardEl('div', 'infocard-row');
-    row.dataset.id = card.id;
-
-    const thumb = infoCardEl('div', 'infocard-thumb');
-    if (card.imageUrl) { const img = document.createElement('img'); img.alt = ''; img.src = card.imageUrl; thumb.appendChild(img); }
-    else thumb.appendChild(infoCardEl('span', 'infocard-thumb-empty', 'Нет картинки'));
-
-    const fields = infoCardEl('div', 'infocard-fields');
-    fields.appendChild(infoCardEl('div', 'infocard-num', `Карточка ${index + 1}`));
-    const titleEl = document.createElement('input');
-    titleEl.type = 'text'; titleEl.maxLength = 80; titleEl.placeholder = 'Заголовок'; titleEl.value = card.title; titleEl.className = 'infocard-title-input';
-    const textEl = document.createElement('textarea');
-    textEl.maxLength = 400; textEl.rows = 3; textEl.placeholder = 'Текст'; textEl.value = card.text; textEl.className = 'infocard-text-input';
-    [titleEl, textEl].forEach((x) => x.addEventListener('input', () => scheduleInfoCardSave(card, titleEl, textEl)));
-    fields.append(titleEl, textEl);
-
-    const actions = infoCardEl('div', 'infocard-actions');
-    const mk = (label, cls, handler, disabled) => {
-      const b = infoCardEl('button', 'btn-tiny' + (cls ? ' ' + cls : ''), label);
-      b.type = 'button'; b.disabled = !!disabled; b.addEventListener('click', handler); return b;
-    };
-    actions.appendChild(mk(card.imageUrl ? 'Заменить картинку' : 'Загрузить картинку', '', () => { infoCardUploadId = card.id; infoCardFile.click(); }));
-    if (card.imageUrl) actions.appendChild(mk('Убрать картинку', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/image/remove`), 'Картинка убрана.')));
-    actions.appendChild(mk('↑ Выше', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/move`, { dir: -1 })), index === 0));
-    actions.appendChild(mk('↓ Ниже', '', () => runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/move`, { dir: 1 })), index === total - 1));
-    actions.appendChild(mk('Удалить', 'btn-tiny-danger', async () => { if (await ui3Confirm('Удалить эту карточку?')) runInfoCardAction(() => infoCardRequest(`/api/infocards/${card.id}/remove`), 'Карточка удалена.'); }));
-
-    row.append(thumb, fields, actions);
-    return row;
-  }
-
-  function renderInfoCardList() {
-    infoCardList.replaceChildren();
-    if (!infoCardsState.cards.length) {
-      infoCardList.appendChild(infoCardEl('p', 'card-hint', 'Карточек пока нет — пока их нет, виджет не показывается на сцене. Добавьте первую.'));
-      return;
-    }
-    infoCardsState.cards.forEach((c, i) => infoCardList.appendChild(buildInfoCardRow(c, i, infoCardsState.cards.length)));
-  }
-
-  /** Структурное действие: сначала сохраняем набранный текст, потом выполняем запрос и перерисовываем список. */
-  async function runInfoCardAction(request, successText) {
-    try {
-      await flushInfoCardSaves();
-      const data = await request();
-      infoCardsState = data.infoCards;
-      renderInfoCardList();
-      if (successText) showInfoCardMessage(successText, 'success');
-    } catch (e) {
-      showInfoCardMessage(e.message, 'error');
-    }
-  }
-
-  document.getElementById('btnInfoCardAdd').addEventListener('click', () => runInfoCardAction(() => infoCardRequest('/api/infocards/add', {}), 'Карточка добавлена — впишите заголовок и текст.'));
-  document.getElementById('btnInfoCardShow').addEventListener('click', async () => {
-    try { await flushInfoCardSaves(); await infoCardRequest('/api/infocard/show'); showInfoCardMessage('Карточка выезжает на оверлее.', 'success'); }
-    catch (e) { showInfoCardMessage(e.message, 'error'); }
-  });
-  infoCardFile.addEventListener('change', async () => {
-    const file = infoCardFile.files[0];
-    const id = infoCardUploadId;
-    infoCardFile.value = '';
-    if (!file || !id) return;
-    const ext = ('.' + (file.name.split('.').pop() || '')).toLowerCase();
-    if (!INFOCARD_EXT.includes(ext)) { showInfoCardMessage('Нужна картинка: png, jpg, webp или gif.', 'error'); return; }
-    if (file.size > INFOCARD_MAX_BYTES) { showInfoCardMessage('Файл больше 10 МБ — выберите картинку поменьше.', 'error'); return; }
-    showInfoCardMessage('Загружаем картинку…', '');
-    const formData = new FormData();
-    formData.append('file', file);
-    await runInfoCardAction(() => infoCardRequest(`/api/infocards/${id}/image`, formData), 'Картинка загружена.');
-  });
-
-  (async function loadInfoCards() {
-    try {
-      const res = await fetch('/api/infocards');
-      const data = await res.json();
-      if (data && data.infoCards) { infoCardsState = data.infoCards; renderInfoCardList(); }
-    } catch (e) {
-      // не критично — список появится, когда сервер ответит
-    }
-  })();
-
   function renderWidgetContentSettingsPanel() {
-    infoCardEditor.style.display = selectedWidgetId === 'infocard' ? '' : 'none'; // список карточек — только у этого виджета
     const schema = selectedWidgetId && widgetSettingsSchema[selectedWidgetId];
     if (!schema) {
       widgetContentSettings.style.display = 'none';
@@ -8889,6 +8743,13 @@
       test: [T('username', 'Ник', 'MrFrost'), T('reward', 'Награда', 'Выпей воды'), T('cost', 'Стоимость, баллов', 500, { t: 'number' }), T('input', 'Сообщение зрителя', 'Пей воду!')],
       fields: [['enabled', 'toggle', 'Показывать алерты наград'], ['minCost', 'number', 'Показывать от (баллов)'], ['rewards', 'textarea', 'Только эти награды (по строке; пусто — все)'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['readMessage', 'toggle', 'Читать сообщение зрителя'], ['color', 'color', 'Цвет карточки'], ['speech', 'text', 'Текст озвучки']],
       hint: PH + ' Ещё: {reward} — название награды, {cost} — стоимость.',
+    },
+    streak: {
+      note: 'Серия просмотров зрителя (watch streak): Twitch пишет в чат, когда зритель смотрит стримы подряд, и даёт ему баллы. Алерт показывается, когда зритель сам делится серией в чате. Событие приходит из чата, отдельный вход через Twitch не нужен.',
+      test: [T('username', 'Ник', 'MrFrost'), T('streak', 'Стримов подряд', 7, { t: 'number' }), T('points', 'Баллов канала', 450, { t: 'number' })],
+      fields: [['enabled', 'toggle', 'Показывать алерты серий просмотров'], ['minStreak', 'number', 'Показывать от (стримов подряд)'], ['showPoints', 'toggle', 'Показывать полученные баллы'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
+        ['speech', 'text', 'Текст озвучки']],
+      hint: PH + ' Ещё: {streak} — стримов подряд, {streamsWord} — «стрим/стрима/стримов», {points} — баллы.',
     },
   };
   const api = async (url, body, method) => { const r = await fetch(url, { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body || {}) }); return r.json(); };

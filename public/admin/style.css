@@ -1671,26 +1671,6 @@ html, body {
   display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
 
-/* --- Виджет «Инфо-карточка»: редактор списка карточек (вкладка «Виджеты оверлея») --- */
-.infocard-editor { margin-top: 16px; }
-.infocard-list { display: flex; flex-direction: column; gap: 12px; margin: 12px 0; }
-.infocard-row {
-  display: grid; grid-template-columns: 110px 1fr auto; gap: 14px; align-items: start;
-  padding: 12px; border: 1px solid var(--divider); border-radius: var(--radius-md); background: var(--bg-app);
-}
-.infocard-thumb {
-  width: 110px; height: 82px; border-radius: var(--radius-sm); overflow: hidden; background: var(--bg-card);
-  border: 1px dashed var(--divider); display: flex; align-items: center; justify-content: center;
-}
-.infocard-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.infocard-thumb-empty { font-size: 12px; color: var(--text-secondary); text-align: center; padding: 4px; }
-.infocard-fields { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.infocard-num { font-size: 12px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
-.infocard-title-input, .infocard-text-input { width: 100%; box-sizing: border-box; }
-.infocard-text-input { resize: vertical; min-height: 60px; font-family: inherit; }
-.infocard-actions { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
-.infocard-actions .btn-tiny { white-space: nowrap; }
-.infocard-actions .btn-tiny:disabled { opacity: 0.4; cursor: default; }
 .btn-tiny-danger { color: #F87171; }
 
 /* --- Зеркало чата: появление сообщения, подсветка ролей, подзаголовки в шестерёнке --- */

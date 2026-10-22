@@ -6,7 +6,7 @@
   const host = document.getElementById('eventFeedHost');
   if (!host) { window.EventFeedModule = { render() {} }; return; }
 
-  const KICK = { follow: 'новый фолловер', sub: 'новая подписка', giftsub: 'подарочные подписки', donation: 'донат', raid: 'рейд', channelpoints: 'баллы канала' };
+  const KICK = { follow: 'новый фолловер', sub: 'новая подписка', giftsub: 'подарочные подписки', donation: 'донат', raid: 'рейд', channelpoints: 'баллы канала', watchstreak: 'серия просмотров' };
   const SVG = {
     follow: '<svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.4"/><path d="M3.6 19.5c.6-3.3 3.1-5 6.4-5s5.8 1.7 6.4 5M19 8v6M16 11h6"/></svg>',
     sub: '<svg viewBox="0 0 24 24"><path class="f" d="M12 2.8l2.8 5.9 6.4.9-4.7 4.5 1.2 6.4L12 17.4l-5.7 3.1 1.2-6.4L2.8 9.6l6.4-.9z"/></svg>',
@@ -14,9 +14,10 @@
     donation: '<b>₽</b>',
     raid: '<svg viewBox="0 0 24 24"><path d="M5.5 6.5 11 12l-5.5 5.5M12.5 6.5 18 12l-5.5 5.5"/></svg>',
     channelpoints: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg>',
+    watchstreak: '<svg viewBox="0 0 24 24"><path class="f" d="M12 3c.5 3-1.6 4.6-3.2 6.6C7.4 11.3 7 12.6 7 14a5 5 0 0 0 10 0c0-1.8-.8-3.1-1.7-4.2-.3 1-.9 1.6-1.6 1.9.6-3-.2-6.2-1.7-8.7z"/></svg>',
   };
-  const CSS_TYPE = { follow: 'follow', sub: 'sub', giftsub: 'gift', donation: 'don', raid: 'raid', channelpoints: 'pts' };
-  const DEFAULTS = { maxRows: 5, showFollow: true, showSub: true, showGift: true, showRaid: true, showDonation: true, showPoints: false, minDonation: 0, showTime: true };
+  const CSS_TYPE = { follow: 'follow', sub: 'sub', giftsub: 'gift', donation: 'don', raid: 'raid', channelpoints: 'pts', watchstreak: 'streak' };
+  const DEFAULTS = { maxRows: 5, showFollow: true, showSub: true, showGift: true, showRaid: true, showDonation: true, showPoints: false, showStreak: true, minDonation: 0, showTime: true };
 
   host.innerHTML = '<div class="ef-spine"></div><div class="ef-empty">Пока событий нет</div>';
   const spine = host.querySelector('.ef-spine');
@@ -37,6 +38,7 @@
     if (e.type === 'giftsub') return s.showGift;
     if (e.type === 'raid') return s.showRaid;
     if (e.type === 'channelpoints') return s.showPoints;
+    if (e.type === 'watchstreak') return s.showStreak;
     if (e.type === 'donation') return s.showDonation && (e.amount || 0) >= s.minDonation;
     return false;
   }
@@ -47,6 +49,7 @@
     if (e.type === 'giftsub') return 'подарил ' + (e.count || 1) + ' подписок';
     if (e.type === 'raid') return 'рейд · ' + fmt(e.count) + ' зрителей';
     if (e.type === 'channelpoints') return e.text || 'награда за баллы';
+    if (e.type === 'watchstreak') { const n = e.count || 0; const m = n % 100; const r = n % 10; return 'серия просмотров · ' + n + ' ' + (m >= 11 && m <= 14 ? 'стримов' : r === 1 ? 'стрим' : r >= 2 && r <= 4 ? 'стрима' : 'стримов') + ' подряд'; }
     return e.text || '';
   }
 

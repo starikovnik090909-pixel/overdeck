@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <link rel="stylesheet" href="ticket.css?v=1">
   <link rel="stylesheet" href="wall.css?v=1">
   <link rel="stylesheet" href="badge.css?v=1">
@@ -83,16 +83,6 @@
     <div class="ef-host" id="eventFeedHost"></div>
   </div>
 
-  <!-- Инфо-карточка: без заголовка и без своего фона панели — всё рисуют две стороны переворачивающейся карточки.
-       Последней в сцене, чтобы при выезде лежать поверх остальных виджетов. -->
-  <div class="panel infocard-panel" data-widget="infocard">
-    <div class="infocard-stage" id="infoCardStage">
-      <div class="infocard-flip" id="infoCardFlip">
-        <div class="infocard-face" id="infoCardFaceA"></div>
-        <div class="infocard-face" id="infoCardFaceB"></div>
-      </div>
-    </div>
-  </div>
 
   <!-- «Цель сбора» в общем источнике алертов (overlay.html?only=donation), если в админке включено «Использовать общий алерт»; иначе плашка живёт отдельно на goal.html (public/goal.js). -->
   <div id="gStage" class="g-embed g-off" data-embed="1">
@@ -153,11 +143,10 @@
 
 <script src="ovl-proto.js?v=2"></script>
 <script src="app.js"></script>
-<script src="timeline.js?v=4"></script>
+<script src="timeline.js?v=5"></script>
 <script src="wordcloud.js?v=2"></script>
 <script src="emotebox.js?v=6"></script>
 <script src="donortop.js"></script>
-<script src="infocard.js"></script>
 <script src="eventfeed.js"></script>
 <script src="donationalert.js?v=16"></script>
 <script src="goal.js?v=1"></script>

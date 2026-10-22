@@ -698,18 +698,6 @@
               <div class="preview-scene" id="previewScene"></div>
             </div>
           </div>
-          <!-- Содержимое виджета «Инфо-карточка»: список карточек. Показывается только когда выбран этот виджет. -->
-          <div class="card infocard-editor" id="infoCardEditor" style="display:none;">
-            <h2 class="section-title">Карточки инфо-виджета</h2>
-            <p class="card-hint">Виджет по очереди переворачивается между карточками (картинка + заголовок + текст) и выезжает на сцену по таймеру — расписание и вид настраиваются выше. До 20 карточек, порядок показа — как в списке.</p>
-            <div class="infocard-list" id="infoCardList"></div>
-            <div class="actions">
-              <button class="btn btn-primary" id="btnInfoCardAdd" type="button">+ Добавить карточку</button>
-              <button class="btn btn-secondary" id="btnInfoCardShow" type="button">Показать на оверлее сейчас</button>
-            </div>
-            <div class="form-message" id="infoCardMessage"></div>
-            <input type="file" id="infoCardFile" accept=".png,.jpg,.jpeg,.webp,.gif" hidden>
-          </div>
         </div>
 
         <aside class="widgets-side-col">
@@ -2932,6 +2920,7 @@
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-da-pane="follow">Фоллоу</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-da-pane="hype">Hype Train</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-da-pane="points">Баллы канала</button>
+        <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-da-pane="streak">Серия просмотров</button>
       </div>
 
       <div class="da-pane" data-da-pane="donation">
@@ -3082,6 +3071,7 @@
       <div class="da-pane" data-da-pane="follow" hidden><div class="da-layout da-evpane" data-kind="follow"></div></div>
       <div class="da-pane" data-da-pane="hype" hidden><div class="da-layout da-evpane" data-kind="hype"></div></div>
       <div class="da-pane" data-da-pane="points" hidden><div class="da-layout da-evpane" data-kind="points"></div></div>
+      <div class="da-pane" data-da-pane="streak" hidden><div class="da-layout da-evpane" data-kind="streak"></div></div>
     </section>
 
     <section class="tab-section" id="tab-twitchext">
@@ -3156,10 +3146,10 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=148"></script>
+<script src="app.js?v=149"></script>
 <script src="guides-data.js?v=6"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>
-<script src="ui3.js?v=13"></script>
+<script src="ui3.js?v=14"></script>
 </body>
 </html>

@@ -8,8 +8,26 @@ const tmi = require('tmi.js');
  * Подключиться к чату канала. onMessage(tags, message) вызывается на каждое
  * сообщение (кроме своих же, self всегда false для анонимного клиента).
  */
-function connectChat(channel, onMessage, onConnected) {
+function connectChat(channel, onMessage, onConnected, onMilestone) {
   const client = new tmi.Client({ channels: [channel] });
+
+  // Серия просмотров зрителя (watch streak): Twitch присылает её в чат как USERNOTICE msg-id=viewermilestone, категория watch-streak.
+  if (onMilestone) {
+    client.on('raw_message', (cloned, msg) => {
+      try {
+        if (!msg || msg.command !== 'USERNOTICE') return;
+        const t = msg.tags || {};
+        if (t['msg-id'] !== 'viewermilestone' || t['msg-param-category'] !== 'watch-streak') return;
+        onMilestone({
+          id: String(t.id || ''),
+          username: String(t['display-name'] || t['login'] || '').slice(0, 40),
+          login: String(t['login'] || '').toLowerCase(),
+          streak: Math.round(Number(t['msg-param-value']) || 0),
+          points: Math.round(Number(t['msg-param-copoReward']) || 0),
+        });
+      } catch (e) { /* чужой формат — пропускаем */ }
+    });
+  }
 
   client.on('message', (ch, tags, message, self) => {
     if (self) return;
