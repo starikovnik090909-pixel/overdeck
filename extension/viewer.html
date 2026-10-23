@@ -21,12 +21,16 @@
     <button id="bgbtn" class="bgbtn" type="button" aria-pressed="false" title="Фон сцены: вкл/выкл">Фон</button>
     <button id="close" class="close" type="button" aria-label="Свернуть">×</button>
   </header>
+  <div id="demoNote" class="demo-banner" hidden>ДЕМО-РЕЖИМ: герои и сообщения выдуманы, ничего не отправляется. «Выйти из демо» — внизу.</div>
   <main class="body">
     <div id="view-profile" class="view active"></div>
     <div id="view-top" class="view"></div>
     <div id="view-awards" class="view"></div>
   </main>
-  <footer id="foot" class="foot muted small">Ждём данные от стримера…</footer>
+  <footer class="foot muted small">
+    <span id="foot">Ждём данные от стримера…</span>
+    <span class="foot-btns"><button id="spamBtn" class="mini" type="button" hidden title="Демо: имитация потока сообщений в чате">Спам в чат</button><button id="demoBtn" class="mini" type="button" title="Показать, как это выглядит, на выдуманных данных">Демо</button></span>
+  </footer>
 </section>
 <script src="viewer.js"></script>
 </body>

@@ -133,3 +133,12 @@ html, body { margin: 0; height: 100%; background: transparent; font: 13px/1.4 sy
 .bg-chip { position: relative; height: 40px; padding: 0; border: 2px solid transparent; border-radius: 6px; background-color: #2a2a35; background-size: auto 100%; background-position: left bottom; image-rendering: pixelated; cursor: pointer; overflow: hidden; }
 .bg-chip span { position: absolute; left: 0; right: 0; top: 0; padding: 1px 4px; background: rgba(0, 0, 0, 0.55); color: #fff; font: 700 10px system-ui, sans-serif; text-align: left; }
 .bg-chip.sel { border-color: var(--accent); }
+
+.foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.foot-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.mini { padding: 3px 9px; background: rgba(255, 255, 255, 0.1); color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: 700 11px system-ui, sans-serif; cursor: pointer; }
+.mini:hover { background: rgba(255, 255, 255, 0.18); }
+.mini.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.demo-banner { margin: 0 0 10px; padding: 6px 9px; border: 1px dashed var(--gold); border-radius: 7px; color: var(--gold); font-size: 11px; text-align: center; }
+.howto { margin: 10px 0 0; padding: 0 0 0 18px; text-align: left; font-size: 12px; color: var(--muted); }
+.howto li { margin: 3px 0; }

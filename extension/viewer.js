@@ -246,7 +246,7 @@
     if (pickOpen && root.firstChild && snap) { var m0 = me(); if (m0 && lastPickSig === [m0.mask, m0.hero, snap.cc, snap.hv, Object.keys(heroes).length].join('|')) return; }   // выбор аватара открыт и ничего не изменилось — не перерисовываем (иначе сбросится прокрутка и подсказка)
     var keepScroll = pickOpen ? root.scrollTop : 0;
     root.replaceChildren();
-    if (!snap) { root.appendChild(el('p', 'muted center', 'Ждём данные от стримера… Если они не появляются — стример сейчас не в эфире или выключил отправку.')); return; }
+    if (!snap) { root.appendChild(emptyBox()); return; }
     var mine = me(), p = viewLogin && snap.players[viewLogin] ? snap.players[viewLogin] : mine;
     if (!p) {
       var box = el('div', 'center');
@@ -296,7 +296,7 @@
   /* ---------- вкладка «Топ» ---------- */
   function renderTop() {
     var root = $('view-top'); root.replaceChildren();
-    if (!snap || !snap.top.length) { root.appendChild(el('p', 'muted center', snap ? 'Топ пока пуст.' : 'Ждём данные от стримера…')); return; }
+    if (!snap || !snap.top.length) { root.appendChild(snap ? el('p', 'muted center', 'Топ пока пуст.') : emptyBox()); return; }
     var list = el('div', 'toplist'), mine = me();
     snap.top.forEach(function (login, i) {
       var p = snap.players[login], h = heroes[p.hero];
@@ -372,6 +372,7 @@
     var f = $('foot');
     if (!snap) { f.textContent = 'Ждём данные от стримера…'; return; }
     var age = Math.max(0, Math.round((Date.now() - snap.receivedAt) / 1000));
+    if (demo) { f.textContent = 'ДЕМО: данные выдуманы'; return; }
     f.textContent = (snap.live ? 'Стрим идёт · ' : '') + 'обновлено ' + (age < 5 ? 'только что' : age < 90 ? age + ' с назад' : Math.round(age / 60) + ' мин назад');
   }
   function renderAll() {
@@ -381,11 +382,87 @@
   }
   function setCollapsed(c) { $('panel').hidden = c; $('pill').hidden = !c; $('scene').hidden = c; store('collapsed', c ? '1' : '0'); renderAll(); }
 
+
+  /* ---------- помощь и демо-режим ---------- */
+  /* Пока стример не в эфире, данных нет. Чтобы любой зритель (и проверяющий) мог посмотреть, как это работает, есть «Демо»:
+   * выдуманные зрители бегают по сцене, «пишут в чат», набирают опыт. Всё считается тут же, в браузере; ничего не отправляется и не сохраняется. */
+  var demo = null;            // { t:таймер, n:счётчик выдуманных, saveCat }
+  var DEMO_NAMES = ['Мурка', 'Бублик', 'Тень', 'Лесник', 'Ягода', 'Север', 'Комета', 'Пират', 'Ласточка', 'Гном', 'Феникс', 'Орех', 'Шторм', 'Звёздочка', 'Барсик', 'Рыцарь', 'Искра', 'Дымок', 'Малыш', 'Туман', 'Ёж', 'Лис', 'Гром', 'Берёза'];
+  var DEMO_COLORS = ['#ff6b6b', '#4ade80', '#60a5fa', '#fbbf24', '#c084fc', '#f472b6', '#34d399', '#fb923c'];
+  function emptyBox() {
+    var box = el('div', 'center');
+    box.appendChild(el('p', null, 'Здесь появятся герои зрителей этого канала.'));
+    box.appendChild(el('p', 'muted small', 'Сейчас от стримера нет данных: вероятно, трансляция не идёт. Пока можно посмотреть, как всё работает, в демо-режиме.'));
+    var b = el('button', 'btn', 'Включить демо'); b.type = 'button'; b.addEventListener('click', function () { setDemo(true); });
+    box.appendChild(b);
+    var ol = el('ol', 'howto');
+    ['Пишите в чат стрима — получите героя, опыт и уровень.', 'Вкладка «Профиль»: ваш герой, уровень, шкала опыта и место в топе.', '«Топ»: лучшие зрители; нажмите на любого — откроется его профиль.', '«События»: награды и медали канала.', 'Кнопка «Фон» включает сцену с героями под плеером; нажмите на героя на сцене — увидите, кто это.']
+      .forEach(function (t) { ol.appendChild(el('li', null, t)); });
+    box.appendChild(ol);
+    return box;
+  }
+  function demoMask() { var n = heroIds().length, s = '', g = Math.ceil(n / 24); for (var i = 0; i < g; i++) s += 'ffffff'; return s; }
+  function demoPlayer(i, you) {
+    var ids = heroIds(), name = you ? 'Вы (демо)' : DEMO_NAMES[i % DEMO_NAMES.length] + (i >= DEMO_NAMES.length ? String(Math.floor(i / DEMO_NAMES.length) + 1) : '');
+    var lvl = you ? 3 : 1 + Math.floor(Math.random() * 14), need = 100 + lvl * 40;
+    return { login: you ? 'demo_you' : 'demo' + i, name: name, hero: ids.length ? ids[(i * 7 + (you ? 0 : 3)) % ids.length] : '', level: lvl, xp: Math.floor(Math.random() * need), need: need, maxed: false,
+      color: you ? '' : DEMO_COLORS[i % DEMO_COLORS.length], uid: you ? 'demo' : '', total: lvl * 120 + Math.floor(Math.random() * 90), rank: 0, mult: 1, awards: [], mask: demoMask() };
+  }
+  function demoRebuild() {
+    var P = demo.players, logins = Object.keys(P);
+    logins.sort(function (a, b) { return P[b].total - P[a].total; });
+    logins.forEach(function (l, i) { P[l].rank = i + 1; });
+    var stage = demo.stage.filter(function (l) { return P[l]; });
+    snap = { t: Date.now(), live: true, hv: heroHash(heroIds()), hn: heroIds().length, cc: '!hero', players: P, stage: stage, top: logins.slice(0, 10), receivedAt: Date.now() };
+    renderAll();
+  }
+  function demoChat(l) {                                   // «сообщение в чате»: опыт растёт, иногда новый уровень
+    var p = demo.players[l]; if (!p) return;
+    p.xp += 8 + Math.floor(Math.random() * 20); p.total += 12;
+    if (p.xp >= p.need) { p.xp -= p.need; p.level++; p.need = 100 + p.level * 40; }
+  }
+  function demoJoin() {                                    // новый зритель написал в чат — его герой выходит на сцену
+    var i = demo.n++, p = demoPlayer(i, false); demo.players[p.login] = p; demo.stage.push(p.login);
+    if (demo.stage.length > 14) demo.stage.shift();
+  }
+  function demoTick() {
+    var l = Object.keys(demo.players);
+    for (var k = 0; k < 3; k++) demoChat(l[Math.floor(Math.random() * l.length)]);
+    if (Math.random() < 0.35) demoJoin();
+    demoRebuild();
+  }
+  function setDemo(on) {
+    if (!!demo === !!on) return;
+    if (on) {
+      if (!Object.keys(heroes).length) { var tries = 0, w = setInterval(function () { if (Object.keys(heroes).length || ++tries > 20) { clearInterval(w); if (Object.keys(heroes).length) setDemo(true); } }, 250); return; }
+      demo = { n: 0, players: {}, stage: [], saveCat: awardCat, saveSnap: snap, saveViewer: viewerId, saveLogin: viewLogin };
+      var you = demoPlayer(0, true); demo.players[you.login] = you; demo.stage.push(you.login);
+      for (var i = 1; i <= 7; i++) { var p = demoPlayer(i, false); demo.players[p.login] = p; demo.stage.push(p.login); }
+      demo.n = 8; viewerId = 'demo'; viewLogin = null;
+      awardCat = { a1: { title: 'Первый шаг', desc: 'Написал первое сообщение в чате (пример награды)', icon: '', howTo: 'Напишите в чат', open: true, issued: 0 }, a2: { title: 'Завсегдатай', desc: 'Пример награды за активность', icon: '', howTo: 'Заходите на стримы', open: true, issued: 0 } };
+      you = demo.players.demo_you; you.awards = ['a1'];
+      demo.t = setInterval(demoTick, 1500);
+      $('demoNote').hidden = false; $('spamBtn').hidden = false; $('demoBtn').classList.add('on'); $('demoBtn').textContent = 'Выйти из демо';
+      setCollapsed(false); demoRebuild();
+    } else {
+      clearInterval(demo.t); awardCat = demo.saveCat; snap = demo.saveSnap; viewerId = demo.saveViewer; viewLogin = demo.saveLogin; demo = null;
+      $('demoNote').hidden = true; $('spamBtn').hidden = true; $('demoBtn').classList.remove('on'); $('demoBtn').textContent = 'Демо';
+      renderAll();
+    }
+  }
+  function demoSpam() {                                    // всплеск сообщений: 6 новых зрителей и общий рост опыта
+    if (!demo) return;
+    for (var i = 0; i < 6; i++) demoJoin();
+    Object.keys(demo.players).forEach(function (l) { if (Math.random() < 0.6) demoChat(l); });
+    demoRebuild();
+  }
+
   function onMessage(target, contentType, message) {
     var o; try { o = JSON.parse(message); } catch (e) { return; }
     var cat = parseCatalog(o);
     if (cat) { mergeCatalog(cat, o.r === 1); renderAll(); return; }
     var s = parseSnapshot(o); if (!s) return;
+    if (demo) setDemo(false);                                // пришли настоящие данные — демо выключается
     snap = s; renderAll();
   }
 
@@ -393,6 +470,8 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.addEventListener('click', function () { if (b.getAttribute('data-tab') === 'profile') viewLogin = null; setTab(b.getAttribute('data-tab')); }); });
     $('bgbtn').addEventListener('click', function () { setBg(!bgOn); });
     applyBg();
+    $('demoBtn').addEventListener('click', function () { setDemo(!demo); });
+    $('spamBtn').addEventListener('click', demoSpam);
     $('close').addEventListener('click', function () { setCollapsed(true); });
     $('pill').addEventListener('click', function () { setCollapsed(false); });
     if (store('collapsed') === '1') setCollapsed(true);
