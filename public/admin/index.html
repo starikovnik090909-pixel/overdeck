@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=126">
+<link rel="stylesheet" href="style.css?v=130">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=21">
 <script>window.__ovQuery = location.search;</script>
@@ -753,6 +753,52 @@
             
                 <div class="form-message" id="pollStatusMessage"></div>
                 <div id="pollActiveBox"><p class="card-hint">Загружаем…</p></div>
+              </div>
+
+              <div class="card ui3-card don-platforms ext-chat-card" id="extChatCard">
+                <div class="ui3-ch"><div><h3>Чаты других платформ</h3><div class="sub">Стримишь на нескольких платформах сразу? Сообщения появятся в зеркале и в виджете чата OBS с меткой платформы. Только чтение, входить в аккаунт не нужно.</div></div></div>
+                <div class="platform-card ext-chat-row" data-p="kick">
+                  <div class="platform-card-header">
+                    <span class="platform-dot"></span>
+                    <span class="platform-name">Kick <span class="chat-role-tag ext-tag" style="background:#53FC18;color:#0b0e0f;border:1px solid #2E9E0B">KICK</span></span>
+                    <span class="ext-state"></span>
+                    <span class="chevron">▸</span>
+                  </div>
+                  <div class="platform-card-body">
+                    <div class="field"><input type="text" class="ext-target" placeholder="Ник канала, например xqc" autocomplete="off"></div>
+                    <div class="actions"><button class="btn btn-primary ext-go" type="button">Подключить</button><button class="btn btn-secondary ext-stop" type="button">Отключить</button></div>
+                    <div class="form-message ext-msg"></div>
+                  </div>
+                </div>
+                <div class="platform-card ext-chat-row" data-p="vk">
+                  <div class="platform-card-header">
+                    <span class="platform-dot"></span>
+                    <span class="platform-name">VK Live <span class="chat-role-tag ext-tag" style="background:#0077FF;color:#fff;border:1px solid #004EA8">VK</span></span>
+                    <span class="ext-state"></span>
+                    <span class="chevron">▸</span>
+                  </div>
+                  <div class="platform-card-body">
+                    <div class="field"><input type="text" class="ext-target" placeholder="Канал: часть адреса live.vkvideo.ru/…" autocomplete="off"></div>
+                    <div class="actions"><button class="btn btn-primary ext-go" type="button">Подключить</button><button class="btn btn-secondary ext-stop" type="button">Отключить</button></div>
+                    <div class="form-message ext-msg"></div>
+                  </div>
+                </div>
+                <div class="platform-card ext-chat-row" data-p="youtube">
+                  <div class="platform-card-header">
+                    <span class="platform-dot"></span>
+                    <span class="platform-name">YouTube <span class="chat-role-tag ext-tag" style="background:#FF0033;color:#fff;border:1px solid #A8001F">You</span></span>
+                    <span class="ext-state"></span>
+                    <span class="chevron">▸</span>
+                  </div>
+                  <div class="platform-card-body">
+                    <div class="field"><input type="text" class="ext-target" placeholder="Ссылка на идущую трансляцию" autocomplete="off"></div>
+                    <div class="field"><input type="password" class="ext-key" placeholder="API-ключ YouTube Data API v3" autocomplete="off"></div>
+                    <div class="field"><div class="remember-row"><span>Запомнить ключ</span><label class="toggle-switch"><input type="checkbox" class="ext-remember"><span class="toggle-slider"></span></label></div></div>
+                    <p class="card-hint">Ключ бесплатный (Google Cloud → YouTube Data API v3). Квоты хватает примерно на 5 часов чата в сутки. Для каждого нового эфира вставляй его ссылку заново.</p>
+                    <div class="actions"><button class="btn btn-primary ext-go" type="button">Подключить</button><button class="btn btn-secondary ext-stop" type="button">Отключить</button></div>
+                    <div class="form-message ext-msg"></div>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="chat-form-area" id="chatFormArea">
@@ -3175,14 +3221,14 @@
   </main>
 </div>
 
-<script src="/chat-format.js"></script>
+<script src="/chat-format.js?v=4"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=162"></script>
+<script src="app.js?v=164"></script>
 <script src="guides-data.js?v=7"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=17"></script>
-<script src="whatsnew.js?v=6"></script>
+<script src="whatsnew.js?v=8"></script>
 </body>
 </html>

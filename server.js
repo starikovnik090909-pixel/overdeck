@@ -68,6 +68,7 @@ const autoMod = require('./autoMod');
 const donorLeaderboard = require('./donorLeaderboard');
 const donateX = require('./donatex');
 const donatePay = require('./donatepay');
+const externalChat = require('./externalChat');
 const donationAlerts = require('./donationAlerts');
 
 // config.json — личный файл пользователя (имя канала, вход через Twitch, настройки), в архивы проекта он НЕ кладётся, чтобы обновление не затирало
@@ -2894,6 +2895,101 @@ app.post('/api/donations/donatepay/disconnect', (req, res) => {
   donationCredentials.save();
   broadcastAdminStatus();
   res.json({ success: true });
+});
+
+// ---------- Чат с других платформ (Kick, YouTube, VK Live) ----------
+
+const EXT_CHAT_FILE = path.join(__dirname, 'external_chat.json');
+let extChatSaved = { kick: '', youtube: '', vk: '', on: {} }; // что подключено и к чему — запоминается, чтобы после перезапуска чаты вернулись сами
+try { extChatSaved = { ...extChatSaved, ...JSON.parse(fs.readFileSync(EXT_CHAT_FILE, 'utf8')) }; } catch (e) { /* первый запуск */ }
+function saveExtChat() { try { fs.writeFileSync(EXT_CHAT_FILE, JSON.stringify(extChatSaved, null, 2)); } catch (e) { console.warn('[Чат] Не удалось сохранить external_chat.json:', e.message); } }
+let ytChatKey = ((authCredentials.get().youtubeChat || {}).apiKey) || ''; // ключ YouTube: в файл попадает только с галочкой «Запомнить»
+
+/** Сообщение с другой платформы: зеркало чата, статистика активности, озвучка. Героев, аватарки Twitch и пиксельные алерты не трогает — логины чужих платформ могут совпасть с логинами Twitch. */
+function onExternalChat(m) {
+  const username = String(m.username || '').slice(0, 40) || 'Зритель';
+  const userId = m.platform + ':' + (m.login || username);
+  const result = stats.recordMessage(username, userId, m.text, null);
+  handleTimelineWeightedEvent({ type: 'message', userId, username });
+  const chatMsg = {
+    username,
+    platform: m.platform,
+    color: m.color || null,
+    avatarUrl: m.avatarUrl || null,
+    badges: [],
+    parts: m.parts && m.parts.length ? m.parts : [{ type: 'text', text: m.text }],
+    roles: { mod: !!(m.roles && m.roles.mod), vip: !!(m.roles && m.roles.vip), first: false, raider: false },
+    login: String(m.login || '').toLowerCase(),
+    ts: Date.now(),
+  };
+  pushChatHistory(chatMsg);
+  broadcastChat(chatMsg);
+  const ttsText = tts.applyCommandMode(result.clean, config.tts);
+  if (ttsText !== null && tts.shouldSpeak(username, ttsText, config.tts)) {
+    tts.enqueue({
+      text: tts.buildSpeechText(username, ttsText, config.tts),
+      ttsConfig: config.tts,
+      onDone: (wavBuffer, mime) => { sendToOverlay({ type: 'tts', audio: `data:${mime || 'audio/wav'};base64,` + wavBuffer.toString('base64') }); },
+    });
+  }
+  dirty = true;
+}
+
+function extChatStatus() {
+  const info = externalChat.info();
+  const out = {};
+  externalChat.PLATFORMS.forEach((p) => {
+    out[p] = { ...info[p], target: info[p].target || extChatSaved[p] || '' };
+  });
+  out.youtubeKeyRemembered = authCredentials.isRemembered('youtubeChat');
+  out.youtubeKeySet = !!ytChatKey;
+  return out;
+}
+
+function extChatStart(platform, target) {
+  externalChat.start(platform, target, onExternalChat, { apiKey: ytChatKey });
+  extChatSaved[platform] = String(target || '').trim();
+  extChatSaved.on[platform] = true;
+  saveExtChat();
+}
+
+if (!SETUP_MODE) {
+  externalChat.PLATFORMS.forEach((p) => {
+    if (extChatSaved.on && extChatSaved.on[p] && extChatSaved[p] && (p !== 'youtube' || ytChatKey)) {
+      try { extChatStart(p, extChatSaved[p]); } catch (e) { console.warn('[Чат ' + p + '] ' + e.message); }
+    }
+  });
+}
+
+app.get('/api/chat/external', (req, res) => res.json({ success: true, ...extChatStatus() }));
+
+app.post('/api/chat/external/connect', (req, res) => {
+  const b = req.body || {};
+  const platform = String(b.platform || '');
+  if (!externalChat.PLATFORMS.includes(platform)) return res.status(400).json({ success: false, error: 'Неизвестная платформа' });
+  const target = String(b.target || '').trim();
+  if (!target) return res.status(400).json({ success: false, error: platform === 'youtube' ? 'Вставь ссылку на трансляцию YouTube' : 'Укажи канал' });
+  try {
+    if (platform === 'youtube') {
+      const key = String(b.apiKey || '').trim();
+      if (key) ytChatKey = key;
+      if (!ytChatKey) return res.status(400).json({ success: false, error: 'Нужен API-ключ YouTube (YouTube Data API v3) — бесплатно создаётся в Google Cloud (Credentials → API key).' });
+      authCredentials.setRemembered('youtubeChat', !!b.remember, { apiKey: ytChatKey });
+    }
+    extChatStart(platform, target);
+    res.json({ success: true, ...extChatStatus() });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/chat/external/disconnect', (req, res) => {
+  const platform = String((req.body || {}).platform || '');
+  if (!externalChat.PLATFORMS.includes(platform)) return res.status(400).json({ success: false, error: 'Неизвестная платформа' });
+  externalChat.stop(platform);
+  extChatSaved.on[platform] = false;
+  saveExtChat();
+  res.json({ success: true, ...extChatStatus() });
 });
 
 // ---------- Донатный хаб: DonationAlerts (Client ID/Secret + OAuth + Centrifugo) ----------

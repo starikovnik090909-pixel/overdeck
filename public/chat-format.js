@@ -77,10 +77,31 @@
   }
 
   /** Оформляет строку чата: подсветка (цветная полоска слева и лёгкая заливка) + метки ролей перед ником. beforeEl — перед каким элементом вставить метки. */
+  const PLATFORM_TAGS = {
+    kick: { label: 'KICK', color: '#53FC18', text: '#0b0e0f', border: '#2E9E0B' },
+    youtube: { label: 'You', color: '#FF0033', text: '#ffffff', border: '#A8001F' },
+    vk: { label: 'VK', color: '#0077FF', text: '#ffffff', border: '#004EA8' },
+  };
+
   function decorateLine(line, msg, settings, beforeEl, doc) {
+    const d = doc || document;
+    const pt = msg && msg.platform && PLATFORM_TAGS[msg.platform]; // метка платформы (сообщения с Kick / YouTube / VK Live)
+    if (pt) {
+      const ptag = d.createElement('span');
+      ptag.className = 'chat-role-tag chat-platform-tag';
+      ptag.textContent = pt.label;
+      ptag.style.background = pt.color;
+      ptag.style.color = pt.text;
+      // у всех платформ метка одного размера (как у KICK): одинаковая ширина по центру и тонкая рамка темнее цвета платформы
+      ptag.style.display = 'inline-block';
+      ptag.style.boxSizing = 'border-box';
+      ptag.style.minWidth = '4.2em';
+      ptag.style.textAlign = 'center';
+      ptag.style.border = '1px solid ' + pt.border;
+      line.insertBefore(ptag, beforeEl || null);
+    }
     const active = activeRoles(msg, settings);
     if (!active.length) return;
-    const d = doc || document;
     line.classList.add('role-highlight');
     line.style.setProperty('--role-color', active[0].color);
     line.style.setProperty('--role-bg', hexToRgba(active[0].color, 0.16)); // rgba считаем сами, а не через color-mix: он не везде есть во встроенном браузере OBS

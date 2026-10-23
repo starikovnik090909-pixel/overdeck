@@ -6,6 +6,7 @@ node_modules/
 config.json
 auth_credentials.json
 donation_credentials.json
+external_chat.json
 
 # Накопленные данные стрима — у каждого свои, в репозитории не нужны
 stats.json

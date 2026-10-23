@@ -7904,6 +7904,79 @@
   // Статус/сообщения обновляем, только пока открыта вкладка "Чат бот" — на других вкладках лишние запросы не нужны.
   setInterval(() => { if (currentTabId === 'chatbot') pollChatBot(false); }, 3000);
 
+  // ---------- Чаты других платформ (Kick / YouTube / VK Live) ----------
+  (function initExternalChats() {
+    const card = document.getElementById('extChatCard');
+    if (!card) return;
+    const NAMES = { kick: 'Kick', youtube: 'YouTube', vk: 'VK Live' };
+    const rows = {};
+    card.querySelectorAll('.ext-chat-row').forEach((row) => { rows[row.dataset.p] = row; });
+    const touched = {};
+
+    function paint(p, info) {
+      const row = rows[p]; if (!row || !info) return;
+      row.classList.remove('connected', 'connecting', 'error');
+      const msg = row.querySelector('.ext-msg');
+      const stateEl = row.querySelector('.ext-state');
+      const input = row.querySelector('.ext-target');
+      if (info.running) {
+        row.classList.add(info.status === 'on' ? 'connected' : info.status === 'error' ? 'error' : 'connecting');
+        if (!touched[p] && document.activeElement !== input && info.target) input.value = info.target;
+        if (info.status === 'on') { msg.textContent = 'Подключено' + (info.label ? ': ' + info.label : '') + (info.count ? ' · сообщений: ' + info.count : ''); msg.className = 'form-message success ext-msg'; }
+        else if (info.status === 'error') { msg.textContent = info.lastError || 'Ошибка подключения'; msg.className = 'form-message error ext-msg'; }
+        else { msg.textContent = info.lastError || 'Подключаемся…'; msg.className = 'form-message ext-msg'; }
+      } else {
+        if (!touched[p] && document.activeElement !== input && info.target && !input.value) input.value = info.target;
+        if (info.lastError) { row.classList.add('error'); msg.textContent = info.lastError; msg.className = 'form-message error ext-msg'; }
+        else if (msg.dataset.keep !== '1') { msg.textContent = ''; msg.className = 'form-message ext-msg'; }
+      }
+      stateEl.textContent = row.classList.contains('connected') ? 'Читается' : row.classList.contains('error') ? 'Ошибка' : row.classList.contains('connecting') ? 'Подключаемся…' : '';
+      if (p === 'youtube') {
+        const key = row.querySelector('.ext-key');
+        key.placeholder = info.keySet ? 'Ключ сохранён — можно не вводить' : 'API-ключ YouTube Data API v3';
+      }
+    }
+
+    async function refresh() {
+      try {
+        const r = await fetch('/api/chat/external');
+        const d = await r.json();
+        if (!d || !d.success) return;
+        Object.keys(rows).forEach((p) => paint(p, { ...d[p], keySet: d.youtubeKeySet }));
+        const rem = rows.youtube.querySelector('.ext-remember');
+        if (document.activeElement !== rem) rem.checked = !!d.youtubeKeyRemembered;
+      } catch (e) { /* сервер временно недоступен */ }
+    }
+
+    Object.keys(rows).forEach((p) => {
+      const row = rows[p];
+      row.querySelector('.ext-target').addEventListener('input', () => { touched[p] = true; });
+      row.querySelector('.ext-go').addEventListener('click', async () => {
+        const msg = row.querySelector('.ext-msg');
+        const body = { platform: p, target: row.querySelector('.ext-target').value.trim() };
+        if (p === 'youtube') { body.apiKey = row.querySelector('.ext-key').value.trim(); body.remember = row.querySelector('.ext-remember').checked; }
+        msg.dataset.keep = '1';
+        msg.textContent = 'Подключаемся…'; msg.className = 'form-message ext-msg';
+        try {
+          const { ok, data } = await postJSON('/api/chat/external/connect', body);
+          if (!ok) { msg.textContent = (data && data.error) || 'Не удалось подключиться.'; msg.className = 'form-message error ext-msg'; return; }
+          touched[p] = false;
+          if (p === 'youtube') row.querySelector('.ext-key').value = '';
+          msg.dataset.keep = '';
+          refresh();
+        } catch (e) { msg.textContent = 'Сетевая ошибка при обращении к серверу.'; msg.className = 'form-message error ext-msg'; }
+      });
+      row.querySelector('.ext-stop').addEventListener('click', async () => {
+        try { await postJSON('/api/chat/external/disconnect', { platform: p }); } catch (e) { /* ниже обновим статус */ }
+        const msg = row.querySelector('.ext-msg'); msg.dataset.keep = '1'; msg.textContent = 'Отключено.'; msg.className = 'form-message ext-msg';
+        refresh();
+      });
+    });
+
+    refresh();
+    setInterval(() => { if (currentTabId === 'chat') refresh(); }, 4000);
+  })();
+
   /* --- Конструктор команд бота: "!команда" → ответ (хранится на сервере в bot_commands.json) --- */
   const botCommandsBody = document.getElementById('botCommandsBody');
   const botCommandForm = document.getElementById('botCommandForm');

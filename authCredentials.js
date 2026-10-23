@@ -20,6 +20,7 @@ function emptyData() {
     donationAlerts: { clientId: '', clientSecret: '' },
     donateX: { apiToken: '' },
     donatePay: { apiKey: '' },
+    youtubeChat: { apiKey: '' },
   };
 }
 
@@ -35,6 +36,7 @@ function load() {
         donationAlerts: { ...base.donationAlerts, ...(raw.donationAlerts || {}) },
         donateX: { ...base.donateX, ...(raw.donateX || {}) },
         donatePay: { ...base.donatePay, ...(raw.donatePay || {}) },
+        youtubeChat: { ...base.youtubeChat, ...(raw.youtubeChat || {}) },
       };
       return;
     }

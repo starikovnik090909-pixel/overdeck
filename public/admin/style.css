@@ -2246,3 +2246,20 @@ html, body {
 /* ===== Ключ авторизации (§145) ===== */
 .key-check { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
 .setup-bar { display: flex; gap: 14px; align-items: center; padding: 10px 24px; background: var(--accent-soft); border-bottom: 1px solid var(--accent); font-size: 14px; }
+
+/* Чаты других платформ (вкладка «Чат») */
+.ext-chat-row .ext-state { font-size: 12px; color: var(--text-secondary); white-space: nowrap; }
+.ext-chat-row.connected .ext-state { color: #4ADE80; font-weight: 600; }
+.ext-chat-row.error .ext-state { color: #F87171; }
+.ext-chat-row.connecting .ext-state { color: #F5A524; }
+.ext-chat-row.connected .platform-dot { background: #4ADE80; box-shadow: 0 0 6px rgba(74,222,128,0.7); }
+.ext-chat-row.error .platform-dot { background: #F87171; }
+.ext-chat-row.connecting .platform-dot { background: #F5A524; }
+.ext-chat-row .ext-stop { display: none; }
+.ext-chat-row.connected .ext-stop, .ext-chat-row.connecting .ext-stop, .ext-chat-row.error .ext-stop { display: inline-flex; }
+.ext-chat-row .actions { margin-top: 10px; }
+.ext-chat-row .field { margin-bottom: 8px; }
+.ext-chat-row .form-message { min-height: 0; margin-top: 6px; }
+.ext-chat-row .form-message:empty { display: none; }
+.ext-chat-row .card-hint { margin: 4px 0 0; }
+.ext-tag, .chat-platform-tag { display: inline-block; box-sizing: border-box; min-width: 4.2em; text-align: center; font-weight: 700; }
