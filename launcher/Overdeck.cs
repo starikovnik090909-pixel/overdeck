@@ -354,7 +354,7 @@ class Launcher : Form
 
         Text = "Overdeck by Starikov";
         HandleCreated += delegate { DarkTitle.Apply(this, Ui.Bg1); };
-        ClientSize = new Size(460, 566);
+        ClientSize = new Size(700, 410);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -398,7 +398,7 @@ class Launcher : Form
 
         Card verPill = new Card();
         verPill.Size = new Size(96, 28);
-        verPill.Location = new Point(342, 34);
+        verPill.Location = new Point(326, 34);
         lblVersion = new Label();
         lblVersion.Text = "v" + version;
         lblVersion.Font = new Font("Consolas", 9.5f, FontStyle.Bold);
@@ -413,7 +413,7 @@ class Launcher : Form
         // --- карточка обновлений ---
         Card cUpd = new Card();
         cUpd.Location = new Point(22, 96);
-        cUpd.Size = new Size(416, 92);
+        cUpd.Size = new Size(400, 92);
         Controls.Add(cUpd);
         dotUpd = new Dot(); dotUpd.Location = new Point(16, 16); dotUpd.DotColor = Ui.Dim; cUpd.Controls.Add(dotUpd);
         lblUpdTitle = new Label();
@@ -426,7 +426,7 @@ class Launcher : Form
         cUpd.Controls.Add(lblUpdTitle);
         lblUpdate = new Label();
         lblUpdate.AutoSize = false;
-        lblUpdate.Size = new Size(384, 38);
+        lblUpdate.Size = new Size(368, 38);
         lblUpdate.Location = new Point(18, 38);
         lblUpdate.ForeColor = Ui.Dim;
         lblUpdate.BackColor = Color.Transparent;
@@ -435,14 +435,14 @@ class Launcher : Form
         cUpd.Controls.Add(lblUpdate);
         progUpd = new ProgressLine();
         progUpd.Location = new Point(18, 78);
-        progUpd.Size = new Size(380, 6);
+        progUpd.Size = new Size(364, 6);
         progUpd.Visible = false;
         cUpd.Controls.Add(progUpd);
 
         // --- карточка состояния ---
         Card cSt = new Card();
         cSt.Location = new Point(22, 200);
-        cSt.Size = new Size(416, 116);
+        cSt.Size = new Size(400, 116);
         Controls.Add(cSt);
         dotServer = new Dot(); dotServer.Location = new Point(16, 14); cSt.Controls.Add(dotServer);
         cSt.Controls.Add(RowName("Сервер", 11));
@@ -455,36 +455,35 @@ class Launcher : Form
         lblAdminUrl = RowValue(79); lblAdminUrl.Text = "localhost:" + port + "/admin"; cSt.Controls.Add(lblAdminUrl);
 
         // --- кнопки ---
-        btnAdmin = MakeButton("Открыть админку  ›", 22, 330, 416, 52, true);
-        btnAdmin.Font = new Font("Segoe UI Semibold", 12.5f);
+        btnAdmin = MakeButton("Открыть админку", 438, 96, 240, 48, false);
         btnAdmin.Click += delegate { OpenAdmin(); };
-        btnConsole = MakeButton("Консоль сервера", 22, 392, 204, 42, false);
+        btnConsole = MakeButton("Консоль сервера", 438, 154, 240, 48, false);
         btnConsole.Click += delegate { ShowConsole(); };
-        btnUpdate = MakeButton("Проверить обновления", 234, 392, 204, 42, false);
+        btnUpdate = MakeButton("Проверить обновления", 438, 212, 240, 48, false);
         btnUpdate.Click += delegate
         {
             if (pendingVersion.Length > 0 && downloadUrl.Length > 0 && !updating) InstallUpdate(pendingVersion);
             else CheckUpdates(true);
         };
-        btnToggle = MakeButton("Остановить сервер", 22, 442, 416, 40, false);
+        btnToggle = MakeButton("Остановить сервер", 438, 270, 240, 48, false);
         btnToggle.Click += delegate { ToggleServer(); };
 
         chkAuto = new Toggle();
         chkAuto.Text = "Обновлять автоматически";
         chkAuto.Checked = autoUpdate;
-        chkAuto.Location = new Point(24, 498);
+        chkAuto.Location = new Point(24, 334);
         chkAuto.Size = new Size(280, 24);
         chkAuto.CheckedChanged += delegate { autoUpdate = chkAuto.Checked; SaveUpdateConfig(); };
         Controls.Add(chkAuto);
 
         Label hint = new Label();
-        hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать.\nПолностью выйти: значок в трее → «Выход».";
+        hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать. Полностью выйти: значок в трее → «Выход».";
         hint.ForeColor = Color.FromArgb(150, 120, 126);
         hint.BackColor = Color.Transparent;
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
-        hint.Size = new Size(416, 34);
-        hint.Location = new Point(24, 526);
+        hint.Size = new Size(654, 20);
+        hint.Location = new Point(24, 372);
         Controls.Add(hint);
 
         console = new ConsoleForm();
@@ -565,7 +564,7 @@ class Launcher : Form
     static Label RowValue(int y)
     {
         Label l = new Label();
-        l.AutoSize = false; l.Size = new Size(260, 22); l.Location = new Point(140, y + 2);
+        l.AutoSize = false; l.Size = new Size(244, 22); l.Location = new Point(140, y + 2);
         l.TextAlign = ContentAlignment.MiddleRight; l.ForeColor = Ui.Dim; l.BackColor = Color.Transparent;
         l.Font = new Font("Consolas", 9.5f, FontStyle.Bold);
         return l;
