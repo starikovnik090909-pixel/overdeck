@@ -67,7 +67,7 @@ static class Program
             Application.ThreadException += delegate(object s, ThreadExceptionEventArgs e)
             {
                 Launcher.WriteLog("Ошибка: " + e.Exception);
-                MessageBox.Show("Ошибка лаунчера:\n" + e.Exception.Message + "\n\nПодробности — в файле launcher.log рядом с Overdeck.exe.", "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ошибка лаунчера:\n" + (string.IsNullOrEmpty(e.Exception.Message) ? e.Exception.GetType().FullName : e.Exception.Message) + "\n\n" + e.Exception.StackTrace + "\n\nПодробности — в файле launcher.log рядом с Overdeck.exe.", "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Error);
             };
             Launcher form = new Launcher();
             Thread waiter = new Thread(delegate()
@@ -76,7 +76,10 @@ static class Program
             });
             waiter.IsBackground = true;
             waiter.Start();
-            Application.Run(form);
+            Launcher.WriteLog("Запуск: окно создано");
+            try { Application.Run(form); }
+            catch (Exception ex) { Launcher.WriteLog("Application.Run завершился ошибкой: " + ex); throw; }
+            Launcher.WriteLog("Лаунчер завершил работу");
         }
     }
 }
@@ -485,7 +488,7 @@ class Launcher : Form
         Controls.Add(hint);
 
         console = new ConsoleForm();
-        IntPtr consoleHandle = console.Handle; // окно консоли создаём в потоке интерфейса, чтобы вывод сервера из других потоков не падал
+        console.HandleCreated += delegate { FlushPendingLog(); };
         try { console.Icon = Icon; } catch { }
 
         // значок в трее
@@ -623,12 +626,30 @@ class Launcher : Form
         return null;
     }
 
+    // строки, пришедшие раньше, чем создано окно консоли (оно создаётся при первом показе) — ждут здесь и выводятся при создании
+    readonly List<KeyValuePair<string, Color>> pendingLog = new List<KeyValuePair<string, Color>>();
+    void FlushPendingLog()
+    {
+        try
+        {
+            KeyValuePair<string, Color>[] items;
+            lock (pendingLog) { items = pendingLog.ToArray(); pendingLog.Clear(); }
+            foreach (KeyValuePair<string, Color> kv in items) console.Append(kv.Key, kv.Value);
+        }
+        catch { }
+    }
+
     void Log(string text, Color color)
     {
         WriteLog(text);
         try
         {
-            if (console == null || console.IsDisposed || !console.IsHandleCreated) return;
+            if (console == null || console.IsDisposed) return;
+            if (!console.IsHandleCreated)
+            {
+                lock (pendingLog) { pendingLog.Add(new KeyValuePair<string, Color>(text, color)); if (pendingLog.Count > 3000) pendingLog.RemoveAt(0); }
+                return;
+            }
             if (console.InvokeRequired) { console.BeginInvoke((MethodInvoker)delegate { try { console.Append(text, color); } catch { } }); return; }
             console.Append(text, color);
         }
@@ -997,7 +1018,7 @@ class Launcher : Form
             f.StartPosition = FormStartPosition.CenterScreen;
             f.ClientSize = new Size(560, 440);
             f.FormBorderStyle = FormBorderStyle.FixedDialog; f.MaximizeBox = false; f.MinimizeBox = false;
-            f.BackColor = Ui.Bg2; f.ForeColor = Ui.Txt; f.TopMost = true;
+            f.BackColor = Ui.Bg2; f.ForeColor = Ui.Txt;
             f.HandleCreated += delegate { DarkTitle.Apply(f, Ui.Bg2); };
             try { f.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             Label h = new Label(); h.Text = "Overdeck обновлён до " + ver; h.Font = new Font("Segoe UI Semibold", 15f); h.ForeColor = Ui.Txt; h.SetBounds(20, 16, 520, 32); f.Controls.Add(h);
@@ -1009,7 +1030,7 @@ class Launcher : Form
             Button ok = new Button(); ok.Text = "Понятно"; ok.FlatStyle = FlatStyle.Flat; ok.FlatAppearance.BorderSize = 0;
             ok.BackColor = Ui.Coral; ok.ForeColor = Color.White; ok.Font = new Font("Segoe UI Semibold", 10f);
             ok.SetBounds(420, 384, 120, 36); ok.Click += delegate { f.Close(); }; f.Controls.Add(ok); f.AcceptButton = ok;
-            f.ShowDialog();
+            f.Show();
         }
         catch (Exception ex) { WriteLog("Окно «Что нового» не показано: " + ex.Message); }
     }
@@ -1127,7 +1148,12 @@ class Launcher : Form
                 dotUpd.DotColor = col;
                 lblUpdate.Cursor = page.Length > 0 ? Cursors.Hand : Cursors.Default;
                 btnUpdate.Enabled = true;
-                if (newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating) InstallUpdate(newVersion);
+                if (newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating)
+                {
+                    // сразу после установки обновления второй раз подряд не обновляемся (защита от цикла «обновился — перезапустился»)
+                    if (Program.JustUpdated && !manual) { WriteLog("Сразу после обновления автообновление пропущено (найдена версия " + newVersion + ", у нас " + version + ")"); lblUpdate.Text = "Доступна версия " + newVersion + " (у тебя " + version + "). Нажми «Обновить»."; }
+                    else { WriteLog("Автообновление: " + version + " → " + newVersion); InstallUpdate(newVersion); }
+                }
             });
         });
     }
