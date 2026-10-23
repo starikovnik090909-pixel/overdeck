@@ -913,6 +913,7 @@ class Launcher : Form
         foreach (string raw in md.Split(new char[] { '\n' }))
         {
             string l = raw.TrimEnd(new char[] { ' ', '\t', '\r' });
+            if (Regex.IsMatch(l, "^\\s*!\\[[^\\]]*\\]\\([^)]*\\)\\s*$")) continue;
             l = Regex.Replace(l, "^#+\\s*", "");
             l = Regex.Replace(l, "^\\s*[-*]\\s+", "•  ");
             l = l.Replace("**", "").Replace("`", "");
