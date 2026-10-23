@@ -12,10 +12,30 @@ using System.IO;
 using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows.Forms;
+
+// Тёмная шапка окна (Windows 10 20H1+ и Windows 11): без этого заголовок окна остаётся светлым
+static class DarkTitle
+{
+    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
+    public static void Apply(Form f, Color caption)
+    {
+        try
+        {
+            int on = 1;
+            if (DwmSetWindowAttribute(f.Handle, 20, ref on, 4) != 0) DwmSetWindowAttribute(f.Handle, 19, ref on, 4);
+            int bg = caption.R | (caption.G << 8) | (caption.B << 16); // COLORREF = 0x00BBGGRR
+            DwmSetWindowAttribute(f.Handle, 35, ref bg, 4);            // цвет шапки (только Windows 11, на 10 просто игнорируется)
+            int fg = Ui.Txt.R | (Ui.Txt.G << 8) | (Ui.Txt.B << 16);
+            DwmSetWindowAttribute(f.Handle, 36, ref fg, 4);            // цвет текста шапки
+        }
+        catch { }
+    }
+}
 
 static class Program
 {
@@ -43,6 +63,7 @@ static class Program
                 return;
             }
             Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            AppDomain.CurrentDomain.UnhandledException += delegate(object s2, UnhandledExceptionEventArgs e2) { Launcher.WriteLog("Необработанная ошибка: " + e2.ExceptionObject); };
             Application.ThreadException += delegate(object s, ThreadExceptionEventArgs e)
             {
                 Launcher.WriteLog("Ошибка: " + e.Exception);
@@ -229,6 +250,7 @@ class ConsoleForm : Form
         Size = new Size(960, 560);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(12, 12, 12);
+        HandleCreated += delegate { DarkTitle.Apply(this, Color.FromArgb(12, 12, 12)); };
         Box = new RichTextBox();
         Box.Dock = DockStyle.Fill;
         Box.ReadOnly = true;
@@ -285,7 +307,8 @@ class Launcher : Form
     ProgressLine progUpd;
     NotifyIcon tray;
     System.Windows.Forms.Timer poll;
-    bool autoOpened;
+    bool autoOpened = true;  // админка сама открывается только после нажатия «Запустить сервер»
+    bool serverWasRunning;
 
     static string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "launcher.log");
     public static void WriteLog(string text)
@@ -327,6 +350,7 @@ class Launcher : Form
         LoadUpdateConfig();
 
         Text = "Overdeck by Starikov";
+        HandleCreated += delegate { DarkTitle.Apply(this, Ui.Bg1); };
         ClientSize = new Size(460, 566);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
@@ -461,6 +485,7 @@ class Launcher : Form
         Controls.Add(hint);
 
         console = new ConsoleForm();
+        IntPtr consoleHandle = console.Handle; // окно консоли создаём в потоке интерфейса, чтобы вывод сервера из других потоков не падал
         try { console.Icon = Icon; } catch { }
 
         // значок в трее
@@ -471,6 +496,7 @@ class Launcher : Form
         menu.Items.Add("Открыть окно", null, delegate { ShowMain(); });
         menu.Items.Add("Открыть админку", null, delegate { OpenAdmin(); });
         menu.Items.Add("Открыть консоль", null, delegate { ShowConsole(); });
+        menu.Items.Add("Что нового", null, delegate { ShowWhatsNewNow(); });
         menu.Items.Add("-");
         menu.Items.Add("Выход (остановит сервер)", null, delegate { Quit(); });
         tray.ContextMenuStrip = menu;
@@ -503,7 +529,8 @@ class Launcher : Form
                 catch { }
                 BeginInvoke((MethodInvoker)delegate { lblNode.Text = nv; lblNode.ForeColor = nc; });
             });
-            StartServerIfNeeded();
+            // сервер сам не запускается: сначала проверка обновлений, запуск — кнопкой «Запустить сервер»
+            RefreshStatus();
             ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(2500); BeginInvoke((MethodInvoker)delegate { CheckUpdates(false); }); });
             CheckWhatsNew();
         };
@@ -599,8 +626,13 @@ class Launcher : Form
     void Log(string text, Color color)
     {
         WriteLog(text);
-        if (console.InvokeRequired) { console.BeginInvoke((MethodInvoker)delegate { console.Append(text, color); }); return; }
-        console.Append(text, color);
+        try
+        {
+            if (console == null || console.IsDisposed || !console.IsHandleCreated) return;
+            if (console.InvokeRequired) { console.BeginInvoke((MethodInvoker)delegate { try { console.Append(text, color); } catch { } }); return; }
+            console.Append(text, color);
+        }
+        catch { }
     }
 
     static readonly Regex Ansi = new Regex("\u001b\\[[0-9;]*m");
@@ -665,6 +697,7 @@ class Launcher : Form
                 server.ErrorDataReceived += delegate(object s, DataReceivedEventArgs e) { OnLine(e.Data); };
                 server.Exited += delegate
                 {
+                  try {
                     int code = -1;
                     try { code = server.ExitCode; } catch { }
                     Log("[Overdeck] Сервер остановлен.", Color.FromArgb(255, 184, 107));
@@ -675,6 +708,7 @@ class Launcher : Form
                         Thread.Sleep(1200);
                         StartServer();
                     }
+                  } catch (Exception ex2) { WriteLog("Ошибка при остановке сервера: " + ex2.Message); }
                 };
                 server.Start();
                 ownServer = true;
@@ -759,9 +793,10 @@ class Launcher : Form
 
     void ToggleServer()
     {
+        if (updating) return;
         if (server != null && ownServer && !server.HasExited) { StopServer(); }
         else if (PortOpen()) { MessageBox.Show("Сервер на порту " + port + " запущен не из этого окна — остановить его можно только там, где он запущен (или через Диспетчер задач).", "Overdeck"); }
-        else { StartServer(); }
+        else { autoOpened = false; StartServer(); }
     }
 
     void RefreshStatus()
@@ -866,8 +901,42 @@ class Launcher : Form
         return string.Join("\r\n", lines.ToArray()).Trim();
     }
 
+    // Записи whatsnew.js (то, что видно красными точками в админке) для версии вида 3.0.25-… — запасной источник текста
+    string LocalNotes(string cur, out string firstTitle)
+    {
+        firstTitle = "";
+        try
+        {
+            Match v = Regex.Match(cur, "^\\d+\\.\\d+\\.\\d+");
+            if (!v.Success) return "";
+            string js = File.ReadAllText(Path.Combine(root, "public", "admin", "whatsnew.js"), Encoding.UTF8);
+            List<string> parts = new List<string>();
+            foreach (Match m in Regex.Matches(js, "id:\\s*'" + Regex.Escape(v.Value) + "-[^']*'[^\\r\\n]*?title:\\s*'((?:[^'\\\\]|\\\\.)*)',\\s*\\r?\\n?\\s*text:\\s*'((?:[^'\\\\]|\\\\.)*)'"))
+            {
+                string t = JsUnescape(m.Groups[1].Value), x = JsUnescape(m.Groups[2].Value);
+                if (firstTitle.Length == 0) firstTitle = t;
+                parts.Add(t + "\r\n" + x.Replace("\n", "\r\n"));
+            }
+            return string.Join("\r\n\r\n", parts.ToArray());
+        }
+        catch (Exception ex) { WriteLog("«Что нового»: не прочитал whatsnew.js: " + ex.Message); return ""; }
+    }
+
+    static string JsUnescape(string t)
+    {
+        return t.Replace("\\n", "\n").Replace("\\'", "'").Replace("\\\"", "\"").Replace("\\\\", "\\");
+    }
+
+    // пункт меню в трее: показать описание текущей версии в любой момент
+    void ShowWhatsNewNow()
+    {
+        string lt; string ln = LocalNotes(version, out lt);
+        ShowWhatsNew(version, lt, ln);
+    }
+
     void CheckWhatsNew()
     {
+        WriteLog("«Что нового»: проверка, версия " + version);
         string statePath = Path.Combine(root, "launcher.state");
         string last = "";
         try { if (File.Exists(statePath)) last = File.ReadAllText(statePath, Encoding.UTF8).Trim(); } catch { }
@@ -904,8 +973,17 @@ class Launcher : Form
                 }
             }
             catch { }
-            if (notes.Trim().Length == 0 && title.Length == 0) return; // не удалось получить описание — попробуем при следующем запуске
-            BeginInvoke((MethodInvoker)delegate { ShowWhatsNew(cur, title, CleanNotes(notes)); });
+            string shown = CleanNotes(notes);
+            if (shown.Length == 0)
+            {
+                // описание релиза получить не удалось (нет сети / лимит GitHub / пустое поле) — берём «что нового» из файла самой программы
+                string lt; string ln = LocalNotes(cur, out lt);
+                WriteLog("«Что нового»: описание релиза пустое, беру из whatsnew.js (" + (ln.Length > 0 ? "найдено" : "не найдено") + ")");
+                if (ln.Length > 0) { shown = ln; if (title.Length == 0) title = lt; }
+            }
+            if (shown.Length == 0 && title.Length == 0) { WriteLog("«Что нового»: нечего показывать, попробую при следующем запуске"); return; }
+            WriteLog("«Что нового»: показываю окно для " + cur);
+            BeginInvoke((MethodInvoker)delegate { ShowWhatsNew(cur, title, shown); });
             try { File.WriteAllText(statePath, cur, new UTF8Encoding(false)); } catch { }
         });
     }
@@ -920,6 +998,7 @@ class Launcher : Form
             f.ClientSize = new Size(560, 440);
             f.FormBorderStyle = FormBorderStyle.FixedDialog; f.MaximizeBox = false; f.MinimizeBox = false;
             f.BackColor = Ui.Bg2; f.ForeColor = Ui.Txt; f.TopMost = true;
+            f.HandleCreated += delegate { DarkTitle.Apply(f, Ui.Bg2); };
             try { f.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             Label h = new Label(); h.Text = "Overdeck обновлён до " + ver; h.Font = new Font("Segoe UI Semibold", 15f); h.ForeColor = Ui.Txt; h.SetBounds(20, 16, 520, 32); f.Controls.Add(h);
             Label sub = new Label(); sub.Text = title; sub.Font = new Font("Segoe UI", 10f); sub.ForeColor = Ui.Dim; sub.SetBounds(22, 50, 516, 22); f.Controls.Add(sub);
@@ -1092,6 +1171,7 @@ class Launcher : Form
                 }
                 SetUpdateText("Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
                 Log("[Overdeck] Устанавливаю обновление " + newVer + "…", Color.FromArgb(255, 184, 107));
+                serverWasRunning = ownServer || PortOpen();
                 StopServer();
                 Thread.Sleep(800);
 
@@ -1131,7 +1211,7 @@ class Launcher : Form
                 Log("[Overdeck] Не удалось обновиться: " + ex.Message, Color.FromArgb(241, 76, 76));
                 SetUpdateText("Не удалось установить обновление: " + ex.Message, Color.FromArgb(240, 140, 140));
                 try { Directory.Delete(tmpDir, true); } catch { }
-                BeginInvoke((MethodInvoker)delegate { updating = false; progUpd.Visible = false; btnUpdate.Enabled = true; StartServerIfNeeded(); });
+                BeginInvoke((MethodInvoker)delegate { updating = false; progUpd.Visible = false; btnUpdate.Enabled = true; if (serverWasRunning) StartServerIfNeeded(); });
             }
         });
     }

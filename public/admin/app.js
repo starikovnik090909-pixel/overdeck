@@ -2984,7 +2984,7 @@
   const chatSettingsMessage = document.getElementById('chatSettingsMessage');
   const CHAT_MIRROR_LIMIT = 60;
 
-  let chatDisplaySettings = { showBadges: true, showAvatars: true, showThirdPartyEmotes: true, animateMessages: true, hideLinks: false, highlightMods: false, highlightVips: false, highlightNewChatters: false, highlightRaiders: false };
+  let chatDisplaySettings = { showBadges: true, showAvatars: true, showThirdPartyEmotes: true, animateMessages: true, hideLinks: false, highlightMods: false, highlightVips: false, highlightNewChatters: false, highlightRaiders: false, platformTagStyle: 'outline' };
   // Все переключатели шестерёнки «Отображение чата»: id поля -> ключ настройки на сервере
   const CHAT_TOGGLES = { chatShowBadges: 'showBadges', chatShowAvatars: 'showAvatars', chatShowThirdPartyEmotes: 'showThirdPartyEmotes', chatAnimateMessages: 'animateMessages', chatHideLinks: 'hideLinks', chatHighlightMods: 'highlightMods', chatHighlightVips: 'highlightVips', chatHighlightNewChatters: 'highlightNewChatters', chatHighlightRaiders: 'highlightRaiders' };
   let chatMessagesCache = []; // чтобы перерисовать всё при смене настроек, не только новые сообщения
@@ -3030,6 +3030,7 @@
     }
     const line = document.createElement('div');
     line.className = 'chat-mirror-line';
+    line.dataset.platform = msg.platform || 'twitch'; // по нему работает фильтр платформ над зеркалом
 
     if (chatDisplaySettings.showAvatars && msg.avatarUrl) {
       const avatar = document.createElement('img');
@@ -3064,6 +3065,18 @@
     return line;
   }
 
+  // Фильтр платформ над зеркалом: прячет строки других платформ (только в админке, виджет OBS не меняется)
+  (function initChatFilter() {
+    const box = document.getElementById('chatFilter');
+    if (!box) return;
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-f]'); if (!b) return;
+      box.querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b));
+      const mirror = document.getElementById('chatMirror');
+      if (mirror) mirror.dataset.filter = b.dataset.f;
+    });
+  })();
+
   function renderChatMirrorAll() {
     chatMirror.innerHTML = '';
     if (chatMessagesCache.length === 0) {
@@ -3077,7 +3090,56 @@
     chatMirror.scrollTop = chatMirror.scrollHeight;
   }
 
+  /* Статистика чата (карточка слева): считается по сообщениям, которые пришли, пока открыта админка */
+  const chatStats = { total: 0, times: [], users: new Map(), plat: { twitch: 0, kick: 0, youtube: 0, vk: 0 } };
+  const CS_COLORS = { twitch: '#9146FF', kick: '#53FC18', youtube: '#FF0033', vk: '#0077FF' };
+  const CS_NAMES = { twitch: 'Twitch', kick: 'Kick', youtube: 'YouTube', vk: 'VK Live' };
+  function paintChatStats() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    const now = Date.now();
+    chatStats.times = chatStats.times.filter((t) => now - t < 60000);
+    set('csTotal', chatStats.total);
+    set('csRate', chatStats.times.length);
+    set('csUsers', chatStats.users.size);
+    let top = null;
+    chatStats.users.forEach((v) => { if (!top || v.n > top.n) top = v; });
+    set('csTop', top ? top.name : '—');
+    set('csTopSub', top ? 'самый активный · ' + top.n + ' сообщ.' : 'самый активный');
+    const bars = document.getElementById('csBars');
+    if (!bars) return;
+    const max = Math.max(1, ...Object.values(chatStats.plat));
+    bars.innerHTML = Object.keys(chatStats.plat).map((k) => '<div class="csbar"><span class="csbar-n">' + CS_NAMES[k] + '</span><span class="csbar-t"><i style="width:' + Math.round(chatStats.plat[k] / max * 100) + '%;background:' + CS_COLORS[k] + '"></i></span><span class="csbar-v">' + chatStats.plat[k] + '</span></div>').join('');
+  }
+  function countChatStats(msg) {
+    const p = msg.platform || 'twitch';
+    chatStats.total++; chatStats.times.push(Date.now());
+    if (chatStats.plat[p] != null) chatStats.plat[p]++;
+    const key = p + ':' + String(msg.username || '').toLowerCase();
+    const u = chatStats.users.get(key) || { name: msg.username || '?', n: 0 };
+    u.n++; chatStats.users.set(key, u);
+    paintChatStats();
+  }
+  paintChatStats();
+  setInterval(() => { if (!document.hidden) paintChatStats(); }, 5000);
+
+  /* Кнопки над зеркалом («На стрим», «Только мне», шестерёнка) раскрывают свою панель; открыта может быть одна */
+  (function initChatPops() {
+    const btns = Array.from(document.querySelectorAll('.chat-pill[data-pop]'));
+    if (!btns.length) return;
+    const close = () => btns.forEach((b) => { b.setAttribute('aria-expanded', 'false'); const el = document.getElementById(b.dataset.pop); if (el) el.hidden = true; });
+    btns.forEach((b) => b.addEventListener('click', () => {
+      const el = document.getElementById(b.dataset.pop); if (!el) return;
+      const open = el.hidden; close();
+      if (open) { el.hidden = false; b.setAttribute('aria-expanded', 'true'); }
+    }));
+    document.addEventListener('click', (e) => {
+      if (e.target.closest('.chat-pop, .chat-pill[data-pop]')) return;
+      close();
+    });
+  })();
+
   function addChatMirrorMessage(msg) {
+    countChatStats(msg);
     chatMessagesCache.push(msg);
     if (chatMessagesCache.length > CHAT_MIRROR_LIMIT) chatMessagesCache.shift();
     if (chatMirrorEmpty.parentNode) chatMirrorEmpty.remove();
@@ -3096,8 +3158,25 @@
     if (wasAtBottom) chatMirror.scrollTop = chatMirror.scrollHeight;
   }
 
+  /* Плашки платформ: в заголовках подключений и в образцах выбора стиля рисуются тем же кодом, что и в чате */
+  function paintPlatformTags() {
+    const st = chatDisplaySettings.platformTagStyle;
+    document.querySelectorAll('.ext-tag[data-ptag]').forEach((el) => {
+      el.replaceChildren(window.ChatFormat.makePlatformTag(el.dataset.ptag, st));
+    });
+    document.querySelectorAll('.ptag-prev').forEach((el) => {
+      el.replaceChildren(...['kick', 'youtube', 'vk'].map((p) => window.ChatFormat.makePlatformTag(p, el.dataset.style)));
+    });
+    document.querySelectorAll('.ptag-opt').forEach((b) => b.classList.toggle('on', b.dataset.v === st));
+  }
+  document.getElementById('chatPtagOpts')?.addEventListener('click', (e) => {
+    const b = e.target.closest('.ptag-opt'); if (!b) return;
+    saveChatSetting({ platformTagStyle: b.dataset.v });
+  });
+
   function applyChatSettingsToForm(settings) {
     chatDisplaySettings = { ...chatDisplaySettings, ...settings };
+    paintPlatformTags();
     Object.entries(CHAT_TOGGLES).forEach(([id, key]) => { document.getElementById(id).checked = !!chatDisplaySettings[key]; });
   }
 
@@ -3179,7 +3258,7 @@
     } catch (e) {
       label.textContent = 'Не удалось скопировать';
     }
-    setTimeout(() => { label.textContent = 'Скопировать URL'; }, 1500);
+    setTimeout(() => { label.textContent = 'Копировать'; }, 1500);
   });
 
   /* ================================================================
@@ -6000,19 +6079,7 @@
   document.getElementById('btnPredictionCancelForm').addEventListener('click', closeGameForms);
   document.getElementById('btnPollCancelForm').addEventListener('click', closeGameForms);
 
-  /* --- Шестерёнка у окна чата: «Отображение чата» спрятано во всплывающую панель --- */
-  const btnChatGear = document.getElementById('btnChatGear');
-  const chatDisplayPanel = document.getElementById('chatDisplayPanel');
-  function setChatDisplayPanelOpen(open) {
-    chatDisplayPanel.style.display = open ? 'block' : 'none';
-    btnChatGear.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-  btnChatGear.addEventListener('click', () => setChatDisplayPanelOpen(chatDisplayPanel.style.display === 'none'));
-  document.addEventListener('click', (e) => {
-    if (chatDisplayPanel.style.display === 'none') return;
-    if (chatDisplayPanel.contains(e.target) || btnChatGear.contains(e.target)) return;
-    setChatDisplayPanelOpen(false); // клик мимо панели закрывает её
-  });
+  /* --- «Как выглядит чат» теперь обычная карточка на странице (раньше пряталась за шестерёнкой) --- */
 
   /* --- «Отделить чат»: окно чата выносится в отдельное окно, которое не пропадает, когда сворачиваешь браузер с админкой ---
      Основной способ — Document Picture-in-Picture (Chrome/Edge 116+): плавающее окно с произвольным HTML, висит поверх

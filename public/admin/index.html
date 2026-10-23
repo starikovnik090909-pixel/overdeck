@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=130">
+<link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=21">
 <script>window.__ovQuery = location.search;</script>
@@ -731,7 +731,8 @@
       <div class="chat-page">
         <div class="chat-main">
           <h1 class="tab-title">Чат</h1>
-          <p class="tab-description">Ставки на баллы канала и опросы, зеркало чата в реальном времени (только чтение) и виджет для OBS.</p>
+          <p class="tab-description">Чат со всех платформ в одном месте: как показать его в OBS, как он выглядит, ставки и опросы.</p>
+
           <div class="chat-main-body">
             <!-- Компактные панели; «+» раскрывает форму в свободном месте справа от панели (см. .chat-form-area). -->
             <div class="chat-games-col">
@@ -760,7 +761,7 @@
                 <div class="platform-card ext-chat-row" data-p="kick">
                   <div class="platform-card-header">
                     <span class="platform-dot"></span>
-                    <span class="platform-name">Kick <span class="chat-role-tag ext-tag" style="background:#53FC18;color:#0b0e0f;border:1px solid #2E9E0B">KICK</span></span>
+                    <span class="platform-name">Kick <span class="ext-tag" data-ptag="kick"></span></span>
                     <span class="ext-state"></span>
                     <span class="chevron">▸</span>
                   </div>
@@ -773,7 +774,7 @@
                 <div class="platform-card ext-chat-row" data-p="vk">
                   <div class="platform-card-header">
                     <span class="platform-dot"></span>
-                    <span class="platform-name">VK Live <span class="chat-role-tag ext-tag" style="background:#0077FF;color:#fff;border:1px solid #004EA8">VK</span></span>
+                    <span class="platform-name">VK Live <span class="ext-tag" data-ptag="vk"></span></span>
                     <span class="ext-state"></span>
                     <span class="chevron">▸</span>
                   </div>
@@ -786,7 +787,7 @@
                 <div class="platform-card ext-chat-row" data-p="youtube">
                   <div class="platform-card-header">
                     <span class="platform-dot"></span>
-                    <span class="platform-name">YouTube <span class="chat-role-tag ext-tag" style="background:#FF0033;color:#fff;border:1px solid #A8001F">You</span></span>
+                    <span class="platform-name">YouTube <span class="ext-tag" data-ptag="youtube"></span></span>
                     <span class="ext-state"></span>
                     <span class="chevron">▸</span>
                   </div>
@@ -799,6 +800,17 @@
                     <div class="form-message ext-msg"></div>
                   </div>
                 </div>
+              </div>
+
+              <div class="card ui3-card chat-stats-card" id="chatStatsCard">
+                <div class="ui3-ch"><div><h3>Статистика чата</h3><div class="sub">За время, пока открыта админка. Считается по сообщениям со всех платформ.</div></div></div>
+                <div class="cstat-tiles">
+                  <div class="cstat"><b id="csTotal">0</b><span>сообщений</span></div>
+                  <div class="cstat"><b id="csRate">0</b><span>в минуту</span></div>
+                  <div class="cstat"><b id="csUsers">0</b><span>пишущих</span></div>
+                  <div class="cstat"><b id="csTop">—</b><span id="csTopSub">самый активный</span></div>
+                </div>
+                <div class="cstat-bars" id="csBars"></div>
               </div>
             </div>
             <div class="chat-form-area" id="chatFormArea">
@@ -871,96 +883,117 @@
           <div class="chat-mirror-head">
             <h2 class="section-title">Чат сейчас</h2>
             <div class="chat-head-actions">
-              <button class="chat-obs-btn chat-detach-btn" id="btnChatDetach" type="button" title="Вынести чат в отдельное окно" aria-pressed="false">
+              <button class="chat-pill chat-detach-btn" id="btnChatDetach" type="button" title="Отделить чат в отдельное окно" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M14 4h6v6M20 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 <span class="chat-obs-btn-label" id="chatDetachLabel">Отделить чат</span>
               </button>
-              <button class="chat-obs-btn" id="btnChatDock" type="button" title="Добавить чат панелью прямо в OBS (вместо чата Twitch)">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M15 4v16" stroke="currentColor" stroke-width="1.6"/></svg>
-                <span class="chat-obs-btn-label">Док для OBS</span>
-              </button>
-              <button class="chat-obs-btn" id="btnCopyWidgetUrl" type="button" title="Скопировать URL виджета чата для OBS">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="7.4" r="3.1" fill="currentColor"/><circle cx="7.7" cy="14.8" r="3.1" fill="currentColor"/><circle cx="16.3" cy="14.8" r="3.1" fill="currentColor"/></svg>
-                <span class="chat-obs-btn-label">Скопировать URL</span>
-              </button>
-              <input type="text" id="chatWidgetUrl" readonly tabindex="-1" aria-hidden="true" class="visually-hidden">
-              <button class="chat-gear-btn" id="btnChatGear" type="button" title="Отображение чата" aria-expanded="false">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.5"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1.08-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1.08 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
-              </button>
+              <button class="chat-pill" data-pop="popStream" type="button" aria-expanded="false" title="Чат на экране стрима: источник «Браузер»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>На стрим</span><i class="dot dot-g"></i></button>
+              <button class="chat-pill" data-pop="popDock" type="button" aria-expanded="false" title="Чат внутри OBS, только для тебя: док-панель"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M15 4v16"/></svg><span>Только мне</span><i class="dot dot-y"></i></button>
+              <button class="chat-pill chat-pill-ico" data-pop="chatDisplayPanel" type="button" aria-expanded="false" title="Как выглядит чат: значки, смайлы, подсветка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
             </div>
-            <div class="card chat-display-panel" id="chatDisplayPanel" style="display:none;">
-              <h2 class="section-title">Отображение чата</h2>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Показывать значки (подписка, VIP, модератор и т.д.)</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatShowBadges">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Показывать аватарки</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatShowAvatars">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Показывать смайлы 7TV / BTTV / FFZ</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatShowThirdPartyEmotes">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <h3 class="chat-display-subtitle">Анимация и фильтры</h3>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Анимация появления сообщений (маленькое → обычный размер)</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatAnimateMessages">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Скрывать ссылки (сообщение из одной ссылки не показывается)</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatHideLinks">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <h3 class="chat-display-subtitle">Подсветка по ролям</h3>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Модераторы</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatHighlightMods">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">VIP</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatHighlightVips">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Новые зрители чата (первое сообщение в чате)</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatHighlightNewChatters">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="toggle-row">
-                <span class="toggle-row-label">Рейдеры (первое сообщение в течение 10 минут после рейда)</span>
-                <label class="toggle-switch">
-                  <input type="checkbox" id="chatHighlightRaiders">
-                  <span class="toggle-slider"></span>
-                </label>
-              </div>
-              <div class="form-message" id="chatSettingsMessage"></div>
+
+          </div>
+          <div class="chat-pops">
+            <div class="chat-pop" id="popStream" hidden>
+              <div class="chat-pop-title"><b>Чат на экране стрима</b><span class="obs-who obs-who-viewers">Видят зрители</span></div>
+              <p>Часть картинки трансляции. Источник «Браузер», фон прозрачный.</p>
+              <ol class="obs-steps"><li>В OBS: Источники → «+» → <b>Браузер</b></li><li>Вставь ссылку ниже, размер <b>400 × 800</b></li></ol>
+              <div class="obs-url-row"><input type="text" id="chatWidgetUrl" class="obs-url" readonly aria-label="Ссылка на виджет чата"><button class="btn btn-primary obs-copy" id="btnCopyWidgetUrl" type="button"><span class="chat-obs-btn-label">Копировать</span></button></div>
             </div>
+            <div class="chat-pop" id="popDock" hidden>
+              <div class="chat-pop-title"><b>Чат только для тебя</b><span class="obs-who obs-who-me">Видишь только ты</span></div>
+              <p>Панель внутри окна OBS. Зрители её не видят. Заменяет чат Twitch и пишет от имени бота.</p>
+              <ol class="obs-steps"><li>В OBS: Вид → Док-панели → <b>Пользовательские док-панели браузера</b></li><li>Название «Чат», вставь ссылку, «Применить»</li></ol>
+              <div class="obs-url-row"><button class="btn btn-primary obs-copy obs-copy-wide" id="btnChatDock" type="button">Скопировать ссылку на док</button></div>
+            </div>
+                  <div class="chat-pop chat-display-panel" id="chatDisplayPanel" hidden>
+                    <div class="chat-pop-title"><b>Как выглядит чат</b><span>Для виджета и зеркала. Применяется сразу.</span></div>
+                    <div class="chat-display-body">
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Показывать значки (подписка, VIP, модератор и т.д.)</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatShowBadges">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Показывать аватарки</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatShowAvatars">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Показывать смайлы 7TV / BTTV / FFZ</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatShowThirdPartyEmotes">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <h3 class="chat-display-subtitle">Плашка платформы (Kick, YouTube, VK Live)</h3>
+                    <div class="ptag-opts" id="chatPtagOpts">
+                      <button type="button" class="ptag-opt" data-v="outline"><span class="ptag-prev" data-style="outline"></span><em>Контур</em></button>
+                      <button type="button" class="ptag-opt" data-v="icon"><span class="ptag-prev" data-style="icon"></span><em>Значок</em></button>
+                    </div>
+                    <h3 class="chat-display-subtitle">Анимация и фильтры</h3>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Анимация появления сообщений (маленькое → обычный размер)</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatAnimateMessages">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Скрывать ссылки (сообщение из одной ссылки не показывается)</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatHideLinks">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <h3 class="chat-display-subtitle">Подсветка по ролям</h3>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Модераторы</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatHighlightMods">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">VIP</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatHighlightVips">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Новые зрители чата (первое сообщение в чате)</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatHighlightNewChatters">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="toggle-row">
+                      <span class="toggle-row-label">Рейдеры (первое сообщение в течение 10 минут после рейда)</span>
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="chatHighlightRaiders">
+                        <span class="toggle-slider"></span>
+                      </label>
+                    </div>
+                    <div class="form-message" id="chatSettingsMessage"></div>
+                  </div>
+                  </div>
+
           </div>
           <div class="chat-detached-note" id="chatDetachedNote" style="display:none;">
             <p class="card-hint">Чат вынесен в отдельное окно и висит поверх других окон. Окно закроется вместе с этой вкладкой админки.</p>
             <button class="btn btn-secondary" id="btnChatReattach" type="button">Вернуть чат сюда</button>
+          </div>
+          <div class="chat-filter" id="chatFilter" role="group" aria-label="Показывать сообщения платформы">
+            <button type="button" class="on" data-f="all">Все</button>
+            <button type="button" data-f="twitch">Twitch</button>
+            <button type="button" data-f="kick">Kick</button>
+            <button type="button" data-f="youtube">YouTube</button>
+            <button type="button" data-f="vk">VK</button>
           </div>
           <div class="chat-mirror-frame" id="chatMirror">
             <div class="chat-mirror-empty" id="chatMirrorEmpty">Ждём сообщения в чате…</div>
@@ -3221,14 +3254,14 @@
   </main>
 </div>
 
-<script src="/chat-format.js?v=4"></script>
+<script src="/chat-format.js?v=6"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=164"></script>
+<script src="app.js?v=168"></script>
 <script src="guides-data.js?v=7"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>
-<script src="ui3.js?v=17"></script>
-<script src="whatsnew.js?v=8"></script>
+<script src="ui3.js?v=18"></script>
+<script src="whatsnew.js?v=9"></script>
 </body>
 </html>

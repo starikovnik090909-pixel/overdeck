@@ -593,6 +593,7 @@ const DEFAULT_CHAT_SETTINGS = {
   animateMessages: true,        // новое сообщение появляется маленьким и плавно вырастает до обычного размера
   hideLinks: false,             // ссылки в тексте не показываются (сообщение, где была только ссылка, не показывается совсем)
   highlightMods: false, highlightVips: false, highlightNewChatters: false, highlightRaiders: false, // подсветка сообщений по ролям автора
+  platformTagStyle: 'outline',  // вид метки платформы (Kick / YouTube / VK Live) в чате: 'outline' — контур, 'icon' — значок + подпись
 };
 {
   // Настройки, сохранённые до появления новых полей, дополняем значениями по умолчанию (старые значения не трогаем).
@@ -3471,7 +3472,7 @@ app.get('/api/chat-settings', (req, res) => {
 app.post('/api/chat-settings', (req, res) => {
   const b = req.body || {};
   // Принимаем только известные поля и только булевы значения; остальное остаётся как было.
-  config.chatSettings = Object.fromEntries(Object.keys(DEFAULT_CHAT_SETTINGS).map((k) => [k, typeof b[k] === 'boolean' ? b[k] : config.chatSettings[k]]));
+  config.chatSettings = Object.fromEntries(Object.keys(DEFAULT_CHAT_SETTINGS).map((k) => [k, (k === 'platformTagStyle' ? ['outline', 'icon'].includes(b[k]) : typeof b[k] === 'boolean') ? b[k] : config.chatSettings[k]]));
   saveConfigToDisk();
   broadcastChatSettings();
   res.json({ success: true, settings: config.chatSettings });

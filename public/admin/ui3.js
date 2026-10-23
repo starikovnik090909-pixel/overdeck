@@ -196,8 +196,7 @@
   if (dockBtn) dockBtn.addEventListener('click', async () => {
     const url = location.origin + '/chat-dock.html';
     try { await navigator.clipboard.writeText(url); } catch (e) {}
-    toast('Ссылка на док скопирована');
-    window.ui3Alert('Ссылка на чат скопирована — осталось добавить её в OBS:\n\n1. В OBS: Вид → Док-панели → Пользовательские док-панели браузера.\n2. Название: Чат. URL: ' + url + '\n3. Нажми «Применить» — панель появится, её можно перетащить на место чата Twitch.\n\nВ панели есть поле, чтобы писать в чат от имени бота (бот должен быть подключён на вкладке «Чат-бот»).');
+    toast('Ссылка на док скопирована. Дальше по шагам выше');
   });
   /* ---------- общие клики ---------- */
   document.addEventListener('click', (e) => {
