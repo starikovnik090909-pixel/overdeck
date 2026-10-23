@@ -172,6 +172,7 @@ function sourceTag(platform) {
   const p = String(platform || '').toLowerCase();
   if (p === 'donatex') return 'DX';
   if (p === 'donationalerts') return 'DA';
+  if (p === 'donatepay') return 'DP';
   return '';
 }
 

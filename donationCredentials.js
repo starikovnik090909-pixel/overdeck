@@ -21,6 +21,10 @@ function defaults() {
       apiToken: null,
       connected: false,
     },
+    donatePay: {
+      apiKey: null,
+      connected: false,
+    },
   };
 }
 
@@ -34,6 +38,7 @@ function load() {
       data = {
         donationAlerts: { ...base.donationAlerts, ...(raw.donationAlerts || {}) },
         donateX: { ...base.donateX, ...(raw.donateX || {}) },
+        donatePay: { ...base.donatePay, ...(raw.donatePay || {}) },
       };
       return;
     }
@@ -52,6 +57,7 @@ function save() {
   const toWrite = {
     donationAlerts: { ...data.donationAlerts, clientId: '', clientSecret: '' },
     donateX: { ...data.donateX, apiToken: null },
+    donatePay: { ...data.donatePay, apiKey: null },
   };
   try {
     fs.writeFileSync(FILE_PATH, JSON.stringify(toWrite, null, 2));

@@ -67,6 +67,7 @@ const botTimers = require('./botTimers');
 const autoMod = require('./autoMod');
 const donorLeaderboard = require('./donorLeaderboard');
 const donateX = require('./donatex');
+const donatePay = require('./donatepay');
 const donationAlerts = require('./donationAlerts');
 
 // config.json — личный файл пользователя (имя канала, вход через Twitch, настройки), в архивы проекта он НЕ кладётся, чтобы обновление не затирало
@@ -605,9 +606,12 @@ donationCredentials.init();
 {
   const da = donationCredentials.get().donationAlerts;
   const dx = donationCredentials.get().donateX;
+  const dp = donationCredentials.get().donatePay;
   if (authCredentialsFileExisted) {
     const savedDa = authCredentials.get().donationAlerts;
     const savedDx = authCredentials.get().donateX;
+    const savedDp = authCredentials.get().donatePay || {};
+    dp.apiKey = savedDp.apiKey || null;
     da.clientId = savedDa.clientId || '';
     da.clientSecret = savedDa.clientSecret || '';
     dx.apiToken = savedDx.apiToken || null;
@@ -720,6 +724,25 @@ if (donationCredentials.get().donateX.apiToken) {
   donateX.connect(donationCredentials.get().donateX.apiToken, handleDonation).catch((e) => {
     console.warn('[DonateX] Не удалось восстановить подключение при старте сервера:', e.message);
     donationCredentials.get().donateX.connected = false;
+    donationCredentials.save();
+  });
+}
+
+/** Вызывается donatepay.js, если DonatePay перестал принимать ключ (опрос остановлен). */
+function handleDonatePayAuthError(message) {
+  console.warn('[DonatePay] Подключение остановлено:', message);
+  donationCredentials.get().donatePay.connected = false;
+  donationCredentials.save();
+  broadcastAdminStatus();
+}
+
+if (donationCredentials.get().donatePay.apiKey) {
+  donatePay.connect(donationCredentials.get().donatePay.apiKey, handleDonation, handleDonatePayAuthError).then(() => {
+    donationCredentials.get().donatePay.connected = true;
+    donationCredentials.save();
+  }).catch((e) => {
+    console.warn('[DonatePay] Не удалось восстановить подключение при старте сервера:', e.message);
+    donationCredentials.get().donatePay.connected = false;
     donationCredentials.save();
   });
 }
@@ -2700,6 +2723,12 @@ app.get('/api/donations/status', (req, res) => {
       available: donateX.isAvailable(),
       remembered: authCredentials.isRemembered('donateX'),
     },
+    donatePay: {
+      connected: !!donationCredentials.get().donatePay.connected,
+      userName: donatePay.info().userName || '',
+      lastError: donatePay.info().lastError || '',
+      remembered: authCredentials.isRemembered('donatePay'),
+    },
   });
 });
 
@@ -2735,14 +2764,14 @@ app.get('/api/home', (req, res) => {
     bot: { status: chatBot.getStatus().status, username: bot.botUsername || '', commands: cmds, timers: tmrs },
     donations: {
       today: sum(today), todayCount: today.length, week: sum(week), weekCount: week.length,
-      daConnected: !!(dc.donationAlerts && dc.donationAlerts.connected), dxConnected: !!(dc.donateX && dc.donateX.connected),
+      daConnected: !!(dc.donationAlerts && dc.donationAlerts.connected), dxConnected: !!(dc.donateX && dc.donateX.connected), dpConnected: !!(dc.donatePay && dc.donatePay.connected),
     },
     events: eventFeed.getList(8),
     obs,
     checklist: {
       twitch: !!oauth.connected,
       obs: Object.values(obs).some((n) => n > 0),
-      donations: !!((dc.donationAlerts && dc.donationAlerts.connected) || (dc.donateX && dc.donateX.connected)),
+      donations: !!((dc.donationAlerts && dc.donationAlerts.connected) || (dc.donateX && dc.donateX.connected) || (dc.donatePay && dc.donatePay.connected)),
       tts: !!(config.tts && config.tts.enabled),
       alerts: !!(config.donationAlert && config.donationAlert.enabled) || eventAlerts.KINDS.some((k) => config.eventAlerts && config.eventAlerts[k] && config.eventAlerts[k].enabled),
     },
@@ -2799,7 +2828,7 @@ app.post('/api/donations/add-manual', (req, res) => {
   if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
     return res.status(400).json({ success: false, error: 'Сумма должна быть положительным числом' });
   }
-  const cleanPlatform = (platform === 'donatex') ? 'donatex' : 'donationalerts'; // на что похоже больше — то и берём по умолчанию
+  const cleanPlatform = (platform === 'donatex' || platform === 'donatepay') ? platform : 'donationalerts'; // на что похоже больше — то и берём по умолчанию
   handleDonation({
     platform: cleanPlatform,
     username: cleanUsername,
@@ -2833,6 +2862,35 @@ app.post('/api/donations/donatex/connect', async (req, res) => {
 app.post('/api/donations/donatex/disconnect', (req, res) => {
   donateX.disconnect();
   donationCredentials.get().donateX.connected = false;
+  donationCredentials.save();
+  broadcastAdminStatus();
+  res.json({ success: true });
+});
+
+// ---------- Донатный хаб: DonatePay (API-ключ, без OAuth; опрос транзакций) ----------
+
+app.post('/api/donations/donatepay/connect', async (req, res) => {
+  const apiKey = String((req.body && req.body.apiKey) || '').trim();
+  const remember = req.body && req.body.remember;
+  if (!apiKey) {
+    return res.status(400).json({ success: false, error: 'Вставь API-ключ DonatePay' });
+  }
+  try {
+    const user = await donatePay.connect(apiKey, handleDonation, handleDonatePayAuthError);
+    donationCredentials.get().donatePay = { apiKey, connected: true };
+    donationCredentials.save(); // сам ключ в этот файл не попадёт — см. donationCredentials.js
+    authCredentials.setRemembered('donatePay', !!remember, { apiKey });
+    broadcastAdminStatus();
+    res.json({ success: true, userName: (user && user.userName) || '' });
+  } catch (e) {
+    res.status(400).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/donations/donatepay/disconnect', (req, res) => {
+  donatePay.disconnect();
+  donationCredentials.get().donatePay.connected = false;
+  donationCredentials.get().donatePay.apiKey = null;
   donationCredentials.save();
   broadcastAdminStatus();
   res.json({ success: true });
@@ -3169,7 +3227,7 @@ app.delete('/api/donation-alert/texture', (req, res) => {
 /** Тестовый алерт: в историю донатов и в «Топ донатеров» не попадает. */
 app.post('/api/donation-alert/test', (req, res) => {
   const b = req.body || {};
-  fireDonationAlert({ username: String(b.username || 'Тестовый зритель').slice(0, 40), amount: Number(b.amount) > 0 ? Number(b.amount) : 500, currency: String(b.currency || 'RUB'), message: String(b.message == null ? 'Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!' : b.message), platform: b.platform === 'donatex' ? 'donatex' : 'donationalerts' }, true);
+  fireDonationAlert({ username: String(b.username || 'Тестовый зритель').slice(0, 40), amount: Number(b.amount) > 0 ? Number(b.amount) : 500, currency: String(b.currency || 'RUB'), message: String(b.message == null ? 'Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!' : b.message), platform: (b.platform === 'donatex' || b.platform === 'donatepay') ? b.platform : 'donationalerts' }, true);
   res.json({ success: true });
 });
 // ---------- REST API: алерты событий ----------
@@ -3487,6 +3545,12 @@ function getAdminStatusPayload() {
       donateX: {
         connected: donationCredentials.get().donateX.connected,
         available: donateX.isAvailable(),
+      },
+      donatePay: {
+        connected: !!donationCredentials.get().donatePay.connected,
+        userName: donatePay.info().userName || '',
+        lastError: donatePay.info().lastError || '',
+        remembered: authCredentials.isRemembered('donatePay'),
       },
       donationAlerts: {
         connected: donationCredentials.get().donationAlerts.connected,

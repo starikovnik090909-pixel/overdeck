@@ -847,6 +847,9 @@ html, body {
 .donation-item[data-platform="donationalerts"] .donation-icon { background: #F58907; }
 .donation-item[data-platform="donatex"] { border-left-color: #9267DC; }
 .donation-item[data-platform="donatex"] .donation-icon { background: #9267DC; }
+.donation-item[data-platform="donatepay"] { border-left-color: #FFC107; }
+.donation-item[data-platform="donatepay"] .donation-icon { background: #FFC107; color: #1a1400; }
+.dp-tag { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: #FFC107; color: #1a1400; font: 800 10px/1.5 system-ui, sans-serif; letter-spacing: .04em; vertical-align: 1px; }
 
 .platform-card {
   background: var(--bg-card); border: 1px solid var(--divider); border-radius: var(--radius-lg);

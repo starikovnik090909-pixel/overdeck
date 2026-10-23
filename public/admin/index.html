@@ -7,9 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=125">
+<link rel="stylesheet" href="style.css?v=126">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=20">
+<link rel="stylesheet" href="ui3.css?v=21">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -924,19 +924,48 @@
     </section>
 
     <section class="tab-section" id="tab-donations">
-      <div class="page-head"><div><h1 class="tab-title">Донаты</h1><p class="tab-description">Донаты с DonationAlerts и DonateX в одной ленте. История хранится на этом ПК.</p></div>
+      <div class="page-head"><div><h1 class="tab-title">Донаты</h1><p class="tab-description">Донаты с DonationAlerts, DonateX и DonatePay в одной ленте. История хранится на этом ПК.</p></div>
         <div class="page-actions"><button class="btn btn-secondary" id="ui3DonTest" type="button">Тестовый донат</button></div></div>
       <div class="ui3-stats" id="donStats"></div>
       <div class="ui3-grid don-grid">
         <div class="card ui3-card">
-          <div class="ui3-ch"><h3>Лента</h3><div class="r"><div class="ui3-seg" id="donFilter"><span class="on" data-v="">Все</span><span data-v="donationalerts">DonationAlerts</span><span data-v="donatex">DonateX</span></div><input type="search" class="ui3-search" id="donSearch" placeholder="Ник или сообщение"><button class="btn btn-ghost btn-sm" id="btnDonationsReset" type="button">Очистить историю</button></div></div>
+          <div class="ui3-ch"><h3>Лента</h3><div class="r"><div class="ui3-seg" id="donFilter"><span class="on" data-v="">Все</span><span data-v="donationalerts">DonationAlerts</span><span data-v="donatex">DonateX</span><span data-v="donatepay">DonatePay</span></div><input type="search" class="ui3-search" id="donSearch" placeholder="Ник или сообщение"><button class="btn btn-ghost btn-sm" id="btnDonationsReset" type="button">Очистить историю</button></div></div>
           <div class="donations-feed" id="donationsFeed">
-            <div class="donations-feed-empty" id="donationsFeedEmpty"><b>Донатов пока не было</b>Подключи DonationAlerts или DonateX справа — новые донаты появятся здесь сразу. Как выглядит алерт, можно проверить кнопкой «Тестовый донат».</div>
+            <div class="donations-feed-empty" id="donationsFeedEmpty"><b>Донатов пока не было</b>Подключи DonationAlerts, DonateX или DonatePay справа — новые донаты появятся здесь сразу. Как выглядит алерт, можно проверить кнопкой «Тестовый донат».</div>
           </div>
         </div>
         <div class="ui3-col">
           <div class="card ui3-card"><div class="ui3-ch"><h3>Топ донатеров</h3><div class="r"><div class="ui3-seg" id="donTopScope"><span class="on" data-v="7">Неделя</span><span data-v="0">Всё время</span></div></div></div><div id="donTop"></div></div>
           <div class="card ui3-card don-platforms"><div class="ui3-ch"><h3>Площадки</h3></div>
+          <div class="platform-card" id="platformCardDonatePay" data-platform="donatepay">
+            <div class="platform-card-header">
+              <span class="platform-dot" id="donatePayDot"></span>
+              <span class="platform-name">DonatePay <span class="dp-tag">DP</span></span>
+              <span class="chevron">▸</span>
+            </div>
+            <div class="platform-card-body">
+              <p class="card-hint">Ключ API берётся на странице <b>donatepay.ru/page/api</b> (строка «Ваш API ключ»). Донаты приходят с задержкой до ~20 секунд: DonatePay разрешает запрашивать данные не чаще раза в 20 секунд.</p>
+              <div class="field">
+                <label for="donatePayKey">API-ключ</label>
+                <input type="password" id="donatePayKey" placeholder="Вставь ключ DonatePay" autocomplete="off">
+              </div>
+              <div class="field">
+                <div class="remember-row">
+                  <span>Запомнить</span>
+                  <label class="toggle-switch">
+                    <input type="checkbox" id="donatePayRememberToggle">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="actions">
+                <button class="btn btn-secondary" id="btnDonatePayOpen" type="button">Открыть страницу с ключом</button>
+                <button class="btn btn-primary" id="btnDonatePayConnect" type="button">Подключить</button>
+                <button class="btn btn-secondary" id="btnDonatePayDisconnect" type="button">Отключить</button>
+              </div>
+              <div class="form-message" id="donatePayMessage"></div>
+            </div>
+          </div>
           <div class="platform-card" id="platformCardDonateX" data-platform="donatex">
             <div class="platform-card-header">
               <span class="platform-dot" id="donateXDot"></span>
@@ -2935,7 +2964,7 @@
           <div class="field"><label for="daTestNick">Ник</label><input type="text" id="daTestNick" value="Тестовый зритель"></div>
           <div class="field"><label for="daTestAmount">Сумма, ₽</label><input type="number" id="daTestAmount" value="500" min="1"></div>
           <div class="field"><label for="daTestPlatform">Площадка (значок на карточке)</label>
-            <select id="daTestPlatform"><option value="donationalerts">DA — DonationAlerts</option><option value="donatex">DX — DonateX</option></select>
+            <select id="daTestPlatform"><option value="donationalerts">DA — DonationAlerts</option><option value="donatex">DX — DonateX</option><option value="donatepay">DP — DonatePay</option></select>
           </div>
           <div class="field"><label for="daTestMsg">Сообщение</label><input type="text" id="daTestMsg" value="Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!"></div>
           <div class="actions">
@@ -3149,11 +3178,11 @@
 <script src="/chat-format.js"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=161"></script>
-<script src="guides-data.js?v=6"></script>
+<script src="app.js?v=162"></script>
+<script src="guides-data.js?v=7"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>
-<script src="ui3.js?v=16"></script>
-<script src="whatsnew.js?v=5"></script>
+<script src="ui3.js?v=17"></script>
+<script src="whatsnew.js?v=6"></script>
 </body>
 </html>

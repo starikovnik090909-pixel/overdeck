@@ -19,6 +19,7 @@ function emptyData() {
     twitch: { clientId: '', clientSecret: '' },
     donationAlerts: { clientId: '', clientSecret: '' },
     donateX: { apiToken: '' },
+    donatePay: { apiKey: '' },
   };
 }
 
@@ -33,6 +34,7 @@ function load() {
         twitch: { ...base.twitch, ...(raw.twitch || {}) },
         donationAlerts: { ...base.donationAlerts, ...(raw.donationAlerts || {}) },
         donateX: { ...base.donateX, ...(raw.donateX || {}) },
+        donatePay: { ...base.donatePay, ...(raw.donatePay || {}) },
       };
       return;
     }

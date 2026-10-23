@@ -149,7 +149,7 @@
     const steps = [
       ['twitch', 'Подключить Twitch', c.twitch ? 'Вход выполнен' : 'Вкладка «Подключения» → «Войти через Twitch»', 'auth'],
       ['obs', 'Добавить оверлей в OBS', c.obs ? 'Виджет открыт в OBS' : 'Источник «Браузер», 1920×1080', 'obs'],
-      ['donations', 'Подключить донаты', c.donations ? (d.donations.daConnected ? 'DonationAlerts' : 'DonateX') : 'DonationAlerts или DonateX', 'donations'],
+      ['donations', 'Подключить донаты', c.donations ? (d.donations.daConnected ? 'DonationAlerts' : d.donations.dxConnected ? 'DonateX' : 'DonatePay') : 'DonationAlerts, DonateX или DonatePay', 'donations'],
       ['tts', 'Включить озвучку чата', c.tts ? 'Включена' : 'Выбери голос — 1 минута', 'voice'],
       ['alerts', 'Настроить алерты', c.alerts ? 'Хотя бы один алерт включён' : 'Звук и текст для доната и событий', 'donalerts'],
     ];

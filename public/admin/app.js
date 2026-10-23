@@ -2343,6 +2343,7 @@
             <select id="donorManualPlatform">
               <option value="donationalerts">DonationAlerts</option>
               <option value="donatex">DonateX</option>
+              <option value="donatepay">DonatePay</option>
             </select>
             <button class="btn btn-secondary" type="button" id="btnDonorManualAdd">Добавить</button>
           </div>
@@ -3196,6 +3197,14 @@
   const btnDonateXDisconnect = document.getElementById('btnDonateXDisconnect');
   const donateXMessage = document.getElementById('donateXMessage');
 
+  const donatePayDot = document.getElementById('donatePayDot');
+  const donatePayKey = document.getElementById('donatePayKey');
+  const donatePayRememberToggle = document.getElementById('donatePayRememberToggle');
+  const btnDonatePayConnect = document.getElementById('btnDonatePayConnect');
+  const btnDonatePayDisconnect = document.getElementById('btnDonatePayDisconnect');
+  const btnDonatePayOpen = document.getElementById('btnDonatePayOpen');
+  const donatePayMessage = document.getElementById('donatePayMessage');
+
   const daDot = document.getElementById('daDot');
   const daClientId = document.getElementById('daClientId');
   const daClientSecret = document.getElementById('daClientSecret');
@@ -3222,7 +3231,7 @@
     });
   });
 
-  const PLATFORM_LABELS = { donationalerts: 'DA', donatex: 'DX' };
+  const PLATFORM_LABELS = { donationalerts: 'DA', donatex: 'DX', donatepay: 'DP' };
 
   function formatDonationTime(ts) {
     const d = new Date(ts);
@@ -3299,6 +3308,21 @@
       donateXMessage.className = 'form-message error';
     }
 
+    if (data.donatePay) {
+      donatePayDot.classList.toggle('connected', !!data.donatePay.connected);
+      btnDonatePayConnect.disabled = !!data.donatePay.connected;
+      btnDonatePayDisconnect.disabled = !data.donatePay.connected;
+      if (data.donatePay.remembered !== undefined) donatePayRememberToggle.checked = !!data.donatePay.remembered;
+      if (data.donatePay.connected) {
+        donatePayMessage.textContent = 'Подключено' + (data.donatePay.userName ? ': ' + data.donatePay.userName : '') + '. Донаты DonatePay появляются в ленте с задержкой до ~20 секунд.';
+        donatePayMessage.className = 'form-message success';
+      } else if (donatePayDot.dataset.wasConnected === '1') {
+        donatePayMessage.textContent = data.donatePay.lastError || 'Соединение с DonatePay потеряно — вставь ключ и подключи снова.';
+        donatePayMessage.className = 'form-message error';
+      }
+      donatePayDot.dataset.wasConnected = data.donatePay.connected ? '1' : '0';
+    }
+
     daDot.classList.toggle('connected', !!data.donationAlerts.connected);
     btnDaLogin.disabled = !data.donationAlerts.hasCredentials;
     btnDaDisconnect.disabled = !data.donationAlerts.connected;
@@ -3325,6 +3349,52 @@
     }
   }
   loadDonationsStatus();
+
+  btnDonatePayOpen.addEventListener('click', () => { window.open('https://donatepay.ru/page/api', '_blank', 'noopener'); });
+  btnDonatePayConnect.addEventListener('click', async () => {
+    const key = donatePayKey.value.trim();
+    if (!key) {
+      donatePayMessage.textContent = 'Вставь API-ключ DonatePay (donatepay.ru/page/api).';
+      donatePayMessage.className = 'form-message error';
+      return;
+    }
+    btnDonatePayConnect.disabled = true;
+    donatePayMessage.textContent = 'Проверяем ключ…';
+    donatePayMessage.className = 'form-message';
+    try {
+      const { ok, data } = await postJSON('/api/donations/donatepay/connect', { apiKey: key, remember: donatePayRememberToggle.checked });
+      if (ok) {
+        donatePayMessage.textContent = 'Подключено' + (data && data.userName ? ': ' + data.userName : '') + '. Новые донаты DonatePay появятся в ленте (метка DP).';
+        donatePayMessage.className = 'form-message success';
+        donatePayDot.classList.add('connected');
+        donatePayDot.dataset.wasConnected = '1';
+        donatePayKey.value = '';
+        btnDonatePayDisconnect.disabled = false;
+      } else {
+        donatePayMessage.textContent = (data && data.error) || 'Не удалось подключиться.';
+        donatePayMessage.className = 'form-message error';
+        btnDonatePayConnect.disabled = false;
+      }
+    } catch (e) {
+      donatePayMessage.textContent = 'Сетевая ошибка при обращении к серверу.';
+      donatePayMessage.className = 'form-message error';
+      btnDonatePayConnect.disabled = false;
+    }
+  });
+
+  btnDonatePayDisconnect.addEventListener('click', async () => {
+    btnDonatePayDisconnect.disabled = true;
+    try {
+      await postJSON('/api/donations/donatepay/disconnect', {});
+      donatePayDot.classList.remove('connected');
+      donatePayDot.dataset.wasConnected = '0';
+      btnDonatePayConnect.disabled = false;
+      donatePayMessage.textContent = 'Отключено.';
+      donatePayMessage.className = 'form-message';
+    } catch (e) {
+      btnDonatePayDisconnect.disabled = false;
+    }
+  });
 
   btnDonateXConnect.addEventListener('click', async () => {
     const token = donateXToken.value.trim();
@@ -8354,7 +8424,7 @@
     { k: 'font', t: 'font', l: '', noRow: true },
     { k: 'typeText', t: 'toggle', l: 'Печатать текст сообщения на карточке во время озвучки' },
     { k: 'pulse', t: 'toggle', l: 'Пульсация и лёгкая подсветка суммы' },
-    { k: 'showSource', t: 'toggle', l: 'Значок площадки (DA / DX) в углу карточки' },
+    { k: 'showSource', t: 'toggle', l: 'Значок площадки (DA / DX / DP) в углу карточки' },
     { k: 'plateOpacity', t: 'range', l: 'Непрозрачность плашки (0% — как у виджетов стиля; при привязке к теме)', suf: '%', min: 0, max: 100, step: 5 },
     { k: 'texture', t: 'texture', l: 'Текстура фона карточки (картинка JPG/PNG/WEBP/GIF до 10 МБ)' },
     { k: 'texDim', t: 'range', l: 'Затемнение текстуры (чтобы текст читался)', suf: '%', min: 0, max: 100, step: 5 },
@@ -8592,7 +8662,7 @@
       font: document.getElementById('da_font') ? document.getElementById('da_font').value : '',
       plateOpacity: val('plateOpacity', 100), pulse: !document.getElementById('da_pulse') || document.getElementById('da_pulse').checked,
       typeText: !document.getElementById('da_typeText') || document.getElementById('da_typeText').checked, typeLead: 0.3,
-      source: (!document.getElementById('da_showSource') || document.getElementById('da_showSource').checked) ? (document.getElementById('daTestPlatform').value === 'donatex' ? 'DX' : 'DA') : '',
+      source: (!document.getElementById('da_showSource') || document.getElementById('da_showSource').checked) ? ({ donatex: 'DX', donatepay: 'DP' }[document.getElementById('daTestPlatform').value] || 'DA') : '',
       themed: !document.getElementById('da_themed') || document.getElementById('da_themed').checked,
       texture: document.getElementById('da_texture') && document.getElementById('da_texture').value ? '/uploads/alert-texture/' + encodeURIComponent(document.getElementById('da_texture').value) : '',
       texDim: val('texDim', 35), texOpacity: val('texOpacity', 100),
