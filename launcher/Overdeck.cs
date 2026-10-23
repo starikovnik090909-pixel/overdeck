@@ -913,7 +913,7 @@ class Launcher : Form
         List<string> lines = new List<string>();
         foreach (string raw in md.Split(new char[] { '\n' }))
         {
-            string l = raw.TrimEnd();
+            string l = raw.TrimEnd(new char[] { ' ', '\t', '\r' });
             l = Regex.Replace(l, "^#+\\s*", "");
             l = Regex.Replace(l, "^\\s*[-*]\\s+", "•  ");
             l = l.Replace("**", "").Replace("`", "");
