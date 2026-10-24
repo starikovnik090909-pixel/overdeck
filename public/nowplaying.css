@@ -75,3 +75,6 @@
 .np-cn i.b { right: 0; top: 0; border-left: 0; border-bottom: 0; }
 .np-cn i.c { left: 0; bottom: 0; border-right: 0; border-top: 0; }
 .np-cn i.d { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+
+/* Отдельный источник «Сейчас играет»: карточка по центру источника — источник можно ставить в любое место экрана OBS */
+body.kind-only .np-layer { left: 50% !important; top: 50% !important; right: auto !important; bottom: auto !important; translate: -50% -50%; }

@@ -618,7 +618,7 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .ui3-dot.on { background: #4cc38a; }
 .ui3-obs-det { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--divider); border-radius: 12px; background: var(--bg-card); min-width: 0; }
 .ui3-obs-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 16px; }
-.ui3-pv { position: relative; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; border: 1px solid var(--divider); container-type: inline-size; background: repeating-conic-gradient(#1c1c20 0 25%, #16161a 0 50%) 0 0/16px 16px; }
+.ui3-pv { position: relative; margin: 0 auto; border-radius: 10px; overflow: hidden; border: 1px solid var(--divider); container-type: inline-size; background: repeating-conic-gradient(#1c1c20 0 25%, #16161a 0 50%) 0 0/16px 16px; }
 .ui3-pv-fr { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; background: transparent; }
 .ui3-pv-box { position: absolute; border: 2px dashed var(--accent, #D84B55); background: rgba(216, 75, 85, .2); border-radius: 6px; }
 .ui3-obs-size { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 13px; color: var(--text-secondary); }

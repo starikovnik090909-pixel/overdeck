@@ -48,3 +48,6 @@
 .ts-glass span { color: #e4e4f2; }
 .ts-glassBar { height: 2px; background: #fff; }
 .ts-lb em, .ts-tx em, .ts-bubT em, .ts-chk em { display: block; }
+
+/* Отдельный источник «Серии просмотров»: плашка по центру источника — источник можно ставить в любое место экрана OBS */
+body.kind-only .ts-layer { left: 50% !important; top: 50% !important; right: auto !important; bottom: auto !important; translate: -50% -50%; width: max-content; }

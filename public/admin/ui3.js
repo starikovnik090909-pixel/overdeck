@@ -172,12 +172,13 @@
   // Один источник OBS = одна функция. Категории слева, справа — выбранный источник: превью, рекомендуемый размер, ссылка, как добавить.
   const FULL = '1920 × 1080';
   const DEFR = { activity: [40, 40, 460, 1000], timeline: [524, 40, 1356, 494], emotebox: [524, 558, 542, 482], wordcloud: [1090, 558, 790, 482], donortop: [1520, 40, 360, 494], eventfeed: [1520, 558, 360, 482], chat: [1520, 40, 360, 1000] };
-  const ALERT_KINDS = [['donation', 'Донаты', 'Донат-алерт: карточка с ником, суммой и сообщением'], ['sub', 'Подписки', 'Алерт подписки и подарочных подписок'], ['raid', 'Рейды', 'Алерт рейда'], ['follow', 'Фоллоу', 'Алерт нового фолловера'],
-    ['hype', 'Hype Train', 'Алерты Hype Train'], ['points', 'Баллы канала', 'Алерт наград за баллы канала'], ['streak', 'Серия просмотров', 'Плашка серии просмотров в углу экрана'], ['nowplaying', 'Сейчас играет', 'Алерт «Сейчас играет» (угол — в настройках алерта)']];
+  // Размеры измерены по кадрам анимации (карточка + свечение + выезд) и округлены с запасом. Алерт всегда по центру источника.
+  const ALERT_KINDS = [['donation', 'Донаты', 'Донат-алерт: карточка с ником, суммой и сообщением', 1100, 1080], ['sub', 'Подписки', 'Алерт подписки и подарочных подписок', 1200, 1040], ['raid', 'Рейды', 'Алерт рейда', 1800, 900], ['follow', 'Фоллоу', 'Алерт нового фолловера', 1400, 1040],
+    ['hype', 'Hype Train', 'Алерты Hype Train', 900, 1040], ['points', 'Баллы канала', 'Алерт наград за баллы канала', 900, 1040], ['streak', 'Серия просмотров', 'Небольшая плашка серии просмотров', 700, 200], ['nowplaying', 'Сейчас играет', 'Закреплённая карточка «Сейчас играет»: ставь источник туда, где она должна висеть', 680, 260]];
   const WIDGET_TITLES = { activity: 'Активность зрителей', timeline: 'Таймлайн стрима', emotebox: 'Топ эмодзи', wordcloud: 'Слова эфира', donortop: 'Топ донатеров', eventfeed: 'События', chat: 'Чат на сцене' };
   const full = (name, desc, url, key, tab, extra) => Object.assign({ name, desc, url, size: FULL, key, tab, note: 'Прозрачный фон — включён по умолчанию' }, extra || {});
   const CATS = [
-    { id: 'alerts', name: 'Алерты', icon: 'bell', items: ALERT_KINDS.map(([k, n, d]) => full(n, d, 'overlay.html?only=donation&kind=' + k, 'k_' + k, 'donalerts', { alert: k })) },
+    { id: 'alerts', name: 'Алерты', icon: 'bell', items: ALERT_KINDS.map(([k, n, d, sw, sh]) => full(n, d, 'overlay.html?only=donation&kind=' + k, 'k_' + k, 'donalerts', { alert: k, sw, sh, size: sw + ' × ' + sh, note: k === 'donation' ? 'Вид «Чек» — 700 × 1080, «Слот-машина» — 1450 × 1000. Алерт по центру источника; при масштабе больше 100% увеличь источник' : k === 'nowplaying' ? 'Мини-виды: 640 × 160. Алерт по центру источника; при масштабе больше 100% увеличь источник' : 'Алерт по центру источника, размер с запасом на свечение и выезд. При масштабе больше 100% увеличь источник' })) },
     { id: 'screen', name: 'Виджеты экрана', icon: 'layout', items: [full('Весь оверлей сразу', 'Все включённые блоки сцены одним источником (без алертов)', 'overlay.html', 'overlay', 'widgets', { rect: [0, 0, 1920, 1080] })]
       .concat(Object.keys(WIDGET_TITLES).map((id) => full(WIDGET_TITLES[id], 'Только этот блок сцены, на своём месте', 'overlay.html?w=' + id, 'w_' + id, 'widgets', { rect: DEFR[id] }))) },
     { id: 'goal', name: 'Цель и фонд', icon: 'target', items: [
@@ -196,8 +197,8 @@
   const WIDGETS = ['k_donation', 'overlay', 'chat'].map((k) => ALLW.find((w) => w.key === k));
   let obsCat = 'alerts', obsSel = 0, obsPrev = null;
   const stage = (w) => {
-    if (w.alert && w.alert !== 'nowplaying') return '<iframe class="ui3-pv-fr" data-pv="' + w.alert + '" src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe>';
-    if (w.alert === 'nowplaying') return '<iframe class="ui3-pv-fr" src="/nowplaying-preview.html" title="Предпросмотр"></iframe>';
+    if (w.alert && w.alert !== 'nowplaying') return '<iframe class="ui3-pv-fr" data-pv="' + w.alert + '" style="width:' + w.sw + 'px;height:' + w.sh + 'px" src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe>';
+    if (w.alert === 'nowplaying') return '<iframe class="ui3-pv-fr" style="width:' + w.sw + 'px;height:' + w.sh + 'px" src="/nowplaying-preview.html" title="Предпросмотр"></iframe>';
     const r = w.rect || [0, 0, 1920, 1080];
     return '<i class="ui3-pv-box" style="left:' + (r[0] / 19.2) + '%;top:' + (r[1] / 10.8) + '%;width:' + (r[2] / 19.2) + '%;height:' + (r[3] / 10.8) + '%"></i>';
   };
@@ -206,7 +207,7 @@
     const d = await post(url, {});
     if (d && d.card && fr.contentWindow) fr.contentWindow.postMessage({ type: 'da_preview', card: d.card }, '*');
   }
-  function obsFit() { const pv = document.querySelector('#obsBox .ui3-pv'), f = document.querySelector('#obsBox .ui3-pv-fr'); if (pv && f && pv.clientWidth) f.style.transform = 'scale(' + pv.clientWidth / 1920 + ')'; }
+  function obsFit() { const pv = document.querySelector('#obsBox .ui3-pv'), f = document.querySelector('#obsBox .ui3-pv-fr'); if (pv && f && pv.clientWidth) f.style.transform = 'scale(' + pv.clientWidth / (+pv.dataset.w || 1920) + ')'; }
   window.addEventListener('resize', obsFit);
   function renderObs() {
     const t = $('#obsBox'); if (!t) return;
@@ -221,7 +222,7 @@
     const nav = CATS.map((c) => '<button type="button" class="' + (c.id === obsCat ? 'a' : '') + '" data-cat="' + c.id + '">' + IC(c.icon) + '<span>' + c.name + '</span><em>' + (cnt(c) ? cnt(c) + '/' : '') + c.items.length + '</em></button>').join('');
     const list = '<div class="ui3-obs-list">' + cat.items.map((x, i) => '<button type="button" class="' + (i === obsSel ? 'a' : '') + '" data-sel="' + i + '"><span class="ui3-dot ' + ((obs[x.key] || 0) > 0 ? 'on' : '') + '"></span>' + x.name + '</button>').join('') + '</div>';
     const detail = '<div class="ui3-obs-det"><div class="ui3-obs-top"><b>' + w.name + '</b>' + st + '</div><p class="card-hint" style="margin:0">' + w.desc + '</p>' +
-      '<div class="ui3-pv">' + stage(w) + '</div>' +
+      '<div class="ui3-pv" data-w="' + (w.sw || 1920) + '" data-h="' + (w.sh || 1080) + '" style="aspect-ratio:' + (w.sw || 1920) + '/' + (w.sh || 1080) + ';width:min(100%,' + Math.round(360 * (w.sw || 1920) / (w.sh || 1080)) + 'px)">' + stage(w) + '</div>' +
       '<div class="ui3-obs-size"><span>Рекомендуемый размер источника</span><b>' + w.size + '</b>' + (w.note ? '<em>' + w.note + '</em>' : '') + '</div>' +
       '<div class="ui3-obs-url"><input readonly value="' + esc(urlFull) + '"><button class="btn btn-primary btn-sm" type="button" data-copy="' + urlFull + '">' + I('copy') + ' Копировать</button><a class="btn btn-ghost btn-sm" href="' + urlFull + '" target="_blank" rel="noopener" title="Открыть в браузере">' + I('ext') + '</a><button class="btn btn-ghost btn-sm" type="button" data-go="' + w.tab + '">Настроить</button></div>' +
       '<ol class="ui3-obs-steps"><li>OBS → Источники → «+» → <b>Браузер</b></li><li>Вставь ссылку, укажи размер из строки выше</li><li>Сними галочку «Отключать источник, когда он не виден»</li></ol></div>';
@@ -402,7 +403,7 @@
       let body = '';
       if (step === 0) body = '<h1>Подключим Twitch</h1><p>Overdeck будет получать чат, фолловы, подписки, рейды и баллы канала. Займёт минуту.</p><div id="wzDev"></div>';
       if (step === 1) body = '<h1>Добавь Overdeck в OBS</h1><p>В OBS: <b>Источники → + → Браузер</b>. Вставь ссылку, размер <b>1920 × 1080</b>, сними галочку «Отключать источник, когда он не виден».</p>' +
-        ['Основной оверлей|overlay.html', 'Алерты|overlay.html?only=donation'].map((x) => { const [n, u] = x.split('|'); return '<div class="ui3-wz-link"><b>' + n + '</b><code>' + origin + '/' + u + '</code><button class="btn btn-secondary btn-sm" type="button" data-wcopy="' + origin + '/' + u + '">Копировать</button></div>'; }).join('') +
+        ['Основной оверлей|overlay.html', 'Алерт доната|overlay.html?only=donation&kind=donation'].map((x) => { const [n, u] = x.split('|'); return '<div class="ui3-wz-link"><b>' + n + '</b><code>' + origin + '/' + u + '</code><button class="btn btn-secondary btn-sm" type="button" data-wcopy="' + origin + '/' + u + '">Копировать</button></div>'; }).join('') +
         '<div class="ui3-wz-act"><button class="btn btn-primary" type="button" data-wz="next">Добавил, дальше</button><button class="btn btn-ghost" type="button" data-wz="next">Сделаю позже</button></div>';
       if (step === 2) body = '<h1>Проверим</h1><p>Нажми — в OBS должен появиться алерт. В статистику тестовые события не попадают.</p><div class="ui3-tests" style="padding:0;margin:16px 0 0">' +
         [['donation', 'Донат'], ['follow', 'Фоллов'], ['sub', 'Подписка'], ['raid', 'Рейд']].map((x) => '<button class="btn btn-secondary" type="button" data-wtest="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
@@ -742,7 +743,7 @@
     });
     label(); setTimeout(label, 1500); setTimeout(label, 4000);
     const ob = $('[data-copy-alerts]');
-    if (ob) ob.addEventListener('click', async () => { const u = location.origin + '/overlay.html?only=donation'; try { await navigator.clipboard.writeText(u); } catch (e) {} if (window.ui3Toast) window.ui3Toast('Ссылка на алерты скопирована'); });
+    if (ob) ob.addEventListener('click', async () => { const u = location.origin + '/overlay.html?only=donation&kind=donation'; try { await navigator.clipboard.writeText(u); } catch (e) {} if (window.ui3Toast) window.ui3Toast('Ссылка на алерт доната скопирована'); });
   }
 
   /* --- Чат: подписи на кнопках «+» --- */
