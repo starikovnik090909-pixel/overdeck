@@ -185,13 +185,12 @@
       full('Цель сбора', 'Плашка со шкалой сбора', 'goal.html', 'goal', 'donalerts', { size: '680 × 250', rect: [60, 80, 680, 250] }),
       full('Призовой фонд', 'Сумма фонда', 'fund.html', 'fund', 'event'), full('Фонд — алерт', 'Алерт пополнения фонда', 'fund-alert.html', 'fundalert', 'event'), full('Фонд — копилка', 'Копилка с купюрами', 'fund-box.html', 'fundbox', 'event')] },
     { id: 'stream', name: 'Игра и стрим', icon: 'trophy', items: [
-      full('MVP', 'Плашка лучшего зрителя', 'mvp.html', 'mvp', 'event'), full('Факт', 'Плашка с фактом', 'fact.html', 'fact', 'event'), full('Таймер', 'Таймер на экране', 'timer.html', 'timer', 'event'),
-      full('Сетка турнира', 'Все панели турнира', 'bracket.html', 'bracket', 'event'), full('Команда слева', 'Панель команды', 'team-left.html', 'team', 'event'), full('Команда справа', 'Панель команды', 'team-right.html', 'team', 'event')] },
+      full('MVP', 'Плашка лучшего зрителя', 'mvp.html', 'mvp', 'event'), full('Факт', 'Плашка с фактом', 'fact.html', 'fact', 'event'), full('Таймер', 'Таймер на экране', 'timer.html', 'timer', 'event'),] },
     { id: 'chat', name: 'Чат', icon: 'msg', items: [
       full('Чат', 'Сообщения зрителей с эмодзи и бейджами', 'chat-widget.html', 'chat', 'chat', { size: '400 × 800 (любой)' }),
       full('Чат — док-панель OBS', 'Чат с полем «написать от имени бота» внутри OBS: Вид → Док-панели → Пользовательские док-панели браузера', 'chat-dock.html', 'chatdock', 'chat', { size: 'панель OBS', dock: 1, note: '' })] },
     { id: 'avatars', name: 'Аватары и фон', icon: 'image', items: [
-      full('ЧатАватары', 'Пиксельные герои бродят по экрану', 'pixel-avatar.html', 'pixel', 'chatavatars'), full('Фон', 'Фон сцены (НЕ прозрачный) — ставь самым нижним слоем', 'background.html', 'background', 'event', { note: 'Фон непрозрачный — ставь нижним слоем' })] },
+      full('Фон', 'Фон сцены (НЕ прозрачный) — ставь самым нижним слоем', 'background.html', 'background', 'event', { note: 'Фон непрозрачный — ставь нижним слоем' })] },
   ];
   const ALLW = [].concat(...CATS.map((c) => c.items));
   const WIDGETS = ['k_donation', 'overlay', 'chat'].map((k) => ALLW.find((w) => w.key === k));
@@ -251,7 +250,7 @@
   /* ---------- Плашка «Источник для OBS» на вкладках функций ---------- */
   (function () {
     const mk = (title, url, size) => { const d = document.createElement('div'); d.className = 'obs-url-compact ui3-plate'; d.innerHTML = '<span class="obs-url-compact-title">' + esc(title) + '</span><input type="text" readonly value="' + esc(url) + '" title="Рекомендуемый размер источника: ' + esc(size) + '"><button class="btn-tiny" type="button" data-copy="' + esc(url) + '">Копировать</button>'; return d; };
-    const NAME = { 'team-left': 'Команда слева', 'team-right': 'Команда справа', mvp: 'MVP', fact: 'Факт', fund: 'Призовой фонд', 'fund-alert': 'Фонд — алерт', 'fund-box': 'Фонд — копилка', background: 'Фон', timer: 'Таймер', bracket: 'Сетка турнира' };
+    const NAME = { mvp: 'MVP', fact: 'Факт', fund: 'Призовой фонд', 'fund-alert': 'Фонд — алерт', 'fund-box': 'Фонд — копилка', background: 'Фон', timer: 'Таймер' };
     document.querySelectorAll('p.card-hint').forEach((p) => {
       const m = /Виджет для OBS:\s*<code>[^<]*?\/([a-z-]+)\.html<\/code>/.exec(p.innerHTML); if (!m || !NAME[m[1]]) return;
       const plate = mk('Источник для OBS · ' + NAME[m[1]], ORIGIN + '/' + m[1] + '.html', FULL);

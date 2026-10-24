@@ -159,7 +159,6 @@
 
   const pixelAvatarUrlField = document.getElementById('pixelAvatarUrl');
   const btnCopyPixelAvatarUrl = document.getElementById('btnCopyPixelAvatarUrl');
-  pixelAvatarUrlField.value = `http://localhost:${location.port || 3001}/pixel-avatar.html`;
   btnCopyPixelAvatarUrl.addEventListener('click', () => copyToField(pixelAvatarUrlField, btnCopyPixelAvatarUrl));
 
   /* ---------- Карточки героев: кто сейчас на оверлее ---------- */

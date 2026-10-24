@@ -1459,7 +1459,6 @@
           <button class="btn btn-secondary" id="btnTeamLeftPresetLoad" type="button">Загрузить команду</button>
         </div>
         <div class="form-message" id="teamLeftMessage"></div>
-        <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/team-left.html</code> (прозрачный фон, обновляется сразу после сохранения).</p>
       </div>
       <div class="card team-editor-card">
         <h2 class="section-title">Панель команды — правая</h2>
@@ -1523,7 +1522,6 @@
           <button class="btn btn-secondary" id="btnTeamRightPresetLoad" type="button">Загрузить команду</button>
         </div>
         <div class="form-message" id="teamRightMessage"></div>
-        <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/team-right.html</code> (прозрачный фон, обновляется сразу после сохранения).</p>
       </div>
       </div>
       <div class="card" style="max-width:820px;">
@@ -2786,7 +2784,6 @@
             <div class="field"><label>Высота</label><input type="number" id="bracketPanelFieldH" disabled></div>
           </div>
         </div>
-        <p class="card-hint">Виджет для OBS: <code>http://localhost:3001/bracket.html</code> (прозрачный фон, обновляется через WebSocket) — все три панели показываются там ровно в тех местах/размерах, что заданы здесь.</p>
 
         <h3 class="section-title" style="margin-top:14px; font-size:13px;">Команды</h3>
         <p class="card-hint">Переименование и логотипы — здесь. Ввод не сбрасывается на середине слова: значение хранится в переменной и сохраняется с задержкой, без пересборки самого поля.</p>
@@ -2862,7 +2859,7 @@
       <h1 class="tab-title">Чат-аватары</h1>
       <p class="tab-description">Полноэкранный алерт с прозрачным фоном: пиксельные герои бродят по экрану, над головой у каждого — ник и уровень, сообщения чата звучат в пиксельных облаках.</p>
 
-      <div class="obs-url-compact">
+      <div class="obs-url-compact" hidden>
         <span class="obs-url-compact-title">Алерт для OBS</span>
         <input type="text" id="pixelAvatarUrl" readonly title="Общий алерт со всеми героями. Добавь как источник «Браузер» размером 1920×1080 — фон прозрачный. Только для использования на этом ПК">
         <button class="btn-tiny" id="btnCopyPixelAvatarUrl" type="button">Копировать</button>
@@ -3256,11 +3253,11 @@
 <script src="/chat-format.js?v=6"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=170"></script>
-<script src="guides-data.js?v=9"></script>
+<script src="app.js?v=171"></script>
+<script src="guides-data.js?v=10"></script>
 <script src="guides.js?v=4"></script>
 <script src="keyfile.js?v=4"></script>
-<script src="ui3.js?v=22"></script>
+<script src="ui3.js?v=23"></script>
 <script src="whatsnew.js?v=12"></script>
 </body>
 </html>
