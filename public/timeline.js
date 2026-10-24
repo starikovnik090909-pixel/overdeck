@@ -47,6 +47,7 @@
     donationColor: '#4FAE5A', activityLifetimeMin: 5, activityFloatSpread: 36,
     showCategoryBackground: true, categoryBgOpacity: 55,
     showClockPlate: true, clockPlateOpacity: 60,
+    view: 'classic',
   };
 
   function rgbArrayToHex([r, g, b]) {
@@ -415,6 +416,7 @@
     l: { shape: 'square', fill: 'slot', pal: { p: '#4be3d8', s: '#ff5555', g: '#55ff55', r: '#ffaa00' }, ic: 'col', icons: { channelpoints: 'gem', sub: 'heart', raid: 'swords' }, don: { mode: 'slot', r: 0 } },
     m: { shape: 'circle', fill: 'outline', pal: { p: '#c4c4c4', s: '#c4c4c4', g: '#c4c4c4', r: '#c4c4c4' }, ic: 'col', thin: true, glow: 0, don: { mode: 'outline', r: 0, thin: true } },
     n: { shape: 'circle', fill: 'light', ic: 'col', don: { mode: 'light', r: 0.5 } },
+    p: { shape: 'hex', fill: 'dark', bg: '#0b0b0b', pal: { p: '#e22a22', s: '#e22a22', g: '#ff5a4d', r: '#c41e18' }, ic: 'col', glow: 1.2, icons: { raid: 'swords' }, don: { mode: 'dark', r: 0, bg: '#0b0b0b', border: '#e22a22' } },
     o: { shape: 'cyber', fill: 'solid', pal: { p: '#00f0ff', s: '#fcee0a', g: '#ff003c', r: '#ff003c' }, ic: '#0a0a0a', glow: 1.2, border: 'none', icons: { raid: 'crosshair' }, don: { mode: 'flat', r: 0, fill: '#00f08a', text: '#04140c', border: 'none' } },
   };
 
@@ -663,6 +665,67 @@
     ctx.restore();
   }
 
+  let fontCache = { at: 0, v: 'Inter, sans-serif' };
+  function themeFont() {
+    const now = performance.now();
+    if (now - fontCache.at > 1000) {
+      fontCache.at = now;
+      try { const v = getComputedStyle(document.body).getPropertyValue('--font-main').trim(); if (v) fontCache.v = v + ', Inter, sans-serif'; } catch (e) { /* ignore */ }
+    }
+    return fontCache.v;
+  }
+
+  /** Собирает всё, что нужно видам из timeline-views.js: геометрия окна, данные, цвета и рисование маркеров в стиле сцены. */
+  function drawView(s, t, dpr, W, H, refTime, lifetimeMs, linePoints, categoryHistory) {
+    sizeK = computeSizeK(H, dpr);
+    const smoothed = smoothValues(linePoints, 3);
+    const maxValue = Math.max(...smoothed.map((p) => p.value), 3);
+    const first = smoothed[0].ts;
+    const mk = markerStyle();
+    const col = (type) => styledColor(type, colorForType(type, s));
+    const events = [];
+    markers.forEach((m, key) => {
+      const age = refTime - m.ts;
+      const expired = age > lifetimeMs || age < 0;
+      if (m.dying || expired) { m.va = (m.va == null ? 1 : m.va) - 0.07; if (m.va <= 0) { markers.delete(key); return; } }
+      else m.va = Math.min(1, (m.va || 0) + 0.07);
+      const fade = expired ? 1 : Math.max(0, Math.min(1, (lifetimeMs - age) / 20000));
+      events.push(Object.assign({}, m, { alpha: m.va * fade, _m: m }));
+    });
+    events.sort((a, b) => a.ts - b.ts);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    const fontFamily = themeFont();
+    const env = {
+      ctx, W, H, dpr, s, refTime, winMs: lifetimeMs, events,
+      accent: s.lineColor,
+      c2: col('sub'), c3: col('raid'), c4: col('channelpoints'),
+      sharp: !!(mk && /^(square|oct|cyber|para)$/.test(mk.shape)),
+      glow: mk && mk.glow === 0 ? 0 : 1,
+      fontFamily, streamStart: streamStartedAt,
+      cats: categoryHistory.filter((c) => c.startedAt).map((c) => ({ startedAt: c.startedAt, name: c.name })),
+      catName: categoryHistory[0] && categoryHistory[0].name,
+      valAt: (ts) => (ts < first ? 0 : Math.max(0, Math.min(1, valueAtTime(smoothed, ts) / maxValue))),
+      colorOf: col,
+      clock: formatClock,
+      fit: (text, maxPx) => {
+        if (ctx.measureText(text).width <= maxPx) return text;
+        let lo = 0, hi = text.length;
+        while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (ctx.measureText(text.slice(0, mid) + '…').width <= maxPx) lo = mid; else hi = mid - 1; }
+        return text.slice(0, lo) + '…';
+      },
+      drawEvent: (e, x, y, r, alpha) => {
+        const m = e._m || e;
+        const a = alpha == null ? e.alpha : alpha;
+        if (e.type === 'message' || e.type === 'emote') { drawAvatarMarker(m, x, y, Math.max(r, (s.avatarSize / 2) * dpr * sizeK * 0.6), a); return; }
+        if (e.type === 'donation') { donationGeometry(m, s, dpr); drawDonationMarker(m, x, y, colorForType('donation', s), a, dpr); return; }
+        drawIconMarker(e.type, x, y, r, colorForType(e.type, s), a, dpr);
+      },
+    };
+    ctx.save();
+    window.TimelineViews[s.view](env);
+    ctx.restore();
+  }
+
   function tick(t) {
     requestAnimationFrame(tick);
     const dpr = devicePixelRatio;
@@ -695,6 +758,13 @@
     const isReplay = tl.replayTs != null;
     const refTime = isReplay ? tl.replayTs : now;
     const lifetimeMs = Math.max(1, s.activityLifetimeMin) * 60000;
+
+    // Альтернативные виды (timeline-views.js): рисуют сами по окну «Сколько минут кружок виден»
+    if (s.view && s.view !== 'classic' && window.TimelineViews && window.TimelineViews[s.view]) {
+      drawView(s, t, dpr, W, H, refTime, lifetimeMs, linePoints, categoryHistory);
+      drawStreamClock(s, formatClockHMS(refTime - streamStartedAt), W, dpr);
+      return;
+    }
 
     // Ось X — от самой первой реальной точки данных до сейчас (см. комментарий в шапке файла).
     const rangeStart = linePoints[0].ts;

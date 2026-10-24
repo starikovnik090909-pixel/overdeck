@@ -88,6 +88,7 @@ const WIDGET_SETTINGS_SCHEMA = {
     goldColor2: { type: 'color', label: 'Золотой топ-1 (градиент, конец)', default: '#FFA500' },
   },
   timeline: {
+    view: { type: 'select', label: 'Вид таймлайна', options: ['classic','wave','chronicle','pulse','equalizer','constellation','river'], default: 'classic' },
     // Тумблер общей палитры — управляет полями ниже, помеченными syncable: true.
     useGlobalPalette: { type: 'toggle', label: 'Использовать общую палитру', default: true },
     // syncable: true — при включённом тумблере эти 4 поля скрыты и берутся из

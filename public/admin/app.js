@@ -1973,6 +1973,12 @@
     const def = rect && widgetDefs.find((w) => w.id === selectedWidgetId);
     document.getElementById('wpTitle').textContent = def ? def.label : 'Выберите блок на сцене';
     document.getElementById('wpSub').textContent = def ? 'Положение и размер на экране 1920 × 1080' : 'Нажмите на блок или на строку в списке слоёв';
+    // Таймлайн — длинная полоска; если его растянули в квадрат, предупреждаем
+    let warn = document.getElementById('wpTlWarn');
+    if (!warn) { warn = document.createElement('div'); warn.id = 'wpTlWarn'; warn.style.cssText = 'margin:8px 0;padding:8px 10px;border-radius:8px;background:rgba(255,170,0,.14);border:1px solid rgba(255,170,0,.5);font-size:12px;line-height:1.4'; box.insertBefore(warn, document.getElementById('wpSub').nextSibling); }
+    const tall = !!(rect && selectedWidgetId === 'timeline' && rect.w / rect.h < 2.4);
+    warn.hidden = !tall;
+    warn.textContent = tall ? '⚠ Таймлайн слишком высокий для своей ширины: при более квадратном виде он смотрится хуже — лучше длинная широкая полоска (например 1200 × 300).' : '';
     Object.keys(wpIds).forEach((k) => { const el = document.getElementById(wpIds[k]); if (!el) return; el.disabled = !rect; if (rect && document.activeElement !== el) el.value = Math.round(rect[k]); if (!rect) el.value = ''; });
   }
   Object.keys(wpIds).forEach((k) => {
@@ -2153,6 +2159,8 @@
   // из виджета целиком; сам механизм select-полей в панели настроек остался
   // как есть на случай, если он понадобится для чего-то другого.
   const SELECT_OPTION_LABELS = {
+    // Вид таймлайна
+    classic: 'Классика (как раньше)', wave: 'Волна — линия с пиками и событиями над ней', chronicle: 'Хроника — ось времени, главы и активность полосой', pulse: 'Пульс — линия-кардиограмма с кольцами событий', equalizer: 'Эквалайзер — столбики активности', constellation: 'Созвездие — события как звёзды', river: 'Река — поток, ширина = активность',
     // Инфо-карточка (значения уникальны на весь проект — таблица общая для всех виджетов)
     'from-left': 'Слева', 'from-right': 'Справа', 'from-top': 'Сверху', 'from-bottom': 'Снизу',
     'from-cycle': 'По кругу (слева → справа → сверху → снизу)', 'from-random': 'Случайно',
