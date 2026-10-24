@@ -93,7 +93,7 @@ function applyOverlayStyle(os) {
   const style = q.get('ostyle') || (os && os.style) || 'default'; // адресная строка важнее — удобно для проверок
   const glass = q.get('glass') ? q.get('glass') !== 'off' : !(os && os.glass === false);
   const b = document.body;
-  if (/^[a-o]$/.test(style)) {
+  if (/^[a-p]$/.test(style)) {
     b.setAttribute('data-ostyle', style);
     b.setAttribute('data-glass', glass ? 'on' : 'off');
     b.classList.add('show-header-icons'); // иконки у заголовков — часть стилей

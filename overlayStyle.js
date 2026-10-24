@@ -23,6 +23,7 @@ const STYLES = [
   { id: 'm', num: 13, label: 'Строгий Mono', hint: 'чёрный, тонкие линии, моноширинный' },
   { id: 'n', num: 14, label: 'Строгий Light', hint: 'светлая карточка, графит' },
   { id: 'o', num: 15, label: 'Cyberpunk 2077', hint: 'жёлтый и бирюзовый на чёрном' },
+  { id: 'p', num: 16, label: 'Dead by Daylight', hint: 'чёрные чернила, красное свечение, шестиугольники' },
 ];
 const DEFAULT = { style: 'default', glass: true };
 let state = { ...DEFAULT };

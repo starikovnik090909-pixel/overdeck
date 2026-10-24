@@ -334,6 +334,33 @@ body[data-ostyle="o"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle
 body[data-ostyle="o"] .chatter-row.rank-0 .chatter-count { color: #00f0ff; }
 body[data-ostyle="o"] .donor-circle, body[data-ostyle="o"] .donor-circle-inner { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
 
+/* ================= 16 · DEAD BY DAYLIGHT: чёрные чернила, красное свечение, шестиугольники, Roboto Condensed ================= */
+body[data-ostyle="p"] {
+  --font-main: 'OvlRobotoC', system-ui, sans-serif; --font-text: 'OvlRobotoC', system-ui, sans-serif; --o-scale: 1.06;
+  --o-r: 0px; --o-bw: 1px; --o-blur: 2px; --o-sat: 100%; --o-bg: radial-gradient(ellipse at 50% 50%, rgba(156,15,15,.38), rgba(0,0,0,0) 72%), linear-gradient(180deg, rgba(14,11,11,.94), rgba(5,4,4,.97)); --o-solid: #080606; --o-border: rgba(226,42,34,.28); --o-hi: transparent; --o-shadow: 0 0 26px rgba(226,42,34,.14);
+  --o-track: .1em; --o-case: uppercase; --o-title: #ffffff; --o-title-k: 1; --o-title-w: 700; --o-line: rgba(226,42,34,.45); --o-track-bg: rgba(0,0,0,.55);
+  --o-chip-r: 0px; --o-chip-bg: #e22a22; --o-chip-fg: #fff; --o-name: #f4eceb; --o-bar-r: 0px; --o-bar-k: .45; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
+}
+body[data-ostyle="p"] .panel-title-row { justify-content: center; }
+body[data-ostyle="p"] .panel-icon, body[data-ostyle="p"] .chatter-avatar, body[data-ostyle="p"] .donor-circle, body[data-ostyle="p"] .donor-circle-inner, body[data-ostyle="p"] .ef-ic { clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%); border-radius: 0; }
+body[data-ostyle="p"] .chatter-avatar { border: 0; outline: 0; }
+body[data-ostyle="p"] .chatter-bar-fill { background: linear-gradient(90deg, #5c0b0b, #e22a22); box-shadow: 0 0 10px rgba(226,42,34,.6); }
+body[data-ostyle="p"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="p"] .donor-amount { color: #ff8a82 !important; }
+body[data-ostyle="p"] .chatter-row.rank-0 .chatter-count { color: #fff; text-shadow: 0 0 10px #e22a22; }
+body[data-ostyle="p"] .wc-poster { --wc-hero: linear-gradient(#fff, #ffb3ad); --wc-hi: #f4eceb; --wc-acc: #e22a22; --wc-up: #ff8a82; --wc-line: rgba(226,42,34,.35); }
+body[data-ostyle="p"] .wc-ln i { background: linear-gradient(90deg, #5c0b0b, #e22a22); }
+body[data-ostyle="p"] .ef-host { --ef-hi: #ff8a82; --ef-follow: #ff8a82; --ef-sub: #e22a22; --ef-gift: #ff5a52; --ef-don: #ffb3ad; --ef-raid: #c0161a; }
+body[data-ostyle="p"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #e22a22; }
+/* силуэт Toki: едва заметный (~10%), красно-чёрный, растворяется книзу */
+body[data-ostyle="p"] .panel[data-widget="activity"], body[data-ostyle="p"] .panel[data-widget="donortop"], body[data-ostyle="p"] .panel[data-widget="wordcloud"], body[data-ostyle="p"] .panel[data-widget="eventfeed"] { position: relative; overflow: hidden; }
+body[data-ostyle="p"] .panel[data-widget="activity"]::after, body[data-ostyle="p"] .panel[data-widget="donortop"]::after, body[data-ostyle="p"] .panel[data-widget="wordcloud"]::after, body[data-ostyle="p"] .panel[data-widget="eventfeed"]::after {
+  content: ''; position: absolute; right: 0; bottom: 0; width: 62%; height: 100%; pointer-events: none; z-index: 0;
+  background: url('ovl-fonts/dbd-silhouette.png') right bottom / contain no-repeat; opacity: .10; mix-blend-mode: screen;
+  filter: grayscale(1) contrast(1.15) sepia(1) hue-rotate(-40deg) saturate(3.2) brightness(.9);
+  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent);
+}
+body[data-ostyle="p"] .panel[data-widget] > * { position: relative; z-index: 1; }
+
 /* ================= Облако слов («Слово дня»): подстройка под стили. Базовые цвета берутся из переменных стиля (--o-name, --o-line, --o-bar-r…) ================= */
 body[data-ostyle] .wc-poster { --wc-bar-h: max(4px, calc(var(--o-bar-h, 7px) * 0.6)); }
 body[data-ostyle] .wc-kicker { font-weight: var(--o-title-w, 700); }
