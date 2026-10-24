@@ -446,3 +446,5 @@ body[data-ostyle="n"] .da-layer:not(.da-plain) .da-amount { background: linear-g
 /* Чат на сцене (виджет «Чат»): та же плашка темы, что у остальных блоков; внутри — прозрачный iframe чата.
    Чат на своей вкладке — отдельная страница, плашки у него нет. */
 body[data-ostyle] .panel.chat-panel { padding: 10px 12px; overflow: hidden; }
+/* Светлые темы: текст чата по умолчанию светлый — переворачиваем яркость внутри iframe, цвета остаются близкими */
+body[data-ostyle="d"] .panel.chat-panel iframe, body[data-ostyle="n"] .panel.chat-panel iframe { filter: invert(1) hue-rotate(180deg); }
