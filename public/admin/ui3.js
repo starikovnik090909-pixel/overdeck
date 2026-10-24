@@ -250,7 +250,7 @@
   /* ---------- Плашка «Источник для OBS» на вкладках функций ---------- */
   (function () {
     const mk = (title, url, size) => { const d = document.createElement('div'); d.className = 'obs-url-compact ui3-plate'; d.innerHTML = '<span class="obs-url-compact-title">' + esc(title) + '</span><input type="text" readonly value="' + esc(url) + '" title="Рекомендуемый размер источника: ' + esc(size) + '"><button class="btn-tiny" type="button" data-copy="' + esc(url) + '">Копировать</button>'; return d; };
-    const NAME = { mvp: 'MVP', fact: 'Факт', fund: 'Призовой фонд', 'fund-alert': 'Фонд — алерт', 'fund-box': 'Фонд — копилка', background: 'Фон', timer: 'Таймер' };
+    const NAME = { 'team-left': 'Команда слева', 'team-right': 'Команда справа', mvp: 'MVP', fact: 'Факт', fund: 'Призовой фонд', 'fund-alert': 'Фонд — алерт', 'fund-box': 'Фонд — копилка', background: 'Фон', timer: 'Таймер', bracket: 'Сетка турнира' };
     document.querySelectorAll('p.card-hint').forEach((p) => {
       const m = /Виджет для OBS:\s*<code>[^<]*?\/([a-z-]+)\.html<\/code>/.exec(p.innerHTML); if (!m || !NAME[m[1]]) return;
       const plate = mk('Источник для OBS · ' + NAME[m[1]], ORIGIN + '/' + m[1] + '.html', FULL);
