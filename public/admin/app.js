@@ -8823,7 +8823,7 @@
   window.daPreviewPlay = play;
   document.getElementById('btnDaPrevPlay').addEventListener('click', play);
   window.addEventListener('message', (e) => {
-    if (e.data && e.data.type === 'da_preview_done' && document.getElementById('daPrevLoop').checked) setTimeout(play, 900);
+    if (e.data && e.data.type === 'da_preview_done' && document.getElementById('daPrevLoop').checked && frame.offsetParent) setTimeout(play, 900);  // на скрытой вкладке не повторяем: иначе звук играет сам по себе
   });
 })();
 
@@ -9121,7 +9121,7 @@
       if (!ready) return;
       try { const d = await api(`/api/event-alerts/${kind}/card`, testData()); if (d.success) frame.contentWindow.postMessage({ type: 'da_preview', card: d.card }, '*'); } catch (e) { /* нет связи */ }
     };
-    window.addEventListener('message', (e) => { if (e.source === frame.contentWindow && e.data && e.data.type === 'da_preview_done' && btn('loop').checked && !root.closest('.da-pane').hidden) setTimeout(play, 900); });
+    window.addEventListener('message', (e) => { if (e.source === frame.contentWindow && e.data && e.data.type === 'da_preview_done' && btn('loop').checked && !root.closest('.da-pane').hidden && frame.offsetParent) setTimeout(play, 900); });
     const cfgCard = btn('cfgcard'), cfgBtn = btn('cfg'), obsBtn = btn('obs');
     cfgBtn.addEventListener('click', () => { const open = cfgCard.hidden; cfgCard.hidden = !open; cfgBtn.classList.toggle('on', open); if (open) cfgCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
     const obsUrl = `http://localhost:${location.port || 3001}/overlay.html?only=donation&kind=${kind}`;

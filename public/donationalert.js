@@ -4,6 +4,8 @@
 // Оформление (цвет, шрифты, скругление) берётся из темы и стиля оверлея; цвет можно переопределить в настройках алерта.
 
 (function () {
+  // &mute=1 — встроенный предпросмотр на странице «Ссылки для OBS»: крутится сам по кругу и должен быть беззвучным
+  if (new URLSearchParams(location.search).get('mute') === '1') { try { HTMLMediaElement.prototype.play = function () { this.muted = true; this.volume = 0; return Promise.resolve(); }; } catch (_) {} }
   const layer = document.getElementById('daLayer');
   if (!layer) { window.DonationAlertModule = { show() {}, skip() {} }; return; }
 

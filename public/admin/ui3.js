@@ -196,7 +196,7 @@
   const WIDGETS = ['k_donation', 'overlay', 'chat'].map((k) => ALLW.find((w) => w.key === k));
   let obsCat = 'alerts', obsSel = 0, obsPrev = null;
   const stage = (w) => {
-    if (w.alert && w.alert !== 'nowplaying') return '<iframe class="ui3-pv-fr" data-pv="' + w.alert + '" style="width:' + w.sw + 'px;height:' + w.sh + 'px" src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe>';
+    if (w.alert && w.alert !== 'nowplaying') return '<iframe class="ui3-pv-fr" data-pv="' + w.alert + '" style="width:' + w.sw + 'px;height:' + w.sh + 'px" src="/overlay.html?only=donation&preview=1&mute=1" title="Предпросмотр"></iframe>';
     if (w.alert === 'nowplaying') return '<iframe class="ui3-pv-fr" style="width:' + w.sw + 'px;height:' + w.sh + 'px" src="/nowplaying-preview.html" title="Предпросмотр"></iframe>';
     const r = w.rect || [0, 0, 1920, 1080];
     return '<i class="ui3-pv-box" style="left:' + (r[0] / 19.2) + '%;top:' + (r[1] / 10.8) + '%;width:' + (r[2] / 19.2) + '%;height:' + (r[3] / 10.8) + '%"></i>';
