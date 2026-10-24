@@ -22,7 +22,7 @@
 @font-face { font-family: 'OvlPixel'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/press-start-2p-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
 
 /* ---------- общее для всех вариантов ---------- */
-body[data-ostyle] .panel:not(.chat-panel) {
+body[data-ostyle] .panel {
   background: var(--o-bg); border: var(--o-bw, 1px) solid var(--o-border); border-radius: var(--o-r);
   -webkit-backdrop-filter: blur(var(--o-blur)) saturate(var(--o-sat)); backdrop-filter: blur(var(--o-blur)) saturate(var(--o-sat));
   box-shadow: var(--o-shadow), inset 0 1px 0 var(--o-hi);
@@ -61,8 +61,8 @@ body[data-ostyle="b"] {
   --o-shadow: none; --o-track: .12em; --o-case: uppercase; --o-title: #e8ffe3; --o-title-size: 14px; --o-line: rgba(68,214,44,.3); --o-track-bg: rgba(68,214,44,.12);
   --o-chip-r: 0px; --o-chip-bg: #44D62C; --o-chip-fg: #06140a; --o-name: #8dff75; --o-bar-r: 0px; --o-bar-h: 8px; --o-av-r: 8px; --o-dc-r: 0px; --o-av-shadow: 0 0 12px rgba(68,214,44,.35);
 }
-body[data-ostyle="b"] .panel:not(.chat-panel) { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px)); }
-body[data-ostyle="b"] .panel:not(.chat-panel)::before { content: ''; position: absolute; left: 0; top: 0; width: 90px; height: 3px; background: #44D62C; box-shadow: 0 0 14px #44D62C; }
+body[data-ostyle="b"] .panel { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px)); }
+body[data-ostyle="b"] .panel::before { content: ''; position: absolute; left: 0; top: 0; width: 90px; height: 3px; background: #44D62C; box-shadow: 0 0 14px #44D62C; }
 body[data-ostyle="b"] .panel-icon { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
 body[data-ostyle="b"] .chatter-bar-track, body[data-ostyle="b"] .chatter-bar-fill { transform: skewX(-24deg); }
 body[data-ostyle="b"] .chatter-bar-fill { background: linear-gradient(90deg, #2fa81d, #7dff63); box-shadow: 0 0 10px rgba(68,214,44,.55); }
@@ -77,9 +77,9 @@ body[data-ostyle="c"] {
   --o-shadow: 0 0 0 1px rgba(0,0,0,.4); --o-track: .16em; --o-case: uppercase; --o-title: #dfe8f2; --o-title-size: 13px; --o-title-w: 700; --o-line: color-mix(in srgb, var(--accent) 30%, transparent); --o-track-bg: transparent;
   --o-chip-r: 2px; --o-chip-bg: transparent; --o-chip-fg: var(--accent); --o-name: #e8eef6; --o-bar-r: 0px; --o-bar-h: 10px; --o-av-r: 4px; --o-dc-r: 4px; --o-av-shadow: none;
 }
-body[data-ostyle="c"] .panel:not(.chat-panel)::before, body[data-ostyle="c"] .panel:not(.chat-panel)::after { content: ''; position: absolute; width: 22px; height: 22px; pointer-events: none; border: 2px solid var(--accent); }
-body[data-ostyle="c"] .panel:not(.chat-panel)::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
-body[data-ostyle="c"] .panel:not(.chat-panel)::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
+body[data-ostyle="c"] .panel::before, body[data-ostyle="c"] .panel::after { content: ''; position: absolute; width: 22px; height: 22px; pointer-events: none; border: 2px solid var(--accent); }
+body[data-ostyle="c"] .panel::before { left: 0; top: 0; border-right: 0; border-bottom: 0; }
+body[data-ostyle="c"] .panel::after { right: 0; bottom: 0; border-left: 0; border-top: 0; }
 body[data-ostyle="c"] .panel-title-row::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--o-line), transparent); }
 body[data-ostyle="c"] .panel-icon { border: 1px solid var(--o-line); }
 body[data-ostyle="c"] .chatter-bar-track { background: repeating-linear-gradient(90deg, rgba(255,255,255,.08) 0 9px, transparent 9px 12px); }
@@ -125,7 +125,7 @@ body[data-ostyle="e"] .panel-icon { box-shadow: 3px 3px 0 rgba(0,0,0,.55); }
 body[data-ostyle] { --o-scale: 1; --o-n: calc(var(--chatter-name-size, 14px) * var(--o-scale)); }
 body[data-ostyle="a"], body[data-ostyle="c"], body[data-ostyle="d"] { --o-scale: 1.07; }
 body[data-ostyle="e"] { --o-scale: .72; }
-body[data-ostyle] .panel:not(.chat-panel) { padding: calc(var(--o-n) * 1.6) calc(var(--o-n) * 1.85) calc(var(--o-n) * 1.7); }
+body[data-ostyle] .panel { padding: calc(var(--o-n) * 1.6) calc(var(--o-n) * 1.85) calc(var(--o-n) * 1.7); }
 body[data-ostyle] .panel-title-row { gap: calc(var(--o-n) * .8); margin-bottom: calc(var(--o-n) * 1.15); }
 body[data-ostyle] .panel-title { font-size: calc(var(--o-n) * var(--o-title-k, .9)); line-height: 1.2; }
 body[data-ostyle] .panel-icon { width: calc(var(--o-n) * 2); height: calc(var(--o-n) * 2); padding: calc(var(--o-n) * .5); }
@@ -212,7 +212,7 @@ body[data-ostyle="h"] {
   --o-track: .08em; --o-case: uppercase; --o-title: #c8aa6e; --o-title-k: .92; --o-title-w: 400; --o-line: rgba(200,170,110,.3); --o-track-bg: #091e2d;
   --o-chip-r: 0px; --o-chip-bg: #c8aa6e; --o-chip-fg: #010a13; --o-name: #f0e6d2; --o-bar-r: 0px; --o-bar-k: .5; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: 0 0 0 2px #010a13, 0 0 0 3px #785a28;
 }
-body[data-ostyle="h"] .panel:not(.chat-panel) { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
+body[data-ostyle="h"] .panel { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
 body[data-ostyle="h"] .panel-icon { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); padding: calc(var(--o-n) * .62); }
 body[data-ostyle="h"] .chatter-avatar { border-color: #c8aa6e; }
 body[data-ostyle="h"] .chatter-bar-fill { background: linear-gradient(90deg, #0a8f87, #0ac8b9); box-shadow: 0 0 8px rgba(10,200,185,.45); }
@@ -226,7 +226,7 @@ body[data-ostyle="i"] {
   --o-track: .06em; --o-case: uppercase; --o-title: rgba(255,255,255,.72); --o-title-k: .8; --o-line: rgba(255,255,255,.1); --o-track-bg: rgba(255,255,255,.1);
   --o-chip-r: 0px; --o-chip-bg: transparent; --o-chip-fg: #f0c14b; --o-name: #f2f2f2; --o-bar-r: 0px; --o-bar-k: .42; --o-av-r: 2px; --o-dc-r: 2px; --o-av-shadow: none;
 }
-body[data-ostyle="i"] .panel:not(.chat-panel)::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f0c14b; }
+body[data-ostyle="i"] .panel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #f0c14b; }
 body[data-ostyle="i"] .panel { padding-left: calc(var(--o-n) * 2.1) !important; }
 body[data-ostyle="i"] .panel-icon { padding: 0; width: calc(var(--o-n) * 1.7); height: calc(var(--o-n) * 1.7); }
 body[data-ostyle="i"] .chatter-bar-fill { background: #e8e8e8; }
@@ -257,8 +257,8 @@ body[data-ostyle="k"] {
   --o-track: .06em; --o-case: uppercase; --o-title: #ece8e1; --o-title-k: .9; --o-line: rgba(236,232,225,.12); --o-track-bg: rgba(236,232,225,.1);
   --o-chip-r: 0px; --o-chip-bg: #ff4655; --o-chip-fg: #fff; --o-name: #ece8e1; --o-bar-r: 0px; --o-bar-k: .55; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
 }
-body[data-ostyle="k"] .panel:not(.chat-panel) { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); }
-body[data-ostyle="k"] .panel:not(.chat-panel)::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 46px; background: #ff4655; }
+body[data-ostyle="k"] .panel { clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%); }
+body[data-ostyle="k"] .panel::before { content: ''; position: absolute; left: 0; top: 0; width: 6px; height: 46px; background: #ff4655; }
 body[data-ostyle="k"] .panel-title-row { padding-left: calc(var(--o-n) * .6); }
 body[data-ostyle="k"] .panel-icon, body[data-ostyle="k"] .chatter-avatar { clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%); }
 body[data-ostyle="k"] .chatter-avatar { border: 0; }
@@ -275,7 +275,7 @@ body[data-ostyle="l"] {
   --o-track: 0em; --o-case: none; --o-title: #ffff55; --o-title-k: 1.05; --o-title-w: 700; --o-line: rgba(255,255,255,.15); --o-track-bg: #1f1f1f;
   --o-chip-r: 0px; --o-chip-bg: #8b8b8b; --o-chip-fg: #fff; --o-name: #fff; --o-bar-r: 0px; --o-bar-k: .6; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
 }
-body[data-ostyle="l"] .panel:not(.chat-panel) { border-color: #c6c6c6 #555 #555 #c6c6c6; }
+body[data-ostyle="l"] .panel { border-color: #c6c6c6 #555 #555 #c6c6c6; }
 body[data-ostyle="l"] .panel-title, body[data-ostyle="l"] .chatter-name, body[data-ostyle="l"] .donor-name, body[data-ostyle="l"] .chatter-count, body[data-ostyle="l"] .donor-amount { text-shadow: 2px 2px 0 #3f3f3f; }
 body[data-ostyle="l"] .panel-icon { box-shadow: inset 2px 2px 0 #c6c6c6, inset -2px -2px 0 #555; }
 body[data-ostyle="l"] .chatter-avatar { image-rendering: pixelated; border: 2px solid #8b8b8b; border-color: #c6c6c6 #555 #555 #c6c6c6; }
@@ -324,7 +324,7 @@ body[data-ostyle="o"] {
   --o-track: .1em; --o-case: uppercase; --o-title: #0a0a0a; --o-title-k: .9; --o-title-w: 700; --o-line: rgba(252,238,10,.3); --o-track-bg: rgba(252,238,10,.12);
   --o-chip-r: 0px; --o-chip-bg: #fcee0a; --o-chip-fg: #0a0a0a; --o-name: #f4f1c8; --o-bar-r: 0px; --o-bar-k: .5; --o-av-r: 0px; --o-dc-r: 0px; --o-av-shadow: none;
 }
-body[data-ostyle="o"] .panel:not(.chat-panel) { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%); }
+body[data-ostyle="o"] .panel { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 22px), calc(100% - 22px) 100%, 0 100%); }
 body[data-ostyle="o"] .panel-title { background: #fcee0a; padding: .18em .7em; text-shadow: none; clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); padding-right: 1.3em; }
 body[data-ostyle="o"] .panel-icon, body[data-ostyle="o"] .chatter-avatar { clip-path: polygon(0 0, 100% 0, 100% 70%, 70% 100%, 0 100%); }
 body[data-ostyle="o"] .chatter-avatar { border: 0; outline: 0; }
@@ -352,7 +352,7 @@ body[data-ostyle="p"] .wc-ln i { background: linear-gradient(90deg, #5c0b0b, #e2
 body[data-ostyle="p"] .ef-host { --ef-hi: #ff8a82; --ef-follow: #ff8a82; --ef-sub: #e22a22; --ef-gift: #ff5a52; --ef-don: #ffb3ad; --ef-raid: #c0161a; }
 body[data-ostyle="p"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #e22a22; }
 /* силуэт Toki: ~10%, красно-чёрный; на всех панелях виджетов, целиком (contain) — виден при любом размере плашки */
-body[data-ostyle="p"] .panel[data-widget]:not(.chat-panel)::before {
+body[data-ostyle="p"] .panel[data-widget]::before {
   content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1; border-radius: inherit;
   background: url('ovl-fonts/dbd-silhouette.png') right bottom / contain no-repeat; opacity: .10; mix-blend-mode: screen;
   filter: grayscale(1) contrast(1.2) sepia(1) hue-rotate(-40deg) saturate(3.4) brightness(1);
@@ -442,3 +442,7 @@ body[data-ostyle="l"] .da-layer:not(.da-plain) .da-nick { font-size: 30px; } bod
 /* светлый стиль N: тёмные буквы, сумма с тёмным градиентом */
 body[data-ostyle="n"] .da-layer:not(.da-plain) .da-kicker { color: color-mix(in srgb, var(--da-c0) 80%, #000); }
 body[data-ostyle="n"] .da-layer:not(.da-plain) .da-amount { background: linear-gradient(180deg, #1c1c1a, color-mix(in srgb, var(--da-c0) 70%, #000)); -webkit-background-clip: text; background-clip: text; filter: none; }
+
+/* Чат на сцене (виджет «Чат»): та же плашка темы, что у остальных блоков; внутри — прозрачный iframe чата.
+   Чат на своей вкладке — отдельная страница, плашки у него нет. */
+body[data-ostyle] .panel.chat-panel { padding: 10px 12px; overflow: hidden; }
