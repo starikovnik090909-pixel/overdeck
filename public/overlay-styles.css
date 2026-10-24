@@ -351,15 +351,15 @@ body[data-ostyle="p"] .wc-poster { --wc-hero: linear-gradient(#fff, #ffb3ad); --
 body[data-ostyle="p"] .wc-ln i { background: linear-gradient(90deg, #5c0b0b, #e22a22); }
 body[data-ostyle="p"] .ef-host { --ef-hi: #ff8a82; --ef-follow: #ff8a82; --ef-sub: #e22a22; --ef-gift: #ff5a52; --ef-don: #ffb3ad; --ef-raid: #c0161a; }
 body[data-ostyle="p"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #e22a22; }
-/* силуэт Toki: едва заметный (~10%), красно-чёрный, растворяется книзу */
-body[data-ostyle="p"] .panel[data-widget="activity"], body[data-ostyle="p"] .panel[data-widget="donortop"], body[data-ostyle="p"] .panel[data-widget="wordcloud"], body[data-ostyle="p"] .panel[data-widget="eventfeed"] { position: relative; overflow: hidden; }
-body[data-ostyle="p"] .panel[data-widget="activity"]::after, body[data-ostyle="p"] .panel[data-widget="donortop"]::after, body[data-ostyle="p"] .panel[data-widget="wordcloud"]::after, body[data-ostyle="p"] .panel[data-widget="eventfeed"]::after {
-  content: ''; position: absolute; right: 0; bottom: 0; width: 62%; height: 100%; pointer-events: none; z-index: 0;
+/* силуэт Toki: ~10%, красно-чёрный; на всех панелях виджетов, целиком (contain) — виден при любом размере плашки */
+body[data-ostyle="p"] .panel[data-widget]:not(.chat-panel) { position: relative; overflow: hidden; }
+body[data-ostyle="p"] .panel[data-widget]:not(.chat-panel)::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: url('ovl-fonts/dbd-silhouette.png') right bottom / contain no-repeat; opacity: .10; mix-blend-mode: screen;
-  filter: grayscale(1) contrast(1.15) sepia(1) hue-rotate(-40deg) saturate(3.2) brightness(.9);
-  -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent);
+  filter: grayscale(1) contrast(1.2) sepia(1) hue-rotate(-40deg) saturate(3.4) brightness(1.2);
+  -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent);
 }
-body[data-ostyle="p"] .panel[data-widget] > * { position: relative; z-index: 1; }
+body[data-ostyle="p"] .panel[data-widget]:not(.chat-panel) > * { position: relative; z-index: 1; }
 
 /* ================= Облако слов («Слово дня»): подстройка под стили. Базовые цвета берутся из переменных стиля (--o-name, --o-line, --o-bar-r…) ================= */
 body[data-ostyle] .wc-poster { --wc-bar-h: max(4px, calc(var(--o-bar-h, 7px) * 0.6)); }
