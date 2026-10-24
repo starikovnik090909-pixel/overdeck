@@ -5450,7 +5450,7 @@
     goalScaleValue.textContent = goalEls.scale.value + '%';
     goalPosXValue.textContent = goalEls.posX.value + ' px';
     goalPosYValue.textContent = goalEls.posY.value + ' px';
-    const shared = goalEls.shared.checked;
+    const shared = false;
     btnGoalShared.classList.toggle('on', shared);
     btnGoalShared.setAttribute('aria-pressed', String(shared));
     goalSharedHint.style.display = shared ? '' : 'none';
@@ -5477,7 +5477,7 @@
     goalEls.soundEnabled.checked = !!goal.soundEnabled;
     goalEls.volume.value = goal.volume;
     goalEls.scale.value = goal.scale;
-    goalEls.shared.checked = !!goal.shared;
+    goalEls.shared.checked = false;
     goalEls.posX.value = goal.posX;
     goalEls.posY.value = goal.posY;
     updateGoalPreview();
@@ -8558,7 +8558,6 @@
   const msgEl = document.getElementById('daMessage');
   const FIELDS = [
     { k: 'enabled', t: 'toggle', l: 'Показывать алерт при донате' },
-    { k: 'inMain', t: 'toggle', l: 'Показывать в основном оверлее (выключи, если используешь отдельный источник OBS)' },
     { k: 'minAmount', t: 'number', l: 'Показывать от суммы', suf: '₽', min: 0, max: 1000000 },
     { k: 'themed', t: 'toggle', l: 'Привязать к теме оверлея (стиль, цвет, шрифт; выкл — нейтральный вид)' },
     { k: 'font', t: 'font', l: '', noRow: true },
@@ -8602,7 +8601,7 @@
     { k: 'cardColor', t: 'color', l: 'Цвет карточки (пусто — цвет темы)' },
   ];
   const GROUPS = [
-    ['show', 'Показ и тайминг', 'когда показывать, размер, время на экране', ["enabled", "look", "receiptTitle", "inMain", "minAmount", "scale", "flySec", "holdMinSec", "holdMaxSec", "maxLength"]],
+    ['show', 'Показ и тайминг', 'когда показывать, размер, время на экране', ["enabled", "look", "receiptTitle", "minAmount", "scale", "flySec", "holdMinSec", "holdMaxSec", "maxLength"]],
     ['look', 'Оформление карточки', 'тема, цвет, плашка, текстура, рамка, свет', ["themed", "cardColor", "plateOpacity", "showSource", "texture", "texDim", "texOpacity", "frame", "frameW", "glow", "glowPower"]],
     ['fx', 'Элементы и эффекты', 'уровни доната, пульсация, печать текста, статистика', ["typeText", "pulse", "tiers", "tier1", "tier2", "tier3", "donorStat", "timeBar"]],
     ['voice', 'Озвучка', 'голос, громкость, что читать, «задонатил / задонатила»', ["speak", "voice", "volume", "readNick", "genderVerb", "genderUnknown", "genderList", "readMessage"]],
@@ -8774,7 +8773,7 @@
 (function () {
   const obsBtn = document.getElementById('btnDaObs');
   if (!obsBtn) return;
-  const obsUrl = `http://localhost:${location.port || 3001}/overlay.html?only=donation`;
+  const obsUrl = `http://localhost:${location.port || 3001}/overlay.html?only=donation&kind=donation`;
   obsBtn.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(obsUrl); } catch (e) { const ta = document.createElement('textarea'); ta.value = obsUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
     const old = obsBtn.dataset.tip; obsBtn.dataset.tip = 'Ссылка скопирована ✓\n' + obsUrl; obsBtn.classList.add('on');
@@ -9125,7 +9124,7 @@
     window.addEventListener('message', (e) => { if (e.source === frame.contentWindow && e.data && e.data.type === 'da_preview_done' && btn('loop').checked && !root.closest('.da-pane').hidden) setTimeout(play, 900); });
     const cfgCard = btn('cfgcard'), cfgBtn = btn('cfg'), obsBtn = btn('obs');
     cfgBtn.addEventListener('click', () => { const open = cfgCard.hidden; cfgCard.hidden = !open; cfgBtn.classList.toggle('on', open); if (open) cfgCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
-    const obsUrl = `http://localhost:${location.port || 3001}/overlay.html?only=donation`;
+    const obsUrl = `http://localhost:${location.port || 3001}/overlay.html?only=donation&kind=${kind}`;
     obsBtn.addEventListener('click', async () => {
       try { await navigator.clipboard.writeText(obsUrl); } catch (e) { const ta = document.createElement('textarea'); ta.value = obsUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); }
       const old = obsBtn.dataset.tip; obsBtn.dataset.tip = 'Ссылка скопирована ✓\n' + obsUrl; obsBtn.classList.add('on');

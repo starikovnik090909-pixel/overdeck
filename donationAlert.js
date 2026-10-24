@@ -5,7 +5,6 @@ const gender = require('./gender');
 
 const DEFAULTS = {
   enabled: true,
-  inMain: true,          // показывать и в основном оверлее (выключи, если алерт вынесен в отдельный источник OBS)
   minAmount: 0,          // донаты меньше этой суммы (в ₽) алерт не показывают
   speak: true,           // озвучивать алерт
   readNick: true,        // «<ник> задонатил <сумма>»
@@ -57,7 +56,6 @@ function sanitize(raw, base) {
   const r = raw || {};
   return {
     enabled: bool(r.enabled, b.enabled),
-    inMain: bool(r.inMain, b.inMain),
     minAmount: clamp(r.minAmount, 0, 1000000, b.minAmount),
     speak: bool(r.speak, b.speak),
     readNick: bool(r.readNick, b.readNick),

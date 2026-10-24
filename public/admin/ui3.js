@@ -14,7 +14,7 @@
     activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>', clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', bot: '<rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/>',
     target: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/>', train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 11h14M8 21l2-4M16 21l-2-4"/>',
     copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>', ext: '<path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
-    chev: '<path d="m9 18 6-6-6-6"/>', zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+    bell: '<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/>', layout: '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>', msg: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>', image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>', trophy: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/>', chev: '<path d="m9 18 6-6-6-6"/>', zap: '<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
   };
   const I = (n) => '<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none">' + (P[n] || '') + '</svg>';
   const IC = (n) => '<svg viewBox="0 0 24 24">' + (P[n] || '') + '</svg>';
@@ -169,27 +169,107 @@
   }
 
   /* ---------- Ссылки для OBS ---------- */
-  const WIDGETS = [
-    { name: 'Основной оверлей', desc: 'Активность чата, таймлайн, топ донатеров, эмодзи, слова эфира', url: 'overlay.html', size: '1920 × 1080', key: 'overlay', tab: 'widgets', th: 'left:6px;right:6px;top:6px;height:16px;background:rgba(216,75,85,.45)' },
-    { name: 'Все алерты вместе', desc: 'Один источник на весь экран: донаты, подписки, рейды, фоллоу, Hype Train, баллы, серия, «Сейчас играет», цель сбора', url: 'overlay.html?only=donation', size: '1920 × 1080', key: 'alerts', tab: 'donalerts', th: 'left:26px;right:26px;top:16px;height:22px;background:rgba(216,75,85,.6)' },
-    ...[['donation', 'Донаты', 'Только алерт доната', 'donalerts'], ['sub', 'Подписки', 'Только алерт подписки', 'donalerts'], ['raid', 'Рейды', 'Только алерт рейда', 'donalerts'], ['follow', 'Фоллоу', 'Только алерт нового фолловера', 'donalerts'],
-      ['hype', 'Hype Train', 'Только алерты Hype Train', 'donalerts'], ['points', 'Баллы канала', 'Только алерт наград за баллы', 'donalerts'], ['streak', 'Серия просмотров', 'Только плашка в углу экрана', 'donalerts'], ['nowplaying', 'Сейчас играет', 'Только алерт «Сейчас играет» (положение — настройкой «Угол»)', 'donalerts']]
-      .map(([k, n, d, tab]) => ({ name: 'Алерт: ' + n, desc: d + '. Отдельный источник OBS', url: 'overlay.html?only=donation&kind=' + k, size: '1920 × 1080 (на весь экран)', key: 'k_' + k, tab, th: 'left:26px;right:26px;top:16px;height:22px;background:rgba(216,75,85,.35)' })),
-    { name: 'Чат', desc: 'Сообщения зрителей с эмодзи и бейджами', url: 'chat-widget.html', size: 'любой, например 400 × 800', key: 'chat', tab: 'chat', th: 'left:30px;width:36px;top:5px;bottom:5px;background:rgba(255,255,255,.18)' },
-    { name: 'Чат — док-панель OBS', desc: 'Чат с полем «написать от имени бота» внутри OBS: Вид → Док-панели → Пользовательские док-панели браузера', url: 'chat-dock.html', size: 'панель OBS', key: 'chatdock', dock: 1, tab: 'chat', th: 'left:8px;width:30px;top:5px;bottom:5px;background:rgba(216,75,85,.6)' },
-    { name: 'Цель сбора отдельно', desc: 'Только если в «Алертах» выключен общий источник', url: 'goal.html', size: '680 × 250', key: 'goal', tab: 'donalerts', th: 'left:10px;right:10px;top:22px;height:10px;background:linear-gradient(90deg,#D84B55 62%,#333 62%)' },
+  // Один источник OBS = одна функция. Категории слева, справа — выбранный источник: превью, рекомендуемый размер, ссылка, как добавить.
+  const FULL = '1920 × 1080';
+  const DEFR = { activity: [40, 40, 460, 1000], timeline: [524, 40, 1356, 494], emotebox: [524, 558, 542, 482], wordcloud: [1090, 558, 790, 482], donortop: [1520, 40, 360, 494], eventfeed: [1520, 558, 360, 482], chat: [1520, 40, 360, 1000] };
+  const ALERT_KINDS = [['donation', 'Донаты', 'Донат-алерт: карточка с ником, суммой и сообщением'], ['sub', 'Подписки', 'Алерт подписки и подарочных подписок'], ['raid', 'Рейды', 'Алерт рейда'], ['follow', 'Фоллоу', 'Алерт нового фолловера'],
+    ['hype', 'Hype Train', 'Алерты Hype Train'], ['points', 'Баллы канала', 'Алерт наград за баллы канала'], ['streak', 'Серия просмотров', 'Плашка серии просмотров в углу экрана'], ['nowplaying', 'Сейчас играет', 'Алерт «Сейчас играет» (угол — в настройках алерта)']];
+  const WIDGET_TITLES = { activity: 'Активность зрителей', timeline: 'Таймлайн стрима', emotebox: 'Топ эмодзи', wordcloud: 'Слова эфира', donortop: 'Топ донатеров', eventfeed: 'События', chat: 'Чат на сцене' };
+  const full = (name, desc, url, key, tab, extra) => Object.assign({ name, desc, url, size: FULL, key, tab, note: 'Прозрачный фон — включён по умолчанию' }, extra || {});
+  const CATS = [
+    { id: 'alerts', name: 'Алерты', icon: 'bell', items: ALERT_KINDS.map(([k, n, d]) => full(n, d, 'overlay.html?only=donation&kind=' + k, 'k_' + k, 'donalerts', { alert: k })) },
+    { id: 'screen', name: 'Виджеты экрана', icon: 'layout', items: [full('Весь оверлей сразу', 'Все включённые блоки сцены одним источником (без алертов)', 'overlay.html', 'overlay', 'widgets', { rect: [0, 0, 1920, 1080] })]
+      .concat(Object.keys(WIDGET_TITLES).map((id) => full(WIDGET_TITLES[id], 'Только этот блок сцены, на своём месте', 'overlay.html?w=' + id, 'w_' + id, 'widgets', { rect: DEFR[id] }))) },
+    { id: 'goal', name: 'Цель и фонд', icon: 'target', items: [
+      full('Цель сбора', 'Плашка со шкалой сбора', 'goal.html', 'goal', 'donalerts', { size: '680 × 250', rect: [60, 80, 680, 250] }),
+      full('Призовой фонд', 'Сумма фонда', 'fund.html', 'fund', 'event'), full('Фонд — алерт', 'Алерт пополнения фонда', 'fund-alert.html', 'fundalert', 'event'), full('Фонд — копилка', 'Копилка с купюрами', 'fund-box.html', 'fundbox', 'event')] },
+    { id: 'stream', name: 'Игра и стрим', icon: 'trophy', items: [
+      full('MVP', 'Плашка лучшего зрителя', 'mvp.html', 'mvp', 'event'), full('Факт', 'Плашка с фактом', 'fact.html', 'fact', 'event'), full('Таймер', 'Таймер на экране', 'timer.html', 'timer', 'event'),
+      full('Сетка турнира', 'Все панели турнира', 'bracket.html', 'bracket', 'event'), full('Команда слева', 'Панель команды', 'team-left.html', 'team', 'event'), full('Команда справа', 'Панель команды', 'team-right.html', 'team', 'event')] },
+    { id: 'chat', name: 'Чат', icon: 'msg', items: [
+      full('Чат', 'Сообщения зрителей с эмодзи и бейджами', 'chat-widget.html', 'chat', 'chat', { size: '400 × 800 (любой)' }),
+      full('Чат — док-панель OBS', 'Чат с полем «написать от имени бота» внутри OBS: Вид → Док-панели → Пользовательские док-панели браузера', 'chat-dock.html', 'chatdock', 'chat', { size: 'панель OBS', dock: 1, note: '' })] },
+    { id: 'avatars', name: 'Аватары и фон', icon: 'image', items: [
+      full('ЧатАватары', 'Пиксельные герои бродят по экрану', 'pixel-avatar.html', 'pixel', 'chatavatars'), full('Фон', 'Фон сцены (НЕ прозрачный) — ставь самым нижним слоем', 'background.html', 'background', 'event', { note: 'Фон непрозрачный — ставь нижним слоем' })] },
   ];
-  function renderObs() {
-    const obs = (home && home.obs) || {};
-    const t = $('#obsTable'); if (!t) return;
-    t.innerHTML = '<thead><tr><th style="width:130px">Превью</th><th>Виджет</th><th style="width:200px">Размер источника</th><th style="width:420px">Ссылка</th><th style="width:150px">Статус</th><th style="width:240px"></th></tr></thead><tbody>' +
-      WIDGETS.map((w) => { const on = (obs[w.key] || 0) > 0; const full = ORIGIN + '/' + w.url;
-        return '<tr><td><div class="ui3-thumb"><i style="' + w.th + '"></i></div></td><td><b style="font-weight:600">' + w.name + '</b><div class="card-hint" style="margin:2px 0 0">' + w.desc + '</div></td><td class="mono">' + w.size + '</td>' +
-          '<td><div class="ui3-url"><i>' + esc(ORIGIN.replace(/^https?:\/\//, '')) + '/</i>' + esc(w.url) + '</div></td>' +
-          '<td>' + (w.dock ? '<span class="ui3-chip">Док-панель</span>' : on ? '<span class="ui3-chip ok">Открыт в OBS</span>' : '<span class="ui3-chip">Не открыт</span>') + '</td>' +
-          '<td style="text-align:right;white-space:nowrap"><button class="btn btn-secondary btn-sm" type="button" data-copy="' + full + '">' + I('copy') + ' Копировать</button> <a class="btn btn-ghost btn-sm" href="' + full + '" target="_blank" rel="noopener" title="Открыть в браузере">' + I('ext') + '</a> <button class="btn btn-ghost btn-sm" type="button" data-go="' + w.tab + '">Настроить</button></td></tr>'; }).join('') + '</tbody>';
+  const ALLW = [].concat(...CATS.map((c) => c.items));
+  const WIDGETS = ['k_donation', 'overlay', 'chat'].map((k) => ALLW.find((w) => w.key === k));
+  let obsCat = 'alerts', obsSel = 0, obsPrev = null;
+  const stage = (w) => {
+    if (w.alert && w.alert !== 'nowplaying') return '<iframe class="ui3-pv-fr" data-pv="' + w.alert + '" src="/overlay.html?only=donation&preview=1" title="Предпросмотр"></iframe>';
+    if (w.alert === 'nowplaying') return '<iframe class="ui3-pv-fr" src="/nowplaying-preview.html" title="Предпросмотр"></iframe>';
+    const r = w.rect || [0, 0, 1920, 1080];
+    return '<i class="ui3-pv-box" style="left:' + (r[0] / 19.2) + '%;top:' + (r[1] / 10.8) + '%;width:' + (r[2] / 19.2) + '%;height:' + (r[3] / 10.8) + '%"></i>';
+  };
+  async function playPreview(kind, fr) {
+    const url = kind === 'donation' ? '/api/donation-alert/card' : '/api/event-alerts/' + kind + '/card';
+    const d = await post(url, {});
+    if (d && d.card && fr.contentWindow) fr.contentWindow.postMessage({ type: 'da_preview', card: d.card }, '*');
   }
+  function obsFit() { const pv = document.querySelector('#obsBox .ui3-pv'), f = document.querySelector('#obsBox .ui3-pv-fr'); if (pv && f && pv.clientWidth) f.style.transform = 'scale(' + pv.clientWidth / 1920 + ')'; }
+  window.addEventListener('resize', obsFit);
+  function renderObs() {
+    const t = $('#obsBox'); if (!t) return;
+    const obs = (home && home.obs) || {};
+    const cat = CATS.find((c) => c.id === obsCat) || CATS[0];
+    if (obsSel >= cat.items.length) obsSel = 0;
+    const w = cat.items[obsSel], urlFull = ORIGIN + '/' + w.url, on = (obs[w.key] || 0) > 0;
+    const st = w.dock ? '<span class="ui3-chip">Док-панель</span>' : w.key === 'pixel' ? '' : on ? '<span class="ui3-chip ok">Открыт в OBS</span>' : '<span class="ui3-chip">Не открыт</span>';
+    const sig = obsCat + '|' + obsSel;
+    const keep = t.dataset.sig === sig;
+    const cnt = (c) => c.items.filter((x) => (obs[x.key] || 0) > 0).length;
+    const nav = CATS.map((c) => '<button type="button" class="' + (c.id === obsCat ? 'a' : '') + '" data-cat="' + c.id + '">' + IC(c.icon) + '<span>' + c.name + '</span><em>' + (cnt(c) ? cnt(c) + '/' : '') + c.items.length + '</em></button>').join('');
+    const list = '<div class="ui3-obs-list">' + cat.items.map((x, i) => '<button type="button" class="' + (i === obsSel ? 'a' : '') + '" data-sel="' + i + '"><span class="ui3-dot ' + ((obs[x.key] || 0) > 0 ? 'on' : '') + '"></span>' + x.name + '</button>').join('') + '</div>';
+    const detail = '<div class="ui3-obs-det"><div class="ui3-obs-top"><b>' + w.name + '</b>' + st + '</div><p class="card-hint" style="margin:0">' + w.desc + '</p>' +
+      '<div class="ui3-pv">' + stage(w) + '</div>' +
+      '<div class="ui3-obs-size"><span>Рекомендуемый размер источника</span><b>' + w.size + '</b>' + (w.note ? '<em>' + w.note + '</em>' : '') + '</div>' +
+      '<div class="ui3-obs-url"><input readonly value="' + esc(urlFull) + '"><button class="btn btn-primary btn-sm" type="button" data-copy="' + urlFull + '">' + I('copy') + ' Копировать</button><a class="btn btn-ghost btn-sm" href="' + urlFull + '" target="_blank" rel="noopener" title="Открыть в браузере">' + I('ext') + '</a><button class="btn btn-ghost btn-sm" type="button" data-go="' + w.tab + '">Настроить</button></div>' +
+      '<ol class="ui3-obs-steps"><li>OBS → Источники → «+» → <b>Браузер</b></li><li>Вставь ссылку, укажи размер из строки выше</li><li>Сними галочку «Отключать источник, когда он не виден»</li></ol></div>';
+    if (keep) { obsFit(); // только обновляем статусы, не трогая превью
+      const top = t.querySelector('.ui3-obs-top'); if (top) { const c = top.querySelector('.ui3-chip'); if (c) c.outerHTML = st || '<span></span>'; }
+      t.querySelectorAll('.ui3-obs-list .ui3-dot').forEach((d, i) => d.classList.toggle('on', (obs[cat.items[i].key] || 0) > 0));
+      return;
+    }
+    t.dataset.sig = sig;
+    t.innerHTML = '<div class="ui3-obs-cat">' + nav + '</div>' + list + detail;
+    const fr = t.querySelector('.ui3-pv-fr[data-pv]');
+    obsPrev = null;
+    obsFit();
+    if (fr) { obsPrev = { fr, kind: fr.dataset.pv }; fr.addEventListener('load', () => playPreview(obsPrev && obsPrev.kind, fr)); }
+  }
+  window.addEventListener('message', (e) => { // повтор алерта в превью: пауза и снова, без звука
+    if (e.data && e.data.type === 'da_preview_done' && obsPrev && e.source === obsPrev.fr.contentWindow) { const p = obsPrev; setTimeout(() => { if (obsPrev === p) playPreview(p.kind, p.fr); }, 1200); }
+  });
+  document.addEventListener('click', (e) => {
+    const c = e.target.closest('#obsBox [data-cat]'); if (c) { obsCat = c.dataset.cat; obsSel = 0; renderObs(); return; }
+    const x = e.target.closest('#obsBox [data-sel]'); if (x) { obsSel = +x.dataset.sel; renderObs(); }
+  });
 
+
+
+  /* ---------- Плашка «Источник для OBS» на вкладках функций ---------- */
+  (function () {
+    const mk = (title, url, size) => { const d = document.createElement('div'); d.className = 'obs-url-compact ui3-plate'; d.innerHTML = '<span class="obs-url-compact-title">' + esc(title) + '</span><input type="text" readonly value="' + esc(url) + '" title="Рекомендуемый размер источника: ' + esc(size) + '"><button class="btn-tiny" type="button" data-copy="' + esc(url) + '">Копировать</button>'; return d; };
+    const NAME = { 'team-left': 'Команда слева', 'team-right': 'Команда справа', mvp: 'MVP', fact: 'Факт', fund: 'Призовой фонд', 'fund-alert': 'Фонд — алерт', 'fund-box': 'Фонд — копилка', background: 'Фон', timer: 'Таймер', bracket: 'Сетка турнира' };
+    document.querySelectorAll('p.card-hint').forEach((p) => {
+      const m = /Виджет для OBS:\s*<code>[^<]*?\/([a-z-]+)\.html<\/code>/.exec(p.innerHTML); if (!m || !NAME[m[1]]) return;
+      const plate = mk('Источник для OBS · ' + NAME[m[1]], ORIGIN + '/' + m[1] + '.html', FULL);
+      plate.style.maxWidth = '620px'; plate.style.marginTop = '14px';
+      p.parentNode.insertBefore(plate, p);
+      p.innerHTML = p.innerHTML.replace(/Виджет для OBS:\s*<code>[^<]*<\/code>\s*/, 'Рекомендуемый размер источника: ' + FULL + '. ');
+    });
+    const wt = document.querySelector('#tab-widgets .wtool-head');   // сцена: источник на каждый блок отдельно
+    if (wt) {
+      const d = mk('Источник блока', ORIGIN + '/overlay.html', FULL);
+      const sel = document.createElement('select'); sel.style.cssText = 'height:32px;border-radius:8px;border:1px solid var(--divider);background:var(--bg-app);color:var(--text-primary);font-size:12px';
+      sel.innerHTML = '<option value="">Вся сцена</option>' + Object.keys(WIDGET_TITLES).map((k) => '<option value="' + k + '">' + WIDGET_TITLES[k] + '</option>').join('');
+      d.insertBefore(sel, d.querySelector('input'));
+      const inp = d.querySelector('input'), b = d.querySelector('button');
+      sel.addEventListener('change', () => { const u = ORIGIN + '/overlay.html' + (sel.value ? '?w=' + sel.value : ''); inp.value = u; b.dataset.copy = u; });
+      d.style.maxWidth = '640px'; d.style.marginTop = '0'; d.style.marginBottom = '14px';
+      wt.parentNode.insertBefore(d, wt.nextSibling);
+    }
+  })();
 
   /* ---------- Чат: «Док для OBS» ---------- */
   const dockBtn = document.getElementById('btnChatDock');

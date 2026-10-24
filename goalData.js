@@ -27,7 +27,7 @@ function defaultData() {
     soundEnabled: true,
     volume: 70, // % — общая громкость звуков виджета
     scale: 100, // % — размер плашки
-    shared: true, // true — плашка рисуется в общем источнике алертов (overlay.html?only=donation); false — отдельный источник goal.html
+    shared: false, // (устарело: цель всегда отдельный источник goal.html)  // true — плашка рисуется в общем источнике алертов (overlay.html?only=donation); false — отдельный источник goal.html
     posX: 40, // px — левый край плашки на экране 1920×1080 (только в общем источнике)
     posY: 40, // px — верхний край плашки на экране (только в общем источнике)
   };
@@ -55,7 +55,7 @@ function normalize(raw) {
     soundEnabled: raw.soundEnabled === undefined ? base.soundEnabled : !!raw.soundEnabled,
     volume: clampInt(raw.volume, LIMITS.volume, base.volume),
     scale: clampInt(raw.scale, LIMITS.scale, base.scale),
-    shared: raw.shared === undefined ? base.shared : !!raw.shared,
+    shared: false,
     posX: clampInt(raw.posX, LIMITS.posX, base.posX),
     posY: clampInt(raw.posY, LIMITS.posY, base.posY),
   };

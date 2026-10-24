@@ -16,8 +16,7 @@
   <link rel="stylesheet" href="slots.css?v=2">
   <link rel="stylesheet" href="radar.css?v=1">
   <link rel="stylesheet" href="raidcard.css?v=3">
-  <link rel="stylesheet" href="goal.css?v=1">
-  <link rel="stylesheet" href="overlay-styles.css?v=11">
+    <link rel="stylesheet" href="overlay-styles.css?v=11">
 </head>
 <body>
 
@@ -91,20 +90,6 @@
   </div>
 
 
-  <!-- «Цель сбора» в общем источнике алертов (overlay.html?only=donation), если в админке включено «Использовать общий алерт»; иначе плашка живёт отдельно на goal.html (public/goal.js). -->
-  <div id="gStage" class="g-embed g-off" data-embed="1">
-    <canvas id="gCv" width="680" height="250"></canvas>
-    <div class="g-card" id="gCard">
-      <div class="g-kick" id="gKick"></div>
-      <div class="g-pc" id="gPc">0%</div>
-      <div class="g-row"><span class="g-amt" id="gAmt">0</span><span class="g-of" id="gOf"></span></div>
-      <div class="g-track"><div class="g-fill" id="gFill"><i class="g-head"></i></div></div>
-      <i class="g-tk" data-q="0.25"></i><i class="g-tk" data-q="0.5"></i><i class="g-tk" data-q="0.75"></i>
-      <div class="g-sheen" id="gSheen"></div>
-    </div>
-    <div id="gPops"></div>
-  </div>
-
   <!-- Алерт доната: карточка подлетает из центра, зависает и улетает вбок (public/donationalert.js). Поверх всех виджетов. -->
   <div class="da-layer" id="daLayer">
     <div class="da-wave"></div>
@@ -159,6 +144,5 @@
 <script src="eventfeed.js"></script>
 <script src="donationalert.js?v=17"></script>
 <script src="nowplaying.js?v=6"></script>
-<script src="goal.js?v=1"></script>
 </body>
 </html>

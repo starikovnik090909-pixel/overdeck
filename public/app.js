@@ -114,7 +114,7 @@ function applyLayout(layout) {
     el.style.top = rect.y + 'px';
     el.style.width = rect.w + 'px';
     el.style.height = rect.h + 'px';
-    el.style.display = rect.enabled === false ? 'none' : 'flex';
+    el.style.display = (rect.enabled === false && !ONLY_W) || (ONLY_W && el.dataset.widget !== ONLY_W) ? 'none' : 'flex';
     if (el.dataset.widget === 'chat' && rect.enabled !== false) { // чат подключается к серверу только пока блок включён
       const f = el.querySelector('iframe');
       if (f && !f.getAttribute('src')) f.setAttribute('src', f.dataset.src);
@@ -212,12 +212,13 @@ function stopTts() {
 
 const PAGE_Q = new URLSearchParams(location.search);
 const ONLY_DONATION = PAGE_Q.get('only') === 'donation';        // отдельный источник OBS: только алерт доната
+const ONLY_W = (PAGE_Q.get('w') || '').replace(/[^a-z]/g, '');   // overlay.html?w=timeline — источник одного виджета основного оверлея
 const DA_PREVIEW = PAGE_Q.get('preview') === '1';               // предпросмотр в админке (алерты приходят через postMessage)
 if (ONLY_DONATION || DA_PREVIEW) document.body.classList.add('only-donation');
 if (DA_PREVIEW) document.body.classList.add('da-preview');
-const ALERT_KIND = ONLY_DONATION ? (PAGE_Q.get('kind') || '').replace(/[^a-z]/g, '') : '';   // overlay.html?only=donation&kind=sub — источник одного вида алертов
+const ALERT_KIND = ONLY_DONATION ? ((PAGE_Q.get('kind') || 'donation').replace(/[^a-z]/g, '')) : '';   // overlay.html?only=donation&kind=sub — источник одного вида алертов
 if (ALERT_KIND) document.body.classList.add('kind-only');
-const ws = new WebSocket(`ws://${location.host}/?type=overlay${DA_PREVIEW ? '&view=preview' : ONLY_DONATION ? '&view=alerts' + (ALERT_KIND ? '&kind=' + ALERT_KIND : '') : ''}`);
+const ws = new WebSocket(`ws://${location.host}/?type=overlay${DA_PREVIEW ? '&view=preview' : ONLY_W ? '&w=' + ONLY_W : ONLY_DONATION ? '&view=alerts' + (ALERT_KIND ? '&kind=' + ALERT_KIND : '') : ''}`);
 ws.onmessage = (event) => {
   const data = JSON.parse(event.data);
 
