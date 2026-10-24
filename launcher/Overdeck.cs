@@ -305,7 +305,7 @@ class Launcher : Form
 
     ConsoleForm console;
     Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
-    FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle;
+    FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut;
     Dot dotUpd, dotServer;
     ProgressLine progUpd;
     NotifyIcon tray;
@@ -354,7 +354,7 @@ class Launcher : Form
 
         Text = "Overdeck by Starikov";
         HandleCreated += delegate { DarkTitle.Apply(this, Ui.Bg1); };
-        ClientSize = new Size(700, 410);
+        ClientSize = new Size(700, 428);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         StartPosition = FormStartPosition.CenterScreen;
@@ -467,6 +467,8 @@ class Launcher : Form
         };
         btnToggle = MakeButton("Остановить сервер", 438, 270, 240, 48, false);
         btnToggle.Click += delegate { ToggleServer(); };
+        btnShortcut = MakeButton("Ярлык на рабочий стол", 438, 328, 240, 48, false);
+        btnShortcut.Click += delegate { CreateDesktopShortcut(); };
 
         chkAuto = new Toggle();
         chkAuto.Text = "Обновлять автоматически";
@@ -483,7 +485,7 @@ class Launcher : Form
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
         hint.Size = new Size(654, 20);
-        hint.Location = new Point(24, 372);
+        hint.Location = new Point(24, 392);
         Controls.Add(hint);
 
         console = new ConsoleForm();
@@ -540,6 +542,33 @@ class Launcher : Form
         {
             if (!quitting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); }
         };
+    }
+
+    // Ярлык «Overdeck by Starikov» на рабочем столе: запускает этот же Overdeck.exe из его папки, значок — из exe.
+    void CreateDesktopShortcut()
+    {
+        try
+        {
+            string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            string lnk = Path.Combine(desktop, "Overdeck by Starikov.lnk");
+            bool existed = File.Exists(lnk);
+            Type t = Type.GetTypeFromProgID("WScript.Shell");
+            if (t == null) throw new Exception("на этом компьютере нет WScript.Shell");
+            object sh = Activator.CreateInstance(t);
+            object sc = t.InvokeMember("CreateShortcut", System.Reflection.BindingFlags.InvokeMethod, null, sh, new object[] { lnk });
+            Type st = sc.GetType();
+            string exe = Application.ExecutablePath;
+            st.InvokeMember("TargetPath", System.Reflection.BindingFlags.SetProperty, null, sc, new object[] { exe });
+            st.InvokeMember("WorkingDirectory", System.Reflection.BindingFlags.SetProperty, null, sc, new object[] { Path.GetDirectoryName(exe) });
+            st.InvokeMember("IconLocation", System.Reflection.BindingFlags.SetProperty, null, sc, new object[] { exe + ",0" });
+            st.InvokeMember("Description", System.Reflection.BindingFlags.SetProperty, null, sc, new object[] { "Overdeck by Starikov — оверлей для Twitch" });
+            st.InvokeMember("Save", System.Reflection.BindingFlags.InvokeMethod, null, sc, null);
+            MessageBox.Show(existed ? "Ярлык на рабочем столе обновлён." : "Ярлык «Overdeck by Starikov» создан на рабочем столе.", "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Не удалось создать ярлык: " + ex.Message, "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     FancyButton MakeButton(string text, int x, int y, int w, int h, bool primary)
