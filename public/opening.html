@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Overdeck — заставка «Комната стримера»</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  Заставка-открытие стрима: анимированная комната стримера (источник «Браузер» 1920×1080).
+  Параметры в адресе (все необязательные):
+    ?title=СКОРО НАЧНЁМ   — крупная надпись на правом мониторе
+    ?sub=стрим начнётся через   — подпись под ней
+    ?minutes=10           — таймер обратного отсчёта на мониторе (0 — без таймера)
+    ?mood=sunset|night|neon   — настроение: закат, ночь, неон
+    ?accent=%23ff3b5c     — цвет неона/подсветки (по умолчанию от настроения или темы ?ostyle=)
+  Полки — «слоты» для предметов: window.OpeningScene.setSlot(1..8, 'url.png') / clearSlot(n).
+-->
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0a14; overflow: hidden; }
+  #stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  svg { display: block; width: 1920px; height: 1080px; }
+  canvas#fx { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; mix-blend-mode: screen; }
+  text { font-family: 'Roboto Condensed', 'Inter', system-ui, sans-serif; }
+  #cam { transform-origin: 960px 640px; animation: breathe 14s ease-in-out infinite alternate; }
+  @keyframes breathe { from { transform: scale(1) translate(0,0); } to { transform: scale(1.018) translate(-6px,-4px); } }
+  .flick { animation: flick 5.5s steps(1) infinite; }
+  @keyframes flick { 0%,100%{opacity:1} 41%{opacity:1} 42%{opacity:.55} 43%{opacity:1} 44%{opacity:.7} 45%{opacity:1} 78%{opacity:1} 79%{opacity:.6} 80%{opacity:1} }
+  .scrfl { opacity: .04; animation: scrfl 3.2s steps(1) infinite; }
+  @keyframes scrfl { 0%,100%{opacity:.03} 30%{opacity:.07} 31%{opacity:.02} 60%{opacity:.05} 85%{opacity:.08} }
+  .pulse { animation: pulse 4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+  .sway { animation: sway 6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes sway { from { transform: rotate(-2.2deg); } to { transform: rotate(2.2deg); } }
+  .sway2 { animation-duration: 8s; animation-delay: -3s; }
+  .scroll-y { animation: scrolly 9s linear infinite; }
+  @keyframes scrolly { from { transform: translateY(0); } to { transform: translateY(-120px); } }
+  .drift1 { animation: drift 160s linear infinite; }
+  .drift2 { animation: drift 260s linear infinite; }
+  @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-640px); } }
+  .cloud { animation: cloud 90s linear infinite; }
+  @keyframes cloud { from { transform: translateX(-200px); } to { transform: translateX(760px); } }
+  .rgb { animation: rgb 6s linear infinite; }
+  @keyframes rgb { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+  .spin { animation: spin 2.2s linear infinite; transform-box: fill-box; transform-origin: 50% 50%; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .bar { animation: bar 1.1s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+  @keyframes bar { from { transform: scaleY(.25); } to { transform: scaleY(1); } }
+  .blink { animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .slotbox { stroke: rgba(255,255,255,.0); }
+</style>
+</head>
+<body>
+<div id="stage">
+<svg id="svg" viewBox="0 0 1920 1080" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--wall1)"/><stop offset="1" stop-color="var(--wall2)"/></linearGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--floor1)"/><stop offset="1" stop-color="var(--floor2)"/></linearGradient>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sky1)"/><stop offset=".55" stop-color="var(--sky2)"/><stop offset="1" stop-color="var(--sky3)"/></linearGradient>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff3c9"/><stop offset=".35" stop-color="var(--sun)" stop-opacity=".95"/><stop offset="1" stop-color="var(--sun)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="warm" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd9a0" stop-opacity=".85"/><stop offset="1" stop-color="#ffb066" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cool" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="var(--screen)" stop-opacity=".55"/><stop offset="1" stop-color="var(--screen)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="neonGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="var(--accent)" stop-opacity=".5"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></radialGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--sun)" stop-opacity=".28"/><stop offset="1" stop-color="var(--sun)" stop-opacity="0"/></linearGradient>
+    <linearGradient id="deskTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a4a3a"/><stop offset="1" stop-color="#4a3228"/></linearGradient>
+    <linearGradient id="screenG" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1a2a5a"/><stop offset="1" stop-color="#0d1330"/></linearGradient>
+    <radialGradient id="vig" cx=".5" cy=".5" r=".75"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#05030a" stop-opacity=".72"/></radialGradient>
+    <filter id="blur6"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="blur14"><feGaussianBlur stdDeviation="14"/></filter>
+    <filter id="soft"><feGaussianBlur stdDeviation="2"/></filter>
+    <clipPath id="winclip"><rect x="1090" y="130" width="610" height="490" rx="6"/></clipPath>
+    <clipPath id="scrL"><rect x="342" y="492" width="286" height="176" rx="3"/></clipPath>
+    <clipPath id="chatclip"><rect x="528" y="518" width="100" height="150"/></clipPath>
+    <clipPath id="scrR"><rect x="692" y="492" width="286" height="176" rx="3"/></clipPath>
+  </defs>
+
+  <g id="cam">
+    <!-- СТЕНА -->
+    <rect width="1920" height="800" fill="url(#wall)"/>
+    <g id="wallDecor" opacity=".5"></g>
+    <rect y="0" width="1920" height="70" fill="#120d1c"/>
+    <rect y="68" width="1920" height="4" fill="var(--accent)" class="pulse" filter="url(#soft)"/>
+    <rect y="72" width="1920" height="60" fill="url(#neonGlow)" opacity=".35"/>
+
+    <!-- ОКНО -->
+    <g id="window">
+      <rect x="1074" y="114" width="642" height="522" rx="10" fill="#171122"/>
+      <g clip-path="url(#winclip)">
+        <rect x="1090" y="130" width="610" height="490" fill="url(#sky)"/>
+        <circle cx="1390" cy="470" r="150" fill="url(#sun)"/>
+        <g id="stars" opacity=".0"></g>
+        <g class="cloud"><ellipse cx="1180" cy="230" rx="90" ry="14" fill="var(--cloud)" opacity=".5"/><ellipse cx="1240" cy="218" rx="60" ry="10" fill="var(--cloud)" opacity=".5"/></g>
+        <g class="cloud" style="animation-duration:140s;animation-delay:-60s"><ellipse cx="1300" cy="300" rx="110" ry="12" fill="var(--cloud)" opacity=".35"/></g>
+        <g class="drift2"><g id="cityFar" opacity=".75"></g></g>
+        <g class="drift1"><g id="cityNear"></g></g>
+        
+      </g>
+      <!-- переплёт -->
+      <g fill="#171122">
+        <rect x="1090" y="365" width="610" height="14"/>
+        <rect x="1288" y="130" width="14" height="490"/>
+        <rect x="1490" y="130" width="14" height="490"/>
+      </g>
+      <rect x="1090" y="130" width="610" height="490" rx="6" fill="none" stroke="#2c2140" stroke-width="3"/>
+      <rect x="1060" y="632" width="670" height="22" rx="4" fill="#2a1f3a"/>
+      <!-- блик на стекле -->
+      <path d="M1100 140 L1300 140 L1120 610 L1100 610 Z" fill="#fff" opacity=".05"/>
+    </g>
+
+    <!-- световой луч из окна -->
+    <polygon points="1100,640 1700,640 1300,1040 560,1040" fill="url(#beam)" opacity=".5"/>
+
+    <!-- НЕОН НА СТЕНЕ -->
+    <g id="neon" class="flick" transform="translate(900 330)">
+      <ellipse cx="0" cy="0" rx="170" ry="190" fill="url(#neonGlow)"/>
+      <rect x="-100" y="-130" width="200" height="260" rx="14" fill="#1a0f1c" stroke="#2b1c30" stroke-width="4"/>
+      <g fill="none" stroke="var(--accent)" stroke-linecap="round" stroke-width="8" filter="url(#soft)">
+        <path d="M-52 -70 H52 Q72 -70 72 -50 V50 Q72 70 52 70 H-52 Q-72 70 -72 50 V-50 Q-72 -70 -52 -70 Z"/>
+        <path d="M-30 -42 H30 Q44 -42 44 -28 V28 Q44 42 30 42 H-30 Q-44 42 -44 28 V-28 Q-44 -42 -30 -42 Z" opacity=".85"/>
+      </g>
+      <g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="2.5" opacity=".85">
+        <path d="M-52 -70 H52 Q72 -70 72 -50 V50 Q72 70 52 70 H-52 Q-72 70 -72 50 V-50 Q-72 -70 -52 -70 Z"/>
+      </g>
+    </g>
+
+    <!-- ПОЛКИ (слоты для предметов) -->
+    <g id="shelves">
+      <g id="shelf1">
+        <rect x="140" y="202" width="640" height="14" rx="3" fill="#3a2a3e"/><rect x="140" y="216" width="640" height="6" fill="#241a2a"/>
+        <path d="M200 222 v34 l24 -34z M696 222 v34 l-24 -34z" fill="#2c2030"/>
+      </g>
+      <g id="shelf2">
+        <rect x="140" y="352" width="640" height="14" rx="3" fill="#3a2a3e"/><rect x="140" y="366" width="640" height="6" fill="#241a2a"/>
+        <path d="M200 372 v34 l24 -34z M696 372 v34 l-24 -34z" fill="#2c2030"/>
+      </g>
+      <g id="slots"></g>
+    </g>
+
+    <!-- ПОДВЕСНАЯ ЛАМПА -->
+    <g id="lamp" transform="translate(1000 0)">
+      <rect x="-1.5" y="0" width="3" height="120" fill="#0c0812"/>
+      <ellipse cx="0" cy="150" rx="220" ry="150" fill="url(#warm)" opacity=".4" class="pulse"/>
+      <path d="M-42 166 Q-42 118 0 118 Q42 118 42 166 Z" fill="#e9b565"/>
+      <ellipse cx="0" cy="166" rx="42" ry="8" fill="#ffe2a8"/>
+    </g>
+
+    <!-- ПОЛ -->
+    <rect y="796" width="1920" height="284" fill="url(#floor)"/>
+    <g id="planks" stroke="#000" stroke-opacity=".16"></g>
+    <rect y="796" width="1920" height="10" fill="#000" opacity=".35"/>
+    <ellipse cx="760" cy="960" rx="520" ry="80" fill="var(--rug)" opacity=".55"/>
+    <ellipse cx="760" cy="960" rx="470" ry="62" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="3" stroke-dasharray="14 12"/>
+
+    <!-- ПК под столом -->
+    <g id="tower" transform="translate(200 806)">
+      <ellipse cx="62" cy="168" rx="80" ry="12" fill="#000" opacity=".4"/>
+      <rect width="124" height="170" rx="8" fill="#1a1624" stroke="#2c2640" stroke-width="3"/>
+      <rect x="10" y="10" width="104" height="150" rx="5" fill="#0e0b16"/>
+      <circle cx="62" cy="62" r="34" fill="#0a0812" stroke="var(--accent)" stroke-width="3"/>
+      <g transform="translate(62 62)"><g class="spin" fill="var(--accent)" opacity=".9"><path d="M0 -28 Q10 -14 0 0 Q-10 -14 0 -28Z"/><path d="M0 -28 Q10 -14 0 0 Q-10 -14 0 -28Z" transform="rotate(120)"/><path d="M0 -28 Q10 -14 0 0 Q-10 -14 0 -28Z" transform="rotate(240)"/></g></g>
+      <circle cx="62" cy="62" r="5" fill="#fff" opacity=".8"/>
+      <g class="rgb"><rect x="14" y="116" width="96" height="4" rx="2" fill="var(--accent)"/><rect x="14" y="128" width="96" height="4" rx="2" fill="var(--accent2)"/></g>
+      <rect x="-8" y="0" width="3" height="170" fill="var(--accent)" class="pulse"/>
+    </g>
+
+    <!-- СТОЛ -->
+    <g id="desk">
+      <rect x="170" y="772" width="1030" height="20" fill="#3a271f"/>
+      <rect x="190" y="792" width="14" height="150" fill="#2b1d17"/>
+      <rect x="1146" y="792" width="14" height="150" fill="#2b1d17"/>
+      <rect x="880" y="792" width="266" height="96" rx="4" fill="#33231c"/><rect x="896" y="806" width="234" height="28" rx="3" fill="#2a1c16"/><rect x="896" y="844" width="234" height="28" rx="3" fill="#2a1c16"/>
+      <polygon points="150,700 1220,700 1250,772 120,772" fill="url(#deskTop)"/>
+      <polygon points="150,700 1220,700 1224,712 146,712" fill="#fff" opacity=".07"/>
+      <ellipse cx="660" cy="720" rx="440" ry="40" fill="url(#cool)" class="pulse"/>
+    </g>
+
+    <!-- МОНИТОРЫ -->
+    <g id="monitors">
+      <!-- левый -->
+      <g>
+        <rect x="320" y="470" width="330" height="220" rx="8" fill="#0b0912" stroke="#2a2438" stroke-width="4"/>
+        <g clip-path="url(#scrL)">
+          <rect x="342" y="492" width="286" height="176" fill="url(#screenG)"/>
+          <rect x="342" y="492" width="286" height="22" fill="#0e1636"/><circle cx="356" cy="503" r="4" fill="#ff5f56"/><circle cx="370" cy="503" r="4" fill="#ffbd2e"/><circle cx="384" cy="503" r="4" fill="#27c93f"/>
+          <text x="402" y="508" font-size="11" fill="#7f93d9">Overdeck — предпросмотр</text>
+          <rect x="354" y="526" width="170" height="96" rx="4" fill="#12204d"/>
+          <circle cx="440" cy="574" r="26" fill="none" stroke="var(--accent)" stroke-width="3" opacity=".8"/><circle cx="440" cy="574" r="14" fill="none" stroke="var(--accent2)" stroke-width="3" opacity=".8"/><circle cx="440" cy="574" r="4" fill="#fff"/>
+          <g transform="translate(370 612)"><rect class="bar" x="0" y="-22" width="8" height="22" fill="var(--accent)"/><rect class="bar" x="14" y="-22" width="8" height="22" fill="var(--accent2)" style="animation-delay:-.3s"/><rect class="bar" x="28" y="-22" width="8" height="22" fill="var(--accent)" style="animation-delay:-.7s"/><rect class="bar" x="42" y="-22" width="8" height="22" fill="var(--accent2)" style="animation-delay:-.5s"/></g>
+          <g clip-path="url(#chatclip)"><g class="scroll-y"><g id="chatL" fill="#9db0f0" font-size="10"></g></g></g>
+          <rect x="342" y="492" width="286" height="176" fill="#fff" class="scrfl"/>
+        </g>
+        <rect x="474" y="690" width="22" height="46" fill="#171320"/><rect x="430" y="732" width="110" height="10" rx="3" fill="#201a2c"/>
+      </g>
+      <!-- правый (заставка) -->
+      <g>
+        <rect x="670" y="470" width="330" height="220" rx="8" fill="#0b0912" stroke="#2a2438" stroke-width="4"/>
+        <g clip-path="url(#scrR)">
+          <rect x="692" y="492" width="286" height="176" fill="#0a1030"/>
+          <rect x="692" y="492" width="286" height="176" fill="url(#cool)" opacity=".5"/>
+          <text id="scrTitle" x="835" y="560" font-size="26" font-weight="800" fill="#fff" text-anchor="middle" letter-spacing="1">СКОРО НАЧНЁМ</text>
+          <text id="scrSub" x="835" y="584" font-size="11" fill="#8fa2e8" text-anchor="middle">стрим начнётся через</text>
+          <text id="scrTimer" x="835" y="630" font-size="38" font-weight="800" fill="var(--accent)" text-anchor="middle" style="font-variant-numeric:tabular-nums">10:00</text>
+          <rect x="692" y="492" width="286" height="176" fill="#fff" class="scrfl" style="animation-delay:-2s"/>
+        </g>
+        <rect x="824" y="690" width="22" height="46" fill="#171320"/><rect x="780" y="732" width="110" height="10" rx="3" fill="#201a2c"/>
+        <circle cx="835" cy="460" r="9" fill="#171320" stroke="#2a2438" stroke-width="3"/><circle cx="835" cy="460" r="3" fill="var(--accent)" class="pulse"/>
+      </g>
+    </g>
+
+    <!-- КЛАВИАТУРА / МЫШЬ / НАУШНИКИ -->
+    <g id="peripherals">
+      <polygon points="420,738 740,738 756,762 404,762" fill="#14101e" stroke="#2a2438" stroke-width="2"/>
+      <g class="rgb"><polygon points="424,742 736,742 746,757 414,757" fill="none" stroke="var(--accent)" stroke-width="2" opacity=".9"/></g>
+      <g id="keys" fill="#241d34" opacity=".9"></g>
+      <rect x="790" y="722" width="150" height="44" rx="8" fill="#1b1528" opacity=".85"/>
+      <rect x="846" y="728" width="26" height="34" rx="12" fill="#2a2238" stroke="#3b3252" stroke-width="2"/><rect x="858" y="732" width="2" height="9" fill="var(--accent)" class="pulse"/>
+      <!-- наушники -->
+      <g transform="translate(1040 712)">
+        <ellipse cx="40" cy="50" rx="50" ry="8" fill="#000" opacity=".3"/>
+        <path d="M-6 38 Q-6 -8 40 -8 Q86 -8 86 38" fill="none" stroke="#1a1626" stroke-width="9" stroke-linecap="round"/>
+        <path d="M-6 38 Q-6 -8 40 -8 Q86 -8 86 38" fill="none" stroke="var(--accent)" stroke-width="2.5" opacity=".7"/>
+        <rect x="-18" y="26" width="24" height="36" rx="10" fill="#241d34" stroke="#352c4a" stroke-width="2"/>
+        <rect x="74" y="26" width="24" height="36" rx="10" fill="#241d34" stroke="#352c4a" stroke-width="2"/>
+        <rect x="-14" y="34" width="6" height="20" rx="3" fill="var(--accent)" class="pulse"/><rect x="90" y="34" width="6" height="20" rx="3" fill="var(--accent)" class="pulse"/>
+      </g>
+      <!-- кружка с паром -->
+      <g transform="translate(160 690)">
+        <rect x="0" y="0" width="34" height="38" rx="6" fill="#e6d8c8"/><path d="M34 8 q16 2 0 20" fill="none" stroke="#e6d8c8" stroke-width="5"/>
+        <g id="steam" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-linecap="round">
+          <path d="M10 -6 q-8 -12 0 -22 q8 -10 0 -22" class="pulse"/><path d="M22 -6 q-8 -12 0 -22 q8 -10 0 -22" class="pulse" style="animation-delay:-1.6s"/>
+        </g>
+      </g>
+    </g>
+
+    <!-- СТУЛ -->
+    <g id="chair" transform="translate(1110 600) rotate(-7 100 200)">
+      <ellipse cx="100" cy="392" rx="120" ry="16" fill="#000" opacity=".35"/>
+      <rect x="92" y="262" width="16" height="96" fill="#171320"/>
+      <path d="M100 356 L22 386 M100 356 L178 386 M100 356 L56 398 M100 356 L144 398 M100 356 L100 400" stroke="#1d1829" stroke-width="10" stroke-linecap="round"/>
+      <circle cx="22" cy="390" r="8" fill="#0d0a14"/><circle cx="178" cy="390" r="8" fill="#0d0a14"/><circle cx="56" cy="402" r="8" fill="#0d0a14"/><circle cx="144" cy="402" r="8" fill="#0d0a14"/>
+      <rect x="8" y="228" width="184" height="44" rx="18" fill="#1b1626" stroke="#2c2540" stroke-width="3"/>
+      <path d="M26 226 Q22 80 60 36 Q100 4 140 36 Q178 80 174 226 Z" fill="#1a1524" stroke="#2c2540" stroke-width="3"/>
+      <path d="M60 60 Q100 30 140 60 L142 120 Q100 108 58 120Z" fill="#241d34"/>
+      <g class="pulse"><path d="M26 226 Q22 80 60 36 Q100 4 140 36 Q178 80 174 226" fill="none" stroke="var(--accent)" stroke-width="3" opacity=".8" filter="url(#soft)"/></g>
+      <rect x="-10" y="170" width="26" height="14" rx="6" fill="#2c2540"/><rect x="184" y="170" width="26" height="14" rx="6" fill="#2c2540"/>
+    </g>
+
+    <!-- РАСТЕНИЯ -->
+    <g id="plantL" transform="translate(70 900)">
+      <path d="M-34 0 h68 l-8 90 h-52z" fill="#3a2a3e"/>
+      <g fill="#2f6f58"><ellipse class="sway" cx="-6" cy="-70" rx="16" ry="70" transform="rotate(-24 0 0)" fill="#2f6f58"/><ellipse class="sway sway2" cx="10" cy="-80" rx="15" ry="80" transform="rotate(8 0 0)" fill="#3a8468"/><ellipse class="sway" cx="30" cy="-60" rx="14" ry="62" transform="rotate(30 0 0)" fill="#27604d"/></g>
+    </g>
+    <g id="plantR" transform="translate(1790 930)">
+      <path d="M-44 0 h88 l-10 100 h-68z" fill="#32253a"/>
+      <g><ellipse class="sway sway2" cx="-20" cy="-90" rx="22" ry="96" transform="rotate(-22 0 0)" fill="#2f6f58"/><ellipse class="sway" cx="6" cy="-110" rx="22" ry="110" transform="rotate(4 0 0)" fill="#3a8468"/><ellipse class="sway sway2" cx="34" cy="-84" rx="20" ry="88" transform="rotate(28 0 0)" fill="#27604d"/></g>
+    </g>
+
+    <!-- прикол: плакат и гирлянда -->
+    <g id="poster" transform="translate(28 232)" opacity=".92">
+      <rect width="86" height="116" fill="#1d1630" stroke="#3a2d57" stroke-width="3"/>
+      <path d="M12 96 L36 52 L52 76 L62 62 L76 96Z" fill="var(--accent2)" opacity=".85"/><circle cx="60" cy="30" r="9" fill="var(--sun)"/>
+    </g>
+    <path d="M0 74 Q240 150 480 90 T980 96 T1480 90 T1920 82" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="2"/>
+    <g id="bulbs"></g>
+  </g>
+
+  <rect width="1920" height="1080" fill="url(#vig)"/>
+  <rect width="1920" height="1080" fill="var(--grade)" opacity=".10" style="mix-blend-mode:soft-light"/>
+</svg>
+<canvas id="fx" width="1920" height="1080"></canvas>
+</div>
+
+<script>
+(function () {
+  const q = new URLSearchParams(location.search);
+  const MOODS = {
+    sunset: { wall1:'#3a2538', wall2:'#2b1c2e', floor1:'#4a2f33', floor2:'#2a1a22', sky1:'#3b2a6b', sky2:'#c4456e', sky3:'#ff9a55', sun:'#ffae5c', cloud:'#ffc9a0', screen:'#4aa6ff', rug:'#5b2b49', accent:'#ff3b7b', accent2:'#38c8ff', grade:'#ff8a5c' },
+    night:  { wall1:'#161a33', wall2:'#10132a', floor1:'#231f38', floor2:'#12101f', sky1:'#0a0f2c', sky2:'#1d2a64', sky3:'#3b4f9a', sun:'#a9c4ff', cloud:'#8fa2e8', screen:'#4aa6ff', rug:'#1f2a5a', accent:'#5b8cff', accent2:'#b46bff', grade:'#4a6cff', stars: 1 },
+    neon:   { wall1:'#2a1a4a', wall2:'#1a1038', floor1:'#2c1a4a', floor2:'#150a2a', sky1:'#1a0f4a', sky2:'#7a2bd6', sky3:'#ff4fb0', sun:'#ff7ad9', cloud:'#ffa0e6', screen:'#38e0ff', rug:'#3b1f7a', accent:'#ff3dcb', accent2:'#38e0ff', grade:'#b46bff' },
+  };
+  const OSTYLE_ACCENT = { p: '#e22a22', b: '#44D62C', k: '#ff4655', o: '#fcee0a', c: '#38d0ff', f: '#5865F2', g: '#d9402e', h: '#0ac8b9' };
+  const mood = MOODS[q.get('mood')] ? q.get('mood') : (q.get('ostyle') === 'p' ? 'night' : 'sunset');
+  const m = Object.assign({}, MOODS[mood]);
+  const os = q.get('ostyle');
+  if (os && OSTYLE_ACCENT[os]) m.accent = OSTYLE_ACCENT[os];
+  if (q.get('accent')) m.accent = q.get('accent');
+  const root = document.documentElement.style;
+  Object.keys(m).forEach((k) => root.setProperty('--' + k, m[k]));
+  if (os === 'p') { root.setProperty('--wall1', '#1c1214'); root.setProperty('--wall2', '#120a0c'); root.setProperty('--floor1', '#241214'); root.setProperty('--floor2', '#120809'); root.setProperty('--sky1', '#12090a'); root.setProperty('--sky2', '#5a1210'); root.setProperty('--sky3', '#b3261e'); root.setProperty('--sun', '#ff4d3d'); root.setProperty('--rug', '#3a0f10'); root.setProperty('--accent2', '#ff8a5c'); root.setProperty('--grade', '#e22a22'); }
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const $ = (id) => document.getElementById(id);
+  const mk = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+  let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+
+  // масштаб сцены под окно браузера
+  function fit() { const s = Math.min(innerWidth / 1920, innerHeight / 1080); const st = $('stage'); st.style.transform = `scale(${s})`; st.style.left = ((innerWidth - 1920 * s) / 2) + 'px'; st.style.top = ((innerHeight - 1080 * s) / 2) + 'px'; }
+  addEventListener('resize', fit); fit();
+
+  // панели пола
+  const pl = $('planks');
+  for (let i = 0; i < 14; i++) { const y = 806 + Math.pow(i / 14, 1.5) * 274; mk('line', { x1: 0, y1: y, x2: 1920, y2: y, 'stroke-width': 2 }, pl); }
+  for (let i = -6; i <= 26; i++) { const x = i * 100; mk('line', { x1: 960 + (x - 960) * 0.55, y1: 806, x2: 960 + (x - 960) * 1.5, y2: 1080, 'stroke-width': 2 }, pl); }
+
+  // панели стены
+  const wd = $('wallDecor');
+  for (let x = 0; x < 1920; x += 160) mk('rect', { x, y: 130, width: 2, height: 666, fill: '#000', opacity: .25 }, wd);
+
+  // город
+  function city(g, base, hMin, hMax, wMin, wMax, col, lit) {
+    let x = 1090; while (x < 1090 + 1300) { const w = wMin + rnd() * (wMax - wMin), h = hMin + rnd() * (hMax - hMin);
+      mk('rect', { x, y: base - h, width: w, height: h, fill: col }, g);
+      if (lit) for (let yy = base - h + 12; yy < base - 10; yy += 16) for (let xx = x + 6; xx < x + w - 8; xx += 12) if (rnd() > .62) mk('rect', { x: xx, y: yy, width: 5, height: 7, fill: rnd() > .5 ? '#ffd27a' : '#9fd8ff', opacity: .85 }, g);
+      x += w + 2 + rnd() * 6; } }
+  city($('cityFar'), 560, 60, 180, 30, 60, '#2a1d44', false);
+  city($('cityNear'), 640, 80, 240, 36, 74, '#150f26', true);
+  if (m.stars) { const st = $('stars'); st.setAttribute('opacity', 1); for (let i = 0; i < 60; i++) mk('circle', { cx: 1100 + rnd() * 590, cy: 140 + rnd() * 260, r: .6 + rnd() * 1.3, fill: '#fff', opacity: .4 + rnd() * .6 }, st); }
+
+  // клавиши
+  const keys = $('keys');
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 22; c++) { const x = 432 + c * 14.2 + r * 3, y = 743 + r * 4.4; mk('rect', { x, y, width: 11, height: 3, rx: 1 }, keys); }
+
+  // лампочки гирлянды
+  const bu = $('bulbs');
+  for (let i = 0; i < 24; i++) { const x = 40 + i * 80, y = 92 + Math.sin(i * 0.9) * 8 + 8; const c = mk('circle', { cx: x, cy: y, r: 5, fill: i % 2 ? m.accent : m.accent2, class: 'pulse' }, bu); c.style.animationDelay = (-i * .35) + 's'; }
+
+  // чат на левом мониторе
+  const chat = $('chatL'); const lines = ['привет всем!', 'ну когда уже старт', 'GG', 'жду розыгрыш', 'тут уютно', 'звук норм?', 'о, началось', 'классная комната'];
+  for (let i = 0; i < 16; i++) { const t = mk('text', { x: 534, y: 540 + i * 15, 'font-size': 10 }, chat); t.textContent = (i % 3 ? '▸ ' : '★ ') + lines[i % lines.length]; t.setAttribute('fill', i % 3 ? '#9db0f0' : m.accent); }
+  mk('rect', { x: 530, y: 526, width: 98, height: 96, fill: 'none' }, chat);
+
+  // слоты полок
+  const SLOT_W = 96, SLOT_H = 120;
+  const slotsG = $('slots'); const slots = {};
+  [ [202, 'shelf1'], [352, 'shelf2'] ].forEach(([by, sh], row) => { for (let i = 0; i < 4; i++) { const n = row * 4 + i + 1; const x = 168 + i * 150, y = by - SLOT_H;
+    const g = mk('g', { 'data-slot': n, transform: `translate(${x} ${y})` }, slotsG);
+    mk('rect', { class: 'slotbox', width: SLOT_W, height: SLOT_H, fill: 'none' }, g);
+    slots[n] = g; } });
+  window.OpeningScene = {
+    setSlot(n, url, opts) { const g = slots[n]; if (!g) return; this.clearSlot(n); opts = opts || {};
+      const img = mk('image', { href: url, x: 0, y: 0, width: SLOT_W, height: SLOT_H, preserveAspectRatio: 'xMidYMax meet' }, g); img.setAttribute('class', 'slotimg');
+      if (opts.glow) img.style.filter = `drop-shadow(0 0 12px ${opts.glow})`; },
+    clearSlot(n) { const g = slots[n]; if (!g) return; g.querySelectorAll('.slotimg').forEach((e) => e.remove()); },
+  };
+  (q.get('slots') || '').split(',').forEach((u, i) => { if (u) window.OpeningScene.setSlot(i + 1, u); });
+
+  // надписи и таймер
+  if (q.get('title')) $('scrTitle').textContent = q.get('title');
+  if (q.get('sub')) $('scrSub').textContent = q.get('sub');
+  const minutes = q.has('minutes') ? Math.max(0, parseFloat(q.get('minutes'))) : 10;
+  const endAt = Date.now() + minutes * 60000, tEl = $('scrTimer');
+  function tick() { if (!minutes) { tEl.textContent = ''; $('scrSub').textContent = q.get('sub') || ''; return; } const left = Math.max(0, endAt - Date.now()); const mm = Math.floor(left / 60000), ss = Math.floor(left % 60000 / 1000); tEl.textContent = String(mm).padStart(2, '0') + ':' + String(ss).padStart(2, '0'); }
+  tick(); setInterval(tick, 500);
+
+  // частицы: пыль в луче окна и светлячки
+  const cv = $('fx'), cx = cv.getContext('2d');
+  const P = []; for (let i = 0; i < 70; i++) P.push({ x: 700 + Math.random() * 1000, y: 200 + Math.random() * 760, r: .8 + Math.random() * 1.8, vx: -.06 - Math.random() * .12, vy: -.03 + Math.random() * .08, ph: Math.random() * 6.28, dust: Math.random() > .25 });
+  function hex2rgb(h) { const c = h.replace('#', ''); const n = parseInt(c.length === 3 ? c.replace(/(.)/g, '$1$1') : c, 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  const acc = hex2rgb(m.accent2);
+  function loop(t) { requestAnimationFrame(loop); cx.clearRect(0, 0, 1920, 1080);
+    P.forEach((p) => { p.x += p.vx + Math.sin(t / 2000 + p.ph) * .12; p.y += p.vy + Math.cos(t / 2600 + p.ph) * .08; if (p.x < 600) p.x = 1700; if (p.y < 140) p.y = 980; if (p.y > 1000) p.y = 160;
+      const a = (.35 + .35 * Math.sin(t / 900 + p.ph)) * (p.dust ? .7 : 1);
+      if (p.dust) { cx.fillStyle = `rgba(255,236,200,${a * .6})`; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+      else { const g = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 7); g.addColorStop(0, `rgba(${acc[0]},${acc[1]},${acc[2]},${a})`); g.addColorStop(1, `rgba(${acc[0]},${acc[1]},${acc[2]},0)`); cx.fillStyle = g; cx.fillRect(p.x - p.r * 7, p.y - p.r * 7, p.r * 14, p.r * 14); } }); }
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
