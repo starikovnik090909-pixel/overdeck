@@ -7,7 +7,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 .L{left:0;top:0;pointer-events:none}
 #base{width:1344px;height:768px}
 #win{left:0;top:118px;width:170px;height:394px;overflow:hidden;-webkit-mask:url(opening-room/space_mask.png) 0 0/100% 100%;mask:url(opening-room/space_mask.png) 0 0/100% 100%}
-#win img{position:absolute;left:-20px;top:-20px;width:210px;height:434px;animation:drift 40s ease-in-out infinite alternate}
+#win img{position:absolute;left:0;top:0;width:170px;height:394px}
 @keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(14px,-10px) scale(1.07)}}
 #win canvas{position:absolute;left:0;top:0;width:170px;height:394px}
 #signoff{left:556px;top:105px;width:309px;height:157px;animation:fl 9s steps(1) infinite}
@@ -18,6 +18,11 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 @keyframes br{from{opacity:.15}to{opacity:.55}}
 #led{width:1344px;height:768px;mix-blend-mode:screen;animation:pl 3.2s ease-in-out infinite alternate}
 @keyframes pl{from{opacity:.15}to{opacity:.7}}
+.spin{animation:spin 1.1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.ringp{animation:rp 2.4s ease-in-out infinite alternate}@keyframes rp{from{opacity:.2}to{opacity:.9}}
+#fring{animation:rp 2.4s ease-in-out infinite alternate}
+.led1{animation:bl 1.6s steps(1) infinite}@keyframes bl{0%{opacity:1}50%{opacity:.1}}
+.dots circle{animation:bl 1.3s steps(1) infinite}.dots circle:nth-child(2){animation-duration:.7s}.dots circle:nth-child(3){animation-duration:2.1s}.dots circle:nth-child(4){animation-duration:.9s;animation-delay:.3s}.dots circle:nth-child(5){animation-duration:1.7s}.dots circle:nth-child(6){animation-duration:.5s}
 .scr{overflow:hidden;transform-origin:0 0;background:#0a0204;color:#ffd9d0;font-family:'Segoe UI',Arial,sans-serif}
 .scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px);animation:fl2 .15s steps(2) infinite}
 @keyframes fl2{50%{opacity:.8}}
@@ -43,6 +48,17 @@ body.debug .slot{outline:1px dashed rgba(255,255,255,.5);background:rgba(255,255
  <div id="win" class="L"><img src="opening-room/space.jpg"><canvas id="st" width="170" height="394"></canvas></div>
  <img id="signglow" class="L" src="opening-room/sign_glow.png">
  <img id="signoff" class="L" src="opening-room/sign_off.png">
+<svg id="pc" class="L" width="1344" height="768" viewBox="0 0 1344 768" style="mix-blend-mode:screen">
+ <defs><radialGradient id="fg"><stop offset="0" stop-color="#ff3a22" stop-opacity=".0"/><stop offset=".7" stop-color="#ff3a22" stop-opacity=".25"/><stop offset="1" stop-color="#ff5a3a" stop-opacity=".0"/></radialGradient></defs>
+ <circle id="fring" cx="705" cy="646" r="26" fill="url(#fg)"/>
+ <g transform="translate(705 646)"><g class="spin">
+  <path d="M0 -3 C8 -6 14 -12 12 -17 C8 -13 3 -10 0 -3Z" fill="#ff4a30" opacity=".4"/>
+  <path d="M0 -3 C8 -6 14 -12 12 -17 C8 -13 3 -10 0 -3Z" fill="#ff4a30" opacity=".4" transform="rotate(120)"/>
+  <path d="M0 -3 C8 -6 14 -12 12 -17 C8 -13 3 -10 0 -3Z" fill="#ff4a30" opacity=".4" transform="rotate(240)"/></g>
+  <circle r="18" fill="none" stroke="#ff4a30" stroke-width="1" class="ringp"/></g>
+ <circle class="led1" cx="730" cy="615" r="2.2" fill="#ff3020"/>
+ <g class="dots"><circle cx="694" cy="683" r="1.3" fill="#ff5a40"/><circle cx="701" cy="683" r="1.3" fill="#ffb040"/><circle cx="708" cy="683" r="1.3" fill="#ff5a40"/><circle cx="715" cy="683" r="1.3" fill="#ff8040"/><circle cx="694" cy="691" r="1.3" fill="#ffb040"/><circle cx="708" cy="691" r="1.3" fill="#ff5a40"/></g>
+</svg>
  <img id="led" class="L" src="opening-room/led.png">
  <div id="side" class="scr"><div class="glass"></div><h4>ЧАТ</h4><div id="feed"></div></div>
  <div id="main" class="scr"><div class="glass"></div><div class="tag" id="tag">СТРИМ НАЧНЁТСЯ ЧЕРЕЗ</div><div class="ttl" id="ttl">STARIKOV</div><div class="sub" id="sub">Dead by Daylight</div><div class="tm" id="tm">05:00</div><div class="bar"><i id="pb"></i></div></div>
@@ -75,12 +91,16 @@ let mi=0;const feed=$('feed');
 function push(u,t){const d=document.createElement('div');d.className='m';d.innerHTML='<b>'+u+'</b> '+t;feed.appendChild(d);while(feed.children.length>7)feed.firstChild.remove()}
 window.OpeningRoom={chat:push};
 setInterval(()=>{const m=msgs[mi++%msgs.length];push(m[0],m[1])},1800);
-// звёзды
-const cv=$('st'),cx=cv.getContext('2d');const S=Array.from({length:70},()=>({x:Math.random()*170,y:Math.random()*394,r:Math.random()*1.2+.3,p:Math.random()*6,v:.5+Math.random()*2}));let sh=null;
-(function f(t){cx.clearRect(0,0,170,394);t/=1000;
- for(const s of S){cx.globalAlpha=.25+.75*Math.abs(Math.sin(t*s.v+s.p));cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,7);cx.fill()}
- if(!sh&&Math.random()<.004)sh={x:Math.random()*100+60,y:Math.random()*120,l:0};
- if(sh){sh.l+=.04;cx.globalAlpha=1-sh.l;const g=cx.createLinearGradient(sh.x,sh.y,sh.x-40,sh.y-18);g.addColorStop(0,'#fff');g.addColorStop(1,'transparent');cx.strokeStyle=g;cx.lineWidth=1.4;cx.beginPath();cx.moveTo(sh.x,sh.y);cx.lineTo(sh.x-40,sh.y-18);cx.stroke();sh.x-=3;sh.y+=1.6;if(sh.l>=1)sh=null}
+// звёзды и кометы (без увеличения окна)
+const cv=$('st'),cx=cv.getContext('2d');const S=Array.from({length:90},()=>({x:Math.random()*170,y:Math.random()*394,r:Math.random()*1.1+.3,p:Math.random()*6,v:.6+Math.random()*2.4}));let C=[];
+function spawn(){const big=Math.random()<.3;C.push({x:60+Math.random()*130,y:Math.random()*220,vx:-(2.2+Math.random()*2),vy:1+Math.random()*1.2,l:0,len:big?70:38,w:big?2:1.3,hue:Math.random()<.5?'#fff':'#ffd9b0'})}
+let last=0;(function f(t){if(t-last<33){requestAnimationFrame(f);return}last=t;cx.clearRect(0,0,170,394);const k=t/1000;
+ for(const s of S){cx.globalAlpha=.2+.8*Math.pow(Math.abs(Math.sin(k*s.v+s.p)),2);cx.fillStyle='#fff';cx.fillRect(s.x,s.y,s.r*1.6,s.r*1.6)}
+ if(Math.random()<.025&&C.length<3)spawn();
+ C=C.filter(c=>{c.x+=c.vx;c.y+=c.vy;c.l+=.018;const n=Math.hypot(c.vx,c.vy),dx=c.vx/n,dy=c.vy/n;
+  cx.globalAlpha=Math.max(0,1-c.l);const g=cx.createLinearGradient(c.x,c.y,c.x-dx*c.len,c.y-dy*c.len);g.addColorStop(0,c.hue);g.addColorStop(1,'rgba(255,255,255,0)');
+  cx.strokeStyle=g;cx.lineWidth=c.w;cx.lineCap='round';cx.beginPath();cx.moveTo(c.x,c.y);cx.lineTo(c.x-dx*c.len,c.y-dy*c.len);cx.stroke();
+  cx.globalAlpha=Math.max(0,1-c.l);cx.fillStyle='#fff';cx.beginPath();cx.arc(c.x,c.y,c.w*.8,0,7);cx.fill();return c.l<1});
  requestAnimationFrame(f)})(0);
 // слоты на полках: 6 досок × 3 слота
 const boards=[[150,75],[245,195],[340,313],[441,441],[530,560],[625,715]];
