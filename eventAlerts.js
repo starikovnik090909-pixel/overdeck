@@ -30,6 +30,9 @@ const DEFAULTS = {
     enabled: true, speak: false, voice: '', color: '#3ba7ff', soundVolume: 70, voiceVolume: 100,
     style: 'wall', holdSec: 7, soundStick: 'tk-stamp-3.ogg', soundFly: 'tk-fly-2.ogg',
     big: 'Добро пожаловать!', speech: '{user}, добро пожаловать на канал!',
+    // стандартный вид: своя картинка/гифка + свой звук + текст (как у доната)
+    mode: 'ours', customImage: '', customAudio: '', customVolume: 80, customDuration: 6, customText: '{nick} теперь с нами!',
+    customPos: 'center', customAnim: 'zoom', customFontSize: 56, customTextColor: '#ffffff', customAccent: '#ffd36b', customImgSize: 40,
   },
   hype: {
     enabled: true, speak: true, voice: '', color: '#ff5a1f', soundFly: 'power-up.ogg', soundLand: 'bell.ogg', soundVolume: 70, voiceVolume: 100,
@@ -73,6 +76,16 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'style' && kind === 'nowplaying') out[k] = ['card', 'cols', 'mini', 'vbar', 'bigtime', 'corners'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style' && kind === 'streak') out[k] = ['pill', 'chat', 'ring', 'checkin', 'flip', 'glass'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'corner') out[k] = ['bl', 'br', 'tl', 'tr'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'mode') out[k] = r[k] === 'custom' || r[k] === 'ours' ? r[k] : b[k];
+    else if (k === 'customImage') out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\-]{1,80}\.(jpe?g|png|webp|gif|apng|avif)$/i.test(r[k]) ? r[k] : b[k]);
+    else if (k === 'customAudio') out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\-]{1,80}\.(ogg|mp3|wav|m4a|aac)$/i.test(r[k]) ? r[k] : b[k]);
+    else if (k === 'customVolume' || k === 'customImgSize') out[k] = Math.round(num(r[k], k === 'customVolume' ? 0 : 10, k === 'customVolume' ? 100 : 100, b[k]));
+    else if (k === 'customDuration') out[k] = Math.round(num(r[k], 2, 60, b[k]));
+    else if (k === 'customFontSize') out[k] = Math.round(num(r[k], 20, 140, b[k]));
+    else if (k === 'customPos') out[k] = ['top', 'center', 'bottom'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'customAnim') out[k] = ['fade', 'zoom', 'slide', 'bounce'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'customTextColor' || k === 'customAccent') out[k] = typeof r[k] === 'string' && /^#[0-9a-fA-F]{6}$/.test(r[k]) ? r[k].toLowerCase() : b[k];
+    else if (k === 'customText') out[k] = str(r[k], b[k], 120);
     else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
     else if (k === 'style' && kind === 'raid') out[k] = ['radar', 'card', 'plain'].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style') out[k] = (r[k] === 'card' || r[k] === 'ticket' || r[k] === 'wall' || r[k] === 'badge') && (kind === 'follow' ? r[k] !== 'ticket' : (r[k] !== 'wall' && r[k] !== 'badge')) ? r[k] : b[k];
@@ -259,8 +272,14 @@ function buildCard(kind, data, cfg, s) {
       nick: info.nick, n, word: streamsWord(n), points: cfg.showPoints !== false ? Math.max(0, Math.round(Number(data.points) || 0)) : 0 };
   }
   if (kind === 'sub' && cfg.style === 'ticket' && info.ticket) base.ticket = info.ticket;
-  if (kind === 'follow' && cfg.style === 'wall' && info.wall) base.wall = info.wall;
-  if (kind === 'follow' && cfg.style === 'badge' && info.badge) base.badge = info.badge;
+  if (kind === 'follow' && cfg.mode === 'custom') {
+    const q = (dir, f) => (f ? dir + encodeURIComponent(f) : '');
+    base.dlook = 'custom'; base.amountText = ''; base.message = '';
+    base.custom = { image: q('uploads/alert-custom/', cfg.customImage), audio: q('uploads/alert-custom/', cfg.customAudio), duration: cfg.customDuration, volume: cfg.customVolume, text: cfg.customText, showMsg: false,
+      pos: cfg.customPos, anim: cfg.customAnim, fontSize: cfg.customFontSize, color: cfg.customTextColor, accent: cfg.customAccent, imgSize: cfg.customImgSize, font: s.font || '' };
+  }
+  if (kind === 'follow' && cfg.mode !== 'custom' && cfg.style === 'wall' && info.wall) base.wall = info.wall;
+  if (kind === 'follow' && cfg.mode !== 'custom' && cfg.style === 'badge' && info.badge) base.badge = info.badge;
   if (kind === 'raid' && info.raid) base.raid = info.raid;
   // при выборе рамки «по уровню доната» событиям достаётся спокойная «Бегущий свет»
   base.frame = s.frame === 'tier' ? 'flow' : (s.frame || '');

@@ -9014,7 +9014,8 @@
     follow: {
       note: 'Новый фолловер. Все фолловеры и даты фоллоу хранятся навсегда (follow_registry.json): новые добавляются по событию, уже существующих можно подтянуть кнопкой. Событие Twitch: channel.follow (v2). Нужно право moderator:read:followers — после обновления войдите через Twitch заново.',
       test: [T('username', 'Ник', 'MrFrost')],
-      fields: [['enabled', 'toggle', 'Показывать алерт фоллоу'], ['style', 'select', 'Вид алерта', [['wall', 'Стена стикеров (все фолловеры)'], ['badge', 'Пропуск на ленте (с аватаркой)'], ['card', 'Карточка']]], ['holdSec', 'number', 'Сколько секунд на экране (3–30)'], ['soundFly', 'sound', 'Звук появления (пропуск)'], ['soundStick', 'sound', 'Звук шлепка стикера / штампа'], ['wallsync', 'sync', 'Фолловеры в стене'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'], ['big', 'text', 'Крупный текст на карточке'], ['speech', 'text', 'Текст озвучки']],
+      fields: [['enabled', 'toggle', 'Показывать алерт фоллоу'], ['style', 'select', 'Вид алерта', [['wall', 'Стена стикеров (все фолловеры)'], ['badge', 'Пропуск на ленте (с аватаркой)'], ['card', 'Карточка']]], ['mode', 'select', 'Вид алертов', [['ours', 'Наш: анимированные виды'], ['custom', 'Стандартный: картинка/гифка + звук']]], ['customImage', 'media', 'Картинка или гифка (PNG, JPG, WEBP, GIF до 15 МБ)', 'image'], ['customAudio', 'media', 'Звук алерта (MP3, OGG, WAV до 15 МБ)', 'audio'], ['customVolume', 'range', 'Громкость звука'], ['customDuration', 'number', 'Сколько секунд показывать (2–60)'], ['customText', 'text', 'Текст: {nick} — ник фолловера'], ['customPos', 'select', 'Положение на экране', [['top', 'Сверху'], ['center', 'По центру'], ['bottom', 'Снизу']]], ['customAnim', 'select', 'Анимация появления', [['fade', 'Плавное появление'], ['zoom', 'Приближение'], ['slide', 'Сверху вниз'], ['bounce', 'Прыжок']]], ['customImgSize', 'number', 'Размер картинки, % ширины экрана (10–100)'], ['customFontSize', 'number', 'Размер текста, px (20–140)'], ['customTextColor', 'color', 'Цвет текста'], ['customAccent', 'color', 'Цвет ника'],
+        ['holdSec', 'number', 'Сколько секунд на экране (3–30)'], ['soundFly', 'sound', 'Звук появления (пропуск)'], ['soundStick', 'sound', 'Звук шлепка стикера / штампа'], ['wallsync', 'sync', 'Фолловеры в стене'], ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'], ['big', 'text', 'Крупный текст на карточке'], ['speech', 'text', 'Текст озвучки']],
       hint: PH,
     },
     hype: {
@@ -9066,6 +9067,7 @@
       else if (t === 'range') ctl = `<div class="toggle-row-extra"><input type="range" id="${id}" min="0" max="100" step="5" style="width:170px"><span id="${id}_v" style="min-width:42px;text-align:right;font-variant-numeric:tabular-nums"></span></div>`;
       else if (t === 'text') return `<div class="field" style="margin:10px 0 0"><label for="${id}">${l}</label><input type="text" id="${id}" maxlength="200"></div>`;
       else if (t === 'textarea') return `<div class="field" style="margin:10px 0 0"><label for="${id}">${l}</label><textarea id="${id}" rows="3" style="width:100%"></textarea></div>`;
+      else if (t === 'media') ctl = `<div class="toggle-row-extra"><span id="${id}_pv" class="da-media-pv"></span><input type="hidden" id="${id}"><button class="btn-tiny" type="button" id="${id}_up">Загрузить</button><button class="btn-tiny" type="button" id="${id}_del" style="display:none">Убрать</button><input type="file" id="${id}_file" accept="${opts === 'image' ? 'image/*' : 'audio/*'}" hidden></div>`;
       else if (t === 'sync') ctl = `<div class="toggle-row-extra"><span class="card-hint" id="${id}_st" style="margin:0 10px 0 0"></span><button class="btn-tiny" type="button" id="${id}">Подтянуть всех из Twitch</button></div>`;
       else if (t === 'sound') ctl = `<div class="toggle-row-extra"><select id="${id}" class="ev-snd" style="max-width:230px"></select><button class="btn-tiny" type="button" id="${id}_pv">▶</button></div>`;
       else if (t === 'select') ctl = `<div class="toggle-row-extra"><select id="${id}">${opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></div>`;
@@ -9154,6 +9156,38 @@
       });
     }
     if (kind === 'follow') {
+      // стандартный вид: загрузка файлов и показ групп по выбранному виду
+      const mediaUrl = (v) => '/uploads/alert-custom/' + encodeURIComponent(v);
+      const showMedia = (k, mk) => {
+        const v = el(k).value, pv = document.getElementById(`ev_follow_${k}_pv`); pv.innerHTML = '';
+        if (v) {
+          if (mk === 'image') { const im = document.createElement('img'); im.src = mediaUrl(v); im.alt = ''; im.style.cssText = 'width:44px;height:44px;object-fit:contain;border-radius:6px;border:1px solid var(--border,#444);background:#0003'; pv.appendChild(im); }
+          else { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-tiny'; b.textContent = '▶ звук'; b.addEventListener('click', () => { try { if (window._evCustomAud) window._evCustomAud.pause(); window._evCustomAud = new Audio(mediaUrl(v)); window._evCustomAud.volume = Math.min(1, Number(el('customVolume').value) / 100); window._evCustomAud.play().catch(() => {}); } catch (_) {} }); pv.appendChild(b); }
+        }
+        document.getElementById(`ev_follow_${k}_del`).style.display = v ? '' : 'none';
+        document.getElementById(`ev_follow_${k}_up`).textContent = v ? 'Заменить' : 'Загрузить';
+      };
+      const CM = [['customImage', 'image'], ['customAudio', 'audio']];
+      const CUSTOM_KEYS = ['customImage', 'customAudio', 'customVolume', 'customDuration', 'customText', 'customPos', 'customAnim', 'customImgSize', 'customFontSize', 'customTextColor', 'customAccent'];
+      const OURS_KEYS = ['style', 'holdSec', 'soundFly', 'soundStick', 'wallsync', 'color', 'big'];
+      const rowOf = (k) => el(k).closest('.toggle-row, .field');
+      const syncMode = () => { const c = el('mode').value === 'custom'; CUSTOM_KEYS.forEach((k) => { rowOf(k).hidden = !c; }); OURS_KEYS.forEach((k) => { rowOf(k).hidden = c; }); };
+      el('mode').addEventListener('change', () => { syncMode(); });
+      CM.forEach(([k, mk]) => {
+        const fileEl = document.getElementById(`ev_follow_${k}_file`);
+        document.getElementById(`ev_follow_${k}_up`).addEventListener('click', () => fileEl.click());
+        fileEl.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0]; e.target.value = ''; if (!file) return;
+          const fd = new FormData(); fd.append('file', file); say('Загружаем…', '');
+          try { const d = await (await fetch('/api/event-alerts/follow/custom/' + mk, { method: 'POST', body: fd })).json(); if (!d.success) { say(d.error || 'Не удалось загрузить.', 'error'); return; } el(k).value = d.settings[k]; showMedia(k, mk); say('Файл загружен.', 'success'); play(); } catch (err) { say('Сетевая ошибка.', 'error'); }
+        });
+        document.getElementById(`ev_follow_${k}_del`).addEventListener('click', async () => {
+          try { const d = await (await fetch('/api/event-alerts/follow/custom/' + mk, { method: 'DELETE' })).json(); if (d.success) { el(k).value = ''; showMedia(k, mk); say('Файл убран.', 'success'); play(); } } catch (err) { say('Сетевая ошибка.', 'error'); }
+        });
+      });
+      window._evFollowSync = () => { syncMode(); CM.forEach(([k, mk]) => showMedia(k, mk)); };
+    }
+    if (kind === 'follow') {
       const sb = el('wallsync'), st = document.getElementById('ev_follow_wallsync_st');
       const showStat = () => fetch('/api/follow-wall').then((r) => r.json()).then((d) => { st.textContent = d.count ? `в базе: ${d.count}` + (d.syncedAt ? '' : ' (из Twitch ещё не подтягивали)') : 'пока пусто'; }).catch(() => {});
       showStat();
@@ -9207,12 +9241,12 @@
     btn('test').addEventListener('click', async () => { try { await api(`/api/event-alerts/${kind}/test`, testData()); } catch (e) { say('Сетевая ошибка.', 'error'); } });
     btn('skip').addEventListener('click', () => { api('/api/donation-alert/skip').catch(() => {}); });
     btn('save').addEventListener('click', async () => {
-      try { const d = await api(`/api/event-alerts/${kind}`, collect()); if (d.success) { apply(d.settings); say('Сохранено.', 'success'); play(); } else say(d.error || 'Не удалось сохранить.', 'error'); } catch (e) { say('Сетевая ошибка.', 'error'); }
+      try { const d = await api(`/api/event-alerts/${kind}`, collect()); if (d.success) { apply(d.settings); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); say('Сохранено.', 'success'); play(); } else say(d.error || 'Не удалось сохранить.', 'error'); } catch (e) { say('Сетевая ошибка.', 'error'); }
     });
     btn('reset').addEventListener('click', async () => {
-      try { const d = await api(`/api/event-alerts/${kind}/reset`); if (d.success) { apply(d.settings); say('Сброшено к значениям по умолчанию.', 'success'); play(); } } catch (e) { say('Сетевая ошибка.', 'error'); }
+      try { const d = await api(`/api/event-alerts/${kind}/reset`); if (d.success) { apply(d.settings); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); say('Сброшено к значениям по умолчанию.', 'success'); play(); } } catch (e) { say('Сетевая ошибка.', 'error'); }
     });
-    (window.evLoadSounds && window.evLoadSounds[kind] ? window.evLoadSounds[kind]() : Promise.resolve()).then(() => fetch('/api/event-alerts')).then((r) => r.json()).then((d) => apply(d.settings[kind])).catch(() => say('Не удалось загрузить настройки.', 'error'));
+    (window.evLoadSounds && window.evLoadSounds[kind] ? window.evLoadSounds[kind]() : Promise.resolve()).then(() => fetch('/api/event-alerts')).then((r) => r.json()).then((d) => { apply(d.settings[kind]); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); }).catch(() => say('Не удалось загрузить настройки.', 'error'));
     // при открытии раздела — показать пример
     document.querySelectorAll(`#tab-donalerts .pixel-subtab[data-da-pane="${kind}"]`).forEach((b) => b.addEventListener('click', () => setTimeout(play, 350)));
     // тип/этап меняют вид карточки — сразу показываем

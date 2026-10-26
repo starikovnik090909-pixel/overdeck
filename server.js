@@ -3376,6 +3376,30 @@ app.post('/api/donation-alert/test', (req, res) => {
 });
 // ---------- REST API: алерты событий ----------
 app.get('/api/event-alerts', (req, res) => { res.json({ settings: config.eventAlerts, defaults: eventAlerts.DEFAULTS }); });
+// Свои картинка/гифка и звук для алерта фоллоу (стандартный вид): те же файлы в uploads/alert-custom/
+const removeFollowCustomFile = (kind) => {
+  const old = config.eventAlerts.follow[CUSTOM_KINDS[kind].key];
+  if (old && /^[A-Za-z0-9_.\-]+$/.test(old)) fs.unlink(path.join(ALERT_CUSTOM_DIR, old), () => {});
+};
+app.post('/api/event-alerts/follow/custom/:kind', (req, res) => {
+  const k = CUSTOM_KINDS[req.params.kind];
+  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
+  customUploads[req.params.kind](req, res, (err) => {
+    if (err || !req.file) return res.status(400).json({ success: false, error: k.err });
+    removeFollowCustomFile(req.params.kind);
+    config.eventAlerts.follow = eventAlerts.sanitizeKind('follow', { [k.key]: req.file.filename }, config.eventAlerts.follow);
+    saveConfigToDisk();
+    res.json({ success: true, settings: config.eventAlerts.follow });
+  });
+});
+app.delete('/api/event-alerts/follow/custom/:kind', (req, res) => {
+  const k = CUSTOM_KINDS[req.params.kind];
+  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
+  removeFollowCustomFile(req.params.kind);
+  config.eventAlerts.follow = eventAlerts.sanitizeKind('follow', { [k.key]: '' }, config.eventAlerts.follow);
+  saveConfigToDisk();
+  res.json({ success: true, settings: config.eventAlerts.follow });
+});
 app.post('/api/event-alerts/:kind', (req, res) => {
   const k = req.params.kind;
   if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
