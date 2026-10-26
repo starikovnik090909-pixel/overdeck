@@ -23,22 +23,16 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 #fring{animation:rp 2.4s ease-in-out infinite alternate}
 .led1{animation:bl 1.6s steps(1) infinite}@keyframes bl{0%{opacity:1}50%{opacity:.1}}
 .dots circle{animation:bl 1.3s steps(1) infinite}.dots circle:nth-child(2){animation-duration:.7s}.dots circle:nth-child(3){animation-duration:2.1s}.dots circle:nth-child(4){animation-duration:.9s;animation-delay:.3s}.dots circle:nth-child(5){animation-duration:1.7s}.dots circle:nth-child(6){animation-duration:.5s}
-.scr{overflow:hidden;transform-origin:0 0;background:#0a0204;color:#ffd9d0;font-family:'Segoe UI',Arial,sans-serif}
-.scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px);animation:fl2 .15s steps(2) infinite}
-@keyframes fl2{50%{opacity:.8}}
-.scr .glass{position:absolute;inset:0;background:radial-gradient(120% 90% at 30% 0,rgba(255,80,60,.14),transparent 60%)}
-#main{padding:26px 34px;box-sizing:border-box}
-#main .tag{font-size:20px;letter-spacing:.35em;color:#ff5a45;text-shadow:0 0 10px #f22}
-#main .ttl{font-size:56px;font-weight:800;margin-top:6px;text-shadow:0 0 18px rgba(255,60,40,.7);line-height:1}
-#main .sub{font-size:22px;color:#d9a29a;margin-top:8px}
-#main .tm{position:absolute;right:34px;bottom:22px;font:800 84px/1 'Consolas',monospace;color:#ff6a50;text-shadow:0 0 22px #f33}
-#main .bar{position:absolute;left:34px;right:34px;bottom:14px;height:6px;background:#3a1210;border-radius:3px}
-#main .bar i{display:block;height:100%;width:0;background:#ff4a38;box-shadow:0 0 10px #f33;border-radius:3px}
-#side{padding:14px 16px;box-sizing:border-box;font-size:17px}
-#side h4{margin:0 0 8px;font-size:15px;letter-spacing:.3em;color:#ff5a45}
-#side .m{margin:5px 0;line-height:1.2;opacity:0;animation:in .4s forwards}
+#glow1,#glow2{width:1344px;height:768px;mix-blend-mode:screen}
+#glow1{background:radial-gradient(ellipse 330px 210px at 580px 440px,rgba(200,185,255,.48),rgba(150,120,255,.2) 45%,transparent 75%);animation:gl 5s ease-in-out infinite alternate}
+#glow2{background:radial-gradient(ellipse 170px 120px at 360px 450px,rgba(170,150,230,.14),transparent 75%)}
+@keyframes gl{from{opacity:.75}to{opacity:1}}
+.scr{overflow:hidden;transform-origin:0 0;background:#050204;color:#ffd9d0;font-family:'Segoe UI',Arial,sans-serif}
+.scr::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.07),transparent 40%);pointer-events:none}
+
+.scr .glass{display:none}
+
 @keyframes in{to{opacity:1}}
-#side b{color:#ff8f7a}
 .slot{position:absolute;width:56px;height:72px;transform:translate(-50%,-100%);display:flex;align-items:flex-end;justify-content:center}
 .slot img{max-width:100%;max-height:100%;filter:drop-shadow(0 0 8px var(--g,#f33))}
 body.debug .slot{outline:1px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.08)}
@@ -60,8 +54,9 @@ body.debug .slot{outline:1px dashed rgba(255,255,255,.5);background:rgba(255,255
  <g class="dots"><circle cx="694" cy="683" r="1.3" fill="#ff5a40"/><circle cx="701" cy="683" r="1.3" fill="#ffb040"/><circle cx="708" cy="683" r="1.3" fill="#ff5a40"/><circle cx="715" cy="683" r="1.3" fill="#ff8040"/><circle cx="694" cy="691" r="1.3" fill="#ffb040"/><circle cx="708" cy="691" r="1.3" fill="#ff5a40"/></g>
 </svg>
  <img id="led" class="L" src="opening-room/led.png">
- <div id="side" class="scr"><div class="glass"></div><h4>ЧАТ</h4><div id="feed"></div></div>
- <div id="main" class="scr"><div class="glass"></div><div class="tag" id="tag">СТРИМ НАЧНЁТСЯ ЧЕРЕЗ</div><div class="ttl" id="ttl">STARIKOV</div><div class="sub" id="sub">Dead by Daylight</div><div class="tm" id="tm">05:00</div><div class="bar"><i id="pb"></i></div></div>
+ <div id="glow1" class="L"></div><div id="glow2" class="L"></div>
+ <div id="side" class="scr"><div class="glass"></div></div>
+ <div id="main" class="scr"><div class="glass"></div></div>
  <div id="slots"></div>
 </div>
 <script>
@@ -80,17 +75,11 @@ function homog(w,h,q){ // q: TL,TR,BR,BL -> matrix3d
 function place(el,w,h,q){el.style.width=w+'px';el.style.height=h+'px';el.style.left=0;el.style.top=0;el.style.transform=homog(w,h,q)}
 place($('main'),538,270,[[446,359],[715,355],[715,494],[446,488]]);
 place($('side'),304,194,[[284,396],[436,395],[436,491],[284,493]]);
-// тексты
-$('ttl').textContent=Q.get('title')||'STARIKOV';$('sub').textContent=Q.get('sub')||'Dead by Daylight';
-const total=(+Q.get('minutes')||5)*60;let t0=Date.now();
-setInterval(()=>{const r=Math.max(0,total-(Date.now()-t0)/1000);const m=Math.floor(r/60),s=Math.floor(r%60);
- $('tm').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');$('pb').style.width=(100*(1-r/total))+'%';
- if(r<=0)$('tag').textContent='ПОЕХАЛИ!'},250);
-const msgs=[['mod_anya','скоро старт 🔥'],['viewer42','всем привет'],['Zhenya','готов к катке'],['kira','сегодня DbD?'],['bot','Следи за расписанием'],['neo','hype']];
-let mi=0;const feed=$('feed');
-function push(u,t){const d=document.createElement('div');d.className='m';d.innerHTML='<b>'+u+'</b> '+t;feed.appendChild(d);while(feed.children.length>7)feed.firstChild.remove()}
-window.OpeningRoom={chat:push};
-setInterval(()=>{const m=msgs[mi++%msgs.length];push(m[0],m[1])},1800);
+// контент мониторов: большой — Twitch-плеер канала, малый — чат (?chat=URL), иначе тёмный
+const ch=Q.get('channel')||'starlkov',par=Q.get('parent')||location.hostname||'localhost';
+function frame(host,src){const f=document.createElement('iframe');f.src=src;f.allow='autoplay';f.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;background:#000';host.prepend(f)}
+if(Q.get('twitch')!=='0')frame($('main'),`https://player.twitch.tv/?channel=${encodeURIComponent(ch)}&parent=${encodeURIComponent(par)}&muted=true&autoplay=true`);
+if(Q.get('chat'))frame($('side'),Q.get('chat'));
 // звёзды и кометы (без увеличения окна)
 const cv=$('st'),cx=cv.getContext('2d');const S=Array.from({length:90},()=>({x:Math.random()*170,y:Math.random()*394,r:Math.random()*1.1+.3,p:Math.random()*6,v:.6+Math.random()*2.4}));let C=[];
 function spawn(){const big=Math.random()<.3;C.push({x:60+Math.random()*130,y:Math.random()*220,vx:-(2.2+Math.random()*2),vy:1+Math.random()*1.2,l:0,len:big?70:38,w:big?2:1.3,hue:Math.random()<.5?'#fff':'#ffd9b0'})}
