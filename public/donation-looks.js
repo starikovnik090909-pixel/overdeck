@@ -7,7 +7,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const FONTS = ['Rubik', 'Bebas Neue', 'Oswald', 'IBM Plex Mono', 'Press Start 2P'];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const NAMES = ['arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
+  const NAMES = ['custom', 'arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
 
   let layer = null;
   function getLayer() {
@@ -48,6 +48,22 @@
   ];
 
   const LOOKS = {
+    /* ---------- стандартный алерт: своя картинка/гиф + звук + текст ---------- */
+    custom: {
+      std: true, min: 2, audioAt: 0.3,
+      html: (d, c) => {
+        const u = c.custom || {};
+        return `<div class="cu cu-${esc(u.pos || 'center')} cu-a-${esc(u.anim || 'zoom')}" style="--cf:${Number(u.fontSize) || 56}px;--cc:${esc(u.color || '#fff')};--ca:${esc(u.accent || '#ffd36b')};--ci:${Number(u.imgSize) || 40}%${u.font ? ";font-family:'" + esc(u.font) + "',Rubik,sans-serif" : ''}">
+          ${u.image ? `<img class="cu-img" src="${esc(u.image)}" alt="">` : ''}<div class="cu-t" data-f="t"></div><div class="cu-m" data-f="msg"></div></div>`;
+      },
+      fill: (st, d, c) => {
+        const u = c.custom || {}, t = st.querySelector('[data-f=t]');
+        const parts = String(u.text || '{nick} — {amount}').split(/(\{nick\}|\{amount\})/);
+        t.textContent = '';
+        parts.forEach((p) => { if (!p) return; const sp = document.createElement('span'); if (p === '{nick}') { sp.textContent = d.nick; sp.className = 'cu-n'; } else if (p === '{amount}') { sp.textContent = d.amountText; sp.className = 'cu-a'; } else sp.textContent = p; t.appendChild(sp); });
+        const m = st.querySelector('[data-f=msg]'); m.textContent = u.showMsg !== false && d.msg ? d.msg : '';
+      },
+    },
     /* ---------- аркадный автомат ---------- */
     arcade: {
       min: 6, audioAt: 1.4,
@@ -259,19 +275,26 @@
     const root = getLayer(); root.innerHTML = ''; root.style.opacity = '1'; root.style.transition = ''; root.style.display = 'block';
     const d = { nick: c.username || 'Аноним', amountText: c.amountText || '', amount: c.amount, msg: c.message || '' };
     const st = document.createElement('div'); st.className = 'dl-st dl-' + name;
-    if (L.compact) place(st, L, c); else st.style.transform = 'scale(4)';
+    if (L.compact) place(st, L, c); else if (L.std) { st.style.cssText += ';width:1920px;height:1080px;overflow:hidden;background:transparent'; } else st.style.transform = 'scale(4)';
     st.innerHTML = L.html(d, c); if (L.fill) L.fill(st, d, c); root.appendChild(st);
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, sleep(700)]); } catch (_) {}
     if (L.fill) L.fill(st, d, c); // повторно: после загрузки шрифтов размеры могли измениться
     let dur = 0; if (item.audio) dur = await h.audioDuration(item.audio);
-    const hold = clamp(Math.max(L.min, c.holdMin || 0, dur ? dur + L.audioAt + 0.9 : 0), L.min, Math.max(c.holdMax || 25, L.min));
+    const u = c.custom || {};
+    if (u.font) { try { ensureFontLoaded(u.font); } catch (_) {} }
+    let own = 0, ownAudio = null;
+    if (L.std && u.audio) { ownAudio = new Audio(u.audio); ownAudio.volume = clamp((u.volume == null ? 80 : u.volume) / 100, 0, 1); own = await h.audioDuration(u.audio); }
+    const voiceAt = L.std ? (own ? Math.min(own, 8) + 0.2 : 0.3) : L.audioAt;
+    let hold = clamp(Math.max(L.min, c.holdMin || 0, dur ? dur + L.audioAt + 0.9 : 0), L.min, Math.max(c.holdMax || 25, L.min));
+    if (L.std) hold = clamp(Math.max(Number(u.duration) || 8, dur ? dur + voiceAt + 0.8 : 0), 2, Math.max(c.holdMax || 25, Number(u.duration) || 8, 60));
     const tok = { dead: false };
-    h.sfx(c.soundFly);
+    if (!L.std) h.sfx(c.soundFly);
     st.classList.add('run'); if (L.start) L.start(st, d, tok, hold);
-    const at = setTimeout(() => { if (!tok.dead) { h.sfx(c.soundLand); if (item.audio) h.playAudio(item.audio); } }, L.audioAt * 1000);
+    if (ownAudio) { try { ownAudio.play().catch(() => {}); } catch (_) {} }
+    const at = setTimeout(() => { if (!tok.dead) { if (!L.std) h.sfx(c.soundLand); if (item.audio) h.playAudio(item.audio); } }, voiceAt * 1000);
     const end = performance.now() + hold * 1000;
     while (performance.now() < end) { if (h.takeSkip()) break; await sleep(40); }
-    clearTimeout(at);
+    clearTimeout(at); if (ownAudio) { try { ownAudio.pause(); } catch (_) {} }
     root.style.transition = 'opacity .5s'; root.style.opacity = '0'; await sleep(550);
     tok.dead = true; h.stopAudio(); hide();
   }

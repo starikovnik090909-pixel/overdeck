@@ -3287,7 +3287,7 @@ app.post('/api/donation-alert', (req, res) => {
   res.json({ success: true, settings: config.donationAlert });
 });
 app.post('/api/donation-alert/reset', (req, res) => {
-  try { removeAlertTexture(); } catch (_) {}
+  try { removeAlertTexture(); removeCustomFile('image'); removeCustomFile('audio'); } catch (_) {}
   config.donationAlert = { ...donationAlert.DEFAULTS };
   saveConfigToDisk();
   res.json({ success: true, settings: config.donationAlert });
@@ -3318,6 +3318,48 @@ app.post('/api/donation-alert/texture', alertTexUpload.single('file'), (req, res
 app.delete('/api/donation-alert/texture', (req, res) => {
   removeAlertTexture();
   config.donationAlert = donationAlert.sanitize({ texture: '' }, config.donationAlert);
+  saveConfigToDisk();
+  res.json({ success: true, settings: config.donationAlert });
+});
+// Свои файлы стандартного алерта: картинка/гиф и звук в uploads/alert-custom/ (по одному каждого вида)
+const ALERT_CUSTOM_DIR = path.join(__dirname, 'uploads', 'alert-custom');
+fs.mkdirSync(ALERT_CUSTOM_DIR, { recursive: true });
+app.use('/uploads/alert-custom', express.static(ALERT_CUSTOM_DIR));
+const CUSTOM_KINDS = {
+  image: { key: 'customImage', exts: ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.apng', '.avif'], max: 15, err: 'Нужна картинка или гифка (PNG, JPG, WEBP, GIF) до 15 МБ.' },
+  audio: { key: 'customAudio', exts: ['.mp3', '.ogg', '.wav', '.m4a', '.aac'], max: 15, err: 'Нужен звук MP3, OGG, WAV или M4A до 15 МБ.' },
+};
+const customUploads = {};
+Object.entries(CUSTOM_KINDS).forEach(([kind, k]) => {
+  customUploads[kind] = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => cb(null, ALERT_CUSTOM_DIR),
+      filename: (req, file, cb) => cb(null, `${kind}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}${path.extname(file.originalname).toLowerCase()}`),
+    }),
+    fileFilter: (req, file, cb) => cb(null, k.exts.includes(path.extname(file.originalname).toLowerCase())),
+    limits: { fileSize: k.max * 1024 * 1024 },
+  }).single('file');
+});
+const removeCustomFile = (kind) => {
+  const old = config.donationAlert[CUSTOM_KINDS[kind].key];
+  if (old && /^[A-Za-z0-9_.\-]+$/.test(old)) fs.unlink(path.join(ALERT_CUSTOM_DIR, old), () => {});
+};
+app.post('/api/donation-alert/custom/:kind', (req, res) => {
+  const k = CUSTOM_KINDS[req.params.kind];
+  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
+  customUploads[req.params.kind](req, res, (err) => {
+    if (err || !req.file) return res.status(400).json({ success: false, error: k.err });
+    removeCustomFile(req.params.kind);
+    config.donationAlert = donationAlert.sanitize({ [k.key]: req.file.filename }, config.donationAlert);
+    saveConfigToDisk();
+    res.json({ success: true, settings: config.donationAlert });
+  });
+});
+app.delete('/api/donation-alert/custom/:kind', (req, res) => {
+  const k = CUSTOM_KINDS[req.params.kind];
+  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
+  removeCustomFile(req.params.kind);
+  config.donationAlert = donationAlert.sanitize({ [k.key]: '' }, config.donationAlert);
   saveConfigToDisk();
   res.json({ success: true, settings: config.donationAlert });
 });

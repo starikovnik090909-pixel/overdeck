@@ -730,7 +730,6 @@
         lay.appendChild(right);
         const cc = $('#daCfgCard', p) || $('[data-a="cfgcard"]', p); if (cc) cc.hidden = false;
         $$('#btnDaCfg, [data-a="cfg"]', p).forEach((b) => { b.classList.add('ui3-hide'); });
-        $$('.da-group', p).forEach((g) => { g.open = true; g.addEventListener('toggle', () => { g.open = true; }); });
       });
       layout(); setTimeout(layout, 600); setTimeout(layout, 1800); setTimeout(layout, 4000);
     })();

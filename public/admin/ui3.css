@@ -484,8 +484,13 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #daCfgCard > .card-hint { margin: 0 0 14px; }
 #daCfgCard > .actions { margin-top: 4px; }
 #daForm .da-group { background: var(--bg-card); border: 1px solid var(--divider); border-radius: 16px; margin: 0 0 16px; overflow: hidden; }
-#daForm .da-group > summary { pointer-events: none; padding: 15px 20px; display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--divider); }
-#daForm .da-group > summary::before { display: none; }
+#daForm .da-group > summary { cursor: pointer; user-select: none; position: relative; padding: 15px 20px 15px 44px; display: flex; align-items: baseline; gap: 12px; list-style: none; }
+#daForm .da-group > summary::-webkit-details-marker { display: none; }
+#daForm .da-group > summary::before { content: ''; position: absolute; left: 20px; top: 50%; width: 7px; height: 7px; margin-top: -6px; border-right: 2px solid var(--text-mute); border-bottom: 2px solid var(--text-mute); transform: rotate(-45deg); transition: transform .15s; }
+#daForm .da-group[open] > summary::before { transform: rotate(45deg); margin-top: -8px; }
+#daForm .da-group > summary:hover { background: var(--accent-soft); }
+#daForm .da-group[open] > summary { border-bottom: 1px solid var(--divider); }
+#daForm .da-group[hidden] { display: none; }
 #daForm .da-group-t { font-size: 15px; font-weight: 600; }
 #daForm .da-group-s { font-size: 12px; color: var(--text-mute); }
 #daForm .da-group-body { border: 0; padding: 0; }

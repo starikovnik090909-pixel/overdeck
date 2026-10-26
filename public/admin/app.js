@@ -8565,6 +8565,19 @@
   if (!form) return;
   const msgEl = document.getElementById('daMessage');
   const FIELDS = [
+    { k: 'mode', t: 'select', l: 'Вид алертов', opts: [['ours', 'Наш: анимированные виды'], ['custom', 'Стандартный: картинка/гифка + звук']] },
+    { k: 'customImage', t: 'media', kind: 'image', l: 'Картинка или гифка (PNG, JPG, WEBP, GIF до 15 МБ)' },
+    { k: 'customAudio', t: 'media', kind: 'audio', l: 'Звук алерта (MP3, OGG, WAV до 15 МБ)' },
+    { k: 'customVolume', t: 'range', l: 'Громкость звука', suf: '%', min: 0, max: 100, step: 5 },
+    { k: 'customDuration', t: 'range', l: 'Длительность показа (если озвучка длиннее — дождёмся её)', suf: 'с', min: 2, max: 60, step: 1 },
+    { k: 'customText', t: 'text', l: 'Текст алерта: {nick} — ник, {amount} — сумма', max: 120, w: 260 },
+    { k: 'customShowMsg', t: 'toggle', l: 'Показывать сообщение донатера под текстом' },
+    { k: 'customPos', t: 'select', l: 'Положение на экране', opts: [['top', 'Сверху'], ['center', 'По центру'], ['bottom', 'Снизу']] },
+    { k: 'customAnim', t: 'select', l: 'Анимация появления', opts: [['fade', 'Плавное появление'], ['zoom', 'Приближение'], ['slide', 'Сверху вниз'], ['bounce', 'Прыжок']] },
+    { k: 'customImgSize', t: 'range', l: 'Размер картинки (доля ширины экрана)', suf: '%', min: 10, max: 100, step: 5 },
+    { k: 'customFontSize', t: 'range', l: 'Размер текста', suf: 'px', min: 20, max: 140, step: 2 },
+    { k: 'customTextColor', t: 'color', l: 'Цвет текста', plain: true },
+    { k: 'customAccent', t: 'color', l: 'Цвет суммы и ника', plain: true },
     { k: 'enabled', t: 'toggle', l: 'Показывать алерт при донате' },
     { k: 'minAmount', t: 'number', l: 'Показывать от суммы', suf: '₽', min: 0, max: 1000000 },
     { k: 'themed', t: 'toggle', l: 'Привязать к теме оверлея (стиль, цвет, шрифт; выкл — нейтральный вид)' },
@@ -8609,18 +8622,23 @@
     { k: 'scale', t: 'range', l: 'Размер карточки', suf: '%', min: 40, max: 180, step: 5 },
     { k: 'cardColor', t: 'color', l: 'Цвет карточки (пусто — цвет темы)' },
   ];
+  // 5-й элемент: в каком виде алерта группа видна (нет — в обоих)
   const GROUPS = [
-    ['show', 'Показ и тайминг', 'когда показывать, размер, время на экране', ["enabled", "look", "lookPos", "receiptTitle", "minAmount", "scale", "flySec", "holdMinSec", "holdMaxSec", "maxLength"]],
-    ['look', 'Оформление карточки', 'тема, цвет, плашка, текстура, рамка, свет', ["themed", "cardColor", "plateOpacity", "showSource", "texture", "texDim", "texOpacity", "frame", "frameW", "glow", "glowPower"]],
-    ['fx', 'Элементы и эффекты', 'уровни доната, пульсация, печать текста, статистика', ["typeText", "pulse", "tiers", "tier1", "tier2", "tier3", "donorStat", "timeBar"]],
+    ['mode', 'Вид алертов', 'наш анимированный или стандартный со своей картинкой и звуком', ["mode"]],
+    ['show', 'Показ', 'включение, минимальная сумма, длина сообщения', ["enabled", "minAmount", "maxLength"]],
+    ['custom', 'Своя картинка и звук', 'гифка или картинка, свой звук, длительность', ["customImage", "customAudio", "customVolume", "customDuration"], 'custom'],
+    ['customtext', 'Текст и появление', 'текст алерта, положение, анимация, размер, цвета', ["customText", "customShowMsg", "customPos", "customAnim", "customImgSize", "customFontSize", "customTextColor", "customAccent"], 'custom'],
+    ['ourshow', 'Вид и тайминг', 'какой анимированный вид, размер, время на экране', ["look", "lookPos", "receiptTitle", "scale", "flySec", "holdMinSec", "holdMaxSec"], 'ours'],
+    ['look', 'Оформление карточки', 'тема, цвет, плашка, текстура, рамка, свет', ["themed", "cardColor", "plateOpacity", "showSource", "texture", "texDim", "texOpacity", "frame", "frameW", "glow", "glowPower"], 'ours'],
+    ['fx', 'Элементы и эффекты', 'уровни доната, пульсация, печать текста, статистика', ["typeText", "pulse", "tiers", "tier1", "tier2", "tier3", "donorStat", "timeBar"], 'ours'],
     ['voice', 'Озвучка', 'голос, громкость, что читать, «задонатил / задонатила»', ["speak", "voice", "volume", "readNick", "genderVerb", "genderUnknown", "genderList", "readMessage"]],
-    ['sfx', 'Звуки', 'подлёт и приземление', ["soundFly", "soundLand", "soundPrint", "soundTear", "soundVolume"]],
+    ['sfx', 'Звуки', 'подлёт и приземление', ["soundFly", "soundLand", "soundPrint", "soundTear", "soundVolume"], 'ours'],
   ];
   const groupOf = (k) => (GROUPS.find((g) => g[3].includes(k)) || GROUPS[0])[0];
   const groupBody = {};
-  GROUPS.forEach(([id, title, sub]) => {
-    const d = document.createElement('details'); d.className = 'da-group'; d.dataset.g = id;
-    let open = false; try { open = localStorage.getItem('daGroup_' + id) === '1'; } catch (e) {}
+  GROUPS.forEach(([id, title, sub, , gmode]) => {
+    const d = document.createElement('details'); d.className = 'da-group'; d.dataset.g = id; if (gmode) d.dataset.mode = gmode;
+    let open = id === 'mode'; try { const sv = localStorage.getItem('daGroup_' + id); if (sv !== null) open = sv === '1'; } catch (e) {}
     d.open = open;
     d.innerHTML = `<summary><span class="da-group-t">${title}</span><span class="da-group-s">${sub}</span></summary><div class="da-group-body"></div>`;
     d.addEventListener('toggle', () => { try { localStorage.setItem('daGroup_' + id, d.open ? '1' : '0'); } catch (e) {} });
@@ -8639,30 +8657,68 @@
     else if (f.t === 'sound') ctrl = `<div class="toggle-row-extra"><select id="${id}" style="max-width:230px"></select><button class="btn-tiny" type="button" id="${id}_pv">▶</button></div>`;
     else if (f.t === 'voice') ctrl = `<div class="toggle-row-extra"><select id="${id}" style="max-width:230px"></select><button class="btn-tiny" type="button" id="${id}_pv">▶</button></div>`;
     else if (f.t === 'texture') ctrl = `<div class="toggle-row-extra"><img id="${id}_img" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;display:none;border:1px solid var(--border,#444)"><input type="hidden" id="${id}"><button class="btn-tiny" type="button" id="${id}_up">Загрузить</button><button class="btn-tiny" type="button" id="${id}_del">Убрать</button><input type="file" id="${id}_file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" hidden></div>`;
+    else if (f.t === 'media') ctrl = `<div class="toggle-row-extra"><span id="${id}_pv" class="da-media-pv"></span><input type="hidden" id="${id}"><button class="btn-tiny" type="button" id="${id}_up">Загрузить</button><button class="btn-tiny" type="button" id="${id}_del" style="display:none">Убрать</button><input type="file" id="${id}_file" accept="${f.kind === 'image' ? 'image/*' : 'audio/*'}" hidden></div>`;
     else if (f.t === 'select') ctrl = `<div class="toggle-row-extra"><select id="${id}">${f.opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></div>`;
-    else if (f.t === 'text') ctrl = `<div class="toggle-row-extra"><input type="text" id="${id}" maxlength="30" style="width:200px"></div>`;
+    else if (f.t === 'text') ctrl = `<div class="toggle-row-extra"><input type="text" id="${id}" maxlength="${f.max || 30}" style="width:${f.w || 200}px"></div>`;
     else if (f.t === 'textarea') ctrl = `<div class="toggle-row-extra"><textarea id="${id}" rows="3" style="width:230px" placeholder="Maslino44ka = ж&#10;Toki0FF = м"></textarea></div>`;
-    else if (f.t === 'color') ctrl = `<div class="toggle-row-extra"><input type="color" id="${id}"><button class="btn-tiny" type="button" id="${id}_clr">Из темы</button></div>`;
+    else if (f.t === 'color') ctrl = `<div class="toggle-row-extra"><input type="color" id="${id}">${f.plain ? '' : `<button class="btn-tiny" type="button" id="${id}_clr">Из темы</button>`}</div>`;
     row.innerHTML = `<span class="toggle-row-label">${f.l}</span>${ctrl}`;
     groupBody[groupOf(f.k)].appendChild(row);
     inputs[f.k] = row.querySelector('#' + id);
     if (f.t === 'range') inputs[f.k].addEventListener('input', () => { document.getElementById(id + '_v').textContent = inputs[f.k].value + ' ' + f.suf; });
-    if (f.t === 'color') {
+    if (f.t === 'color' && !f.plain) {
       inputs[f.k].addEventListener('input', () => { inputs[f.k].dataset.empty = ''; });
       row.querySelector('#' + id + '_clr').addEventListener('click', () => { inputs[f.k].dataset.empty = '1'; inputs[f.k].value = '#b14846'; });
     }
   });
+  // стандартный алерт: загрузка картинки/гифки и звука
+  const mediaUrl = (f, v) => '/uploads/alert-custom/' + encodeURIComponent(v);
+  function showMedia(f) {
+    const v = inputs[f.k].value, pv = document.getElementById('da_' + f.k + '_pv');
+    pv.innerHTML = '';
+    if (v) {
+      if (f.kind === 'image') { const im = document.createElement('img'); im.src = mediaUrl(f, v); im.alt = ''; im.style.cssText = 'width:44px;height:44px;object-fit:contain;border-radius:6px;border:1px solid var(--border,#444);background:#0003'; pv.appendChild(im); }
+      else { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-tiny'; b.textContent = '▶ ' + v.replace(/^audio-\d+-\w+/, 'звук'); b.addEventListener('click', () => { try { if (window._daCustomAud) window._daCustomAud.pause(); window._daCustomAud = new Audio(mediaUrl(f, v)); window._daCustomAud.volume = Math.min(1, Number(inputs.customVolume.value) / 100); window._daCustomAud.play().catch(() => {}); } catch (_) {} }); pv.appendChild(b); }
+    }
+    document.getElementById('da_' + f.k + '_del').style.display = v ? '' : 'none';
+    document.getElementById('da_' + f.k + '_up').textContent = v ? 'Заменить' : 'Загрузить';
+  }
+  FIELDS.filter((f) => f.t === 'media').forEach((f) => {
+    const id = 'da_' + f.k, fileEl = document.getElementById(id + '_file');
+    document.getElementById(id + '_up').addEventListener('click', () => fileEl.click());
+    fileEl.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0]; e.target.value = '';
+      if (!file) return;
+      const fd = new FormData(); fd.append('file', file); say('Загружаем…', '');
+      try {
+        const d = await (await fetch('/api/donation-alert/custom/' + f.kind, { method: 'POST', body: fd })).json();
+        if (!d.success) { say(d.error || 'Не удалось загрузить.', 'error'); return; }
+        inputs[f.k].value = d.settings[f.k]; showMedia(f); say('Файл загружен.', 'success'); if (window.daPreviewPlay) window.daPreviewPlay();
+      } catch (err) { say('Сетевая ошибка.', 'error'); }
+    });
+    document.getElementById(id + '_del').addEventListener('click', async () => {
+      try { const d = await (await fetch('/api/donation-alert/custom/' + f.kind, { method: 'DELETE' })).json(); if (d.success) { inputs[f.k].value = ''; showMedia(f); say('Файл убран.', 'success'); if (window.daPreviewPlay) window.daPreviewPlay(); } }
+      catch (err) { say('Сетевая ошибка.', 'error'); }
+    });
+  });
+  // группы настроек показываются по выбранному виду алертов
+  function syncMode() {
+    const m = inputs.mode.value || 'ours';
+    form.querySelectorAll('.da-group[data-mode]').forEach((d) => { d.hidden = d.dataset.mode !== m; });
+    document.querySelectorAll('#tab-donalerts .da-prev, #daPrevHint').forEach(() => {});
+  }
+  inputs.mode.addEventListener('change', () => { syncMode(); if (window.daPreviewPlay) window.daPreviewPlay(); });
   const say = (t, c) => { msgEl.textContent = t; msgEl.className = 'form-message' + (c ? ' ' + c : ''); };
   const api = async (url, body) => { const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); return r.json(); };
   function apply(s) {
     FIELDS.forEach((f) => {
       const el = inputs[f.k]; const v = s[f.k];
       if (f.t === 'toggle') el.checked = !!v;
-      else if (f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture') { el.value = v || ''; if (f.t === 'texture') showTex(); }
-      else if (f.t === 'color') { el.dataset.empty = v ? '' : '1'; el.value = v || '#b14846'; }
+      else if (f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture' || f.t === 'media') { el.value = v || ''; if (f.t === 'texture') showTex(); if (f.t === 'media') showMedia(f); }
+      else if (f.t === 'color') { el.dataset.empty = v || f.plain ? '' : '1'; el.value = v || '#b14846'; }
       else { el.value = v; if (f.t === 'range') document.getElementById('da_' + f.k + '_v').textContent = v + ' ' + f.suf; }
     });
-    syncBtns(); fontPreview(); const fb = document.getElementById('btnDaFont'); if (fb) fb.classList.toggle('on', !!inputs.font.value);
+    syncMode(); syncBtns(); fontPreview(); const fb = document.getElementById('btnDaFont'); if (fb) fb.classList.toggle('on', !!inputs.font.value);
   }
   function syncBtns() {
     [['btnDaTheme', 'themed'], ['btnDaVoice', 'speak'], ['btnDaType', 'typeText']].forEach(([b, k]) => { const el = document.getElementById(b); if (!el) return; el.classList.toggle('on', !!inputs[k].checked); el.setAttribute('aria-pressed', String(!!inputs[k].checked)); });
@@ -8671,7 +8727,7 @@
     const o = {};
     FIELDS.forEach((f) => {
       const el = inputs[f.k];
-      o[f.k] = f.t === 'toggle' ? el.checked : f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture' ? el.value : f.t === 'color' ? (el.dataset.empty === '1' ? '' : el.value) : Number(el.value);
+      o[f.k] = f.t === 'toggle' ? el.checked : f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture' || f.t === 'media' ? el.value : f.t === 'color' ? (el.dataset.empty === '1' ? '' : el.value) : Number(el.value);
     });
     return o;
   }
@@ -8821,6 +8877,13 @@
     { const fr = document.getElementById('da_frame') ? document.getElementById('da_frame').value : 'tier'; card.frame = fr === 'tier' ? ['', 'flow', 'comet', 'gold'][card.tier] : fr; }
     card.tierLabel = ['донат', 'крупный донат', 'огромный донат', 'легендарный донат'][card.tier];
     const val_s = (k) => (document.getElementById('da_' + k) || {}).value || '';
+    if ((document.getElementById('da_mode') || {}).value === 'custom') {
+      const mu = (k, kind) => { const v = val_s(k); return v ? '/uploads/alert-custom/' + encodeURIComponent(v) : ''; };
+      card.dlook = 'custom';
+      card.custom = { image: mu('customImage'), audio: mu('customAudio'), duration: val('customDuration', 8), volume: val('customVolume', 80), text: val_s('customText'), showMsg: chk('customShowMsg'), pos: val_s('customPos') || 'center', anim: val_s('customAnim') || 'zoom', fontSize: val('customFontSize', 56), color: val_s('customTextColor') || '#ffffff', accent: val_s('customAccent') || '#ffd36b', imgSize: val('customImgSize', 40), font: card.font };
+      card.holdMax = 60;
+      return card;
+    }
     { let lk = document.getElementById('da_look') ? document.getElementById('da_look').value : 'card'; if (lk === 'random') lk = 'card';
       if (lk === 'receipt') card.receipt = { soundPrint: val_s('soundPrint'), soundTear: val_s('soundTear'), title: (document.getElementById('da_receiptTitle') || {}).value || 'ДОНАТ-КАССА', no: 3 };
       if (lk === 'slots') card.slots = true;

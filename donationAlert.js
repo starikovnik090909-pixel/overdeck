@@ -8,6 +8,10 @@ const NEW_LOOKS = ['arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'firework
 const LOOKS = ['card', 'receipt', 'slots', 'random', ...NEW_LOOKS];
 
 const DEFAULTS = {
+  mode: 'ours',          // ours — наши анимированные виды (look); custom — стандартный: своя картинка/гиф + звук + текст
+  customImage: '', customAudio: '', customDuration: 8, customVolume: 80, customText: '{nick} — {amount}', customShowMsg: true,
+  customPos: 'center', customAnim: 'zoom', customFontSize: 56, customTextColor: '#ffffff', customAccent: '#ffd36b', customImgSize: 40,
+  customFont: '',
   enabled: true,
   minAmount: 0,          // донаты меньше этой суммы (в ₽) алерт не показывают
   speak: true,           // озвучивать алерт
@@ -85,6 +89,20 @@ function sanitize(raw, base) {
     showSource: bool(r.showSource, b.showSource),
     pulse: bool(r.pulse, b.pulse),
     typeText: bool(r.typeText, b.typeText),
+    mode: r.mode === 'custom' || r.mode === 'ours' ? r.mode : b.mode,
+    customImage: typeof r.customImage === 'string' && (r.customImage === '' || /^[A-Za-z0-9_.\-]{1,80}\.(jpe?g|png|webp|gif|apng|avif)$/i.test(r.customImage)) ? r.customImage : b.customImage,
+    customAudio: typeof r.customAudio === 'string' && (r.customAudio === '' || /^[A-Za-z0-9_.\-]{1,80}\.(ogg|mp3|wav|m4a|aac)$/i.test(r.customAudio)) ? r.customAudio : b.customAudio,
+    customDuration: clamp(r.customDuration, 2, 60, b.customDuration),
+    customVolume: Math.round(clamp(r.customVolume, 0, 100, b.customVolume)),
+    customText: typeof r.customText === 'string' ? r.customText.slice(0, 120) : b.customText,
+    customShowMsg: bool(r.customShowMsg, b.customShowMsg),
+    customPos: ['top', 'center', 'bottom'].includes(r.customPos) ? r.customPos : b.customPos,
+    customAnim: ['fade', 'zoom', 'slide', 'bounce'].includes(r.customAnim) ? r.customAnim : b.customAnim,
+    customFontSize: Math.round(clamp(r.customFontSize, 20, 140, b.customFontSize)),
+    customTextColor: typeof r.customTextColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(r.customTextColor) ? r.customTextColor.toLowerCase() : b.customTextColor,
+    customAccent: typeof r.customAccent === 'string' && /^#[0-9a-fA-F]{6}$/.test(r.customAccent) ? r.customAccent.toLowerCase() : b.customAccent,
+    customImgSize: Math.round(clamp(r.customImgSize, 10, 100, b.customImgSize)),
+    customFont: typeof r.customFont === 'string' ? r.customFont.slice(0, 60) : b.customFont,
     look: LOOKS.includes(r.look) ? r.look : b.look,
     lookPos: ['top', 'top-right', 'bottom-right', 'bottom-left', 'bottom'].includes(r.lookPos) ? r.lookPos : b.lookPos,
     receiptTitle: typeof r.receiptTitle === 'string' ? r.receiptTitle.trim().slice(0, 30) : b.receiptTitle,
@@ -194,7 +212,7 @@ function buildCard(record, s, extra) {
   const ex = extra || {};
   const tier = tierOf(ex.rub == null ? amount : ex.rub, s);
   const look = s.look === 'random' ? ['card', 'receipt', 'slots'][Math.floor(Math.random() * 3)] : (s.look || 'card');
-  const dlook = NEW_LOOKS.includes(look) ? look : '';
+  const dlook = s.mode === 'custom' ? 'custom' : (NEW_LOOKS.includes(look) ? look : '');
   const out = {
     username: record.username || 'Аноним',
     amount,
@@ -209,8 +227,12 @@ function buildCard(record, s, extra) {
     tier, tierLabel: TIER_LABELS[tier], timeBar: s.timeBar !== false,
     stat: s.donorStat !== false ? (ex.stat || '') : '',
   };
-  if (look === 'receipt') out.receipt = { soundPrint: s.soundPrint, soundTear: s.soundTear, title: s.receiptTitle || 'ДОНАТ-КАССА', no: Number(ex.no) || 0 };
-  if (look === 'slots') out.slots = true;
+  if (s.mode === 'custom') {
+    const q = (d, f) => (f ? d + encodeURIComponent(f) : '');
+    out.custom = { image: q('uploads/alert-custom/', s.customImage), audio: q('uploads/alert-custom/', s.customAudio), duration: s.customDuration, volume: s.customVolume, text: s.customText, showMsg: s.customShowMsg, pos: s.customPos, anim: s.customAnim, fontSize: s.customFontSize, color: s.customTextColor, accent: s.customAccent, imgSize: s.customImgSize, font: s.customFont || s.font || '' };
+  }
+  else if (look === 'receipt') out.receipt = { soundPrint: s.soundPrint, soundTear: s.soundTear, title: s.receiptTitle || 'ДОНАТ-КАССА', no: Number(ex.no) || 0 };
+  if (s.mode !== 'custom' && look === 'slots') out.slots = true;
   if (dlook) { out.dlook = dlook; out.lookPos = s.lookPos || 'top'; }
   return out;
 }
