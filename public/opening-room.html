@@ -54,11 +54,16 @@ if(Q.get('debug'))document.body.classList.add('debug');
 function fit(){const k=[innerWidth/1344,innerHeight/768];$('stage').style.transform=`scale(${k[0]},${k[1]})`}
 addEventListener('resize',fit);fit();
 // экраны: аффинная привязка по трём углам
-function place(el,w,h,TL,TR,BL,s){el.style.width=w+'px';el.style.height=h+'px';
- const a=(TR[0]-TL[0])/w,b=(TR[1]-TL[1])/w,c=(BL[0]-TL[0])/h,d=(BL[1]-TL[1])/h;
- el.style.left=0;el.style.top=0;el.style.transform=`matrix(${a},${b},${c},${d},${TL[0]},${TL[1]})`}
-place($('main'),538,260,[446,359],[715,355],[446,488]);
-place($('side'),304,194,[284,396],[436,395],[284,493]);
+function homog(w,h,q){ // q: TL,TR,BR,BL -> matrix3d
+ const src=[[0,0],[w,0],[w,h],[0,h]],A=[],B=[];
+ for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=q[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);B.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);B.push(v)}
+ for(let c=0;c<8;c++){let m=c;for(let r=c+1;r<8;r++)if(Math.abs(A[r][c])>Math.abs(A[m][c]))m=r;[A[c],A[m]]=[A[m],A[c]];[B[c],B[m]]=[B[m],B[c]];
+  for(let r=0;r<8;r++)if(r!==c){const f=A[r][c]/A[c][c];for(let k=c;k<8;k++)A[r][k]-=f*A[c][k];B[r]-=f*B[c]}}
+ const x=B.map((b,i)=>b/A[i][i]);
+ return `matrix3d(${x[0]},${x[3]},0,${x[6]},${x[1]},${x[4]},0,${x[7]},0,0,1,0,${x[2]},${x[5]},0,1)`}
+function place(el,w,h,q){el.style.width=w+'px';el.style.height=h+'px';el.style.left=0;el.style.top=0;el.style.transform=homog(w,h,q)}
+place($('main'),538,270,[[446,359],[715,355],[715,494],[446,488]]);
+place($('side'),304,194,[[284,396],[436,395],[436,491],[284,493]]);
 // тексты
 $('ttl').textContent=Q.get('title')||'STARIKOV';$('sub').textContent=Q.get('sub')||'Dead by Daylight';
 const total=(+Q.get('minutes')||5)*60;let t0=Date.now();
