@@ -3,6 +3,10 @@
 
 const gender = require('./gender');
 
+// Виды алерта: старые (card/receipt/slots) + новые полноэкранные и малое «уведомление» (public/donation-looks.js)
+const NEW_LOOKS = ['arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
+const LOOKS = ['card', 'receipt', 'slots', 'random', ...NEW_LOOKS];
+
 const DEFAULTS = {
   enabled: true,
   minAmount: 0,          // донаты меньше этой суммы (в ₽) алерт не показывают
@@ -41,6 +45,7 @@ const DEFAULTS = {
   typeText: true,        // текст сообщения печатается на карточке во время озвучки
   font: '',              // отдельный шрифт алерта; пусто — шрифт темы/стиля оверлея
   themed: true,          // карточка оформляется в стиле/цвете/шрифте темы оверлея; выключено — нейтральный вид
+  lookPos: 'top',       // положение малого алерта (уведомление): top | top-right | bottom-right | bottom-left | bottom
   look: 'card',          // вид алерта доната: card | receipt (чек) | slots (игровой автомат) | random
   receiptTitle: 'ДОНАТ-КАССА', // заголовок на чеке
   voice: '',             // голос Piper для алертов; пусто — тот же, что в «Озвучке чата»
@@ -80,7 +85,8 @@ function sanitize(raw, base) {
     showSource: bool(r.showSource, b.showSource),
     pulse: bool(r.pulse, b.pulse),
     typeText: bool(r.typeText, b.typeText),
-    look: ['card', 'receipt', 'slots', 'random'].includes(r.look) ? r.look : b.look,
+    look: LOOKS.includes(r.look) ? r.look : b.look,
+    lookPos: ['top', 'top-right', 'bottom-right', 'bottom-left', 'bottom'].includes(r.lookPos) ? r.lookPos : b.lookPos,
     receiptTitle: typeof r.receiptTitle === 'string' ? r.receiptTitle.trim().slice(0, 30) : b.receiptTitle,
     frame: ['', 'tier', 'flow', 'comet', 'neon', 'rainbow', 'gold', 'dashes'].includes(r.frame) ? r.frame : b.frame,
     frameW: Math.round(clamp(r.frameW, 1, 12, b.frameW)),
@@ -188,6 +194,7 @@ function buildCard(record, s, extra) {
   const ex = extra || {};
   const tier = tierOf(ex.rub == null ? amount : ex.rub, s);
   const look = s.look === 'random' ? ['card', 'receipt', 'slots'][Math.floor(Math.random() * 3)] : (s.look || 'card');
+  const dlook = NEW_LOOKS.includes(look) ? look : '';
   const out = {
     username: record.username || 'Аноним',
     amount,
@@ -204,6 +211,7 @@ function buildCard(record, s, extra) {
   };
   if (look === 'receipt') out.receipt = { soundPrint: s.soundPrint, soundTear: s.soundTear, title: s.receiptTitle || 'ДОНАТ-КАССА', no: Number(ex.no) || 0 };
   if (look === 'slots') out.slots = true;
+  if (dlook) { out.dlook = dlook; out.lookPos = s.lookPos || 'top'; }
   return out;
 }
 

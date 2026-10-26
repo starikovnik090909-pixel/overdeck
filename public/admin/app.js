@@ -8578,7 +8578,8 @@
     { k: 'texOpacity', t: 'range', l: 'Непрозрачность текстуры', suf: '%', min: 0, max: 100, step: 5 },
     { k: 'glow', t: 'toggle', l: 'Мягкий свет за карточкой (подсвечивает её от фона)' },
     { k: 'glowPower', t: 'range', l: 'Сила света', suf: '%', min: 0, max: 100, step: 5 },
-    { k: 'look', t: 'select', l: 'Вид алерта', opts: [['card', 'Карточка'], ['receipt', 'Кассовый чек'], ['slots', 'Игровой автомат'], ['random', 'Случайный из трёх']] },
+    { k: 'look', t: 'select', l: 'Вид алерта', opts: [['card', 'Карточка'], ['receipt', 'Кассовый чек'], ['slots', 'Игровой автомат'], ['random', 'Случайный из трёх'], ['arcade', 'Аркадный автомат (весь экран)'], ['terminal', 'Терминал (весь экран)'], ['loot', 'Лут из игры (весь экран)'], ['hijack', 'Взлом эфира (весь экран)'], ['goldrain', 'Золотой дождь (весь экран)'], ['fireworks', 'Салют-цифры (весь экран)'], ['cinema', 'Титры из кино (весь экран)'], ['notif', 'Уведомление из банка (малый)']] },
+    { k: 'lookPos', t: 'select', l: 'Где показывать малый алерт («Уведомление»)', opts: [['top', 'Сверху по центру'], ['top-right', 'Сверху справа'], ['bottom-right', 'Снизу справа'], ['bottom-left', 'Снизу слева'], ['bottom', 'Снизу по центру']] },
     { k: 'receiptTitle', t: 'text', l: 'Шапка чека (для вида «Кассовый чек»)' },
     { k: 'frame', t: 'select', l: 'Анимированная рамка', opts: [['', 'без рамки'], ['tier', 'по уровню доната'], ['flow', 'Бегущий свет'], ['comet', 'Комета по контуру'], ['neon', 'Неон с пульсацией'], ['rainbow', 'Радуга'], ['gold', 'Золото'], ['dashes', 'Бегущие штрихи']] },
     { k: 'frameW', t: 'range', l: 'Толщина рамки', suf: 'px', min: 1, max: 12, step: 1 },
@@ -8609,7 +8610,7 @@
     { k: 'cardColor', t: 'color', l: 'Цвет карточки (пусто — цвет темы)' },
   ];
   const GROUPS = [
-    ['show', 'Показ и тайминг', 'когда показывать, размер, время на экране', ["enabled", "look", "receiptTitle", "minAmount", "scale", "flySec", "holdMinSec", "holdMaxSec", "maxLength"]],
+    ['show', 'Показ и тайминг', 'когда показывать, размер, время на экране', ["enabled", "look", "lookPos", "receiptTitle", "minAmount", "scale", "flySec", "holdMinSec", "holdMaxSec", "maxLength"]],
     ['look', 'Оформление карточки', 'тема, цвет, плашка, текстура, рамка, свет', ["themed", "cardColor", "plateOpacity", "showSource", "texture", "texDim", "texOpacity", "frame", "frameW", "glow", "glowPower"]],
     ['fx', 'Элементы и эффекты', 'уровни доната, пульсация, печать текста, статистика', ["typeText", "pulse", "tiers", "tier1", "tier2", "tier3", "donorStat", "timeBar"]],
     ['voice', 'Озвучка', 'голос, громкость, что читать, «задонатил / задонатила»', ["speak", "voice", "volume", "readNick", "genderVerb", "genderUnknown", "genderList", "readMessage"]],
@@ -8822,7 +8823,8 @@
     const val_s = (k) => (document.getElementById('da_' + k) || {}).value || '';
     { let lk = document.getElementById('da_look') ? document.getElementById('da_look').value : 'card'; if (lk === 'random') lk = 'card';
       if (lk === 'receipt') card.receipt = { soundPrint: val_s('soundPrint'), soundTear: val_s('soundTear'), title: (document.getElementById('da_receiptTitle') || {}).value || 'ДОНАТ-КАССА', no: 3 };
-      if (lk === 'slots') card.slots = true; }
+      if (lk === 'slots') card.slots = true;
+      if (['arcade','terminal','loot','hijack','goldrain','fireworks','cinema','notif'].includes(lk)) { card.dlook = lk; card.lookPos = (document.getElementById('da_lookPos') || {}).value || 'top'; } }
     return card;
   }
   let ready = false;

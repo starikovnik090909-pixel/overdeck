@@ -596,12 +596,24 @@
     if (audio) { try { audio.pause(); } catch (_) {} audio = null; }
   }
 
+  /** Помощники для новых видов алерта (donation-looks.js). */
+  function lookHelpers(c) {
+    skipFlag = false; // залипший «пропуск» с прошлого алерта не должен сразу закрывать новый
+    return {
+      audioDuration,
+      takeSkip: () => { if (skipFlag) { skipFlag = false; return true; } return false; },
+      playAudio: (src) => { try { audio = new Audio(src); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); } catch (_) {} },
+      stopAudio: () => { if (audio) { try { audio.pause(); } catch (_) {} audio = null; } },
+      sfx: (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} },
+    };
+  }
+
   async function pump() {
     if (busy) return;
     busy = true;
     while (queue.length) {
       const item = queue.shift();
-      try { if (item.card && item.card.ticket) await runTicket(item); else if (item.card && item.card.wall) await runWall(item); else if (item.card && item.card.toast) await runToast(item); else if (item.card && item.card.badge) await runBadge(item); else if (item.card && item.card.receipt) await runReceipt(item); else if (item.card && item.card.slots) await runSlots(item); else if (item.card && item.card.raid && item.card.raid.style === 'card') await runRaidCard(item); else if (item.card && item.card.raid) await runRadar(item); else await run(item); } catch (e) { /* алерт не должен ломать оверлей */ }
+      try { if (item.card && item.card.ticket) await runTicket(item); else if (item.card && item.card.wall) await runWall(item); else if (item.card && item.card.toast) await runToast(item); else if (item.card && item.card.badge) await runBadge(item); else if (item.card && item.card.dlook && window.DonationLooks) await window.DonationLooks.run(item, lookHelpers(item.card)); else if (item.card && item.card.receipt) await runReceipt(item); else if (item.card && item.card.slots) await runSlots(item); else if (item.card && item.card.raid && item.card.raid.style === 'card') await runRaidCard(item); else if (item.card && item.card.raid) await runRadar(item); else await run(item); } catch (e) { console.error('DL', e && e.stack); }
       if (item.onEnd) item.onEnd();
       layer.style.display = 'none';
       if (tk.layer) tk.layer.style.display = 'none';
@@ -612,6 +624,7 @@
       if (slL) slL.style.display = 'none';
       if (rdL) rdL.style.display = 'none';
       if (rjL) rjL.style.display = 'none';
+      if (window.DonationLooks) window.DonationLooks.hide();
       if (queue.length) await new Promise((r) => setTimeout(r, GAP_SEC * 1000));
     }
     busy = false;
