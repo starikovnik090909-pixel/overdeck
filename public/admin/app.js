@@ -8998,7 +8998,7 @@
       note: 'Новая подписка, продление и подарок подписки в одном алерте. События Twitch: channel.subscribe, channel.subscription.message, channel.subscription.gift. Нужен вход через Twitch.',
       test: [T('type', 'Событие', 'new', { t: 'select', opts: [['new', 'Новая подписка'], ['resub', 'Продление подписки'], ['gift', 'Подарок подписки']] }), T('username', 'Ник', 'MrFrost'), T('tier', 'Уровень', '1000', { t: 'select', opts: tierOpts }),
         T('months', 'Месяцев всего (продление)', 6, { t: 'number' }), T('streak', 'Месяцев подряд (продление)', 6, { t: 'number' }), T('count', 'Сколько подарено', 5, { t: 'number' }), T('no', '№ подписчика', 147, { t: 'number' })],
-      fields: [['enabled', 'toggle', 'Показывать алерты подписок'], ['style', 'select', 'Вид алерта', [['ticket', 'Билет-абонемент'], ['card', 'Карточка']]], ['showNumber', 'toggle', '№ подписчика на билете'], ['numberStart', 'number', 'Нумерация после № (0 — с первого)'], ['holdSec', 'number', 'Сколько секунд билет на экране (3–30)'],
+      fields: [['enabled', 'toggle', 'Показывать алерты подписок'], ['style', 'select', 'Вид алерта', [['ticket', 'Билет-абонемент'], ['card', 'Карточка'], ['rings', 'Годовые кольца: срез дерева (малый)'], ['cake', 'Торт: этажи по тиру, свечки по месяцам (малый)'], ['activity', 'Кольца активности (малый)'], ['rocket', 'Ракета: высота по месяцам (малый)'], ['level', 'Level Up: пиксельный RPG-экран (малый)']]], ['mode', 'select', 'Вид алертов', [['ours', 'Наш: анимированные виды'], ['custom', 'Стандартный: картинка/гифка + звук']]], ['customImage', 'media', 'Картинка или гифка (PNG, JPG, WEBP, GIF до 15 МБ)', 'image'], ['customAudio', 'media', 'Звук алерта (MP3, OGG, WAV до 15 МБ)', 'audio'], ['customVolume', 'range', 'Громкость звука'], ['customDuration', 'number', 'Сколько секунд показывать (2–60)'], ['customText', 'text', 'Текст: {nick} — ник, {big} — «7 месяцев», {months}, {tier}, {count}'], ['customPos', 'select', 'Положение на экране', [['top', 'Сверху'], ['center', 'По центру'], ['bottom', 'Снизу']]], ['customAnim', 'select', 'Анимация появления', [['fade', 'Плавное появление'], ['zoom', 'Приближение'], ['slide', 'Сверху вниз'], ['bounce', 'Прыжок']]], ['customImgSize', 'number', 'Размер картинки, % ширины экрана (10–100)'], ['customFontSize', 'number', 'Размер текста, px (20–140)'], ['customTextColor', 'color', 'Цвет текста'], ['customAccent', 'color', 'Цвет ника'], ['showNumber', 'toggle', '№ подписчика на билете'], ['numberStart', 'number', 'Нумерация после № (0 — с первого)'], ['holdSec', 'number', 'Сколько секунд билет на экране (3–30)'],
         ['soundPre', 'sound', 'Звук перед вылетом (оповещение)'], ['soundFly', 'sound', 'Звук вылета билета'], ['soundStamp', 'sound', 'Звук штампа'], ['soundTear', 'sound', 'Звук отрыва корешка'], ['showNew', 'toggle', 'Новая подписка'], ['showResub', 'toggle', 'Продление подписки'], ['showGift', 'toggle', 'Подарок подписки'],
         ['soundVolume', 'range', 'Громкость звуков'], ['voiceVolume', 'range', 'Громкость озвучки'], ['speak', 'toggle', 'Озвучивать'], ['voice', 'voice', 'Голос'], ['color', 'color', 'Цвет карточки'],
         ['speechNew', 'text', 'Текст озвучки: новая подписка'], ['speechResub', 'text', 'Текст озвучки: продление'], ['speechGift', 'text', 'Текст озвучки: подарок']],
@@ -9155,37 +9155,37 @@
         if (!d.opened) { try { await navigator.clipboard.writeText(d.page || 'chrome://extensions'); } catch (e) { /* вручную */ } window.ui3Alert('Страницу расширений браузер открыть не позволяет\n\nАдрес ' + (d.page || 'chrome://extensions') + ' скопирован в буфер: вставь его в адресную строку браузера и нажми Enter. Дальше идут шаги 1–3 из списка.'); }
       });
     }
-    if (kind === 'follow') {
+    if (kind === 'follow' || kind === 'sub') {
       // стандартный вид: загрузка файлов и показ групп по выбранному виду
       const mediaUrl = (v) => '/uploads/alert-custom/' + encodeURIComponent(v);
       const showMedia = (k, mk) => {
-        const v = el(k).value, pv = document.getElementById(`ev_follow_${k}_pv`); pv.innerHTML = '';
+        const v = el(k).value, pv = document.getElementById(`ev_${kind}_${k}_pv`); pv.innerHTML = '';
         if (v) {
           if (mk === 'image') { const im = document.createElement('img'); im.src = mediaUrl(v); im.alt = ''; im.style.cssText = 'width:44px;height:44px;object-fit:contain;border-radius:6px;border:1px solid var(--border,#444);background:#0003'; pv.appendChild(im); }
           else { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-tiny'; b.textContent = '▶ звук'; b.addEventListener('click', () => { try { if (window._evCustomAud) window._evCustomAud.pause(); window._evCustomAud = new Audio(mediaUrl(v)); window._evCustomAud.volume = Math.min(1, Number(el('customVolume').value) / 100); window._evCustomAud.play().catch(() => {}); } catch (_) {} }); pv.appendChild(b); }
         }
-        document.getElementById(`ev_follow_${k}_del`).style.display = v ? '' : 'none';
-        document.getElementById(`ev_follow_${k}_up`).textContent = v ? 'Заменить' : 'Загрузить';
+        document.getElementById(`ev_${kind}_${k}_del`).style.display = v ? '' : 'none';
+        document.getElementById(`ev_${kind}_${k}_up`).textContent = v ? 'Заменить' : 'Загрузить';
       };
       const CM = [['customImage', 'image'], ['customAudio', 'audio']];
       const CUSTOM_KEYS = ['customImage', 'customAudio', 'customVolume', 'customDuration', 'customText', 'customPos', 'customAnim', 'customImgSize', 'customFontSize', 'customTextColor', 'customAccent'];
-      const OURS_KEYS = ['style', 'holdSec', 'soundFly', 'soundStick', 'wallsync', 'color', 'big'];
+      const OURS_KEYS = kind === 'sub' ? ['style', 'showNumber', 'numberStart', 'holdSec', 'soundPre', 'soundFly', 'soundStamp', 'soundTear', 'color'] : ['style', 'holdSec', 'soundFly', 'soundStick', 'wallsync', 'color', 'big'];
       const rowOf = (k) => el(k).closest('.toggle-row, .field');
       const syncMode = () => { const c = el('mode').value === 'custom'; CUSTOM_KEYS.forEach((k) => { rowOf(k).hidden = !c; }); OURS_KEYS.forEach((k) => { rowOf(k).hidden = c; }); };
       el('mode').addEventListener('change', () => { syncMode(); });
       CM.forEach(([k, mk]) => {
-        const fileEl = document.getElementById(`ev_follow_${k}_file`);
-        document.getElementById(`ev_follow_${k}_up`).addEventListener('click', () => fileEl.click());
+        const fileEl = document.getElementById(`ev_${kind}_${k}_file`);
+        document.getElementById(`ev_${kind}_${k}_up`).addEventListener('click', () => fileEl.click());
         fileEl.addEventListener('change', async (e) => {
           const file = e.target.files && e.target.files[0]; e.target.value = ''; if (!file) return;
           const fd = new FormData(); fd.append('file', file); say('Загружаем…', '');
-          try { const d = await (await fetch('/api/event-alerts/follow/custom/' + mk, { method: 'POST', body: fd })).json(); if (!d.success) { say(d.error || 'Не удалось загрузить.', 'error'); return; } el(k).value = d.settings[k]; showMedia(k, mk); say('Файл загружен.', 'success'); play(); } catch (err) { say('Сетевая ошибка.', 'error'); }
+          try { const d = await (await fetch(`/api/event-alerts/${kind}/custom/` + mk, { method: 'POST', body: fd })).json(); if (!d.success) { say(d.error || 'Не удалось загрузить.', 'error'); return; } el(k).value = d.settings[k]; showMedia(k, mk); say('Файл загружен.', 'success'); play(); } catch (err) { say('Сетевая ошибка.', 'error'); }
         });
-        document.getElementById(`ev_follow_${k}_del`).addEventListener('click', async () => {
-          try { const d = await (await fetch('/api/event-alerts/follow/custom/' + mk, { method: 'DELETE' })).json(); if (d.success) { el(k).value = ''; showMedia(k, mk); say('Файл убран.', 'success'); play(); } } catch (err) { say('Сетевая ошибка.', 'error'); }
+        document.getElementById(`ev_${kind}_${k}_del`).addEventListener('click', async () => {
+          try { const d = await (await fetch(`/api/event-alerts/${kind}/custom/` + mk, { method: 'DELETE' })).json(); if (d.success) { el(k).value = ''; showMedia(k, mk); say('Файл убран.', 'success'); play(); } } catch (err) { say('Сетевая ошибка.', 'error'); }
         });
       });
-      window._evFollowSync = () => { syncMode(); CM.forEach(([k, mk]) => showMedia(k, mk)); };
+      window._evStdSync = window._evStdSync || {}; window._evStdSync[kind] = () => { syncMode(); CM.forEach(([k, mk]) => showMedia(k, mk)); };
     }
     if (kind === 'follow') {
       const sb = el('wallsync'), st = document.getElementById('ev_follow_wallsync_st');
@@ -9241,12 +9241,12 @@
     btn('test').addEventListener('click', async () => { try { await api(`/api/event-alerts/${kind}/test`, testData()); } catch (e) { say('Сетевая ошибка.', 'error'); } });
     btn('skip').addEventListener('click', () => { api('/api/donation-alert/skip').catch(() => {}); });
     btn('save').addEventListener('click', async () => {
-      try { const d = await api(`/api/event-alerts/${kind}`, collect()); if (d.success) { apply(d.settings); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); say('Сохранено.', 'success'); play(); } else say(d.error || 'Не удалось сохранить.', 'error'); } catch (e) { say('Сетевая ошибка.', 'error'); }
+      try { const d = await api(`/api/event-alerts/${kind}`, collect()); if (d.success) { apply(d.settings); if (window._evStdSync && window._evStdSync[kind]) window._evStdSync[kind](); say('Сохранено.', 'success'); play(); } else say(d.error || 'Не удалось сохранить.', 'error'); } catch (e) { say('Сетевая ошибка.', 'error'); }
     });
     btn('reset').addEventListener('click', async () => {
-      try { const d = await api(`/api/event-alerts/${kind}/reset`); if (d.success) { apply(d.settings); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); say('Сброшено к значениям по умолчанию.', 'success'); play(); } } catch (e) { say('Сетевая ошибка.', 'error'); }
+      try { const d = await api(`/api/event-alerts/${kind}/reset`); if (d.success) { apply(d.settings); if (window._evStdSync && window._evStdSync[kind]) window._evStdSync[kind](); say('Сброшено к значениям по умолчанию.', 'success'); play(); } } catch (e) { say('Сетевая ошибка.', 'error'); }
     });
-    (window.evLoadSounds && window.evLoadSounds[kind] ? window.evLoadSounds[kind]() : Promise.resolve()).then(() => fetch('/api/event-alerts')).then((r) => r.json()).then((d) => { apply(d.settings[kind]); if (kind === 'follow' && window._evFollowSync) window._evFollowSync(); }).catch(() => say('Не удалось загрузить настройки.', 'error'));
+    (window.evLoadSounds && window.evLoadSounds[kind] ? window.evLoadSounds[kind]() : Promise.resolve()).then(() => fetch('/api/event-alerts')).then((r) => r.json()).then((d) => { apply(d.settings[kind]); if (window._evStdSync && window._evStdSync[kind]) window._evStdSync[kind](); }).catch(() => say('Не удалось загрузить настройки.', 'error'));
     // при открытии раздела — показать пример
     document.querySelectorAll(`#tab-donalerts .pixel-subtab[data-da-pane="${kind}"]`).forEach((b) => b.addEventListener('click', () => setTimeout(play, 350)));
     // тип/этап меняют вид карточки — сразу показываем

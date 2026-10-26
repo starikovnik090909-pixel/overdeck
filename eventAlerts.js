@@ -8,6 +8,7 @@ const gender = require('./gender');
 const { plural, numberWords, cleanMessage } = donationAlert;
 
 const FOLLOW_STYLES = ['neon', 'chat', 'load', 'vinyl', 'call', 'news', 'stars']; // малые анимированные виды фоллоу (public/donation-looks.js, f_*)
+const SUB_STYLES = ['rings', 'cake', 'activity', 'rocket', 'level']; // малые анимированные виды подписки (public/donation-looks.js, s_*)
 const KINDS = ['sub', 'raid', 'follow', 'hype', 'points', 'streak', 'nowplaying'];
 const TIER_NAMES = { '1000': 'Tier 1', '2000': 'Tier 2', '3000': 'Tier 3', prime: 'Prime' };
 
@@ -15,6 +16,9 @@ const DEFAULTS = {
   sub: {
     enabled: true, showNew: true, showResub: true, showGift: true,
     style: 'ticket', showNumber: true, numberStart: 0, holdSec: 6,
+    // стандартный вид: своя картинка/гифка + свой звук + текст ({nick} {big} {months} {tier} {count})
+    mode: 'ours', customImage: '', customAudio: '', customVolume: 80, customDuration: 6, customText: '{nick}: {big}',
+    customPos: 'center', customAnim: 'zoom', customFontSize: 56, customTextColor: '#ffffff', customAccent: '#ffd36b', customImgSize: 40,
     soundPre: 'tk-pre-1.ogg', soundFly: 'tk-fly-1.ogg', soundStamp: 'tk-stamp-1.ogg', soundTear: 'tk-tear-1.ogg',
     speak: true, voice: '', color: '#9146ff', soundVolume: 70, voiceVolume: 100,
     speechNew: '{user} оформил{а} подписку! Спасибо!',
@@ -89,6 +93,7 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'customText') out[k] = str(r[k], b[k], 120);
     else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
     else if (k === 'style' && kind === 'raid') out[k] = ['radar', 'card', 'plain'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'style' && kind === 'sub') out[k] = ['ticket', 'card', ...SUB_STYLES].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style' && kind === 'follow') out[k] = ['wall', 'badge', 'card', ...FOLLOW_STYLES].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style') out[k] = (r[k] === 'card' || r[k] === 'ticket' || r[k] === 'wall' || r[k] === 'badge') && (kind === 'follow' ? r[k] !== 'ticket' : (r[k] !== 'wall' && r[k] !== 'badge')) ? r[k] : b[k];
     else if (/^sound(Pre|Fly|Land|Stamp|Tear|Stick|Ping|Tick|Siren|In|Done)$/.test(k)) out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\- ]{1,80}\.(ogg|mp3|wav)$/i.test(r[k]) ? r[k] : b[k]);
@@ -197,7 +202,7 @@ function describe(kind, data, cfg, s) {
     const count = Math.max(1, Math.round(Number(d.count) || 1));
     const no = cfg.showNumber !== false && type !== 'gift' && Number(d.no) > 0 ? Math.round(Number(d.no)) : 0;
     out.ticket = {
-      type, nick: out.nick, tier: tierCode(d.tier), tierText: tier, months, count, no,
+      type, nick: out.nick, tier: tierCode(d.tier), prime: String(d.tier) === 'prime', tierText: tier, months, count, no,
       label: type === 'gift' ? 'Подарок сообществу' : monthLabel(months),
       meta: type === 'gift' ? `${tier} · подарочные подписки` : `${tier} · ${type === 'resub' ? 'продление подписки' : 'новая подписка'}`,
       message: '',
@@ -273,7 +278,22 @@ function buildCard(kind, data, cfg, s) {
     base.toast = { style: cfg.style || 'pill', corner: cfg.corner || 'bl', size: cfg.size || 100, hold: cfg.holdSec || 6, color: cfg.color || '#a970ff',
       nick: info.nick, n, word: streamsWord(n), points: cfg.showPoints !== false ? Math.max(0, Math.round(Number(data.points) || 0)) : 0 };
   }
-  if (kind === 'sub' && cfg.style === 'ticket' && info.ticket) base.ticket = info.ticket;
+  if (kind === 'sub' && cfg.mode !== 'custom' && cfg.style === 'ticket' && info.ticket) base.ticket = info.ticket;
+  if (kind === 'sub' && cfg.mode === 'custom') {
+    const q = (dir, f) => (f ? dir + encodeURIComponent(f) : '');
+    const tk = info.ticket || {};
+    const text = String(cfg.customText || '').replace(/\{(big|months|tier|count)\}/g, (m, k) => (k === 'big' ? info.big : k === 'months' ? tk.months : k === 'tier' ? tk.tierText : tk.count));
+    base.dlook = 'custom'; base.amountText = ''; base.message = '';
+    base.custom = { image: q('uploads/alert-custom/', cfg.customImage), audio: q('uploads/alert-custom/', cfg.customAudio), duration: cfg.customDuration, volume: cfg.customVolume, text, showMsg: false,
+      pos: cfg.customPos, anim: cfg.customAnim, fontSize: cfg.customFontSize, color: cfg.customTextColor, accent: cfg.customAccent, imgSize: cfg.customImgSize, font: s.font || '' };
+  }
+  if (kind === 'sub' && cfg.mode !== 'custom' && SUB_STYLES.includes(cfg.style) && info.ticket) {
+    const tk = info.ticket, tn = tk.prime ? 0 : tk.tier;
+    base.dlook = 's_' + cfg.style; base.amountText = ''; base.message = '';
+    base.holdMin = cfg.holdSec; base.holdMax = Math.max(cfg.holdSec, 10); base.soundFly = cfg.soundFly || ''; base.soundLand = cfg.soundStamp || '';
+    base.sub = { type: tk.type, tn: tn === 1 || tn === 2 || tn === 3 ? tn : 0, tname: tk.tierText, n: tk.type === 'gift' ? tk.count : tk.months, streak: Math.max(0, Math.round(Number(data.streak) || 0)),
+      kick: String(info.kicker).toUpperCase(), big: info.big, line: tk.type === 'gift' ? 'для сообщества · ' + tk.tierText : tk.type === 'new' ? 'спасибо за поддержку' : info.stat };
+  }
   if (kind === 'follow' && cfg.mode === 'custom') {
     const q = (dir, f) => (f ? dir + encodeURIComponent(f) : '');
     base.dlook = 'custom'; base.amountText = ''; base.message = '';

@@ -8,7 +8,19 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const FONTS = ['Rubik', 'Bebas Neue', 'Oswald', 'IBM Plex Mono', 'Press Start 2P', 'Pacifico'];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const NAMES = ['custom', 'f_neon', 'f_chat', 'f_load', 'f_vinyl', 'f_call', 'f_news', 'f_stars', 'arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
+  const NAMES = ['custom', 'f_neon', 'f_chat', 'f_load', 'f_vinyl', 'f_call', 'f_news', 'f_stars', 's_rings', 's_cake', 's_activity', 's_rocket', 's_level', 'arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
+
+  /* ---- подписки: палитра по тиру и общий текстовый блок ---- */
+  const SPAL = { 0: ['#3aa8ff', '#a8d8ff', '#124f8f'], 1: ['#a970ff', '#d6bbff', '#4a2899'], 2: ['#2fd6c4', '#a6f5ec', '#0b6d63'], 3: ['#ffb62e', '#ffe19a', '#9a5a00'] };
+  const rnd = (s) => { const v = Math.sin(s * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
+  const subCtx = (c) => { const s = c.sub || {}, tn = SPAL[s.tn] ? s.tn : 1, p = SPAL[tn]; return { s, tn, col: p[0], lt: p[1], dk: p[2], n: Math.max(1, s.n | 0), gift: s.type === 'gift', type: s.type, streak: s.streak | 0 }; };
+  const stxt = () => '<div class="sx"><i data-f="kick"></i><b data-f="nick"></b><em data-f="big"></em><span data-f="line"></span></div>';
+  function sfill(st, d, c) {
+    const x = subCtx(c), q = (f) => st.querySelector('[data-f=' + f + ']');
+    q('kick').textContent = x.s.kick || ''; q('kick').style.color = x.lt; q('nick').textContent = d.nick; q('nick').style.fontSize = ''; fit(q('nick'), 262, 16);
+    q('big').textContent = x.s.big || ''; q('big').style.color = x.col; q('line').textContent = x.s.line || '';
+  }
+  const stIn = (st, at) => st.querySelectorAll('.sx > *').forEach((e, i) => anim(e, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: at + i * 130 }));
 
   let layer = null;
   function getLayer() {
@@ -171,6 +183,104 @@
         st.querySelectorAll('.nl').forEach((e, i) => anim(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 2200 + i * 200 }));
         anim(st.querySelector('.nc'), [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }], { duration: 500, delay: 2800, iterations: 4, direction: 'alternate', easing: 'ease-in-out', fill: 'forwards' });
         anim(st.querySelector('.lbl'), [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 2500 });
+      },
+    },
+    /* ================= алерты подписок (малые, 576x324): меняются от тира, месяцев, типа ================= */
+    s_rings: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.4,
+      html: (d, c) => {
+        const x = subCtx(c), R = Math.min(x.n, 14);
+        let h = '<div class="sbg"></div><svg class="ab sv" viewBox="0 0 576 324" width="576" height="324"><circle cx="150" cy="162" r="124" fill="' + x.dk + '" opacity=".6"/><circle class="r0" cx="150" cy="162" r="118" fill="' + x.col + '"/><circle cx="150" cy="162" r="118" fill="' + x.lt + '" opacity=".35"/>';
+        for (let i = R; i >= 1; i--) h += `<circle class="rr" cx="150" cy="162" r="${(8 + i * (104 / R)).toFixed(1)}" fill="none" stroke="${x.dk}" stroke-width="${i === R ? 3.2 : 1.6}" opacity="${i === R ? 1 : .55}" data-o="${i === R ? 1 : .55}"/>`;
+        return h + `<circle cx="150" cy="162" r="5" fill="${x.dk}"/><path d="M150 162L262 112" stroke="${x.dk}" stroke-width="1.5" opacity=".35"/></svg>` + stxt();
+      },
+      fill: sfill,
+      start: (st) => {
+        anim(st.querySelector('.r0'), [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 500, delay: 100, easing: 'cubic-bezier(.2,1.5,.4,1)' });
+        const rr = [...st.querySelectorAll('.rr')].reverse();
+        rr.forEach((e, i) => anim(e, [{ opacity: 0, transform: 'scale(0)' }, { opacity: +e.dataset.o, transform: 'scale(1)' }], { duration: 400, delay: 500 + i * 110, easing: 'cubic-bezier(.2,1.8,.4,1)' }));
+        stIn(st, 1000);
+        anim(rr[rr.length - 1], [{ filter: 'none' }, { filter: 'drop-shadow(0 0 8px #fff)' }], { duration: 400, delay: 1800, iterations: 8, direction: 'alternate', fill: 'none' });
+      },
+    },
+    s_cake: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.3,
+      html: (d, c) => {
+        const x = subCtx(c), L = Math.max(1, x.tn || 1), cn = Math.min(x.n, 12);
+        let h = '<div class="sbg"></div><svg class="ab sv" viewBox="0 0 576 324" width="576" height="324"><g class="ck"><ellipse cx="150" cy="274" rx="112" ry="14" fill="rgba(0,0,0,.35)"/>';
+        for (let i = 0; i < L; i++) { const w = 190 - i * 40, y = 248 - i * 50, x0 = 150 - w / 2; h += `<rect x="${x0}" y="${y}" width="${w}" height="48" rx="10" fill="${i % 2 ? x.dk : x.col}"/><path d="M${x0} ${y + 12}q${w / 8} 14 ${w / 4} 0t${w / 4} 0t${w / 4} 0t${w / 4} 0" fill="${x.lt}" opacity=".85"/>`; }
+        const ty = 248 - (L - 1) * 50, tw = 190 - (L - 1) * 40;
+        for (let i = 0; i < cn; i++) { const cx = 150 - tw / 2 + 16 + (i + .5) * ((tw - 32) / cn); h += `<rect x="${cx - 2.5}" y="${ty - 26}" width="5" height="26" fill="#fff"/><rect x="${cx - 2.5}" y="${ty - 26}" width="5" height="5" fill="${x.col}"/><g class="fm" style="transform-origin:${cx}px ${ty - 26}px"><ellipse cx="${cx}" cy="${ty - 34}" rx="4" ry="8" fill="#ffb02e"/><ellipse cx="${cx}" cy="${ty - 32}" rx="2" ry="4.5" fill="#fff3b8"/></g>`; }
+        return h + '</g></svg>' + stxt();
+      },
+      fill: sfill,
+      start: (st) => {
+        anim(st.querySelector('.ck'), [{ opacity: 0, transform: 'translateY(-260px)', offset: 0 }, { opacity: 1, transform: 'translateY(0)', offset: .55 }, { transform: 'translateY(-34px)', offset: .72 }, { transform: 'translateY(0)', offset: .86 }, { transform: 'translateY(-9px)', offset: .94 }, { transform: 'translateY(0)', offset: 1 }], { duration: 900, delay: 200, easing: 'ease-in' });
+        st.querySelectorAll('.fm').forEach((e, i) => { anim(e, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 250, delay: 1100 + i * 110, easing: 'cubic-bezier(.2,1.6,.4,1)' }); anim(e, [{ transform: 'scale(1,1)' }, { transform: 'scale(1,1.22)' }], { duration: 180, delay: 1900 + i * 50, iterations: 30, direction: 'alternate', easing: 'ease-in-out', fill: 'forwards' }); });
+        stIn(st, 900);
+      },
+    },
+    s_activity: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.4,
+      html: (d, c) => {
+        const x = subCtx(c), R = [110, 82, 54], cs = [x.col, x.lt, '#ffd35a'];
+        const f = x.gift ? [Math.min(x.n, 10) / 10, Math.min(x.n, 10) / 10, Math.max(x.tn, .6) / 3] : [(x.n % 12 || 12) / 12, x.streak > 0 ? Math.min(1, x.streak / x.n) : 1, Math.max(x.tn, .6) / 3];
+        let h = '<div class="sbg"></div><svg class="ab sv" viewBox="0 0 576 324" width="576" height="324">';
+        R.forEach((r, i) => { const L = 2 * Math.PI * r; h += `<circle cx="150" cy="162" r="${r}" fill="none" stroke="${cs[i]}" stroke-opacity=".18" stroke-width="20"/><circle class="rg" data-l="${L}" data-f="${f[i]}" cx="150" cy="162" r="${r}" fill="none" stroke="${cs[i]}" stroke-width="20" stroke-linecap="round" transform="rotate(-90 150 162)" stroke-dasharray="${L}" stroke-dashoffset="${L}"/>`; });
+        h += `<text class="cn" x="150" y="178" font-size="52" font-weight="800" fill="#fff" text-anchor="middle" font-family="Rubik,sans-serif">0</text><text x="150" y="198" font-size="11" font-weight="600" fill="${x.lt}" text-anchor="middle" font-family="Rubik,sans-serif">${esc(x.gift ? 'подарено' : (x.n % 10 === 1 && x.n !== 11 ? 'месяц' : (x.n % 10 > 1 && x.n % 10 < 5 && (x.n < 10 || x.n > 20) ? 'месяца' : 'месяцев')))}</text>`;
+        const lg = [x.gift ? 'подарено сообществу' : x.n + ' из 12 до года', x.gift ? 'подарочные подписки' : (x.streak > 1 ? 'серия подряд: ' + x.streak : 'серия подряд'), x.s.tname || ''];
+        lg.forEach((t, i) => { h += `<circle cx="304" cy="${250 + i * 22}" r="5" fill="${cs[i]}"/><text x="318" y="${255 + i * 22}" font-size="13" fill="#e6dde9" font-family="Rubik,sans-serif">${esc(t)}</text>`; });
+        return h + '</svg>' + stxt();
+      },
+      fill: sfill,
+      start: (st, d, tok, hold) => {
+        st.querySelectorAll('.rg').forEach((e, i) => { const L = +e.dataset.l; anim(e, [{ strokeDashoffset: L }, { strokeDashoffset: L * (1 - +e.dataset.f) }], { duration: 1300, delay: 300 + i * 250, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
+        const cn = st.querySelector('.cn'), N = subCtx({ sub: (d.sub) }).n, t0 = performance.now() + 400;
+        (function f(t) { if (tok.dead) return; const k = clamp((t - t0) / 1200, 0, 1); cn.textContent = Math.round(N * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(performance.now());
+        stIn(st, 900);
+      },
+    },
+    s_rocket: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.2,
+      html: (d, c) => {
+        const x = subCtx(c), eng = Math.max(1, x.tn), H = Math.min(x.n, 24) / 24, fy = 250 - H * 170;
+        let h = '<div class="sbg"></div><svg class="ab sv" viewBox="0 0 576 324" width="576" height="324">';
+        for (let i = 0; i < 22; i++) h += `<circle cx="${(rnd(i) * 290).toFixed(0)}" cy="${(rnd(i + 50) * 300).toFixed(0)}" r="${(.6 + rnd(i + 9) * 1.4).toFixed(1)}" fill="#fff" opacity=".5"/>`;
+        h += `<ellipse cx="150" cy="290" rx="90" ry="10" fill="#000" opacity=".4"/><rect class="tr" x="145" y="${fy}" width="10" height="${280 - fy}" fill="${x.col}" opacity=".5" rx="5"/>`;
+        for (let k = 0; k <= 4; k++) { const yy = 250 - k * 42.5; h += `<line x1="40" y1="${yy}" x2="58" y2="${yy}" stroke="${x.lt}" stroke-width="2" opacity=".6"/><text x="34" y="${yy + 4}" font-size="10" font-weight="600" fill="${x.lt}" text-anchor="end" font-family="Rubik,sans-serif">${k * 6}</text>`; }
+        h += `<g class="rk" style="transform:translate(150px,${fy}px)" data-fy="${fy}"><g class="fl">`;
+        for (let i = 0; i < eng; i++) { const o = (i - (eng - 1) / 2) * 16; h += `<g class="fm" style="transform-origin:${o}px 0"><path d="M${o - 6} 0Q${o} 40 ${o + 6} 0z" fill="#ffb02e"/><path d="M${o - 3} 0Q${o} 24 ${o + 3} 0z" fill="#fff3b8"/></g>`; }
+        h += `</g><path d="M0-66C20-46 20-14 16 0H-16C-20-14-20-46 0-66z" fill="#e9eef8"/><path d="M0-66C-14-46-14-14-16 0H0z" fill="#fff" opacity=".5"/><circle cx="0" cy="-36" r="9" fill="${x.col}" stroke="${x.dk}" stroke-width="3"/><path d="M-16 0l-16 22V0z M16 0l16 22V0z" fill="${x.col}"/><rect x="-18" y="-4" width="36" height="8" fill="${x.dk}"/></g></svg>`;
+        return h + stxt();
+      },
+      fill: sfill,
+      start: (st) => {
+        const rk = st.querySelector('.rk'), fy = +rk.dataset.fy, dur = 1800, dl = 400, ez = 'cubic-bezier(.5,0,1,.6)';
+        anim(rk, [{ transform: 'translate(150px,300px)' }, { transform: `translate(150px,${fy}px)` }], { duration: dur, delay: dl, easing: ez });
+        anim(st.querySelector('.tr'), [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], { duration: dur, delay: dl, easing: ez, transformOrigin: 'bottom' });
+        st.querySelector('.tr').style.cssText += ';transform-box:fill-box;transform-origin:bottom';
+        st.querySelectorAll('.fm').forEach((e) => anim(e, [{ transform: 'scaleY(.6)' }, { transform: 'scaleY(1.5)' }], { duration: 120, iterations: 60, direction: 'alternate', fill: 'both' }));
+        anim(st.querySelector('.fl'), [{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: 200 });
+        anim(rk, [{ transform: `translate(150px,${fy}px)` }, { transform: `translate(150px,${fy + 5}px)` }], { duration: 300, delay: dl + dur, iterations: 8, direction: 'alternate', easing: 'ease-in-out', fill: 'forwards' });
+        stIn(st, 1200);
+      },
+    },
+    s_level: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.3,
+      html: (d, c) => {
+        const x = subCtx(c), xp = Math.round((x.n % 12 || 12) / 12 * 10);
+        let seg = ''; for (let i = 0; i < 10; i++) seg += `<i class="${i < xp ? 'on' : ''}"></i>`;
+        const rank = ['РЕКРУТ', 'СТРАЖ', 'РЫЦАРЬ', 'ЛЕГЕНДА'][x.tn];
+        return `<div class="lvp" style="--c:${x.col};--l:${x.lt}"><div class="lvi"></div><div class="lvt">${x.gift ? 'GIFT DROP!' : x.type === 'new' ? 'NEW PLAYER!' : 'LEVEL UP!'}</div><div class="lvn" data-f="nick"></div><div class="lvl">${x.gift ? '+' + x.n : 'LV ' + x.n}</div><div class="lvr">${rank} · ${esc(x.s.tname || '')}</div><div class="lvx">${seg}</div></div>`;
+      },
+      fill: (st, d) => { const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; n.style.fontSize = ''; fit(n, 440, 14); },
+      start: (st) => {
+        anim(st.querySelector('.lvp'), [{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'none' }], { duration: 250, delay: 100 });
+        anim(st.querySelector('.lvt'), [{ opacity: 0 }, { opacity: 1 }], { duration: 110, delay: 300, iterations: 8, direction: 'alternate', easing: 'steps(1)', fill: 'both' });
+        ['.lvn', '.lvl', '.lvr'].forEach((q, i) => anim(st.querySelector(q), [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 300, delay: 700 + i * 150, easing: 'cubic-bezier(.2,1.6,.4,1)' }));
+        st.querySelectorAll('.lvx i').forEach((e, i) => anim(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 50, delay: 1400 + i * 80, easing: 'steps(1)' }));
+        const pi = st.querySelector('.lvi');
+        for (let i = 0; i < 14; i++) { const p = document.createElement('b'); p.className = 'lvs'; pi.appendChild(p); anim(p, [{ opacity: 1, transform: 'translate(0,0)' }, { opacity: 0, transform: `translate(${(rnd(i) - .5) * 520}px,${(rnd(i + 7) - .5) * 240}px)` }], { duration: 1100, delay: 700, easing: 'ease-out' }); }
       },
     },
     /* ---------- аркадный автомат ---------- */
@@ -382,10 +492,10 @@
     const c = item.card, name = LOOKS[c.dlook] ? c.dlook : 'arcade', L = LOOKS[name];
     FONTS.forEach((f) => { try { if (typeof ensureFontLoaded === 'function') ensureFontLoaded(f); } catch (_) {} });
     const root = getLayer(); root.innerHTML = ''; root.style.opacity = '1'; root.style.transition = ''; root.style.display = 'block';
-    const d = { nick: c.username || 'Аноним', amountText: c.amountText || '', amount: c.amount, msg: c.message || '', no: c.followNo || 0 };
+    const d = { nick: c.username || 'Аноним', amountText: c.amountText || '', amount: c.amount, msg: c.message || '', no: c.followNo || 0, sub: c.sub };
     const st = document.createElement('div'); st.className = 'dl-st dl-' + name;
     if (L.compact) place(st, L, c); else if (L.std) { st.style.cssText += ';width:1920px;height:1080px;overflow:hidden;background:transparent'; } else st.style.transform = 'scale(4)';
-    st.innerHTML = L.html(d, c); if (L.fill) L.fill(st, d, c); if (name.indexOf('f_') === 0) st.style.visibility = 'hidden'; root.appendChild(st);
+    st.innerHTML = L.html(d, c); if (L.fill) L.fill(st, d, c); if (name.indexOf('f_') === 0 || name.indexOf('s_') === 0) st.style.visibility = 'hidden'; root.appendChild(st);
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, sleep(700)]); } catch (_) {}
     if (L.fill) L.fill(st, d, c); // повторно: после загрузки шрифтов размеры могли измениться
     let dur = 0; if (item.audio) dur = await h.audioDuration(item.audio);
