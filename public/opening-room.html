@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Overdeck — комната</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#stage{position:absolute;left:0;top:0;width:1344px;height:768px;transform-origin:0 0}
+#stage>*{position:absolute}
+.L{left:0;top:0;pointer-events:none}
+#base{width:1344px;height:768px}
+#win{left:0;top:118px;width:170px;height:394px;overflow:hidden;-webkit-mask:url(opening-room/space_mask.png) 0 0/100% 100%;mask:url(opening-room/space_mask.png) 0 0/100% 100%}
+#win img{position:absolute;left:-20px;top:-20px;width:210px;height:434px;animation:drift 40s ease-in-out infinite alternate}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(14px,-10px) scale(1.07)}}
+#win canvas{position:absolute;left:0;top:0;width:170px;height:394px}
+#signoff{left:556px;top:105px;width:309px;height:157px;animation:fl 9s steps(1) infinite}
+@keyframes fl{0%{opacity:0}2%{opacity:1}3%{opacity:0}4.5%{opacity:1}6%{opacity:0}7%{opacity:1}8%{opacity:0}9%{opacity:0}9.5%{opacity:0}
+ 10%{opacity:0}11%{opacity:0}12%{opacity:0}
+ 13%,60%{opacity:0}61%{opacity:1}62%{opacity:0}63%{opacity:1}64%{opacity:0}65%,100%{opacity:0}}
+#signglow{left:556px;top:105px;width:309px;height:157px;mix-blend-mode:screen;animation:br 4s ease-in-out infinite alternate}
+@keyframes br{from{opacity:.15}to{opacity:.55}}
+#led{width:1344px;height:768px;mix-blend-mode:screen;animation:pl 3.2s ease-in-out infinite alternate}
+@keyframes pl{from{opacity:.15}to{opacity:.7}}
+.scr{overflow:hidden;transform-origin:0 0;background:#0a0204;color:#ffd9d0;font-family:'Segoe UI',Arial,sans-serif}
+.scr::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px);animation:fl2 .15s steps(2) infinite}
+@keyframes fl2{50%{opacity:.8}}
+.scr .glass{position:absolute;inset:0;background:radial-gradient(120% 90% at 30% 0,rgba(255,80,60,.14),transparent 60%)}
+#main{padding:26px 34px;box-sizing:border-box}
+#main .tag{font-size:20px;letter-spacing:.35em;color:#ff5a45;text-shadow:0 0 10px #f22}
+#main .ttl{font-size:56px;font-weight:800;margin-top:6px;text-shadow:0 0 18px rgba(255,60,40,.7);line-height:1}
+#main .sub{font-size:22px;color:#d9a29a;margin-top:8px}
+#main .tm{position:absolute;right:34px;bottom:22px;font:800 84px/1 'Consolas',monospace;color:#ff6a50;text-shadow:0 0 22px #f33}
+#main .bar{position:absolute;left:34px;right:34px;bottom:14px;height:6px;background:#3a1210;border-radius:3px}
+#main .bar i{display:block;height:100%;width:0;background:#ff4a38;box-shadow:0 0 10px #f33;border-radius:3px}
+#side{padding:14px 16px;box-sizing:border-box;font-size:17px}
+#side h4{margin:0 0 8px;font-size:15px;letter-spacing:.3em;color:#ff5a45}
+#side .m{margin:5px 0;line-height:1.2;opacity:0;animation:in .4s forwards}
+@keyframes in{to{opacity:1}}
+#side b{color:#ff8f7a}
+.slot{position:absolute;width:56px;height:72px;transform:translate(-50%,-100%);display:flex;align-items:flex-end;justify-content:center}
+.slot img{max-width:100%;max-height:100%;filter:drop-shadow(0 0 8px var(--g,#f33))}
+body.debug .slot{outline:1px dashed rgba(255,255,255,.5);background:rgba(255,255,255,.08)}
+</style></head><body>
+<div id="stage">
+ <img id="base" class="L" src="opening-room/base.jpg">
+ <div id="win" class="L"><img src="opening-room/space.jpg"><canvas id="st" width="170" height="394"></canvas></div>
+ <img id="signglow" class="L" src="opening-room/sign_glow.png">
+ <img id="signoff" class="L" src="opening-room/sign_off.png">
+ <img id="led" class="L" src="opening-room/led.png">
+ <div id="side" class="scr"><div class="glass"></div><h4>ЧАТ</h4><div id="feed"></div></div>
+ <div id="main" class="scr"><div class="glass"></div><div class="tag" id="tag">СТРИМ НАЧНЁТСЯ ЧЕРЕЗ</div><div class="ttl" id="ttl">STARIKOV</div><div class="sub" id="sub">Dead by Daylight</div><div class="tm" id="tm">05:00</div><div class="bar"><i id="pb"></i></div></div>
+ <div id="slots"></div>
+</div>
+<script>
+const Q=new URLSearchParams(location.search), $=id=>document.getElementById(id);
+if(Q.get('debug'))document.body.classList.add('debug');
+function fit(){const k=[innerWidth/1344,innerHeight/768];$('stage').style.transform=`scale(${k[0]},${k[1]})`}
+addEventListener('resize',fit);fit();
+// экраны: аффинная привязка по трём углам
+function place(el,w,h,TL,TR,BL,s){el.style.width=w+'px';el.style.height=h+'px';
+ const a=(TR[0]-TL[0])/w,b=(TR[1]-TL[1])/w,c=(BL[0]-TL[0])/h,d=(BL[1]-TL[1])/h;
+ el.style.left=0;el.style.top=0;el.style.transform=`matrix(${a},${b},${c},${d},${TL[0]},${TL[1]})`}
+place($('main'),538,260,[446,359],[715,355],[446,488]);
+place($('side'),304,194,[284,396],[436,395],[284,493]);
+// тексты
+$('ttl').textContent=Q.get('title')||'STARIKOV';$('sub').textContent=Q.get('sub')||'Dead by Daylight';
+const total=(+Q.get('minutes')||5)*60;let t0=Date.now();
+setInterval(()=>{const r=Math.max(0,total-(Date.now()-t0)/1000);const m=Math.floor(r/60),s=Math.floor(r%60);
+ $('tm').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');$('pb').style.width=(100*(1-r/total))+'%';
+ if(r<=0)$('tag').textContent='ПОЕХАЛИ!'},250);
+const msgs=[['mod_anya','скоро старт 🔥'],['viewer42','всем привет'],['Zhenya','готов к катке'],['kira','сегодня DbD?'],['bot','Следи за расписанием'],['neo','hype']];
+let mi=0;const feed=$('feed');
+function push(u,t){const d=document.createElement('div');d.className='m';d.innerHTML='<b>'+u+'</b> '+t;feed.appendChild(d);while(feed.children.length>7)feed.firstChild.remove()}
+window.OpeningRoom={chat:push};
+setInterval(()=>{const m=msgs[mi++%msgs.length];push(m[0],m[1])},1800);
+// звёзды
+const cv=$('st'),cx=cv.getContext('2d');const S=Array.from({length:70},()=>({x:Math.random()*170,y:Math.random()*394,r:Math.random()*1.2+.3,p:Math.random()*6,v:.5+Math.random()*2}));let sh=null;
+(function f(t){cx.clearRect(0,0,170,394);t/=1000;
+ for(const s of S){cx.globalAlpha=.25+.75*Math.abs(Math.sin(t*s.v+s.p));cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,7);cx.fill()}
+ if(!sh&&Math.random()<.004)sh={x:Math.random()*100+60,y:Math.random()*120,l:0};
+ if(sh){sh.l+=.04;cx.globalAlpha=1-sh.l;const g=cx.createLinearGradient(sh.x,sh.y,sh.x-40,sh.y-18);g.addColorStop(0,'#fff');g.addColorStop(1,'transparent');cx.strokeStyle=g;cx.lineWidth=1.4;cx.beginPath();cx.moveTo(sh.x,sh.y);cx.lineTo(sh.x-40,sh.y-18);cx.stroke();sh.x-=3;sh.y+=1.6;if(sh.l>=1)sh=null}
+ requestAnimationFrame(f)})(0);
+// слоты на полках: 6 досок × 3 слота
+const boards=[[150,75],[245,195],[340,313],[441,441],[530,560],[625,715]];
+const X0=865,X1=1240,cols=[930,1050,1170];const slots=[];
+boards.forEach((b,i)=>cols.forEach((x,j)=>{const y=b[0]+(b[1]-b[0])*(x-X0)/(X1-X0)+16;const d=document.createElement('div');d.className='slot';d.style.left=x+'px';d.style.top=y+'px';d.dataset.n=slots.length+1;$('slots').appendChild(d);slots.push(d)}));
+window.OpeningScene={setSlot(n,url,o){const d=slots[n-1];if(!d)return;d.innerHTML='';const im=new Image();im.src=url;if(o&&o.glow)d.style.setProperty('--g',o.glow);d.appendChild(im)},clearSlot(n){const d=slots[n-1];if(d)d.innerHTML=''},count:slots.length};
+(Q.get('slots')||'').split(',').filter(Boolean).forEach((u,i)=>OpeningScene.setSlot(i+1,u));
+</script></body></html>
