@@ -3,11 +3,12 @@
 // (холсты — в полном разрешении), «уведомление» — малый алерт (≈30% экрана) в углу/по центру (card.lookPos).
 (function () {
   const R = Math.random;
+  const anim = (el, kf, o) => { try { return el.animate(kf, Object.assign({ fill: 'both', easing: 'ease-out' }, o)); } catch (_) { return null; } };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  const FONTS = ['Rubik', 'Bebas Neue', 'Oswald', 'IBM Plex Mono', 'Press Start 2P'];
+  const FONTS = ['Rubik', 'Bebas Neue', 'Oswald', 'IBM Plex Mono', 'Press Start 2P', 'Pacifico'];
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const NAMES = ['custom', 'arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
+  const NAMES = ['custom', 'f_neon', 'f_chat', 'f_load', 'f_vinyl', 'f_call', 'f_news', 'f_stars', 'arcade', 'terminal', 'loot', 'hijack', 'goldrain', 'fireworks', 'cinema', 'notif'];
 
   let layer = null;
   function getLayer() {
@@ -62,6 +63,114 @@
         t.textContent = '';
         parts.forEach((p) => { if (!p) return; const sp = document.createElement('span'); if (p === '{nick}') { sp.textContent = d.nick; sp.className = 'cu-n'; } else if (p === '{amount}') { sp.textContent = d.amountText; sp.className = 'cu-a'; } else sp.textContent = p; t.appendChild(sp); });
         const m = st.querySelector('[data-f=msg]'); m.textContent = u.showMsg !== false && d.msg ? d.msg : '';
+      },
+    },
+
+    /* ================= алерты фолловера (малые, 576x324) ================= */
+    /* неоновая вывеска */
+    f_neon: {
+      compact: true, w: 576, h: 324, k: 1, min: 6, audioAt: 1.2,
+      html: () => `<div class="ab bd"><div class="ab w">Welcome</div><div class="ab nn" data-f="nick"></div><div class="ab tb"></div></div>`,
+      fill: (st, d) => { const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick.toUpperCase(); fit(n, 430, 14); },
+      start: (st) => {
+        const A = anim, fl = (el, dl) => A(el, [{ opacity: .12, offset: 0 }, { opacity: 1, offset: .05 }, { opacity: .15, offset: .12 }, { opacity: 1, offset: .2 }, { opacity: .3, offset: .3 }, { opacity: 1, offset: .42 }, { opacity: 1 }], { duration: 1000, delay: dl });
+        A(st.querySelector('.bd'), [{ opacity: 0, transform: 'translateY(30px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: 100 });
+        fl(st.querySelector('.w'), 700); fl(st.querySelector('.nn'), 1600);
+        A(st.querySelector('.tb'), [{ opacity: .12 }, { opacity: 1 }], { duration: 300, delay: 2400 });
+        A(st.querySelector('.w'), [{ opacity: 1 }, { opacity: .82 }, { opacity: 1 }], { duration: 240, delay: 3400, iterations: 6, fill: 'forwards' });
+      },
+    },
+    /* чат: «печатает…» */
+    f_chat: {
+      compact: true, w: 576, h: 324, k: 1, min: 6, audioAt: 2.3,
+      html: () => `<div class="ab ch"><div class="ab tg">НОВЫЙ ФОЛЛОВЕР</div><div class="ab av" data-f="av"></div><div class="ab bb"><div class="bn" data-f="nick"></div><div class="dt"><i></i><i></i><i></i></div><div class="tm" style="display:none">Я теперь с вами! Всем привет!</div></div></div>`,
+      fill: (st, d) => { st.querySelector('[data-f=av]').textContent = (d.nick[0] || '?').toUpperCase(); const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; },
+      start: (st, d, tok) => {
+        anim(st.querySelector('.ch'), [{ opacity: 0, transform: 'translateY(50px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 100, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+        anim(st.querySelector('.tg'), [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 400 });
+        setTimeout(() => { if (tok.dead) return; st.querySelector('.dt').style.display = 'none'; const t = st.querySelector('.tm'); t.style.display = 'block'; anim(st.querySelector('.bb'), [{ transform: 'scale(.9)' }, { transform: 'scale(1)' }], { duration: 400, easing: 'cubic-bezier(.2,1.6,.4,1)' }); }, 2300);
+      },
+    },
+    /* загрузка друга */
+    f_load: {
+      compact: true, w: 576, h: 324, k: 1, min: 6, audioAt: 2.8,
+      html: () => `<div class="ab pn"><div class="t">ДОБАВЛЕНИЕ В ДРУЗЬЯ КАНАЛА</div><div class="n" data-f="nick"></div><div class="ab pc" data-f="pc">0%</div>
+        <svg class="ab ok" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6dffa0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg><div class="ab tr"><div class="ab fl"></div></div></div>`,
+      fill: (st, d) => { const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; fit(n, 390, 14); },
+      start: (st, d, tok) => {
+        const fl = st.querySelector('.fl'), pc = st.querySelector('[data-f=pc]'), ok = st.querySelector('.ok'), pa = ok.querySelector('path');
+        anim(st.querySelector('.pn'), [{ opacity: 0, transform: 'translateY(-50px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 100, easing: 'cubic-bezier(.2,1.4,.4,1)' });
+        const pts = [[0, 0], [.7, 0], [1.4, .35], [2.1, .62], [2.7, 1]]; // t(c) → доля заполнения
+        const frac = (t) => { for (let i = 1; i < pts.length; i++) if (t <= pts[i][0]) { const a = pts[i - 1], b = pts[i], k = (t - a[0]) / (b[0] - a[0]); return a[1] + (b[1] - a[1]) * k; } return 1; };
+        const t0 = performance.now() + 700; let done = false;
+        (function f(now) { if (tok.dead) return; const t = (now - t0) / 1000 + 0.7, v = frac(Math.max(0, t)); fl.style.transform = `scaleX(${v})`; pc.textContent = Math.round(v * 100) + '%';
+          if (v >= 1 && !done) { done = true; fl.style.background = '#43e08a'; pc.style.opacity = 0; ok.style.opacity = 1; try { const L = pa.getTotalLength(); pa.style.strokeDasharray = L; anim(pa, [{ strokeDashoffset: L }, { strokeDashoffset: 0 }], { duration: 450, easing: 'ease-out' }); } catch (_) {} return; }
+          requestAnimationFrame(f); })(performance.now());
+      },
+    },
+    /* виниловая пластинка */
+    f_vinyl: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.6,
+      html: () => `<div class="ab slv"></div><div class="ab recw"><div class="ab rec"><div class="ab lab" data-f="lab"></div></div></div><div class="ab arm"></div><div class="ab eq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="ab tt"><div class="k">СЕЙЧАС ИГРАЕТ</div><div class="n" data-f="nick"></div><div class="s">новый фолловер канала</div></div>`,
+      fill: (st, d) => { st.querySelector('[data-f=lab]').textContent = d.nick.slice(0, 10).toUpperCase(); const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; fit(n, 200, 14); },
+      start: (st) => {
+        anim(st.querySelector('.slv'), [{ opacity: 0, transform: 'translateX(-30px)' }, { opacity: 1, transform: 'none' }], { duration: 400, delay: 100 });
+        anim(st.querySelector('.recw'), [{ opacity: 0, transform: 'translateX(-120px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: 300, easing: 'cubic-bezier(.2,.8,.3,1)' });
+        anim(st.querySelector('.arm'), [{ opacity: 0, transform: 'rotate(-35deg)' }, { opacity: 1, transform: 'rotate(-35deg)', offset: .2 }, { opacity: 1, transform: 'rotate(12deg)' }], { duration: 800, delay: 1000, easing: 'ease-in-out' });
+        anim(st.querySelector('.tt'), [{ opacity: 0, transform: 'translateX(16px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 1600 });
+        st.querySelectorAll('.eq i').forEach((e, i) => anim(e, [{ transform: 'scaleY(.12)' }, { transform: 'scaleY(' + (.5 + R() * .5) + ')' }], { duration: 180 + R() * 160, delay: 1800 + i * 50, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' }));
+      },
+    },
+    /* входящий вызов */
+    f_call: {
+      compact: true, w: 576, h: 324, k: 1, min: 6, audioAt: 2.6,
+      html: () => `<div class="ab cl"><div class="ab av" data-f="av"></div><div class="ab tx"><b data-f="nick"></b><i data-f="st">входящий вызов · Канал…</i></div>
+        <div class="ab bt bx" style="right:88px;background:#ff3b30"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M12 8c-3 0-6 1-8 3l1.5 2.5 3-1.5v-2c1-.3 2.5-.5 3.5-.5s2.5.2 3.5.5v2l3 1.5L20 11c-2-2-5-3-8-3z"/></svg></div>
+        <div class="ab bt ba" style="right:20px;background:#34c759"><svg width="26" height="26" viewBox="0 0 24 24" fill="#fff"><path d="M6.6 10.8a15 15 0 006.6 6.6l2.2-2.2a1 1 0 011-.25 11 11 0 003.5.55 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.2.2 2.4.55 3.5a1 1 0 01-.25 1z"/></svg></div>
+        <div class="ab wv"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>`,
+      fill: (st, d) => { st.querySelector('[data-f=av]').textContent = (d.nick[0] || '?').toUpperCase(); const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; fit(n, 250, 14); },
+      start: (st, d, tok) => {
+        anim(st.querySelector('.cl'), [{ opacity: 0, transform: 'translateY(-130px)' }, { opacity: 1, transform: 'none' }], { duration: 550, delay: 100, easing: 'cubic-bezier(.2,1.5,.4,1)' });
+        anim(st.querySelector('.ba'), [{ transform: 'scale(1)' }, { transform: 'scale(1.18)' }], { duration: 350, delay: 800, iterations: 8, direction: 'alternate', fill: 'none' });
+        setTimeout(() => { if (tok.dead) return; anim(st.querySelector('.bx'), [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.5)' }], { duration: 250 }); anim(st.querySelector('.ba'), [{ opacity: 1 }, { opacity: 0 }], { duration: 250 }); st.querySelector('[data-f=st]').textContent = 'соединено · 00:01'; anim(st.querySelector('.wv'), [{ opacity: 0 }, { opacity: 1 }], { duration: 300 }); }, 2500);
+        st.querySelectorAll('.wv i').forEach((e, i) => anim(e, [{ transform: 'scaleY(.15)' }, { transform: 'scaleY(' + (.4 + R() * .6) + ')' }], { duration: 140 + R() * 120, delay: i * 20, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out' }));
+      },
+    },
+    /* газетная вырезка */
+    f_news: {
+      compact: true, w: 576, h: 324, k: 1, min: 6, audioAt: 1.7,
+      html: () => `<div class="ab np"><div class="mh">ВЕСТНИК КАНАЛА</div><div class="dt"><span>Экстренный выпуск</span><span data-f="no"></span></div><div class="hl" data-f="nick"></div><div class="cols"><i></i><i></i><i></i></div><div class="ab stp">СРОЧНО</div></div>`,
+      fill: (st, d, c) => { st.querySelector('[data-f=no]').textContent = c.followNo ? 'Фолловер № ' + c.followNo : ''; const h = st.querySelector('[data-f=nick]'); h.textContent = d.nick + ' теперь с нами!'; let fs = 38; while (h.scrollHeight > 100 && fs > 16) { fs -= 2; h.style.fontSize = fs + 'px'; } },
+      start: (st) => {
+        const n = st.querySelector('.np');
+        anim(n, [{ opacity: 0, transform: 'scale(0) rotate(-900deg)' }, { opacity: 1, transform: 'scale(1) rotate(-3deg)' }], { duration: 1200, delay: 100 });
+        anim(n, [{ transform: 'rotate(-3deg)' }, { transform: 'rotate(2deg)' }], { duration: 800, delay: 1300, iterations: Infinity, direction: 'alternate', easing: 'ease-in-out', fill: 'forwards' });
+        anim(st.querySelector('.stp'), [{ opacity: 0, transform: 'rotate(-12deg) scale(2.5)' }, { opacity: 1, transform: 'rotate(-12deg) scale(1)' }], { duration: 220, delay: 1700, easing: 'cubic-bezier(.6,0,1,.6)' });
+      },
+    },
+    /* созвездие фолловеров */
+    f_stars: {
+      compact: true, w: 576, h: 324, k: 1, min: 6.5, audioAt: 1.9,
+      html: () => {
+        const P = [[130, 90], [200, 140], [260, 80], [340, 120], [420, 80], [170, 200], [400, 190]], L2 = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [3, 6]], nw = [300, 190];
+        let h = '<div class="ab sky"></div><svg class="ab sv" viewBox="0 0 576 324" width="576" height="324">';
+        L2.forEach(([a, b]) => { h += `<line class="gl" x1="${P[a][0]}" y1="${P[a][1]}" x2="${P[b][0]}" y2="${P[b][1]}" stroke="#8da2ff" stroke-width="1.2"/>`; });
+        P.forEach((p, i) => { h += `<circle class="gs" cx="${p[0]}" cy="${p[1]}" r="${2.5 + (i % 3)}" fill="#dfe6ff"/>`; });
+        h += `<line class="nl" x1="${nw[0]}" y1="${nw[1]}" x2="${P[3][0]}" y2="${P[3][1]}" stroke="#ffe08a" stroke-width="2"/><line class="nl" x1="${nw[0]}" y1="${nw[1]}" x2="${P[1][0]}" y2="${P[1][1]}" stroke="#ffe08a" stroke-width="2"/>`;
+        h += `<circle class="rg" cx="${nw[0]}" cy="${nw[1]}" r="10" fill="none" stroke="#ffe08a" stroke-width="2"/><circle class="nc" cx="${nw[0]}" cy="${nw[1]}" r="7" fill="#fff3b8"/></svg><div class="ab lbl"><b data-f="nick"></b><i>НОВАЯ ЗВЕЗДА В СОЗВЕЗДИИ КАНАЛА</i></div>`;
+        return h;
+      },
+      fill: (st, d) => { const n = st.querySelector('[data-f=nick]'); n.textContent = d.nick; fit(n, 420, 14); },
+      start: (st) => {
+        anim(st.querySelector('.sky'), [{ opacity: 0, transform: 'scale(.92)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 100 });
+        st.querySelectorAll('.gs').forEach((e, i) => anim(e, [{ opacity: 0, transform: 'scale(0)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 300, delay: 500 + i * 80 }));
+        st.querySelectorAll('.gl').forEach((e, i) => anim(e, [{ opacity: 0 }, { opacity: .5 }], { duration: 500, delay: 900 + i * 100 }));
+        anim(st.querySelector('.nc'), [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 400, delay: 1800, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+        anim(st.querySelector('.rg'), [{ opacity: 1, transform: 'scale(.5)' }, { opacity: 0, transform: 'scale(5)' }], { duration: 800, delay: 1900, easing: 'ease-out' });
+        st.querySelectorAll('.nl').forEach((e, i) => anim(e, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 2200 + i * 200 }));
+        anim(st.querySelector('.nc'), [{ transform: 'scale(1)' }, { transform: 'scale(1.3)' }], { duration: 500, delay: 2800, iterations: 4, direction: 'alternate', easing: 'ease-in-out', fill: 'forwards' });
+        anim(st.querySelector('.lbl'), [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 500, delay: 2500 });
       },
     },
     /* ---------- аркадный автомат ---------- */
@@ -258,9 +367,9 @@
 
   /** Позиция малого алерта по настройке: top | top-right | bottom-right | bottom-left | bottom. */
   function place(st, L, c) {
-    const k = 1.1 * clamp((c.scale || 100) / 100, 0.4, 1.8), w = L.w * k, h = L.h * k, m = 40;
-    const pos = c.lookPos || 'top';
-    let left = (1920 - w) / 2, top = m;
+    const k = (L.k || 1.1) * clamp((c.scale || 100) / 100, 0.4, 1.8), w = L.w * k, h = L.h * k, m = 40;
+    const pos = c.lookPos || (L.w === 576 ? 'center' : 'top');
+    let left = (1920 - w) / 2, top = pos === 'center' ? (1080 - h) / 2 : m;
     if (pos === 'top-right') { left = 1920 - w - m; top = m; }
     else if (pos === 'bottom-right') { left = 1920 - w - m; top = 1080 - h - m; }
     else if (pos === 'bottom-left') { left = m; top = 1080 - h - m; }
@@ -273,10 +382,10 @@
     const c = item.card, name = LOOKS[c.dlook] ? c.dlook : 'arcade', L = LOOKS[name];
     FONTS.forEach((f) => { try { if (typeof ensureFontLoaded === 'function') ensureFontLoaded(f); } catch (_) {} });
     const root = getLayer(); root.innerHTML = ''; root.style.opacity = '1'; root.style.transition = ''; root.style.display = 'block';
-    const d = { nick: c.username || 'Аноним', amountText: c.amountText || '', amount: c.amount, msg: c.message || '' };
+    const d = { nick: c.username || 'Аноним', amountText: c.amountText || '', amount: c.amount, msg: c.message || '', no: c.followNo || 0 };
     const st = document.createElement('div'); st.className = 'dl-st dl-' + name;
     if (L.compact) place(st, L, c); else if (L.std) { st.style.cssText += ';width:1920px;height:1080px;overflow:hidden;background:transparent'; } else st.style.transform = 'scale(4)';
-    st.innerHTML = L.html(d, c); if (L.fill) L.fill(st, d, c); root.appendChild(st);
+    st.innerHTML = L.html(d, c); if (L.fill) L.fill(st, d, c); if (name.indexOf('f_') === 0) st.style.visibility = 'hidden'; root.appendChild(st);
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, sleep(700)]); } catch (_) {}
     if (L.fill) L.fill(st, d, c); // повторно: после загрузки шрифтов размеры могли измениться
     let dur = 0; if (item.audio) dur = await h.audioDuration(item.audio);
@@ -289,7 +398,7 @@
     if (L.std) hold = clamp(Math.max(Number(u.duration) || 8, dur ? dur + voiceAt + 0.8 : 0), 2, Math.max(c.holdMax || 25, Number(u.duration) || 8, 60));
     const tok = { dead: false };
     if (!L.std) h.sfx(c.soundFly);
-    st.classList.add('run'); if (L.start) L.start(st, d, tok, hold);
+    st.style.visibility = ''; st.classList.add('run'); if (L.start) L.start(st, d, tok, hold);
     if (ownAudio) { try { ownAudio.play().catch(() => {}); } catch (_) {} }
     const at = setTimeout(() => { if (!tok.dead) { if (!L.std) h.sfx(c.soundLand); if (item.audio) h.playAudio(item.audio); } }, voiceAt * 1000);
     const end = performance.now() + hold * 1000;

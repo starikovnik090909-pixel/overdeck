@@ -7,6 +7,7 @@ const donationAlert = require('./donationAlert');
 const gender = require('./gender');
 const { plural, numberWords, cleanMessage } = donationAlert;
 
+const FOLLOW_STYLES = ['neon', 'chat', 'load', 'vinyl', 'call', 'news', 'stars']; // малые анимированные виды фоллоу (public/donation-looks.js, f_*)
 const KINDS = ['sub', 'raid', 'follow', 'hype', 'points', 'streak', 'nowplaying'];
 const TIER_NAMES = { '1000': 'Tier 1', '2000': 'Tier 2', '3000': 'Tier 3', prime: 'Prime' };
 
@@ -88,6 +89,7 @@ function sanitizeKind(kind, raw, base) {
     else if (k === 'customText') out[k] = str(r[k], b[k], 120);
     else if (k === 'size') out[k] = Math.round(num(r[k], 50, 200, b[k]));
     else if (k === 'style' && kind === 'raid') out[k] = ['radar', 'card', 'plain'].includes(r[k]) ? r[k] : b[k];
+    else if (k === 'style' && kind === 'follow') out[k] = ['wall', 'badge', 'card', ...FOLLOW_STYLES].includes(r[k]) ? r[k] : b[k];
     else if (k === 'style') out[k] = (r[k] === 'card' || r[k] === 'ticket' || r[k] === 'wall' || r[k] === 'badge') && (kind === 'follow' ? r[k] !== 'ticket' : (r[k] !== 'wall' && r[k] !== 'badge')) ? r[k] : b[k];
     else if (/^sound(Pre|Fly|Land|Stamp|Tear|Stick|Ping|Tick|Siren|In|Done)$/.test(k)) out[k] = r[k] === '' ? '' : (typeof r[k] === 'string' && /^[A-Za-z0-9_.\- ]{1,80}\.(ogg|mp3|wav)$/i.test(r[k]) ? r[k] : b[k]);
     else if (k === 'soundVolume' || k === 'voiceVolume') out[k] = Math.round(num(r[k], 0, 100, b[k]));
@@ -277,6 +279,10 @@ function buildCard(kind, data, cfg, s) {
     base.dlook = 'custom'; base.amountText = ''; base.message = '';
     base.custom = { image: q('uploads/alert-custom/', cfg.customImage), audio: q('uploads/alert-custom/', cfg.customAudio), duration: cfg.customDuration, volume: cfg.customVolume, text: cfg.customText, showMsg: false,
       pos: cfg.customPos, anim: cfg.customAnim, fontSize: cfg.customFontSize, color: cfg.customTextColor, accent: cfg.customAccent, imgSize: cfg.customImgSize, font: s.font || '' };
+  }
+  if (kind === 'follow' && cfg.mode !== 'custom' && FOLLOW_STYLES.includes(cfg.style)) {
+    base.dlook = 'f_' + cfg.style; base.followNo = (info.wall && info.wall.no) || 0; base.amountText = ''; base.message = '';
+    base.holdMin = cfg.holdSec; base.holdMax = Math.max(cfg.holdSec, 10); base.soundFly = cfg.soundFly || ''; base.soundLand = cfg.soundStick || '';
   }
   if (kind === 'follow' && cfg.mode !== 'custom' && cfg.style === 'wall' && info.wall) base.wall = info.wall;
   if (kind === 'follow' && cfg.mode !== 'custom' && cfg.style === 'badge' && info.badge) base.badge = info.badge;

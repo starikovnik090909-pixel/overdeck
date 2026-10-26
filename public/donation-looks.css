@@ -133,3 +133,58 @@
 @keyframes dl_cu_zoom{from{opacity:0;scale:.5}to{opacity:1;scale:1}}
 @keyframes dl_cu_slide{from{opacity:0;translate:0 -140px}to{opacity:1;translate:0 0}}
 @keyframes dl_cu_bounce{0%{opacity:0;scale:.3}50%{opacity:1;scale:1.12}70%{scale:.95}100%{opacity:1;scale:1}}
+
+/* ================= алерты фолловера (малые) ================= */
+.dl-f_neon,.dl-f_chat,.dl-f_load,.dl-f_vinyl,.dl-f_call,.dl-f_news,.dl-f_stars{background:transparent;overflow:visible}
+/* неон */
+.dl-f_neon .bd{left:58px;top:58px;width:460px;height:208px;border-radius:20px;background:#0a0710;border:2px solid #2a2040;box-shadow:0 0 0 6px #14101e,0 20px 40px rgba(0,0,0,.6)}
+.dl-f_neon .w{left:0;right:0;top:34px;text-align:center;font:400 78px/1 'Pacifico',cursive;color:#ffe3f6;text-shadow:0 0 6px #ff4fd2,0 0 18px #ff2bc6,0 0 42px #ff2bc6;opacity:.12}
+.dl-f_neon .nn{left:0;right:0;top:128px;text-align:center;font:800 40px 'Rubik',sans-serif;letter-spacing:.14em;color:#dffcff;text-shadow:0 0 6px #35e1ff,0 0 20px #12c9ff,0 0 40px #12c9ff;opacity:.12;white-space:nowrap}
+.dl-f_neon .tb{left:20px;right:20px;bottom:20px;height:4px;border-radius:2px;background:#ff4fd2;box-shadow:0 0 12px #ff2bc6;opacity:.12}
+/* чат */
+.dl-f_chat .ch{left:60px;top:96px;width:456px}
+.dl-f_chat .av{left:0;top:0;width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#b97dff,#6a5cff);display:flex;align-items:center;justify-content:center;font:800 26px 'Rubik',sans-serif}
+.dl-f_chat .bb{left:76px;top:0;min-width:120px;max-width:380px;border-radius:6px 22px 22px 22px;background:#fff;color:#16141c;padding:12px 18px 14px;box-shadow:0 10px 26px rgba(0,0,0,.5);transform-origin:0 0}
+.dl-f_chat .bn{font:700 14px 'Rubik',sans-serif;color:#6a5cff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:340px}
+.dl-f_chat .dt{display:flex;gap:6px;padding:10px 0 4px}.dl-f_chat .dt i{width:10px;height:10px;border-radius:50%;background:#9a96b0;animation:dl_fc_dot .9s ease-in-out infinite alternate}
+.dl-f_chat .dt i:nth-child(2){animation-delay:.15s}.dl-f_chat .dt i:nth-child(3){animation-delay:.3s}
+@keyframes dl_fc_dot{from{transform:translateY(0)}to{transform:translateY(-7px)}}
+.dl-f_chat .tm{font:500 19px/1.3 'Rubik',sans-serif;margin-top:2px}
+.dl-f_chat .tg{left:76px;top:-30px;font:700 11px 'Rubik',sans-serif;letter-spacing:.14em;color:#b9a6ff}
+/* загрузка */
+.dl-f_load .pn{left:68px;top:100px;width:440px;height:130px;border-radius:12px;background:#0a0d12;border:2px solid #2d3a4d;box-shadow:0 14px 34px rgba(0,0,0,.55);padding:18px 22px}
+.dl-f_load .t{font:700 12px 'Rubik',sans-serif;letter-spacing:.18em;color:#7aa8ff}
+.dl-f_load .n{font:800 30px 'Rubik',sans-serif;margin-top:4px;white-space:nowrap}
+.dl-f_load .tr{left:22px;right:22px;bottom:24px;height:16px;border-radius:8px;background:#18202c;overflow:hidden;border:1px solid #2d3a4d}
+.dl-f_load .fl{left:0;top:0;bottom:0;width:100%;transform-origin:0 0;transform:scaleX(0);background:repeating-linear-gradient(45deg,#3a86ff 0 10px,#5ea0ff 10px 20px)}
+.dl-f_load .pc{right:22px;top:18px;font:800 22px 'Rubik',sans-serif;color:#7aa8ff}
+.dl-f_load .ok{right:20px;top:12px;opacity:0}
+/* пластинка */
+.dl-f_vinyl .slv{left:46px;top:54px;width:220px;height:220px;border-radius:8px;background:linear-gradient(135deg,#ff8a5a,#b13cff);box-shadow:0 12px 28px rgba(0,0,0,.5)}
+.dl-f_vinyl .recw{left:90px;top:44px;width:240px;height:240px}
+.dl-f_vinyl .rec{left:0;top:0;width:240px;height:240px;border-radius:50%;background:repeating-radial-gradient(circle,#0d0d11 0 2px,#17171d 2px 4px);box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.dl-f_vinyl.run .rec{animation:dl_fv_spin 1.9s linear infinite}@keyframes dl_fv_spin{to{transform:rotate(360deg)}}
+.dl-f_vinyl .lab{left:88px;top:88px;width:64px;height:64px;border-radius:50%;background:radial-gradient(circle,#0b0b0f 0 4px,#ff5a44 5px);display:flex;align-items:center;justify-content:center;font:800 8px/1.1 'Rubik',sans-serif;text-align:center;padding:0 6px;overflow:hidden;word-break:break-all}
+.dl-f_vinyl .arm{left:318px;top:48px;width:8px;height:150px;background:linear-gradient(#cfd3da,#8c919b);border-radius:4px;transform-origin:50% 8px;opacity:0}
+.dl-f_vinyl .eq{left:354px;bottom:84px;display:flex;gap:6px;align-items:flex-end;height:80px}
+.dl-f_vinyl .eq i{width:10px;height:80px;background:linear-gradient(#ff5a44,#ffd35a);border-radius:3px 3px 0 0;transform-origin:50% 100%;transform:scaleY(.12)}
+.dl-f_vinyl .tt{left:346px;top:60px;width:210px;opacity:0}
+.dl-f_vinyl .tt .k{font:700 11px 'Rubik',sans-serif;letter-spacing:.18em;color:#ff8a6a}.dl-f_vinyl .tt .n{font:800 28px/1.05 'Rubik',sans-serif;margin-top:4px;word-break:break-word;white-space:nowrap}.dl-f_vinyl .tt .s{font:400 13px 'Rubik',sans-serif;color:#c4bac0;margin-top:4px}
+/* звонок */
+.dl-f_call .cl{left:50px;top:70px;width:476px;height:96px;border-radius:26px;background:rgba(32,34,40,.94);box-shadow:0 14px 34px rgba(0,0,0,.55);border:1px solid #3d4048;overflow:hidden}
+.dl-f_call .av{left:16px;top:16px;width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#6ad2ff,#4a6aff);display:flex;align-items:center;justify-content:center;font:800 28px 'Rubik',sans-serif}
+.dl-f_call .tx{left:96px;top:18px}.dl-f_call .tx b{display:block;font:700 24px 'Rubik',sans-serif;white-space:nowrap}.dl-f_call .tx i{font:400 14px 'Rubik',sans-serif;font-style:normal;color:#a6abb5}
+.dl-f_call .bt{top:22px;width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.dl-f_call .wv{left:96px;right:16px;bottom:8px;display:flex;gap:4px;align-items:center;height:16px;opacity:0}.dl-f_call .wv i{flex:1;background:#4cd964;border-radius:2px;height:100%;transform:scaleY(.15)}
+/* газета */
+.dl-f_news .np{left:90px;top:26px;width:396px;height:272px;background:#efe6d2;color:#1b1710;box-shadow:0 18px 40px rgba(0,0,0,.6);padding:16px 22px;transform-origin:50% 50%;font-family:Georgia,'Times New Roman',serif;opacity:0}
+.dl-f_news .mh{text-align:center;font:700 26px Georgia,serif;letter-spacing:.06em;border-bottom:3px double #1b1710;padding-bottom:6px}
+.dl-f_news .dt{display:flex;justify-content:space-between;font:italic 11px Georgia,serif;border-bottom:1px solid #1b1710;padding:3px 0}
+.dl-f_news .hl{font:900 38px/1.02 Georgia,serif;text-align:center;margin-top:12px;text-transform:uppercase;word-break:break-word}
+.dl-f_news .cols{display:flex;gap:10px;margin-top:12px}.dl-f_news .cols i{flex:1;height:60px;background:repeating-linear-gradient(#1b1710 0 2px,transparent 2px 7px);opacity:.55}
+.dl-f_news .stp{right:-10px;top:196px;border:4px solid #c62828;color:#c62828;padding:4px 12px;font:800 15px 'Rubik',sans-serif;letter-spacing:.14em;transform:rotate(-12deg);background:rgba(239,230,210,.6);opacity:0}
+/* созвездие */
+.dl-f_stars .sky{left:56px;top:28px;width:464px;height:268px;border-radius:20px;background:radial-gradient(ellipse at 50% 40%,#1a1f4a,#080a1c 75%);box-shadow:0 18px 40px rgba(0,0,0,.55),inset 0 0 0 1px rgba(150,170,255,.25);opacity:0}
+.dl-f_stars .sv{left:0;top:0}.dl-f_stars .sv *{transform-box:fill-box;transform-origin:center}
+.dl-f_stars .gs{opacity:0}.dl-f_stars .gl,.dl-f_stars .nl{opacity:0}.dl-f_stars .rg{opacity:0}.dl-f_stars .nc{transform:scale(0);filter:drop-shadow(0 0 10px #ffd35a)}
+.dl-f_stars .lbl{left:0;right:0;bottom:44px;text-align:center;opacity:0}.dl-f_stars .lbl b{display:block;font:800 30px 'Rubik',sans-serif;text-shadow:0 0 18px rgba(255,230,140,.8);white-space:nowrap}.dl-f_stars .lbl i{font:500 13px 'Rubik',sans-serif;font-style:normal;color:#b9c4ff;letter-spacing:.1em}
