@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=27">
+<link rel="stylesheet" href="ui3.css?v=29">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -648,17 +648,19 @@
         </aside>
 
         <div class="widgets-preview-col">
-        <div class="wtool-bar" id="wtoolBar">
-          <div class="wtool-group">
+        <div class="wtool-bar wtool-bar1" id="wtoolBar">
+          <div class="wsec">
+            <button class="wsec-hd" type="button" aria-expanded="false"><svg class="wsec-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"/></svg><span>История</span><svg class="wsec-ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><i class="wsec-pip"></i></button>
+            <div class="wsec-body">
             <button class="wtool-btn" id="btnAutoRecord" type="button" title="Автозапись истории при начале стрима: выкл" aria-label="Автозапись истории при начале стрима"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/></svg></button>
             <button class="wtool-btn" id="btnReplayStart" type="button" title="Воспроизвести историю стрима на оверлее (повторное нажатие остановит)" aria-label="Воспроизвести историю"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path id="replayIconPlay" d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg></button>
             <button class="wtool-btn" id="btnStreamReset" type="button" title="Сбросить статистику (новый стрим)" aria-label="Сбросить статистику"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.5-5.8"/><path d="M4 4v4.5h4.5"/></svg></button>
-            <button class="wtool-btn" id="btnLayoutResetAll" type="button" title="Вернуть расположение всех виджетов по умолчанию" aria-label="Сбросить расположение виджетов"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 17a3.5 3.5 0 1 0 1-2.5"/><path d="M14 13.5V16h2.5"/></svg></button>
+            </div>
           </div>
-          <div class="wtool-group">
+          <div class="wsec">
+            <button class="wsec-hd" type="button" aria-expanded="false"><svg class="wsec-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>Предпросмотр</span><svg class="wsec-ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><i class="wsec-pip"></i></button>
+            <div class="wsec-body">
             <button class="wtool-btn" id="btnFakeMode" type="button" title="Фейк-режим: виртуальный стрим на оверлее (сообщения, донаты, баллы, сабы, рейды). Настоящие данные не затрагиваются. Повторное нажатие остановит" aria-label="Фейк-режим" aria-pressed="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6.2L4.6 19.1A1.6 1.6 0 0 0 6 21.5h12a1.6 1.6 0 0 0 1.4-2.4L14 9.2V3"/><path d="M7.4 15h9.2"/></svg></button>
-          </div>
-          <div class="wtool-group">
             <button class="wtool-btn" id="btnWidgetsWide" type="button" title="Открыть предпросмотр на весь экран (выход — Esc)" aria-label="Предпросмотр на весь экран"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
             <div class="wtool-pop-wrap">
               <button class="wtool-btn" id="btnGridPop" type="button" title="Сетка привязки" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM4 9.3h16M4 14.7h16M9.3 4v16M14.7 4v16"/></svg></button>
@@ -668,9 +670,12 @@
                 <label class="wtool-check"><input type="checkbox" id="gridShowToggle" checked> Показывать сетку на предпросмотре</label>
               </div>
             </div>
+            </div>
           </div>
-          <div class="wtool-group">
-            <button class="wtool-btn" id="btnCopyOverlayWidgetUrl" type="button" title="Скопировать ссылку для OBS (источник «Браузер», только для этого ПК)" aria-label="Скопировать ссылку для OBS"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg></button>
+          <div class="wsec">
+            <button class="wsec-hd" type="button" aria-expanded="false"><svg class="wsec-ico" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="5" rx="1.5"/><rect x="13" y="10" width="8" height="11" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/></svg><span>Макет</span><svg class="wsec-ch" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg><i class="wsec-pip"></i></button>
+            <div class="wsec-body">
+            <button class="wtool-btn" id="btnLayoutResetAll" type="button" title="Вернуть расположение всех виджетов по умолчанию" aria-label="Сбросить расположение виджетов"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><path d="M14 17a3.5 3.5 0 1 0 1-2.5"/><path d="M14 13.5V16h2.5"/></svg></button>
             <div class="wtool-pop-wrap">
               <button class="wtool-btn" id="btnStylePop" type="button" title="Стиль оформления виджетов в OBS" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-.9 2-1.8 0-1.4-1.2-1.7-1.2-2.9 0-.9.7-1.6 1.6-1.6H17a4 4 0 0 0 4-4C21 6.7 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.1" fill="currentColor"/><circle cx="10.5" cy="7.3" r="1.1" fill="currentColor"/><circle cx="15" cy="7.8" r="1.1" fill="currentColor"/></svg></button>
               <div class="wtool-pop wtool-pop-style" id="stylePop" hidden>
@@ -683,6 +688,11 @@
                 <div class="form-message" id="ostyleMessage"></div>
               </div>
             </div>
+            </div>
+          </div>
+          <span class="wtool-grow"></span>
+          <div class="wtool-group wtool-primary">
+            <button class="wtool-btn" id="btnCopyOverlayWidgetUrl" type="button" title="Скопировать ссылку для OBS (источник «Браузер», только для этого ПК)" aria-label="Скопировать ссылку для OBS"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg></button>
           </div>
           <div class="fake-banner" id="fakeBanner" hidden>ФЕЙК-РЕЖИМ: на оверлее виртуальный стрим. Настоящая статистика не затронута. Выключается кнопкой колбы.</div>
           <span class="wtool-msg form-message" id="layoutFormMessage"></span>
@@ -3302,7 +3312,7 @@
 <script src="guides-data.js?v=10"></script>
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
-<script src="ui3.js?v=25"></script>
-<script src="whatsnew.js?v=18"></script>
+<script src="ui3.js?v=26"></script>
+<script src="whatsnew.js?v=19"></script>
 </body>
 </html>

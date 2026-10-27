@@ -703,3 +703,31 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-chatbot #chatBotAuthPanel .chatbot-status[hidden]{display:none!important}
 #tab-chatbot #chatBotRefreshStatus{font-size:12.5px;color:var(--text-secondary)}
 .bot-chan{align-self:stretch}
+
+/* ---------- Сцена: панель в одну строку (секции раскрываются вправо) ---------- */
+#tab-widgets .widgets-preview-col > .wtool-bar1{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px}
+#tab-widgets .wsec{display:flex;align-items:center;height:40px;border-radius:12px;background:var(--bg-card2);border:1px solid var(--line2);padding:3px;transition:border-color .2s}
+#tab-widgets .wsec:hover,#tab-widgets .wsec:has(:focus-visible),#tab-widgets .wsec.open,#tab-widgets .wsec:has(.wtool-pop:not([hidden])){border-color:rgba(255,255,255,.28)}
+#tab-widgets .wsec-hd{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:var(--text-primary);font:600 13px/1 inherit;font-family:inherit;white-space:nowrap;cursor:pointer;position:relative;flex:none}
+#tab-widgets .wsec-ico{color:var(--text-secondary);flex:none}
+#tab-widgets .wsec-ch{color:var(--text-mute);transition:transform .25s;flex:none}
+#tab-widgets .wsec:hover .wsec-ch,#tab-widgets .wsec:has(:focus-visible) .wsec-ch,#tab-widgets .wsec.open .wsec-ch,#tab-widgets .wsec:has(.wtool-pop:not([hidden])) .wsec-ch{transform:rotate(90deg);color:var(--accent2)}
+#tab-widgets .wsec-pip{position:absolute;right:3px;top:3px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);display:none}
+#tab-widgets .wsec.has-on .wsec-pip{display:block}
+#tab-widgets .wsec-body{display:flex;gap:2px;align-items:center;max-width:0;opacity:0;overflow:hidden;margin-left:0;transition:max-width .32s cubic-bezier(.3,.7,.2,1) .15s,opacity .2s .15s,margin .3s .15s}
+#tab-widgets .wsec:hover .wsec-body,#tab-widgets .wsec:has(:focus-visible) .wsec-body,#tab-widgets .wsec.open .wsec-body,#tab-widgets .wsec:has(.wtool-pop:not([hidden])) .wsec-body{max-width:460px;opacity:1;margin-left:2px;transition-delay:0s}
+#tab-widgets .wsec:has(.wtool-pop:not([hidden])) .wsec-body{overflow:visible}
+#tab-widgets .wsec-body .wtool-btn{background:transparent!important;border:0!important;height:32px!important;border-radius:9px!important}
+#tab-widgets .wsec-body .wtool-btn:hover{background:rgba(255,255,255,.07)!important}
+#tab-widgets .wsec-body .wtool-btn.on,#tab-widgets .wsec-body .wtool-btn[aria-pressed="true"]{background:var(--accent-soft)!important}
+#tab-widgets .wtool-grow{flex:1;min-width:0}
+#tab-widgets .wtool-bar1 .wtool-primary{border:0!important;padding:0!important;margin:0!important}
+#tab-widgets .wtool-bar1 .wtool-primary .wtool-btn{height:40px!important;padding:0 16px!important;border-radius:12px!important;background:var(--accent)!important;border:0!important;color:#fff}
+#tab-widgets .wtool-bar1 .wtool-primary .wtool-btn .wtl{color:#fff!important;font-weight:600}
+#tab-widgets .wtool-bar1 .wtool-primary .wtool-btn:hover{background:var(--accent2)!important}
+/* пока одна секция раскрыта, остальные сжимаются до значка — всё остаётся в одну строку */
+#tab-widgets .wtool-bar1:has(.wsec:hover) .wsec:not(:hover) .wsec-hd>span,
+#tab-widgets .wtool-bar1:has(.wsec.open) .wsec:not(.open) .wsec-hd>span{display:none}
+#tab-widgets .wtool-bar1:has(.wsec:hover) .wtool-primary .wtl{display:none}
+#tab-widgets .wtool-bar1 .fake-banner,#tab-widgets .wtool-bar1 .wtool-msg{flex-basis:100%}
+@media (max-width:700px){#tab-widgets .wtool-grow{display:none}}

@@ -790,3 +790,18 @@
   const L = { btnAutoRecord: 'Автозапись', btnReplayStart: 'Повтор', btnStreamReset: 'Новый стрим', btnLayoutResetAll: 'Сбросить всё', btnFakeMode: 'Демо-стрим', btnWidgetsWide: 'На весь экран', btnGridPop: 'Сетка', btnCopyOverlayWidgetUrl: 'Ссылка OBS', btnStylePop: 'Стиль' };
   Object.keys(L).forEach((id) => { const b = document.getElementById(id); if (!b || b.querySelector('.wtl')) return; const s = document.createElement('span'); s.className = 'wtl'; s.textContent = L[id]; b.appendChild(s); });
 })();
+
+// ---------- Сцена: секции панели (клик — зафиксировать раскрытие, точка — если внутри что-то включено) ----------
+(function () {
+  'use strict';
+  const bar = document.getElementById('wtoolBar'); if (!bar) return;
+  const secs = [...bar.querySelectorAll('.wsec')];
+  const paint = () => secs.forEach((s) => s.classList.toggle('has-on', !!s.querySelector('.wtool-btn.on, .wtool-btn[aria-pressed="true"]')));
+  secs.forEach((s) => {
+    const hd = s.querySelector('.wsec-hd');
+    hd.addEventListener('click', (e) => { e.stopPropagation(); const o = !s.classList.contains('open'); secs.forEach((x) => { x.classList.remove('open'); x.querySelector('.wsec-hd').setAttribute('aria-expanded', 'false'); }); if (o) { s.classList.add('open'); hd.setAttribute('aria-expanded', 'true'); } });
+    new MutationObserver(paint).observe(s, { subtree: true, attributes: true, attributeFilter: ['class', 'aria-pressed'] });
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.wsec')) secs.forEach((x) => { x.classList.remove('open'); x.querySelector('.wsec-hd').setAttribute('aria-expanded', 'false'); }); });
+  paint(); setTimeout(paint, 1500);
+})();
