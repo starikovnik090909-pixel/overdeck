@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=25">
+<link rel="stylesheet" href="ui3.css?v=27">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1270,64 +1270,106 @@
 
 </div>
           <div class="bot-pane" data-pane="auth" hidden>
-      <div class="chatbot-auth-panel" id="chatBotAuthPanel" >
-      <div class="card">
-        <h2 class="section-title">Данные бота</h2>
-        <p class="card-hint">Боту нужен отдельный Twitch-аккаунт (не твой основной) и его токен.</p>
-        <div class="field">
-          <label for="chatBotUsername">Bot Username</label>
-          <input type="text" id="chatBotUsername" placeholder="имя бот-аккаунта" autocomplete="off">
+      <div class="chatbot-auth-panel" id="chatBotAuthPanel">
+
+      <div class="card bot-hero" id="botHero" data-state="disconnected">
+        <div class="bot-hero-main">
+          <div class="bot-hero-ava" id="botHeroAva"><svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg><i class="bot-hero-dot"></i></div>
+          <div class="bot-hero-txt">
+            <b id="botHeroTitle">Бот не подключён</b>
+            <span id="botHeroSub">Выбери, от чьего имени бот будет отвечать в чате.</span>
+          </div>
+          <div class="bot-hero-btns">
+            <button class="btn btn-primary" id="btnChatBotConnect" type="button">Подключить</button>
+            <button class="btn btn-secondary" id="btnChatBotDisconnect" type="button">Отключить</button>
+          </div>
         </div>
-        <div class="field">
-          <label for="chatBotToken">Bot OAuth Token</label>
-          <input type="password" id="chatBotToken" placeholder="User Access Token бота" autocomplete="new-password">
-          <p class="card-hint" id="chatBotTokenHint" style="margin-top:6px;"></p>
-        </div>
-        <div class="field">
-          <label for="chatBotRefreshToken">Refresh Token</label>
-          <input type="password" id="chatBotRefreshToken" placeholder="Refresh-токен, выданный вместе с access-токеном" autocomplete="new-password">
-          <p class="card-hint" id="chatBotRefreshHint" style="margin-top:6px;"></p>
-        </div>
-        <div class="field">
-          <label for="chatBotClientId">Bot Client ID</label>
-          <input type="text" id="chatBotClientId" placeholder="Client ID приложения, которым получен токен бота" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="chatBotClientSecret">Bot Client Secret</label>
-          <input type="password" id="chatBotClientSecret" placeholder="Client Secret того же приложения" autocomplete="new-password">
-          <p class="card-hint" id="chatBotClientHint" style="margin-top:6px;"></p>
-        </div>
-        <div class="field">
-          <label for="chatBotChannelName">Channel Name</label>
-          <input type="text" id="chatBotChannelName" placeholder="твой канал, где бот работает" autocomplete="off">
-        </div>
-        <div class="field">
-          <label for="chatBotChannelId">Channel ID</label>
-          <input type="text" id="chatBotChannelId" placeholder="числовой ID — можно оставить пустым, найдётся по Channel Name" autocomplete="off">
-        </div>
-        <div class="actions">
-          <button class="btn btn-secondary" id="btnChatBotSave" type="button">Сохранить</button>
-          <button class="btn btn-primary" id="btnChatBotConnect" type="button">Подключить</button>
-          <button class="btn btn-secondary" id="btnChatBotDisconnect" type="button">Отключить</button>
-        </div>
-        <div class="chatbot-status" id="chatBotStatus" data-state="disconnected">
-          <span class="chatbot-status-dot"></span>
-          <span id="chatBotStatusText">Не подключён</span>
-        </div>
+        <div class="chatbot-status" id="chatBotStatus" data-state="disconnected" hidden><span class="chatbot-status-dot"></span><span id="chatBotStatusText">Не подключён</span></div>
         <div class="form-message" id="chatBotMessage"></div>
         <div class="form-message" id="chatBotRefreshStatus"></div>
       </div>
 
-      <div class="card">
-        <h2 class="section-title">Где взять токен</h2>
-        <p class="card-hint">Токен бота должен включать scopes: <code>user:read:chat</code> (читать сообщения), <code>user:write:chat</code> (писать в чат), <code>user:bot</code> (разрешение быть ботом в EventSub). Для чтения сейчас обязателен только <code>user:read:chat</code>; остальные пригодятся, когда бот начнёт отвечать.</p>
-        <p class="card-hint"><b>Быстрый способ для теста — Twitch CLI:</b></p>
-        <pre class="chatbot-code">twitch token --user-token --scopes "user:read:chat user:write:chat user:bot"</pre>
-        <p class="card-hint">Если нужна <b>автомодерация</b> (удаление сообщений), добавь ещё право <code>moderator:manage:chat_messages</code>, а аккаунт бота сделай модератором канала (в чате канала: <code>/mod имя_бота</code>):</p>
-        <pre class="chatbot-code">twitch token --user-token --scopes "user:read:chat user:write:chat user:bot moderator:manage:chat_messages"</pre>
-        <p class="card-hint">Авторизоваться нужно <b>под бот-аккаунтом</b> (войди в Twitch под ним, например, в отдельном окне инкогнито) — токен привязывается к тому аккаунту, под которым дали разрешение, и его логин должен совпасть с полем Bot Username.</p>
-        <p class="card-hint"><b>Автообновление токена.</b> Access-токен живёт недолго (около часа–нескольких часов), поэтому вставь и <b>Refresh Token</b> — Twitch выдаёт его вместе с access-токеном, когда токен получен через Authorization Code flow вашим приложением (в Implicit flow refresh-токена нет). Тогда сервер сам обновляет токен заранее, до истечения, и при ошибке 401 — и сохраняет новую пару в <code>chat_bot.json</code>, так что после перезапуска сервера ничего вставлять заново не нужно. Обновление идёт с Client ID и Client Secret <b>того приложения, которым получен токен бота</b>. Если это то же приложение, что для канала, оставь <b>Bot Client ID / Bot Client Secret</b> пустыми — возьмутся данные из вкладки «Подключения». Если токен бота получен другим приложением (частый случай: ошибка <code>Invalid refresh token</code>), впиши сюда Client ID и Client Secret этого приложения — они используются только для обновления токена бота и никак не влияют на вход через Twitch для канала. Токен из приложения Twitch CLI по умолчанию обновить нельзя — секрета этого приложения у тебя нет. Если refresh-токен отозван или недействителен, статус станет красным с причиной, и нужно получить новую пару токенов.</p>
+      <div class="bot-choose">
+        <div class="bot-opt rec" id="botOptOwn">
+          <span class="bot-opt-tag">Проще всего</span>
+          <h3>Мой аккаунт</h3>
+          <p>Бот пишет в чат от твоего имени. Второй аккаунт на Twitch создавать не нужно.</p>
+          <button class="btn btn-primary" id="btnBotOwn" type="button">Войти и использовать мой аккаунт</button>
+          <div class="bot-code" id="botOwnCode" hidden>
+            <div class="bot-code-l">Введи этот код на странице Twitch:</div>
+            <div class="bot-code-v" id="botOwnCodeVal">— — — —</div>
+            <a class="btn btn-secondary" id="botOwnLink" href="#" target="_blank" rel="noopener">Открыть twitch.tv/activate</a>
+            <button class="btn-tiny" id="btnBotOwnCancel" type="button">Отмена</button>
+            <div class="form-message" id="botOwnMsg"></div>
+          </div>
+          <ol class="bot-steps">
+            <li>Нажми кнопку — откроется Twitch (или покажется код, его нужно ввести на twitch.tv/activate).</li>
+            <li>Войди <b>под своим аккаунтом</b> и нажми «Разрешить».</li>
+            <li>Готово: бот подключится сам, токен будет обновляться автоматически.</li>
+          </ol>
+          <p class="bot-note">Ответы бота будут выглядеть как твои сообщения. Твои команды (<code>!…</code>) работают как обычно. Если хочешь, чтобы бот был отдельным ником, выбери «Отдельный бот-аккаунт».</p>
+        </div>
+        <div class="bot-opt" id="botOptSep">
+          <h3>Отдельный бот-аккаунт</h3>
+          <p>Ответы приходят от отдельного ника (например, <code>MyChannelBot</code>) — его нужно создать на Twitch заранее.</p>
+          <button class="btn btn-secondary" id="btnBotManualOpen" type="button">Настроить вручную ↓</button>
+          <ol class="bot-steps">
+            <li>Создай второй аккаунт на Twitch и сделай его модератором канала: <code>/mod имя_бота</code>.</li>
+            <li>Получи для него токен (шаги — в блоке ниже) и вставь в поля.</li>
+            <li>Нажми «Сохранить» и «Подключить».</li>
+          </ol>
+        </div>
       </div>
+
+      <div class="card bot-chan">
+        <div class="field">
+          <label for="chatBotChannelName">Канал, где работает бот</label>
+          <input type="text" id="chatBotChannelName" placeholder="твой канал, например starikov" autocomplete="off">
+        </div>
+        <div class="actions"><button class="btn btn-secondary" id="btnChatBotSave" type="button">Сохранить</button></div>
+      </div>
+
+      <details class="card bot-manual" id="botManual">
+        <summary><b>Ручная настройка</b> <span>отдельный бот-аккаунт, токены, свои ключи</span></summary>
+        <div class="bot-manual-grid">
+          <div class="field">
+            <label for="chatBotUsername">Bot Username</label>
+            <input type="text" id="chatBotUsername" placeholder="имя бот-аккаунта" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="chatBotChannelId">Channel ID</label>
+            <input type="text" id="chatBotChannelId" placeholder="можно оставить пустым — найдётся по названию канала" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="chatBotToken">Bot OAuth Token</label>
+            <input type="password" id="chatBotToken" placeholder="User Access Token бота" autocomplete="new-password">
+            <p class="card-hint" id="chatBotTokenHint"></p>
+          </div>
+          <div class="field">
+            <label for="chatBotRefreshToken">Refresh Token</label>
+            <input type="password" id="chatBotRefreshToken" placeholder="Refresh-токен, выданный вместе с access-токеном" autocomplete="new-password">
+            <p class="card-hint" id="chatBotRefreshHint"></p>
+          </div>
+          <div class="field">
+            <label for="chatBotClientId">Bot Client ID</label>
+            <input type="text" id="chatBotClientId" placeholder="Client ID приложения, которым получен токен бота" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="chatBotClientSecret">Bot Client Secret</label>
+            <input type="password" id="chatBotClientSecret" placeholder="Client Secret того же приложения" autocomplete="new-password">
+            <p class="card-hint" id="chatBotClientHint"></p>
+          </div>
+        </div>
+        <div class="bot-guide">
+          <h4>Где взять токен</h4>
+          <p class="card-hint">Токен бота должен включать права: <code>user:read:chat</code> (читать чат), <code>user:write:chat</code> (писать), <code>user:bot</code> (быть ботом). Быстрый способ — Twitch CLI:</p>
+          <pre class="chatbot-code">twitch token --user-token --scopes "user:read:chat user:write:chat user:bot"</pre>
+          <p class="card-hint">Для <b>автомодерации</b> (удаление сообщений) добавь право <code>moderator:manage:chat_messages</code> и сделай бота модератором канала:</p>
+          <pre class="chatbot-code">twitch token --user-token --scopes "user:read:chat user:write:chat user:bot moderator:manage:chat_messages"</pre>
+          <p class="card-hint">Авторизуйся <b>под бот-аккаунтом</b> (удобно в окне инкогнито): токен привязывается к тому аккаунту, под которым дали разрешение, и его логин должен совпасть с Bot Username.</p>
+          <p class="card-hint"><b>Автообновление.</b> Access-токен живёт недолго, поэтому вставь и Refresh Token — сервер сам обновит токен до истечения и сохранит его. Обновление идёт с Client ID/Secret приложения, которым получен токен: то же, что для канала — оставь Bot Client ID/Secret пустыми (возьмутся из «Подключений»); другое — впиши его ID и Secret. Токен Twitch CLI по умолчанию обновить нельзя. Если refresh-токен отозван, статус станет красным с причиной — получи новую пару.</p>
+        </div>
+      </details>
 
       </div>
 
@@ -3256,11 +3298,11 @@
 <script src="/chat-format.js?v=6"></script>
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
-<script src="app.js?v=180"></script>
+<script src="app.js?v=181"></script>
 <script src="guides-data.js?v=10"></script>
-<script src="guides.js?v=4"></script>
+<script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=25"></script>
-<script src="whatsnew.js?v=17"></script>
+<script src="whatsnew.js?v=18"></script>
 </body>
 </html>

@@ -647,3 +647,59 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-donalerts .da-evpane .da-group-t { font-size: 15px; font-weight: 600; }
 #tab-donalerts .da-evpane .da-group-s { font-size: 12px; color: var(--text-mute); }
 #tab-donalerts .da-evpane .da-group-body { padding: 0 18px 12px; }
+
+/* ссылки в ответах команд бота */
+.bot-link-chip{color:var(--accent,#ff8a92);text-decoration:none;border-bottom:1px dashed currentColor;white-space:nowrap}
+.bot-link-chip:hover{opacity:.8}
+
+/* ---------- Чат-бот → «Подключение бота» ---------- */
+#tab-chatbot .chatbot-auth-panel{max-width:none}
+.bot-hero{padding:18px 20px}
+.bot-hero-main{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.bot-hero-ava{position:relative;width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:var(--bg-app);border:1px solid var(--line2);flex:none}
+.bot-hero-ava svg{width:26px;height:26px;fill:none;stroke:var(--text-secondary);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bot-hero-dot{position:absolute;right:-3px;bottom:-3px;width:14px;height:14px;border-radius:50%;background:#6b6b70;border:3px solid var(--bg-card)}
+.bot-hero[data-state="connected"] .bot-hero-dot{background:#4ADE80;box-shadow:0 0 8px rgba(74,222,128,.7)}
+.bot-hero[data-state="connected"] .bot-hero-ava svg{stroke:#4ADE80}
+.bot-hero[data-state="connecting"] .bot-hero-dot{background:#FBBF24}
+.bot-hero[data-state="error"] .bot-hero-dot{background:#F87171}
+.bot-hero[data-state="error"] .bot-hero-ava{border-color:rgba(248,113,113,.5)}
+.bot-hero-txt{display:flex;flex-direction:column;gap:2px;min-width:200px;flex:1}
+.bot-hero-txt b{font-size:17px}
+.bot-hero-txt span{font-size:13px;color:var(--text-secondary);overflow-wrap:anywhere}
+.bot-hero-btns{display:flex;gap:8px;flex-wrap:wrap}
+.bot-hero .form-message:empty{display:none}
+.bot-hero .form-message{margin-top:12px}
+.bot-choose{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:0 0 16px}
+.bot-opt{position:relative;display:flex;flex-direction:column;gap:10px;padding:20px;border-radius:16px;background:var(--bg-card);border:1px solid var(--line2)}
+.bot-opt.rec{border-color:rgba(224,80,90,.45);box-shadow:0 0 0 3px rgba(224,80,90,.08)}
+.bot-opt.active{border-color:#4ADE80;box-shadow:0 0 0 3px rgba(74,222,128,.12)}
+.bot-opt.active::after{content:"Используется";position:absolute;right:16px;top:16px;font-size:11px;font-weight:600;color:#4ADE80;background:rgba(74,222,128,.12);padding:3px 9px;border-radius:99px}
+.bot-opt-tag{align-self:flex-start;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--accent2)}
+.bot-opt.active .bot-opt-tag{display:none}
+.bot-opt h3{margin:0;font-size:17px}
+.bot-opt p{margin:0;font-size:13px;color:var(--text-secondary)}
+.bot-opt .btn{align-self:flex-start}
+.bot-steps{margin:4px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-secondary)}
+.bot-steps b{color:var(--text-primary)}
+.bot-note{padding-top:10px;border-top:1px solid var(--divider);font-size:12.5px!important}
+.bot-code{display:flex;flex-direction:column;gap:10px;align-items:flex-start;padding:14px;border-radius:12px;background:var(--bg-app);border:1px dashed var(--line2)}
+.bot-code[hidden]{display:none}
+.bot-code-l{font-size:12.5px;color:var(--text-secondary)}
+.bot-code-v{font:700 28px/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.18em;user-select:all}
+.bot-chan{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.bot-chan .field{flex:1;min-width:220px;margin:0}
+.bot-chan .actions{margin:0}
+.bot-manual>summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bot-manual>summary::-webkit-details-marker{display:none}
+.bot-manual>summary::before{content:"▸";color:var(--text-secondary);transition:transform .2s}
+.bot-manual[open]>summary::before{transform:rotate(90deg)}
+.bot-manual>summary span{font-size:12.5px;color:var(--text-secondary)}
+.bot-manual-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:4px 16px;margin-top:16px}
+.bot-guide{margin-top:12px;padding-top:14px;border-top:1px solid var(--divider)}
+.bot-guide h4{margin:0 0 6px;font-size:14px}
+#tab-chatbot #chatBotAuthPanel{display:flex!important;flex-direction:column;gap:16px;grid-template-columns:none}
+#tab-chatbot #chatBotAuthPanel>.bot-choose{margin:0!important}
+#tab-chatbot #chatBotAuthPanel .chatbot-status[hidden]{display:none!important}
+#tab-chatbot #chatBotRefreshStatus{font-size:12.5px;color:var(--text-secondary)}
+.bot-chan{align-self:stretch}

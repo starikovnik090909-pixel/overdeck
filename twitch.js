@@ -248,6 +248,8 @@ async function validateCredentials(clientId, clientSecret) {
 // имя) — отдельно от App Access Token (client_credentials), который нужен
 // для чтения публичных данных (аватарки чаттеров, категории).
 
+// Права чат-бота (вход «своим аккаунтом» вместо отдельного бот-аккаунта)
+const BOT_SCOPES = 'user:read:chat user:write:chat user:bot moderator:manage:chat_messages';
 const SCOPES = 'channel:read:redemptions channel:read:subscriptions channel:manage:predictions channel:read:predictions channel:manage:polls channel:read:hype_train moderator:read:followers';
 
 // ---------- Device Code Flow (вход по коду для публичного приложения) ----------
@@ -261,12 +263,12 @@ async function postForm(url, params) {
   }
 }
 /** → { device_code, user_code, verification_uri, expires_in, interval } */
-function startDeviceAuth(clientId) {
-  return postForm(`${ID_URL}/oauth2/device`, { client_id: clientId, scopes: SCOPES });
+function startDeviceAuth(clientId, scopes) {
+  return postForm(`${ID_URL}/oauth2/device`, { client_id: clientId, scopes: scopes || SCOPES });
 }
 /** → { status, data }: data.access_token при успехе; data.message === 'authorization_pending', пока стример не ввёл код */
-function pollDeviceAuth(clientId, deviceCode) {
-  return postForm(`${ID_URL}/oauth2/token`, { client_id: clientId, scopes: SCOPES, device_code: deviceCode, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' });
+function pollDeviceAuth(clientId, deviceCode, scopes) {
+  return postForm(`${ID_URL}/oauth2/token`, { client_id: clientId, scopes: scopes || SCOPES, device_code: deviceCode, grant_type: 'urn:ietf:params:oauth:grant-type:device_code' });
 }
 /** Обновление токена стримера; у публичного приложения — без секрета. */
 function refreshUserToken(clientId, clientSecret, refreshToken) {
@@ -275,7 +277,7 @@ function refreshUserToken(clientId, clientSecret, refreshToken) {
   return postForm(`${ID_URL}/oauth2/token`, p);
 }
 
-function buildAuthorizeUrl(clientId, redirectUri, state) {
+function buildAuthorizeUrl(clientId, redirectUri, state, scopes) {
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -291,7 +293,7 @@ function buildAuthorizeUrl(clientId, redirectUri, state) {
     // channel:manage:polls — создание/завершение опросов (вкладка "Чат"); покрывает и чтение опросов. Как и с прогнозами —
     // уже подключённым каналам нужно войти через Twitch ещё раз, чтобы получить токен с этим правом.
     // channel:read:hype_train и moderator:read:followers — для алертов Hype Train и фоллоу (нужен повторный вход через Twitch).
-    scope: SCOPES,
+    scope: scopes || SCOPES,
     state,
   });
   return `https://id.twitch.tv/oauth2/authorize?${params.toString()}`;
@@ -335,7 +337,7 @@ async function revokeToken(clientId, token) {
 }
 
 module.exports = {
-  SCOPES, startDeviceAuth, pollDeviceAuth, refreshUserToken, setUserTokenProvider, isPublicMode,
+  SCOPES, BOT_SCOPES, startDeviceAuth, pollDeviceAuth, refreshUserToken, setUserTokenProvider, isPublicMode,
   connectChat,
   hasCredentials,
   fetchAvatars,

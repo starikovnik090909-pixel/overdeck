@@ -1099,6 +1099,7 @@
   // Возврат из OAuth-редиректа (/auth/twitch/callback или /auth/donationalerts/callback)
   // может нести ?tab=...&authError=... / ?tab=donations&donationsError=...
   const urlParams = new URLSearchParams(location.search);
+  window.__botAuthQ = location.search; // вход бота «своим аккаунтом» возвращает сюда ?botAuthOk / ?botAuthError
   const paramTab = urlParams.get('tab');
   const paramAuthError = urlParams.get('authError');
   const paramDonationsError = urlParams.get('donationsError');
@@ -7877,6 +7878,26 @@
     chatBotRefreshStatus.className = 'form-message' + (failed ? ' error' : '');
   }
 
+  /** Верхняя карточка вкладки «Подключение бота»: кто пишет, в каком режиме и что делать дальше. */
+  function paintBotHero(bot) {
+    const hero = document.getElementById('botHero'); if (!hero) return;
+    hero.dataset.state = bot.status;
+    const T = document.getElementById('botHeroTitle'), S = document.getElementById('botHeroSub');
+    const who = bot.botUsername ? '@' + bot.botUsername : '';
+    const mode = bot.ownAccount ? 'твой аккаунт' : (bot.botUsername ? 'отдельный бот-аккаунт' : '');
+    if (bot.status === 'connected') { T.textContent = (who || 'Бот') + ' в чате'; S.textContent = 'Отвечает от имени: ' + (mode || 'бот-аккаунта') + (bot.channelName ? ' · канал ' + bot.channelName : ''); }
+    else if (bot.status === 'connecting') { T.textContent = 'Подключаемся…'; S.textContent = bot.statusMessage || ''; }
+    else if (bot.status === 'error') { T.textContent = 'Не удалось подключиться'; S.textContent = bot.statusMessage || 'Проверь настройки ниже.'; }
+    else if (bot.hasToken || bot.hasRefreshToken) { T.textContent = (who || 'Бот') + ' готов'; S.textContent = 'Нажми «Подключить», чтобы бот зашёл в чат.' + (mode ? ' Режим: ' + mode + '.' : ''); }
+    else { T.textContent = 'Бот не подключён'; S.textContent = 'Выбери, от чьего имени бот будет отвечать в чате.'; }
+    const own = document.getElementById('botOptOwn'), sep = document.getElementById('botOptSep');
+    if (own) own.classList.toggle('active', !!bot.ownAccount && (bot.hasToken || bot.hasRefreshToken));
+    if (sep) sep.classList.toggle('active', !bot.ownAccount && !!bot.botUsername && (bot.hasToken || bot.hasRefreshToken));
+    const btnOwn = document.getElementById('btnBotOwn');
+    if (btnOwn && !botOwnPoll) btnOwn.textContent = bot.ownAccount && (bot.hasToken || bot.hasRefreshToken) ? 'Войти заново' : 'Войти и использовать мой аккаунт';
+    document.getElementById('btnChatBotDisconnect').hidden = bot.status === 'disconnected';
+  }
+
   /** Обновляет статус/лог; поля формы трогает только при fillFields=true (первая загрузка/после сохранения), иначе опрос стёр бы то, что человек печатает. */
   function renderChatBot(bot, fillFields) {
     if (fillFields) {
@@ -7897,6 +7918,7 @@
     }
     chatBotStatusEl.dataset.state = bot.status;
     chatBotStatusText.textContent = bot.statusMessage;
+    paintBotHero(bot);
     applyChatBotIndicators(bot);
     renderLastBotCommand(bot.lastCommand);
     renderChatBotRefreshStatus(bot);
@@ -7965,6 +7987,48 @@
       showChatBotMessage('Сетевая ошибка при обращении к серверу.', 'error');
     }
   });
+
+  // ---------- «Использовать мой аккаунт» ----------
+  let botOwnPoll = null;
+  const ownBox = document.getElementById('botOwnCode'), ownMsg = document.getElementById('botOwnMsg');
+  function ownStop() { clearInterval(botOwnPoll); botOwnPoll = null; ownBox.hidden = true; }
+  function ownSay(t, kind) { ownMsg.textContent = t; ownMsg.className = 'form-message' + (kind ? ' ' + kind : ''); }
+  document.getElementById('btnBotOwn').addEventListener('click', async () => {
+    showChatBotMessage('', ''); ownSay('', '');
+    try {
+      const { data } = await postJSON('/api/chat-bot/own/start', {});
+      if (!data || !data.success) { showChatBotMessage((data && data.error) || 'Не удалось начать вход.', 'error'); return; }
+      if (data.mode === 'redirect') { location.href = data.url; return; }
+      document.getElementById('botOwnCodeVal').textContent = data.userCode;
+      const a = document.getElementById('botOwnLink'); a.href = data.uri; a.textContent = 'Открыть ' + String(data.uri).replace(/^https?:\/\//, '');
+      ownBox.hidden = false; ownSay('Жду, пока ты введёшь код и нажмёшь «Разрешить»…', '');
+      window.open(data.uri, '_blank', 'noopener');
+      clearInterval(botOwnPoll);
+      botOwnPoll = setInterval(async () => {
+        try {
+          const st = await (await fetch('/api/chat-bot/own/status')).json();
+          if (st.state === 'done') { ownStop(); showChatBotMessage('Готово: бот подключается от аккаунта ' + st.login + '.', 'success'); setTimeout(() => pollChatBot(true), 800); setTimeout(() => pollChatBot(true), 3000); }
+          else if (st.state === 'expired') { ownStop(); showChatBotMessage('Код истёк — нажми кнопку ещё раз.', 'error'); }
+          else if (st.state === 'error') { ownStop(); showChatBotMessage(st.error || 'Ошибка входа.', 'error'); }
+          else if (st.state === 'none') { ownStop(); }
+        } catch (e) { /* сеть моргнула */ }
+      }, 2000);
+    } catch (e) { showChatBotMessage('Сетевая ошибка при обращении к серверу.', 'error'); }
+  });
+  document.getElementById('btnBotOwnCancel').addEventListener('click', async () => { ownStop(); try { await postJSON('/api/chat-bot/own/cancel', {}); } catch (e) {} });
+  document.getElementById('btnBotManualOpen').addEventListener('click', () => { const d = document.getElementById('botManual'); d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); const u = document.getElementById('chatBotUsername'); if (u) setTimeout(() => u.focus(), 300); });
+  // возврат со страницы Twitch (вход со своими ключами)
+  (function () {
+    const q = new URLSearchParams(window.__botAuthQ || '');
+    if (q.get('botAuthOk') || q.get('botAuthError')) {
+      setTimeout(() => {
+        const t = document.querySelector('#botTabs [data-pane="auth"]'); if (t) t.click();
+        if (q.get('botAuthOk')) showChatBotMessage('Готово: вошёл под своим аккаунтом, бот подключается…', 'success');
+        else showChatBotMessage(q.get('botAuthError'), 'error');
+        setTimeout(() => pollChatBot(true), 1500);
+      }, 600);
+    }
+  })();
 
   async function pollChatBot(fillFields) {
     try {
@@ -8077,6 +8141,22 @@
     botCommandsStatus.className = 'form-message' + (last.ok ? ' success' : ' error');
   }
 
+  /** Ответ команды для таблицы: ссылки прячем за словом «(ссылка)» (полный адрес — во всплывающей подсказке и по клику). */
+  function botResponseHtml(text) {
+    const out = []; let last = 0; const re = /(https?:\/\/[^\s<>"']+|(?:www\.)[^\s<>"']+)/gi; let m;
+    const str = String(text == null ? '' : text);
+    while ((m = re.exec(str))) {
+      let url = m[1], tail = '';
+      const t = url.match(/[.,;:!?)\]]+$/); if (t) { tail = t[0]; url = url.slice(0, -tail.length); }
+      out.push(escapeHtmlChatBot(str.slice(last, m.index)));
+      const href = /^https?:/i.test(url) ? url : 'https://' + url;
+      out.push('<a class="bot-link-chip" href="' + escapeHtmlChatBot(href) + '" target="_blank" rel="noopener noreferrer" title="' + escapeHtmlChatBot(url) + '">(ссылка)</a>' + escapeHtmlChatBot(tail));
+      last = m.index + m[1].length;
+    }
+    out.push(escapeHtmlChatBot(str.slice(last)));
+    return out.join('');
+  }
+
   function renderBotCommands() {
     if (!botCommandsList.length) {
       botCommandsBody.innerHTML = '<tr><td colspan="3" class="card-hint">Команд пока нет — нажми «Добавить команду».</td></tr>';
@@ -8085,7 +8165,7 @@
     botCommandsBody.innerHTML = botCommandsList.map((c) => `
       <tr>
         <td class="bot-cmd-code">${escapeHtmlChatBot(c.command)}</td>
-        <td class="bot-cmd-response">${escapeHtmlChatBot(c.response)}</td>
+        <td class="bot-cmd-response">${botResponseHtml(c.response)}</td>
         <td class="bot-cmd-actions">
           <button class="btn-tiny" type="button" data-bot-cmd-edit="${c.id}">Редактировать</button>
           <button class="btn-tiny" type="button" data-bot-cmd-delete="${c.id}">Удалить</button>

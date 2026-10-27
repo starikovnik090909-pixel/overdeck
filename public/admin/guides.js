@@ -131,6 +131,7 @@
   lockOv.addEventListener('click', (e) => { if (e.target === lockOv) closeLock(); });
 
   function refreshLockUi() {
+    syncBotAvTab();
     LOCKED.forEach((t) => {
       const item = $('.nav-item[data-tab="' + t + '"]');
       if (!item) return;
@@ -149,6 +150,15 @@
       }
       if (btn) btn.style.display = unlocked ? '' : 'none';
     });
+  }
+  // «Команды аватаров» в чат-боте зависят от чат-аватаров: пока вкладка закрыта паролем, пункт скрыт
+  function syncBotAvTab() {
+    const tab = $('#botTabs [data-pane="av"]'); if (!tab) return;
+    tab.hidden = !unlocked; tab.style.display = unlocked ? '' : 'none';
+    if (!unlocked) {
+      const pane = $('#tab-chatbot .bot-pane[data-pane="av"]'); if (pane) pane.hidden = true;
+      if (tab.classList.contains('on')) { const c = $('#botTabs [data-pane="cmd"]'); if (c) c.click(); }
+    }
   }
   function relock() {
     store.del(LOCK_KEY); unlocked = false; refreshLockUi();

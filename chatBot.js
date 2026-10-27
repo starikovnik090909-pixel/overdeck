@@ -46,7 +46,7 @@ const MIN_TIMER_MS = Number(process.env.CHATBOT_MIN_TIMER_MS) || 30000; // ни�
 // botToken — access-токен бота (живёт около часа), refreshToken — им обновляется; tokenExpiresAt — когда access-токен истекает (мс, 0 = неизвестно).
 // botClientId/botClientSecret — приложение, которым получен токен БОТА (может отличаться от приложения канала из вкладки «Подключения»).
 // Пусто → для обновления токена используются общие Client ID/Secret (см. effectiveCredentials()).
-let data = { botUsername: '', botToken: '', refreshToken: '', tokenExpiresAt: 0, botClientId: '', botClientSecret: '', channelName: '', channelId: '' };
+let data = { botUsername: '', botToken: '', refreshToken: '', tokenExpiresAt: 0, botClientId: '', botClientSecret: '', channelName: '', channelId: '', ownAccount: false, publicApp: false };
 
 // Состояние соединения — только в памяти.
 let status = 'disconnected'; // 'disconnected' | 'connecting' | 'connected' | 'error'
@@ -114,6 +114,8 @@ function load() {
         botClientSecret: typeof raw.botClientSecret === 'string' ? raw.botClientSecret : '',
         channelName: typeof raw.channelName === 'string' ? raw.channelName : '',
         channelId: typeof raw.channelId === 'string' ? raw.channelId : '',
+        ownAccount: raw.ownAccount === true,
+        publicApp: raw.publicApp === true,
       };
     }
   } catch (e) {
@@ -142,6 +144,8 @@ function getPublic() {
     botUsername: data.botUsername,
     channelName: data.channelName,
     channelId: data.channelId,
+    ownAccount: data.ownAccount,
+    publicApp: data.publicApp,
     hasToken: !!data.botToken,
     tokenPreview: data.botToken ? `…${data.botToken.slice(-4)}` : '',
     hasRefreshToken: !!data.refreshToken,
@@ -200,6 +204,9 @@ function save(fields) {
     botClientSecret,
     channelName,
     channelId,
+    // вручную поменяли токен/ник — это уже не «свой аккаунт, вошли через Twitch»
+    ownAccount: tokenChanged || (has('botUsername') && botUsername.toLowerCase() !== data.botUsername.toLowerCase()) ? false : data.ownAccount,
+    publicApp: tokenChanged || has('botClientId') ? false : data.publicApp,
   };
   persist();
   if (session && !stopped) scheduleRefresh(); // бот уже подключён, а Refresh Token только что добавили — сразу ставим автообновление на таймер
@@ -225,6 +232,7 @@ async function validateToken(token) {
  * Оба пусты — откат на общие данные приложения канала из вкладки «Подключения» (source 'shared'), как было раньше.
  */
 function effectiveCredentials() {
+  if (data.publicApp && data.botClientId) return { clientId: data.botClientId, clientSecret: '', source: 'public' };
   if (data.botClientId || data.botClientSecret) {
     return { clientId: data.botClientId, clientSecret: data.botClientSecret, source: 'bot' };
   }
@@ -236,6 +244,7 @@ function effectiveCredentials() {
 function refreshBlockReason() {
   if (!data.refreshToken) return 'не указан Refresh Token';
   const c = effectiveCredentials();
+  if (c.source === 'public') return '';
   if (c.source === 'bot' && (!c.clientId || !c.clientSecret)) {
     return 'заполни оба поля Bot Client ID и Bot Client Secret (или очисти Bot Client ID — тогда будут использоваться общие данные из вкладки «Подключения»)';
   }
@@ -271,7 +280,7 @@ function refreshAccessToken() {
         grant_type: 'refresh_token',
         refresh_token: data.refreshToken,
         client_id: c.clientId,
-        client_secret: c.clientSecret,
+        ...(c.clientSecret ? { client_secret: c.clientSecret } : {}),
       }).toString(),
     });
     let body = null;
@@ -406,6 +415,7 @@ async function subscribeToChat(sessionId) {
  * обязан совпадать с владельцем токена (это и есть бот). Twitch может принять запрос, но не отправить сообщение
  * (is_sent=false — например, слишком частая отправка или режим уникальных сообщений) — это тоже считаем ошибкой.
  */
+const sentRecent = []; // [{ text, at }] — что бот отправил сам (для режима «свой аккаунт»)
 async function sendChatMessage(text) {
   if (!session) throw new Error('Бот не подключён.');
   if (!session.scopes.includes(SEND_SCOPE)) {
@@ -421,6 +431,7 @@ async function sendChatMessage(text) {
   if (!res.ok) {
     throw new Error(`Twitch отклонил отправку (${res.status}${body && body.message ? `: ${body.message}` : ''}).`);
   }
+  sentRecent.push({ text: String(text).trim(), at: Date.now() }); if (sentRecent.length > 30) sentRecent.shift();
   const result = body && body.data && body.data[0];
   if (result && result.is_sent === false) {
     const reason = result.drop_reason;
@@ -563,7 +574,15 @@ async function handleChatMessage(event) {
   if (flagged) return;
   const text = ((event.message && event.message.text) || '').trim();
   if (!text.startsWith('!')) return;
-  if (session && event.chatter_user_id === session.botUserId) return;
+  if (session && event.chatter_user_id === session.botUserId) {
+    // Обычный бот-аккаунт: свои сообщения пропускаем. «Свой аккаунт» (бот = стример): команды стримера работают,
+    // пропускаем только то, что бот сам только что отправил (иначе ответ вида «!привет» запустил бы сам себя).
+    if (!data.ownAccount) return;
+    const now0 = Date.now();
+    while (sentRecent.length && now0 - sentRecent[0].at > 20000) sentRecent.shift();
+    const i = sentRecent.findIndex((m) => m.text === text);
+    if (i >= 0) { sentRecent.splice(i, 1); return; }
+  }
   const cmd = botCommands.findByToken(text.split(/\s+/)[0]);
   if (!cmd) return;
   const now = Date.now();
@@ -779,6 +798,27 @@ function openSocket(url, gen, isReconnect) {
  * Возвращает { ok, error? } — само подключение к чату подтверждается позже
  * (статус станет 'connected' после успешной подписки), см. getPublic().
  */
+/**
+ * «Использовать свой аккаунт»: сервер получил токен стримера с правами бота (вход через Twitch) — бот пишет от его имени.
+ * publicApp=true — токен выдан общим приложением Overdeck (без секрета): обновляется без Client Secret.
+ */
+function useOwn({ login, accessToken, refreshToken, expiresIn, clientId, clientSecret, publicApp }) {
+  data = {
+    ...data,
+    botUsername: String(login || '').toLowerCase(),
+    botToken: accessToken || '',
+    refreshToken: refreshToken || '',
+    tokenExpiresAt: Number(expiresIn) > 0 ? Date.now() + Number(expiresIn) * 1000 : 0,
+    botClientId: clientId || '',
+    botClientSecret: publicApp ? '' : (clientSecret || ''),
+    channelName: data.channelName || String(login || '').toLowerCase(),
+    channelId: data.channelName && data.channelName.toLowerCase() !== String(login || '').toLowerCase() ? data.channelId : '',
+    ownAccount: true,
+    publicApp: !!publicApp,
+  };
+  persist();
+}
+
 async function connect() {
   disconnect(true);
   if (!data.botToken && !data.refreshToken) return failConnect('Не указан Bot OAuth Token (или Refresh Token).');
@@ -849,4 +889,4 @@ function disconnect(silent) {
   }
 }
 
-module.exports = { say, init, getPublic, getStatus, setOnStatusChange, setAppCredentialsProvider, setLiveProvider, syncTimers, tickTimers, save, connect, disconnect, FILE_PATH };
+module.exports = { say, init, getPublic, getStatus, setOnStatusChange, setAppCredentialsProvider, setLiveProvider, syncTimers, tickTimers, save, useOwn, connect, disconnect, FILE_PATH };

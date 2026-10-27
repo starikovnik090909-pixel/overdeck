@@ -908,7 +908,9 @@ function onChatMessage(tags, message) {
     // регистронезависимо, как и сами логины Twitch), а не отображаемое имя. Зеркало чата и TTS сообщения
     // бота при этом всё равно показывают/озвучивают как обычно — исключение только из статистики.
     const botUsername = chatBot.getPublic().botUsername;
-    const isBotMessage = !!botUsername && tags.username && tags.username.toLowerCase() === botUsername.toLowerCase();
+    const botPub = chatBot.getPublic();
+    // «Свой аккаунт»: бот и стример — один человек, его обычные сообщения в статистике нужны
+    const isBotMessage = !!botUsername && !botPub.ownAccount && tags.username && tags.username.toLowerCase() === botUsername.toLowerCase();
 
     let clean;
     if (isBotMessage) {
@@ -2597,6 +2599,14 @@ app.post('/api/twitch/logout', async (req, res) => {
 
 // ---------- OAuth: "Войти через Twitch" (подтверждение подключения канала) ----------
 
+// Вход «своим аккаунтом» для чат-бота (свои ключи приложения): те же redirect и callback, но с правами бота
+let botOauthState = null;
+app.get('/auth/twitch/bot-login', (req, res) => {
+  if (!twitch.hasCredentials(config)) return res.redirect('/admin?tab=chatbot&botAuthError=' + encodeURIComponent('Сначала укажи Client ID и Client Secret во вкладке «Подключения»'));
+  botOauthState = crypto.randomBytes(16).toString('hex');
+  res.redirect(twitch.buildAuthorizeUrl(config.twitch.clientId, getCallbackUrl(), botOauthState, twitch.BOT_SCOPES));
+});
+
 app.get('/auth/twitch/login', (req, res) => {
   if (usingPublicApp() || (PUBLIC_CLIENT_ID && !config.twitch.clientSecret)) return res.redirect('/admin?tab=auth&device=1'); // публичное приложение: вход по коду
   if (!twitch.hasCredentials(config)) {
@@ -2609,6 +2619,19 @@ app.get('/auth/twitch/login', (req, res) => {
 
 app.get('/auth/twitch/callback', async (req, res) => {
   const { code, state, error, error_description: errorDescription } = req.query;
+
+  if (state && botOauthState && state === botOauthState) { // это вход для чат-бота, не для канала
+    botOauthState = null;
+    const back = (q) => res.redirect('/admin?tab=chatbot&' + q);
+    if (error || !code) return back('botAuthError=' + encodeURIComponent(errorDescription || String(error || 'Вход отменён')));
+    const td = await twitch.exchangeCodeForToken(config.twitch.clientId, config.twitch.clientSecret, code, getCallbackUrl());
+    if (!td || !td.access_token) return back('botAuthError=' + encodeURIComponent((td && td.message) || 'Не удалось получить токен от Twitch'));
+    const u = await twitch.getOwnUser(config.twitch.clientId, td.access_token);
+    if (!u) return back('botAuthError=' + encodeURIComponent('Не удалось получить данные аккаунта от Twitch'));
+    chatBot.useOwn({ login: u.login, accessToken: td.access_token, refreshToken: td.refresh_token, expiresIn: td.expires_in, clientId: config.twitch.clientId, clientSecret: config.twitch.clientSecret, publicApp: false });
+    chatBot.connect().catch(() => {});
+    return back('botAuthOk=1');
+  }
 
   if (error) {
     return res.redirect('/admin?tab=auth&authError=' + encodeURIComponent(errorDescription || String(error)));
@@ -2705,6 +2728,47 @@ app.get('/api/twitch/device/status', (req, res) => {
   if (!s) return res.json({ state: 'none' });
   res.json({ state: s.state, error: s.error || null, login: s.login || null, displayName: s.displayName || null, restart: s.restart || null, userCode: s.userCode, uri: s.uri, left: Math.max(0, Math.round((s.expiresAt - Date.now()) / 1000)) });
 });
+// Бот своим аккаунтом по коду (общее приложение Overdeck)
+let botDeviceSession = null;
+async function pollBotDevice(sess) {
+  while (botDeviceSession === sess && sess.state === 'pending') {
+    await new Promise((r) => setTimeout(r, Math.max(1, sess.interval) * 1000));
+    if (botDeviceSession !== sess) return;
+    if (Date.now() > sess.expiresAt) { sess.state = 'expired'; return; }
+    const r = await twitch.pollDeviceAuth(config.twitch.clientId, sess.deviceCode, twitch.BOT_SCOPES);
+    const d = r.data || {};
+    if (d.access_token) {
+      const user = await twitch.getOwnUser(config.twitch.clientId, d.access_token);
+      if (!user) { sess.state = 'error'; sess.error = 'Twitch не отдал данные аккаунта — попробуй ещё раз.'; return; }
+      chatBot.useOwn({ login: user.login, accessToken: d.access_token, refreshToken: d.refresh_token, expiresIn: d.expires_in, clientId: config.twitch.clientId, publicApp: true });
+      sess.login = user.login; sess.state = 'done';
+      chatBot.connect().catch(() => {});
+      return;
+    }
+    const msg = String(d.message || '');
+    if (/pending/i.test(msg)) continue;
+    if (/slow_down/i.test(msg)) { sess.interval += 5; continue; }
+    if (/expired|invalid device code/i.test(msg)) { sess.state = 'expired'; return; }
+    if (r.status === 0) continue;
+    sess.state = 'error'; sess.error = msg || ('Twitch ответил ' + r.status); return;
+  }
+}
+app.post('/api/chat-bot/own/start', async (req, res) => {
+  if (!config.twitch.clientId) return res.status(400).json({ success: false, error: 'Сначала подключи Twitch во вкладке «Подключения».' });
+  if (config.twitch.clientSecret) return res.json({ success: true, mode: 'redirect', url: '/auth/twitch/bot-login' }); // свои ключи — обычный вход со страницей Twitch
+  const r = await twitch.startDeviceAuth(config.twitch.clientId, twitch.BOT_SCOPES);
+  const d = r.data || {};
+  if (!d.device_code) return res.status(502).json({ success: false, error: 'Twitch не выдал код: ' + (d.message || r.status) });
+  botDeviceSession = { deviceCode: d.device_code, userCode: d.user_code, uri: d.verification_uri, expiresAt: Date.now() + (d.expires_in || 1800) * 1000, interval: d.interval || 5, state: 'pending' };
+  pollBotDevice(botDeviceSession);
+  res.json({ success: true, mode: 'device', userCode: d.user_code, uri: d.verification_uri, expiresIn: d.expires_in || 1800 });
+});
+app.get('/api/chat-bot/own/status', (req, res) => {
+  const s = botDeviceSession;
+  if (!s) return res.json({ state: 'none' });
+  res.json({ state: s.state, error: s.error || null, login: s.login || null, userCode: s.userCode, uri: s.uri, left: Math.max(0, Math.round((s.expiresAt - Date.now()) / 1000)) });
+});
+app.post('/api/chat-bot/own/cancel', (req, res) => { botDeviceSession = null; res.json({ success: true }); });
 app.post('/api/twitch/device/cancel', (req, res) => { deviceSession = null; res.json({ success: true }); });
 app.get('/api/twitch/mode', (req, res) => res.json({ publicApp: !!PUBLIC_CLIENT_ID, usingPublicApp: usingPublicApp(), ownKeys: !!config.twitch.clientSecret, setup: SETUP_MODE, loggedIn: !!(config.twitchAuth && config.twitchAuth.accessToken), launcher: !!process.env.OVERDECK_LAUNCHER }));
 
