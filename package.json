@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "tmi.js": "^1.8.5",
-    "msedge-tts": "^2.1.0",
+    "msedge-tts": "^2.1.1",
     "express": "^4.19.2",
     "ws": "^8.17.0",
     "dotenv": "^16.4.5",

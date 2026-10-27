@@ -102,3 +102,4 @@ migrations_done.json
 follow_registry.json
 node-runtime/
 __pycache__/
+uploads/alert-custom/*
