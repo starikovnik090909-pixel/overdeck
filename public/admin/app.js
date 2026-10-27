@@ -9048,6 +9048,49 @@
       hint: 'Если ничего не отображается: убедись, что в браузере реально играет видео или музыка и вкладка не заглушена. Сайты без поддержки управления медиа (редкие плееры) Windows не видит. Прямые трансляции показывают только время «прошло».',
     },
   };
+  // группы настроек (как в «Донате»: раскрывающиеся по смыслу) и зависимость строк от выбранного вида
+  const CUSTOM_GROUPS = [['custsrc', 'Своя картинка и звук', 'файлы, громкость, сколько показывать', ['customImage', 'customAudio', 'customVolume', 'customDuration'], 'custom'], ['custtext', 'Текст и появление', 'текст алерта, положение, анимация, размер, цвета', ['customText', 'customPos', 'customAnim', 'customImgSize', 'customFontSize', 'customTextColor', 'customAccent'], 'custom']];
+  const EVX = {
+    sub: {
+      groups: [['main', 'Основное', 'какие подписки показывать, вид алерта', ['enabled', 'showNew', 'showResub', 'showGift', 'mode', 'style']], ...CUSTOM_GROUPS,
+        ['look', 'Вид и тайминг', 'время на экране, цвет, номер подписчика', ['holdSec', 'color', 'showNumber', 'numberStart'], 'ours'],
+        ['sfx', 'Звуки', 'звуки выбранного вида', ['soundPre', 'soundFly', 'soundStamp', 'soundTear', 'soundVolume'], 'ours'],
+        ['voice', 'Озвучка', 'голос, громкость, тексты', ['speak', 'voice', 'voiceVolume', 'speechNew', 'speechResub', 'speechGift']]],
+      vis: (v) => {
+        const hide = [], labels = {};
+        if (v.mode === 'custom') hide.push('style');
+        if (v.style === 'card') hide.push('soundPre', 'soundFly', 'soundStamp', 'soundTear', 'showNumber', 'numberStart', 'soundVolume');
+        else if (v.style !== 'ticket') { hide.push('soundPre', 'soundTear', 'showNumber', 'numberStart'); labels.soundFly = 'Звук появления'; labels.soundStamp = 'Звук завершения'; }
+        return { hide, labels };
+      },
+    },
+    raid: {
+      groups: [['main', 'Основное', 'показывать ли, вид, от скольки зрителей', ['enabled', 'style', 'minViewers']],
+        ['look', 'Вид и тайминг', 'время на экране, цвет, игра рейдера, сирена', ['holdSec', 'showGame', 'siren', 'color']],
+        ['sfx', 'Звуки', 'звуки выбранного вида', ['soundSiren', 'soundPing', 'soundIn', 'soundDone', 'soundTick', 'soundVolume']],
+        ['voice', 'Озвучка', 'голос, громкость, текст', ['speak', 'voice', 'voiceVolume', 'speech']]],
+      vis: (v) => ({ hide: v.style === 'radar' ? ['soundIn', 'soundDone'] : v.style === 'card' ? ['soundSiren', 'soundPing', 'siren'] : ['soundSiren', 'soundPing', 'soundIn', 'soundDone', 'soundTick', 'siren', 'soundVolume'], labels: {} }),
+    },
+    follow: {
+      groups: [['main', 'Основное', 'показывать ли, вид алерта', ['enabled', 'mode', 'style']], ...CUSTOM_GROUPS,
+        ['look', 'Вид и тайминг', 'время на экране, цвет, текст, фолловеры в стене', ['holdSec', 'color', 'big', 'wallsync'], 'ours'],
+        ['sfx', 'Звуки', 'звуки выбранного вида', ['soundFly', 'soundStick', 'soundVolume'], 'ours'],
+        ['voice', 'Озвучка', 'голос, громкость, текст', ['speak', 'voice', 'voiceVolume', 'speech']]],
+      vis: (v) => {
+        const hide = [], labels = {}, st = v.style;
+        if (v.mode === 'custom') hide.push('style');
+        if (st === 'wall') { hide.push('soundFly'); labels.soundStick = 'Звук шлепка стикера'; }
+        else if (st === 'badge') { labels.soundFly = 'Звук появления пропуска'; labels.soundStick = 'Звук штампа'; }
+        else if (st === 'card') hide.push('soundFly', 'soundStick', 'soundVolume', 'wallsync');
+        else { hide.push('wallsync', 'big'); labels.soundFly = 'Звук появления'; labels.soundStick = 'Звук завершения'; }
+        return { hide, labels };
+      },
+    },
+    hype: { groups: [['main', 'Основное', 'какие этапы показывать', ['enabled', 'onBegin', 'onLevel', 'onEnd']], ['look', 'Оформление', 'цвет карточки', ['color']], ['sfx', 'Звуки', 'появление и приземление карточки', ['soundFly', 'soundLand', 'soundVolume']], ['voice', 'Озвучка', 'голос, громкость, тексты', ['speak', 'voice', 'voiceVolume', 'speechBegin', 'speechLevel', 'speechEnd']]] },
+    points: { groups: [['main', 'Основное', 'показывать ли, фильтры наград', ['enabled', 'minCost', 'rewards']], ['look', 'Оформление', 'цвет карточки', ['color']], ['sfx', 'Звуки', 'появление и приземление карточки', ['soundFly', 'soundLand', 'soundVolume']], ['voice', 'Озвучка', 'голос, громкость, что читать', ['speak', 'voice', 'voiceVolume', 'readMessage', 'speech']]] },
+    streak: { groups: [['main', 'Основное', 'показывать ли, с какой серии', ['enabled', 'minStreak', 'showPoints']], ['look', 'Вид плашки', 'вид, угол, размер, время, цвет', ['style', 'corner', 'size', 'holdSec', 'color']], ['sfx', 'Звуки', 'появление и приземление плашки', ['soundFly', 'soundLand', 'soundVolume']], ['voice', 'Озвучка', 'голос, громкость, текст', ['speak', 'voice', 'voiceVolume', 'speech']]] },
+    nowplaying: { groups: [['main', 'Основное', 'показывать ли, вид', ['enabled', 'style']], ['look', 'Положение и оформление', 'угол, размер, прозрачность, цвет', ['corner', 'size', 'bgOpacity', 'color']], ['what', 'Что показывать', 'обложка, источник, пауза, длительность', ['showCover', 'showSource', 'showOthers', 'hideWhenPaused', 'hideDelaySec', 'minDurationSec']], ['src', 'Источники', 'браузеры и игнорируемые приложения', ['browsers', 'ignoreApps']]] },
+  };
   const api = async (url, body, method) => { const r = await fetch(url, { method: method || 'POST', headers: { 'Content-Type': 'application/json' }, body: method === 'GET' ? undefined : JSON.stringify(body || {}) }); return r.json(); };
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let voiceOptions = '<option value="">Как у доната / из «Озвучки чата»</option>';
@@ -9060,7 +9103,7 @@
       const ctl = f.t === 'select' ? `<select id="${id}">${f.opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select>` : `<input type="${f.t === 'number' ? 'number' : 'text'}" id="${id}" value="${esc(f.v)}">`;
       return `<div class="field"><label for="${id}">${f.l}</label>${ctl}</div>`;
     }).join('');
-    const rows = cfg.fields.map(([k, t, l, opts]) => {
+    const rowsArr = cfg.fields.map(([k, t, l, opts]) => {
       const id = `ev_${kind}_${k}`; let ctl = '';
       if (t === 'toggle') ctl = `<label class="toggle-switch"><input type="checkbox" id="${id}"><span class="toggle-slider"></span></label>`;
       else if (t === 'number') ctl = `<div class="toggle-row-extra"><input type="number" id="${id}" min="0"></div>`;
@@ -9074,6 +9117,14 @@
       else if (t === 'voice') ctl = `<div class="toggle-row-extra"><select id="${id}" class="ev-voice" style="max-width:230px">${voiceOptions}</select></div>`;
       else if (t === 'color') ctl = `<div class="toggle-row-extra"><input type="color" id="${id}"><button class="btn-tiny" type="button" id="${id}_clr">Из темы</button></div>`;
       return `<div class="toggle-row"><span class="toggle-row-label">${l}</span>${ctl}</div>`;
+    });
+    const rowMap = {}; cfg.fields.forEach((f, i) => { rowMap[f[0]] = rowsArr[i]; });
+    const cx = EVX[kind] || {};
+    const GR = (cx.groups || [['all', 'Настройки', '', cfg.fields.map((f) => f[0])]]).map((g) => g.slice());
+    const placed = new Set(GR.flatMap((g) => g[3])); cfg.fields.forEach((f) => { if (!placed.has(f[0])) GR[0][3].push(f[0]); });
+    const rows = GR.map(([id, title, sub, keys, gmode]) => {
+      let open = id === 'main' || id === 'all'; try { const sv = localStorage.getItem('evGroup_' + kind + '_' + id); if (sv !== null) open = sv === '1'; } catch (e) {}
+      return `<details class="da-group" data-g="${id}"${gmode ? ` data-mode="${gmode}"` : ''}${open ? ' open' : ''}><summary><span class="da-group-t">${title}</span><span class="da-group-s">${sub}</span></summary><div class="da-group-body">${keys.map((kk) => rowMap[kk] || '').join('')}</div></details>`;
     }).join('');
     root.innerHTML = `
       <div class="da-main"><div class="card">${tests}${kind === 'nowplaying' ? `<div style="grid-column:1/-1;min-width:0"><div class="actions" style="margin:0 0 12px"><button class="btn btn-primary" type="button" data-a="npapply">Сохранить и обновить</button><span class="card-hint" data-a="npapplyst" style="margin:0 0 0 10px">Изменения тоже сохраняются сами через секунду.</span></div><div class="np-srcbox" style="margin:0 0 12px;padding:12px;border:1px solid var(--border,rgba(255,255,255,.12));border-radius:10px"><b>Источники из браузера</b> <span class="card-hint" data-a="srccnt" style="margin:0 0 0 6px"></span>
@@ -9102,11 +9153,21 @@
     const el = (k) => document.getElementById(`ev_${kind}_${k}`);
     const say = (t, c) => { const m = btn('msg'); m.textContent = t; m.className = 'form-message' + (c ? ' ' + c : ''); };
     const testData = () => { const o = {}; cfg.test.forEach((f) => { const v = document.getElementById(`ev_${kind}_t_${f.k}`).value; o[f.k] = f.t === 'number' ? Number(v) : v; }); return o; };
-    const apply = (s) => cfg.fields.forEach(([k, t]) => {
+    const apply = (s) => { cfg.fields.forEach(([k, t]) => {
       const e = el(k); if (!e) return; const v = s[k];
       if (t === 'toggle') e.checked = !!v; else if (t === 'range') { e.value = v == null ? 100 : v; const lv = document.getElementById(`ev_${kind}_${k}_v`); if (lv) lv.textContent = e.value + '%'; } else if (t === 'color') { e.dataset.empty = v ? '' : '1'; e.value = v || '#b14846'; } else e.value = v == null ? '' : v;
-    });
+    }); applyVis(); };
     const collect = () => { const o = {}; cfg.fields.forEach(([k, t]) => { const e = el(k); o[k] = t === 'toggle' ? e.checked : (t === 'number' || t === 'range') ? Number(e.value) : t === 'color' ? (e.dataset.empty === '1' ? '' : e.value) : e.value; }); return o; };
+    // видимость строк и групп: по режиму (наш / стандартный) и по выбранному виду (звуки только выбранного алерта)
+    const applyVis = () => {
+      const v = {}; ['style', 'mode'].forEach((k) => { const e = el(k); if (e) v[k] = e.value; });
+      const r = cx.vis ? cx.vis(v) : { hide: [], labels: {} };
+      const hid = new Set(r.hide);
+      cfg.fields.forEach(([k, , l]) => { const e = el(k); if (!e) return; const row = e.closest('.toggle-row, .field'); if (!row) return; row.hidden = hid.has(k); const lb = row.querySelector('.toggle-row-label, label'); if (lb && !lb.querySelector('input,select')) lb.textContent = (r.labels && r.labels[k]) || l; });
+      root.querySelectorAll('.da-group').forEach((g) => { const m = g.dataset.mode; let h = !!m && !!v.mode && m !== v.mode; if (!h) h = ![...g.querySelectorAll('.toggle-row, .field')].some((x) => !x.hidden); g.hidden = h; });
+    };
+    root.querySelectorAll('.da-group').forEach((g) => g.addEventListener('toggle', () => { try { localStorage.setItem('evGroup_' + kind + '_' + g.dataset.g, g.open ? '1' : '0'); } catch (e) {} }));
+    ['style', 'mode'].forEach((k) => { const e = el(k); if (e) e.addEventListener('change', applyVis); });
     if (kind === 'nowplaying') {
       const ast = $('[data-a="npapplyst"]');
       const doSave = async (reload) => {
@@ -9171,8 +9232,7 @@
       const CUSTOM_KEYS = ['customImage', 'customAudio', 'customVolume', 'customDuration', 'customText', 'customPos', 'customAnim', 'customImgSize', 'customFontSize', 'customTextColor', 'customAccent'];
       const OURS_KEYS = kind === 'sub' ? ['style', 'showNumber', 'numberStart', 'holdSec', 'soundPre', 'soundFly', 'soundStamp', 'soundTear', 'color'] : ['style', 'holdSec', 'soundFly', 'soundStick', 'wallsync', 'color', 'big'];
       const rowOf = (k) => el(k).closest('.toggle-row, .field');
-      const syncMode = () => { const c = el('mode').value === 'custom'; CUSTOM_KEYS.forEach((k) => { rowOf(k).hidden = !c; }); OURS_KEYS.forEach((k) => { rowOf(k).hidden = c; }); };
-      el('mode').addEventListener('change', () => { syncMode(); });
+      const syncMode = () => applyVis();
       CM.forEach(([k, mk]) => {
         const fileEl = document.getElementById(`ev_${kind}_${k}_file`);
         document.getElementById(`ev_${kind}_${k}_up`).addEventListener('click', () => fileEl.click());

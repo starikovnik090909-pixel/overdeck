@@ -634,3 +634,16 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .ui3-obs-steps { margin: 0; padding-left: 18px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
 .ui3-obs-steps b { color: var(--text-primary); font-weight: 500; }
 @media (max-width: 1000px) { .ui3-obs { grid-template-columns: 1fr; } .ui3-obs-cat { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+
+/* алерты событий: настройки по раскрывающимся группам (как в «Донате») */
+#tab-donalerts .da-evpane .da-group { background: transparent; border: 1px solid var(--divider); border-radius: 14px; margin: 12px 0 0; overflow: hidden; }
+#tab-donalerts .da-evpane .da-group > summary { cursor: pointer; user-select: none; position: relative; padding: 13px 18px 13px 42px; display: flex; align-items: baseline; gap: 12px; list-style: none; flex-wrap: wrap; }
+#tab-donalerts .da-evpane .da-group > summary::-webkit-details-marker { display: none; }
+#tab-donalerts .da-evpane .da-group > summary::before { content: ''; position: absolute; left: 18px; top: 50%; width: 7px; height: 7px; margin-top: -6px; border-right: 2px solid var(--text-mute); border-bottom: 2px solid var(--text-mute); transform: rotate(-45deg); transition: transform .15s; }
+#tab-donalerts .da-evpane .da-group[open] > summary::before { transform: rotate(45deg); margin-top: -8px; }
+#tab-donalerts .da-evpane .da-group > summary:hover { background: var(--accent-soft); }
+#tab-donalerts .da-evpane .da-group[open] > summary { border-bottom: 1px solid var(--divider); }
+#tab-donalerts .da-evpane .da-group[hidden] { display: none; }
+#tab-donalerts .da-evpane .da-group-t { font-size: 15px; font-weight: 600; }
+#tab-donalerts .da-evpane .da-group-s { font-size: 12px; color: var(--text-mute); }
+#tab-donalerts .da-evpane .da-group-body { padding: 0 18px 12px; }
