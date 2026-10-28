@@ -1627,7 +1627,7 @@ app.post('/api/chronicles/:id/vote', async (req, res) => {
   if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
   const short = it.title.length > 30 ? it.title.slice(0, 29) + '…' : it.title;
   try {
-    const poll = await polls.createPoll({ ...creds, title: `Оценка чата: ${short}`.slice(0, 60), choices: CHR_BINS, durationSeconds: CHR_POLL_SECONDS });
+    const poll = await polls.createPoll({ ...creds, title: 'Оценка чата', choices: CHR_BINS, durationSeconds: CHR_POLL_SECONDS });
     chrPoll = { id: poll.id, itemId: it.id, title: it.title, short, seconds: CHR_POLL_SECONDS, endsAt: Date.now() + CHR_POLL_SECONDS * 1000, poll, timer: null, busy: false, cancelled: false };
     chrPoll.timer = setInterval(chrPollTick, 3000);
     res.json({ success: true, vote: chrPollStatus() });
