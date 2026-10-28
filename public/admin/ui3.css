@@ -917,3 +917,10 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-vote-bars{display:flex;align-items:flex-end;gap:3px;height:34px;width:130px}
 .chr-vote-bars i{flex:1;border-radius:3px 3px 0 0;background:var(--accent2);min-height:2px;opacity:.85}
 .chr-vote-btns{display:flex;gap:8px}
+
+/* лого: иконка в плитке, название и подпись */
+.app-header .brand{grid-template-columns:40px auto;column-gap:12px;row-gap:3px;padding:0 20px;align-content:center}
+.app-header .brand-icon{width:40px;height:40px;padding:5px;box-sizing:border-box;border-radius:12px;background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.02));border:1px solid var(--line2,rgba(255,255,255,.1));box-shadow:0 6px 18px -6px var(--accent-soft,rgba(229,72,77,.5)),inset 0 1px 0 rgba(255,255,255,.08)}
+.app-header .brand-name{font-size:17px;font-weight:700;letter-spacing:-.2px;line-height:1;align-self:end}
+.app-header .brand-by{font-size:9px;letter-spacing:2px;line-height:1;align-self:start;display:flex;align-items:center;gap:6px}
+.app-header .brand-by::before{content:"";width:12px;height:1.5px;border-radius:2px;background:var(--accent)}
