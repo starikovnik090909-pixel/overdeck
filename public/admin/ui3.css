@@ -905,3 +905,7 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-cn .chr-rings{position:absolute;top:18px;right:18px}.chr-cnb{padding-right:170px}
 .chr-rv .chr-rings{position:absolute;top:22px;right:22px}.chr-rvb{padding-right:170px}
 @media (max-width:640px){.chr-cn .chr-rings,.chr-rv .chr-rings{position:static}.chr-cnb,.chr-rvb{padding-right:0}}
+.chr-chatopt{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-secondary);cursor:pointer}
+.chr-list.v-table.no-chat .chr-th,.chr-list.v-table.no-chat .chr-tr{grid-template-columns:48px minmax(0,1.3fr) minmax(0,1fr) 168px minmax(0,1.9fr)}
+.chr-row-stars .field[hidden]{display:none}
+@media (max-width:900px){.chr-list.v-table.no-chat .chr-tr{grid-template-columns:48px minmax(0,1fr)}}

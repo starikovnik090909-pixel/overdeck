@@ -7,7 +7,7 @@
   const NOUN = { game: ['игра', 'игры', 'игр'], movie: ['фильм', 'фильма', 'фильмов'] };
   const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return f[a > 10 && a < 20 ? 2 : b > 1 && b < 5 ? 1 : b === 1 ? 0 : 2]; };
   const fmt = (n) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','));
-  const KEY = 'ovChrTab', VKEY = 'ovChrView';
+  const KEY = 'ovChrTab', VKEY = 'ovChrView', CKEY = 'ovChrChat';
   const VIEWS = [
     ['poster', 'Постеры'], ['row', 'Лента'], ['cine', 'Кино'], ['review', 'Рецензии'], ['table', 'Таблица'], ['duo', 'Две колонки'],
   ];
@@ -17,6 +17,7 @@
   let sources = {}; let syncedTab = {}; let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
   const sv = { rating: null, chatRating: null };
   if (['game', 'movie'].includes(lsGet(KEY))) tab = lsGet(KEY);
+  let showChat = lsGet(CKEY) !== '0';
   if (VIEWS.some((v) => v[0] === lsGet(VKEY))) view = lsGet(VKEY);
 
   const saved = (t, k) => { const el = $('chrSaved'); el.textContent = t; el.className = 'ui3-saved' + (k ? ' ' + k : ''); if (t && k === 'ok') setTimeout(() => { if (el.textContent === t) el.textContent = ''; }, 2500); };
@@ -68,7 +69,7 @@
     const best = rated.length ? Math.max(...rated.map((it) => it.rating)) : null;
     const cells = [[mine.length, plural(mine.length, NOUN[tab]) + ' в журнале']];
     if (avgOf('rating') != null) cells.push([fmt(avgOf('rating')), 'моя средняя']);
-    if (avgOf('chatRating') != null) cells.push([fmt(avgOf('chatRating')), 'средняя чата']);
+    if (showChat && avgOf('chatRating') != null) cells.push([fmt(avgOf('chatRating')), 'средняя чата']);
     if (best != null) cells.push([fmt(best) + '/10', 'лучшая оценка']);
     if (tab === 'game') { const h = mine.reduce((s, it) => s + (it.hours || 0), 0); if (h) cells.push([fmt(Math.round(h * 10) / 10) + ' ч', 'всего наиграно']); }
     $('chrStats').innerHTML = cells.map((c) => '<div class="chr-stat"><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>').join('');
@@ -87,7 +88,7 @@
     const cls = !ok ? 'none' : n >= 9 ? 'top' : n >= 7 ? 'good' : n >= 5 ? 'mid' : 'bad';
     return '<div class="chr-rg"><div class="chr-ring ' + cls + '" style="--p:' + n * 10 + ';--s:' + s + 'px" title="' + (ok ? esc(fmt(n)) + ' из 10' : 'Без оценки') + '"><b>' + (ok ? esc(fmt(n)) : '—') + '</b></div>' + (lbl ? '<span>' + lbl + '</span>' : '') + '</div>';
   };
-  const rings = (it, big) => '<div class="chr-rings">' + ring(it.rating, big, 'Я') + (it.chatRating != null ? ring(it.chatRating, Math.round(big * 0.7), 'Чат') : '') + '</div>';
+  const rings = (it, big) => '<div class="chr-rings">' + ring(it.rating, big) + '</div>';
   const badge = (it) => '<div class="chr-rate ' + ratingClass(it.rating) + '" title="Моя оценка">' + (it.rating == null ? '—' : '★ ' + esc(fmt(it.rating))) + '</div>';
 
   function parts(it) {
@@ -112,7 +113,7 @@
 
   function card(it) {
     const p = parts(it); const id = ' data-id="' + esc(it.id) + '"';
-    const rl = ratingLine('Я', it.rating) + ratingLine('Чат', it.chatRating);
+    const rl = ratingLine('Я', it.rating) + (showChat ? ratingLine('Чат', it.chatRating) : '');
     if (view === 'poster') {
       return '<article class="chr-it chr-pv"' + id + '>' + posterImg(it) + '<div class="chr-pr">' + ring(it.rating, 46) + '</div>' + acts +
         '<div class="chr-ov"><div class="chr-meta">' + (p.meta || '&nbsp;') + '</div><h3 class="chr-title">' + esc(it.title) + '</h3>' + rl +
@@ -124,13 +125,13 @@
         '<div class="chr-tt"><h3 class="chr-title">' + esc(it.title) + '</h3><div class="chr-meta">' + esc([it.year, it.type === 'game' && it.hours != null ? fmt(it.hours) + ' ч' : ''].filter(Boolean).join(' · ')) + '</div></div>' +
         '<div class="chr-chips">' + (it.genres || []).map((g) => '<span class="chr-chip">' + esc(g) + '</span>').join('') + '</div>' +
         '<div class="chr-tc">' + stars(it.rating) + '<b>' + (it.rating == null ? '—' : esc(fmt(it.rating))) + '</b></div>' +
-        '<div class="chr-tc">' + stars(it.chatRating) + '<b>' + (it.chatRating == null ? '—' : esc(fmt(it.chatRating))) + '</b></div>' +
+        (showChat ? '<div class="chr-tc">' + stars(it.chatRating) + '<b>' + (it.chatRating == null ? '—' : esc(fmt(it.chatRating))) + '</b></div>' : '') +
         '<div class="chr-tcm" data-a="more" title="Нажми, чтобы развернуть">' + esc(it.comment || '') + '</div>' + acts + '</article>';
     }
     if (view === 'review') {
       return '<article class="chr-it chr-rv"' + id + '><div class="chr-rvp">' + posterImg(it) + '</div><div class="chr-rvb">' +
         '<div class="chr-rvh"><div><div class="chr-meta">' + (it.type === 'game' ? 'Игра' : 'Фильм') + (p.meta ? ' · ' + p.meta : '') + '</div><h3 class="chr-title">' + esc(it.title) + '</h3></div>' + rings(it, 72) + '</div>' +
-        '<div class="chr-rvr">' + ratingLine('Моя оценка', it.rating) + ratingLine('Оценка чата', it.chatRating) + '</div>' +
+        '<div class="chr-rvr">' + ratingLine('Моя оценка', it.rating) + (showChat ? ratingLine('Оценка чата', it.chatRating) : '') + '</div>' +
         (it.comment ? '<blockquote class="chr-quote">' + esc(it.comment) + '</blockquote>' : '') + p.chips + p.by + p.link + '</div>' + acts + '</article>';
     }
     if (view === 'duo') {
@@ -165,7 +166,11 @@
   }
 
   function renderViews() {
-    $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + VIEWS.map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('');
+    $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + VIEWS.map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('') +
+      '<label class="chr-chatopt" title="Показывать оценку чата в списке и в форме"><input type="checkbox" id="chrShowChat"' + (showChat ? ' checked' : '') + '> Оценка чата</label>';
+    const o = $('chrSort').querySelector('option[value="chat"]'); if (o) { o.hidden = !showChat; o.disabled = !showChat; }
+    if (!showChat && $('chrSort').value === 'chat') $('chrSort').value = 'new';
+    $('chrChatS').closest('.field').hidden = !showChat;
   }
 
   function render() {
@@ -176,8 +181,8 @@
     $('chrSync').hidden = !sources[tab];
     const list = visible();
     const g = $('chrGrid');
-    g.className = 'chr-list v-' + view;
-    g.innerHTML = (view === 'table' && list.length ? '<div class="chr-th"><span></span><span>Название</span><span>Жанр</span><span>Я</span><span>Чат</span><span>Рецензия</span></div>' : '') + list.map(card).join('');
+    g.className = 'chr-list v-' + view + (showChat ? '' : ' no-chat');
+    g.innerHTML = (view === 'table' && list.length ? '<div class="chr-th"><span></span><span>Название</span><span>Жанр</span><span>Я</span>' + (showChat ? '<span>Чат</span>' : '') + '<span>Рецензия</span></div>' : '') + list.map(card).join('');
     const e = $('chrEmpty');
     if (!list.length) {
       e.hidden = false;
@@ -384,6 +389,7 @@
   $('chrPosterUrl').addEventListener('change', (e) => { const u = e.target.value.trim(); if (/^https?:\/\//i.test(u)) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; showPoster(u); } });
   $('chrPosterDel').addEventListener('click', () => { posterFile = null; posterCleared = true; $('chrPosterFile').value = ''; $('chrPosterUrl').value = ''; showPoster(''); });
   $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; tab = s.dataset.t; lsSet(KEY, tab); render(); autoSync(); });
+  $('chrViews').addEventListener('change', (e) => { if (e.target.id === 'chrShowChat') { showChat = e.target.checked; lsSet(CKEY, showChat ? '1' : '0'); render(); } });
   $('chrViews').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; lsSet(VKEY, view); render(); });
   ['input', 'change'].forEach((ev) => ['chrSearch', 'chrOrigin', 'chrGenre', 'chrRatingF', 'chrSort'].forEach((id) => $(id).addEventListener(ev, render)));
   $('chrGrid').addEventListener('click', (e) => {
