@@ -864,3 +864,19 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-posterurl{width:100%;box-sizing:border-box;height:32px;padding:0 10px;border-radius:8px;border:1px solid var(--line2);background:var(--bg-card2);color:var(--text-primary);font:inherit;font-size:12px}
 @media (max-width:900px){.chr-th{display:none}.chr-tr{grid-template-columns:48px minmax(0,1fr)}.chr-tr>.chr-chips,.chr-tr>.chr-tc,.chr-tr>.chr-tcm{grid-column:2}}
 @media (max-width:640px){.chr-rw,.chr-cn,.chr-rv{flex-direction:column}.chr-rwp,.chr-cnp,.chr-rvp{width:130px}.chr-rwb,.chr-cnb,.chr-rvb{padding-right:0}.chr-list.v-duo{grid-template-columns:1fr}.chr-row-stars{grid-template-columns:1fr}}
+
+/* Хроники: импорт */
+.chr-dlg-sm{width:min(640px,100%)}
+.chr-imp{padding:20px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.chr-imp-hint{margin:0;font-size:13px;line-height:1.5;color:var(--text-secondary)}
+.chr-imp-line{display:flex;align-items:center;gap:12px;font-size:13px;color:var(--text-secondary)}
+.chr-imp-row{display:flex;gap:8px}.chr-imp-row input{flex:1;min-width:0}
+.chr-imp-or{text-align:center;font-size:12px;color:var(--text-mute)}
+.chr-imp-src{font-size:12.5px;color:var(--text-secondary);padding:10px 12px;border-radius:10px;background:var(--bg-card2);border:1px solid var(--divider)}
+.chr-imp-src a{color:var(--accent2)}
+.chr-imp-map{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.chr-imp-map label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-secondary)}
+.chr-imp-map select{height:34px;border-radius:8px;border:1px solid var(--line2);background:var(--bg-card2);color:var(--text-primary);font:inherit;font-size:13px;padding:0 8px;min-width:0}
+.chr-imp-sample{font-size:12px;color:var(--text-secondary);line-height:1.5;overflow-wrap:anywhere}.chr-imp-sample b{color:var(--text-primary);font-weight:600}
+.chr-check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-primary);cursor:pointer}
+#chrSync[hidden],.chr-check[hidden],.chr-imp [hidden]{display:none!important}

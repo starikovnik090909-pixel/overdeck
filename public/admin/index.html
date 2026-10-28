@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=32">
+<link rel="stylesheet" href="ui3.css?v=34">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1136,7 +1136,7 @@
 
     <section class="tab-section" id="tab-chronicles">
       <div class="page-head"><div><h1 class="tab-title">Хроники</h1><p class="tab-description">Журнал пройденных игр и просмотренных фильмов: постер, оценка, кто заказал и твой комментарий.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="chrSaved"></span><button class="btn btn-primary" id="chrAdd" type="button">+ Добавить</button></div></div>
+        <div class="page-actions"><span class="ui3-saved" id="chrSaved"></span><button class="btn btn-secondary" id="chrSync" type="button" hidden title="Подтянуть новые записи из подключённой таблицы">↻ Синхронизировать</button><button class="btn btn-secondary" id="chrImport" type="button">Импорт</button><button class="btn btn-primary" id="chrAdd" type="button">+ Добавить</button></div></div>
       <div class="ui3-tabs" id="chrTabs"><span class="on" data-t="game">Игры <i id="chrCntGame"></i></span><span data-t="movie">Фильмы <i id="chrCntMovie"></i></span></div>
       <div class="chr-stats" id="chrStats"></div>
       <div class="chr-toolbar">
@@ -1194,6 +1194,30 @@
             </div>
           </div>
           <div class="chr-dlg-foot"><span class="form-message" id="chrMsg"></span><button class="btn btn-secondary" id="chrCancel" type="button">Отмена</button><button class="btn btn-primary" id="chrSave" type="button">Сохранить</button></div>
+        </div>
+      </div>
+      <div class="chr-modal" id="chrImpModal" hidden>
+        <div class="chr-dlg chr-dlg-sm" role="dialog" aria-modal="true" aria-labelledby="chrImpTitle">
+          <div class="chr-dlg-head"><h2 id="chrImpTitle">Импорт списка</h2><button class="chr-x" id="chrImpClose" type="button" aria-label="Закрыть">✕</button></div>
+          <div class="chr-imp">
+            <div id="chrImpStep1">
+              <p class="chr-imp-hint">Подключи свою таблицу — админка сама возьмёт из неё записи. Подойдёт Google Таблица (с доступом «по ссылке») или файл CSV / JSON. Колонки определятся автоматически.</p>
+              <div class="chr-imp-line"><span>Это список:</span><div class="chr-seg" id="chrImpType"><button type="button" data-v="game">Игры</button><button type="button" data-v="movie">Фильмы</button></div></div>
+              <div class="field"><label for="chrImpUrl">Ссылка на Google Таблицу</label>
+                <div class="chr-imp-row"><input type="url" id="chrImpUrl" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off"><button class="btn btn-primary" id="chrImpGo" type="button">Загрузить</button></div></div>
+              <div class="chr-imp-or">или</div>
+              <label class="btn btn-secondary chr-file">Выбрать файл (CSV, JSON)<input type="file" id="chrImpFile" accept=".csv,.tsv,.txt,.json,text/csv,application/json" hidden></label>
+              <div class="chr-imp-src" id="chrImpSrc" hidden></div>
+            </div>
+            <div id="chrImpStep2" hidden>
+              <p id="chrImpFound" class="chr-imp-hint"></p>
+              <div class="chr-imp-map" id="chrImpMap"></div>
+              <div class="chr-imp-sample" id="chrImpSample"></div>
+              <label class="chr-check"><input type="checkbox" id="chrImpRev" checked> В таблице новые записи внизу</label>
+              <label class="chr-check" id="chrImpRemWrap"><input type="checkbox" id="chrImpRem" checked> Запомнить таблицу и подтягивать новые записи автоматически</label>
+            </div>
+          </div>
+          <div class="chr-dlg-foot"><span class="form-message" id="chrImpMsg"></span><button class="btn btn-secondary" id="chrImpBack" type="button" hidden>Назад</button><button class="btn btn-primary" id="chrImpRun" type="button" hidden>Импортировать</button></div>
         </div>
       </div>
     </section>
@@ -3383,7 +3407,7 @@
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
-<script src="chronicles.js?v=3"></script>
+<script src="chronicles.js?v=4"></script>
 <script src="whatsnew.js?v=19"></script>
 </body>
 </html>

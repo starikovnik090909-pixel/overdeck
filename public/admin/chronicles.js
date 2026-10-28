@@ -14,7 +14,7 @@
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
-  let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
+  let sources = {}; let syncedTab = {}; let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
   const sv = { rating: null, chatRating: null };
   if (['game', 'movie'].includes(lsGet(KEY))) tab = lsGet(KEY);
   if (VIEWS.some((v) => v[0] === lsGet(VKEY))) view = lsGet(VKEY);
@@ -27,7 +27,7 @@
     return d;
   }
   async function load() {
-    try { items = (await api('/api/chronicles')).items || []; loaded = true; render(); }
+    try { const d = await api('/api/chronicles'); items = d.items || []; sources = d.sources || {}; loaded = true; render(); autoSync(); }
     catch (e) { $('chrEmpty').hidden = false; $('chrEmpty').textContent = 'Не удалось загрузить: ' + e.message; }
   }
 
@@ -167,6 +167,7 @@
     $('chrCntMovie').textContent = items.filter((it) => it.type === 'movie').length;
     sec.querySelectorAll('#chrTabs span').forEach((s) => s.classList.toggle('on', s.dataset.t === tab));
     fillSelects(); renderStats(); renderViews();
+    $('chrSync').hidden = !sources[tab];
     const list = visible();
     const g = $('chrGrid');
     g.className = 'chr-list v-' + view;
@@ -264,7 +265,102 @@
     catch (e) { saved(e.message, ''); }
   }
 
+
+  /* ---------- импорт / синхронизация ---------- */
+  const imp = { token: '', url: '', headers: [], mapping: {}, labels: {}, sample: [], type: 'game' };
+  const impMsg = (t, k) => { $('chrImpMsg').textContent = t || ''; $('chrImpMsg').className = 'form-message' + (k ? ' ' + k : ''); };
+  const post = (url, body) => api(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+  function impStep(n) {
+    $('chrImpStep1').hidden = n !== 1; $('chrImpStep2').hidden = n !== 2;
+    $('chrImpBack').hidden = n !== 2; $('chrImpRun').hidden = n !== 2;
+    $('chrImpRemWrap').hidden = !imp.url;
+  }
+  function impType(t) { imp.type = t; $('chrImpType').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === t)); showSrc(); }
+  function showSrc() {
+    const el = $('chrImpSrc'); const s = sources[imp.type];
+    if (!s) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = 'Подключена таблица для ' + (imp.type === 'game' ? 'игр' : 'фильмов') + ': <a href="' + esc(s.url) + '" target="_blank" rel="noopener noreferrer">открыть</a> · <button type="button" class="btn-tiny" id="chrImpForget">Отключить</button>';
+    $('chrImpForget').addEventListener('click', async () => {
+      try { sources = (await api('/api/chronicles/source/' + imp.type, { method: 'DELETE' })).sources || {}; showSrc(); render(); } catch (e) { impMsg(e.message, 'error'); }
+    });
+  }
+  function openImport() {
+    imp.token = ''; imp.url = '';
+    $('chrImpUrl').value = ''; $('chrImpFile').value = ''; impMsg('');
+    impType(tab); impStep(1);
+    $('chrImpModal').hidden = false;
+  }
+  function renderMap() {
+    const opts = (cur) => '<option value="">— не брать —</option>' + imp.headers.map((h) => '<option' + (h === cur ? ' selected' : '') + '>' + esc(h) + '</option>').join('');
+    $('chrImpMap').innerHTML = Object.keys(imp.labels).map((f) => '<label><span>' + esc(imp.labels[f]) + (f === 'title' ? ' *' : '') + '</span><select data-f="' + f + '">' + opts(imp.mapping[f]) + '</select></label>').join('');
+    renderSample();
+  }
+  function renderSample() {
+    const row = imp.sample[0] || [];
+    const parts = Object.keys(imp.mapping).filter((f) => imp.mapping[f]).map((f) => { const v = row[imp.headers.indexOf(imp.mapping[f])]; return v ? esc(imp.labels[f]) + ': <b>' + esc(String(v).slice(0, 40)) + '</b>' : ''; }).filter(Boolean);
+    $('chrImpSample').innerHTML = parts.length ? 'Первая строка: ' + parts.join(' · ') : '';
+  }
+  function applyPreview(d, url) {
+    Object.assign(imp, { token: d.token, headers: d.headers, mapping: d.mapping || {}, labels: d.labels || {}, sample: d.sample || [], url: url || '' });
+    $('chrImpFound').textContent = 'Найдено строк: ' + d.total + '. Проверь, что колонки определились верно.';
+    renderMap(); impStep(2); impMsg('');
+  }
+  async function impLoadUrl() {
+    const url = $('chrImpUrl').value.trim(); if (!url) { impMsg('Вставь ссылку на таблицу.', 'error'); return; }
+    impMsg('Загружаем…'); $('chrImpGo').disabled = true;
+    try { applyPreview(await post('/api/chronicles/source/preview', { url }), url); } catch (e) { impMsg(e.message, 'error'); }
+    $('chrImpGo').disabled = false;
+  }
+  async function impLoadFile(f) {
+    if (!f) return;
+    if (f.size > 8 * 1024 * 1024) { impMsg('Файл больше 8 МБ.', 'error'); return; }
+    impMsg('Читаем файл…');
+    try { applyPreview(await post('/api/chronicles/source/preview', { text: await f.text() }), ''); } catch (e) { impMsg(e.message, 'error'); }
+  }
+  function reloadSoon(n) { if (n) [3000, 9000, 20000].forEach((ms) => setTimeout(() => { if (loaded) load(); }, ms)); }
+  async function impRun() {
+    const mapping = {}; $('chrImpMap').querySelectorAll('select').forEach((s) => { if (s.value) mapping[s.dataset.f] = s.value; });
+    if (!mapping.title) { impMsg('Выбери колонку с названием.', 'error'); return; }
+    impMsg('Импортируем…'); $('chrImpRun').disabled = true;
+    try {
+      const d = await post('/api/chronicles/source/import', { token: imp.token, type: imp.type, mapping, reverse: $('chrImpRev').checked, remember: !!imp.url && $('chrImpRem').checked, url: imp.url });
+      sources = d.sources || sources; tab = imp.type; lsSet(KEY, tab);
+      $('chrImpModal').hidden = true;
+      await load(); reloadSoon(d.posters);
+      saved('Добавлено: ' + d.added + (d.skipped ? ', пропущено (уже есть): ' + d.skipped : '') + (d.posters ? ' · обложки подгружаются' : ''), 'ok');
+    } catch (e) { impMsg(e.message, 'error'); }
+    $('chrImpRun').disabled = false;
+  }
+  async function syncNow(silent) {
+    const t = tab; if (!sources[t]) return;
+    if (!silent) saved('Синхронизируем…', '');
+    try {
+      const d = await post('/api/chronicles/source/sync', { type: t });
+      sources = d.sources || sources;
+      if (d.added) { await load(); reloadSoon(d.posters); }
+      saved(d.added ? 'Из таблицы добавлено: ' + d.added : (silent ? '' : 'Новых записей нет'), d.added || !silent ? 'ok' : '');
+    } catch (e) { if (!silent) saved(e.message, ''); }
+  }
+  function autoSync() {
+    const s = sources[tab];
+    if (!s || syncedTab[tab] || Date.now() - (s.at || 0) < 10 * 60 * 1000) return;
+    syncedTab[tab] = true; syncNow(true);
+  }
+
   /* ---------- события ---------- */
+  $('chrImport').addEventListener('click', openImport);
+  $('chrSync').addEventListener('click', () => syncNow(false));
+  $('chrImpClose').addEventListener('click', () => { $('chrImpModal').hidden = true; });
+  $('chrImpModal').addEventListener('mousedown', (e) => { if (e.target === $('chrImpModal')) $('chrImpModal').hidden = true; });
+  $('chrImpType').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) impType(b.dataset.v); });
+  $('chrImpGo').addEventListener('click', impLoadUrl);
+  $('chrImpUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); impLoadUrl(); } });
+  $('chrImpFile').addEventListener('change', (e) => impLoadFile(e.target.files && e.target.files[0]));
+  $('chrImpBack').addEventListener('click', () => { impStep(1); impMsg(''); });
+  $('chrImpRun').addEventListener('click', impRun);
+  $('chrImpMap').addEventListener('change', (e) => { const s = e.target.closest('select'); if (!s) return; if (s.value) imp.mapping[s.dataset.f] = s.value; else delete imp.mapping[s.dataset.f]; renderSample(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('chrImpModal').hidden) $('chrImpModal').hidden = true; });
   buildStarInput($('chrRatingS')); buildStarInput($('chrChatS'));
   $('chrAdd').addEventListener('click', () => openForm(null));
   $('chrClose').addEventListener('click', closeForm);
@@ -281,7 +377,7 @@
   });
   $('chrPosterUrl').addEventListener('change', (e) => { const u = e.target.value.trim(); if (/^https?:\/\//i.test(u)) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; showPoster(u); } });
   $('chrPosterDel').addEventListener('click', () => { posterFile = null; posterCleared = true; $('chrPosterFile').value = ''; $('chrPosterUrl').value = ''; showPoster(''); });
-  $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; tab = s.dataset.t; lsSet(KEY, tab); render(); });
+  $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; tab = s.dataset.t; lsSet(KEY, tab); render(); autoSync(); });
   $('chrViews').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; lsSet(VKEY, view); render(); });
   ['input', 'change'].forEach((ev) => ['chrSearch', 'chrOrigin', 'chrGenre', 'chrRatingF', 'chrSort'].forEach((id) => $(id).addEventListener(ev, render)));
   $('chrGrid').addEventListener('click', (e) => {

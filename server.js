@@ -1080,6 +1080,33 @@ app.post('/api/key/channel', express.json({ limit: '10kb' }), (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
+// ---------- Хроники: подключение таблицы (до общего express.json(): у файла свой лимит) ----------
+const chrJson = express.json({ limit: '10mb' });
+const chrFail = (res, e) => res.status(400).json({ success: false, error: (e && e.message) || 'Не удалось выполнить.' });
+app.post('/api/chronicles/source/preview', chrJson, async (req, res) => {
+  try {
+    const b = req.body || {};
+    const text = b.url ? await chronicles.fetchSheet(b.url) : String(b.text || '');
+    const r = chronicles.previewTable(text);
+    if (r.error) return res.status(400).json({ success: false, error: r.error });
+    res.json({ success: true, ...r });
+  } catch (e) { chrFail(res, e); }
+});
+app.post('/api/chronicles/source/import', chrJson, (req, res) => {
+  const b = req.body || {};
+  const r = chronicles.importPreviewed(b.token, b.type, b.mapping, b.reverse, b.remember ? String(b.url || '') : '');
+  if (r.error) return res.status(400).json({ success: false, error: r.error });
+  res.json({ success: true, ...r, sources: chronicles.sourcesInfo() });
+});
+app.post('/api/chronicles/source/sync', chrJson, async (req, res) => {
+  try {
+    const r = await chronicles.sync((req.body || {}).type);
+    if (r.error) return res.status(400).json({ success: false, error: r.error });
+    res.json({ success: true, ...r, sources: chronicles.sourcesInfo() });
+  } catch (e) { chrFail(res, e); }
+});
+app.delete('/api/chronicles/source/:type', (req, res) => { chronicles.forgetSource(req.params.type); res.json({ success: true, sources: chronicles.sourcesInfo() }); });
+
 app.use(express.json());
 
 // Тестовый вход для автотестов (только при OVERLAY_TEST=1; в обычной работе маршрута нет): подставляет сообщение так, как будто оно пришло из чата Twitch.
@@ -1530,14 +1557,11 @@ const chroniclesUpload = multer({
   fileFilter: (req, file, cb) => cb(null, ['.png', '.jpg', '.jpeg', '.webp'].includes(path.extname(file.originalname).toLowerCase())),
   limits: { fileSize: 8 * 1024 * 1024 },
 });
-app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list() }));
+app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list(), sources: chronicles.sourcesInfo() }));
 app.post('/api/chronicles', (req, res) => {
   const r = chronicles.save(req.body || {});
   if (!r.ok) return res.status(400).json({ success: false, error: r.error });
   res.json({ success: true, item: r.item });
-});
-app.post('/api/chronicles/import', express.json({ limit: '5mb' }), (req, res) => {
-  res.json({ success: true, ...chronicles.importMany((req.body || {}).items) });
 });
 app.post('/api/chronicles/:id/poster', (req, res) => {
   chroniclesUpload.single('poster')(req, res, (err) => {
@@ -1550,25 +1574,14 @@ app.post('/api/chronicles/:id/poster', (req, res) => {
 });
 // Постер по ссылке: скачиваем картинку на сервер (только http/https, не локальные адреса, до 8 МБ)
 app.post('/api/chronicles/:id/poster-url', async (req, res) => {
+  let name = '';
   try {
-    const u = new URL(String((req.body || {}).url || '').trim());
-    const host = u.hostname.toLowerCase();
-    if (!/^https?:$/.test(u.protocol) || host === 'localhost' || host.endsWith('.local') || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[?::1)/.test(host)) {
-      return res.status(400).json({ success: false, error: 'Нужна обычная ссылка на картинку (http/https).' });
-    }
-    const r = await fetch(u, { redirect: 'follow', signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'Mozilla/5.0 Overdeck' } });
-    const type = String(r.headers.get('content-type') || '').toLowerCase();
-    const ext = type.includes('png') ? '.png' : type.includes('webp') ? '.webp' : type.includes('jpeg') || type.includes('jpg') ? '.jpg' : '';
-    if (!r.ok || !ext) return res.status(400).json({ success: false, error: 'По ссылке не картинка (PNG, JPG или WebP).' });
-    const buf = Buffer.from(await r.arrayBuffer());
-    if (buf.length > 8 * 1024 * 1024) return res.status(400).json({ success: false, error: 'Картинка больше 8 МБ.' });
-    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-    fs.writeFileSync(path.join(chronicles.POSTERS_DIR, name), buf);
+    name = await chronicles.downloadPoster((req.body || {}).url);
     const item = chronicles.setPoster(req.params.id, name);
     if (!item) { try { fs.unlinkSync(path.join(chronicles.POSTERS_DIR, name)); } catch (e) {} return res.status(404).json({ success: false, error: 'Запись не найдена.' }); }
     res.json({ success: true, item });
   } catch (e) {
-    res.status(400).json({ success: false, error: 'Не удалось скачать картинку: ' + (e.name === 'TimeoutError' ? 'долго отвечает сайт.' : 'проверь ссылку.') });
+    res.status(400).json({ success: false, error: e.name === 'TimeoutError' ? 'Не удалось скачать картинку: сайт долго отвечает.' : (e.message && !/fetch failed|Invalid URL/i.test(e.message) ? e.message : 'Не удалось скачать картинку: проверь ссылку.') });
   }
 });
 app.delete('/api/chronicles/:id', (req, res) => {
