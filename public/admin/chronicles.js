@@ -14,7 +14,7 @@
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
-  let items = []; let tab = 'game'; let view = 'poster'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
+  let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
   const sv = { rating: null, chatRating: null };
   if (['game', 'movie'].includes(lsGet(KEY))) tab = lsGet(KEY);
   if (VIEWS.some((v) => v[0] === lsGet(VKEY))) view = lsGet(VKEY);
