@@ -1548,6 +1548,29 @@ app.post('/api/chronicles/:id/poster', (req, res) => {
     res.json({ success: true, item });
   });
 });
+// Постер по ссылке: скачиваем картинку на сервер (только http/https, не локальные адреса, до 8 МБ)
+app.post('/api/chronicles/:id/poster-url', async (req, res) => {
+  try {
+    const u = new URL(String((req.body || {}).url || '').trim());
+    const host = u.hostname.toLowerCase();
+    if (!/^https?:$/.test(u.protocol) || host === 'localhost' || host.endsWith('.local') || /^(127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|0\.|\[?::1)/.test(host)) {
+      return res.status(400).json({ success: false, error: 'Нужна обычная ссылка на картинку (http/https).' });
+    }
+    const r = await fetch(u, { redirect: 'follow', signal: AbortSignal.timeout(15000), headers: { 'User-Agent': 'Mozilla/5.0 Overdeck' } });
+    const type = String(r.headers.get('content-type') || '').toLowerCase();
+    const ext = type.includes('png') ? '.png' : type.includes('webp') ? '.webp' : type.includes('jpeg') || type.includes('jpg') ? '.jpg' : '';
+    if (!r.ok || !ext) return res.status(400).json({ success: false, error: 'По ссылке не картинка (PNG, JPG или WebP).' });
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 8 * 1024 * 1024) return res.status(400).json({ success: false, error: 'Картинка больше 8 МБ.' });
+    const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+    fs.writeFileSync(path.join(chronicles.POSTERS_DIR, name), buf);
+    const item = chronicles.setPoster(req.params.id, name);
+    if (!item) { try { fs.unlinkSync(path.join(chronicles.POSTERS_DIR, name)); } catch (e) {} return res.status(404).json({ success: false, error: 'Запись не найдена.' }); }
+    res.json({ success: true, item });
+  } catch (e) {
+    res.status(400).json({ success: false, error: 'Не удалось скачать картинку: ' + (e.name === 'TimeoutError' ? 'долго отвечает сайт.' : 'проверь ссылку.') });
+  }
+});
 app.delete('/api/chronicles/:id', (req, res) => {
   if (!chronicles.remove(req.params.id)) return res.status(404).json({ success: false, error: 'Запись не найдена.' });
   res.json({ success: true });

@@ -18,6 +18,16 @@ function num(v, min, max) {
   const n = Number(String(v).replace(',', '.'));
   return Number.isFinite(n) ? Math.min(max, Math.max(min, Math.round(n * 10) / 10)) : null;
 }
+/** Оценка в звёздах: 0..10 с шагом 0.5. */
+function stars(v) {
+  if (v === '' || v == null) return null;
+  const n = Number(String(v).replace(',', '.'));
+  return Number.isFinite(n) ? Math.min(10, Math.max(0, Math.round(n * 2) / 2)) : null;
+}
+function strList(v, max, len) {
+  const arr = typeof v === 'string' ? v.split(',') : v;
+  return (Array.isArray(arr) ? arr : []).map((t) => str(t, len)).filter(Boolean).slice(0, max);
+}
 function cleanLink(v) {
   const s = str(v, 500);
   return /^https?:\/\//i.test(s) ? s : '';
@@ -35,9 +45,8 @@ function sanitize(raw, prev) {
   const type = has('type') ? (TYPES.includes(r.type) ? r.type : p.type || 'movie') : (p.type || 'movie');
   const title = has('title') ? str(r.title, 200) : p.title || '';
   if (!title) return { error: 'Укажи название.' };
-  let tags = has('tags') ? r.tags : p.tags;
-  if (typeof tags === 'string') tags = tags.split(',');
-  tags = (Array.isArray(tags) ? tags : []).map((t) => str(t, 30)).filter(Boolean).slice(0, 6);
+  const tags = strList(has('tags') ? r.tags : p.tags, 6, 30);
+  const genres = strList(has('genres') ? r.genres : p.genres, 6, 30);
   return {
     item: {
       id: p.id || crypto.randomBytes(6).toString('hex'),
@@ -51,6 +60,8 @@ function sanitize(raw, prev) {
       hours: type === 'game' ? (has('hours') ? num(r.hours, 0, 99999) : p.hours == null ? null : p.hours) : null,
       extra: has('extra') ? str(r.extra, 80) : p.extra || '',
       tags,
+      genres,
+      chatRating: has('chatRating') ? stars(r.chatRating) : p.chatRating == null ? null : p.chatRating,
       comment: has('comment') ? str(r.comment, 4000) : p.comment || '',
       link: has('link') ? cleanLink(r.link) : p.link || '',
       poster: has('poster') ? cleanPoster(r.poster) : p.poster || '',

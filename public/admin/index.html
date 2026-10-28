@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=30">
+<link rel="stylesheet" href="ui3.css?v=32">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1140,14 +1140,21 @@
       <div class="ui3-tabs" id="chrTabs"><span class="on" data-t="game">Игры <i id="chrCntGame"></i></span><span data-t="movie">Фильмы <i id="chrCntMovie"></i></span></div>
       <div class="chr-stats" id="chrStats"></div>
       <div class="chr-toolbar">
-        <input type="search" id="chrSearch" class="chr-search" placeholder="Поиск по названию, комментарию, нику…" autocomplete="off">
+        <input type="search" id="chrSearch" class="chr-search" placeholder="Название, рецензия, ник…" autocomplete="off">
+        <select id="chrGenre" class="ui3-select" title="Жанр"></select>
+        <select id="chrRatingF" class="ui3-select" title="Моя оценка">
+          <option value="">Любая оценка</option><option value="9">9 ★ и выше</option><option value="8">8 ★ и выше</option><option value="7">7 ★ и выше</option>
+          <option value="mid">5–7 ★</option><option value="low">Ниже 5 ★</option><option value="none">Без оценки</option>
+        </select>
         <select id="chrOrigin" class="ui3-select" title="Откуда"></select>
         <select id="chrSort" class="ui3-select" title="Сортировка">
           <option value="new">Сначала новые</option><option value="old">Сначала старые</option>
-          <option value="rating">По оценке ↓</option><option value="ratingAsc">По оценке ↑</option>
+          <option value="rating">По моей оценке ↓</option><option value="ratingAsc">По моей оценке ↑</option>
+          <option value="chat">По оценке чата ↓</option>
           <option value="title">По названию</option><option value="hours">По времени ↓</option>
         </select>
       </div>
+      <div class="chr-views" id="chrViews" role="group" aria-label="Вид списка"></div>
       <div class="chr-grid" id="chrGrid"></div>
       <div class="chr-empty" id="chrEmpty" hidden></div>
 
@@ -1158,14 +1165,18 @@
             <div class="chr-poster-col">
               <div class="chr-poster-prev" id="chrPosterPrev"><span>Нет постера</span></div>
               <label class="btn btn-secondary chr-file">Выбрать постер<input type="file" id="chrPosterFile" accept="image/png,image/jpeg,image/webp" hidden></label>
+              <input type="url" id="chrPosterUrl" class="chr-posterurl" placeholder="…или ссылка на картинку" autocomplete="off">
               <button class="btn-tiny" id="chrPosterDel" type="button">Убрать</button>
             </div>
             <div class="chr-fields">
               <div class="chr-seg" id="chrType"><button type="button" data-v="game" class="on">Игра</button><button type="button" data-v="movie">Фильм</button></div>
               <div class="field"><label for="chrTitle">Название</label><input type="text" id="chrTitle" maxlength="200" autocomplete="off"></div>
+              <div class="chr-row chr-row-stars">
+                <div class="field"><label>Моя оценка <b class="chr-sv" id="chrRatingV">—</b></label><div class="chr-starin" id="chrRatingS" data-key="rating"></div></div>
+                <div class="field"><label>Оценка чата <b class="chr-sv" id="chrChatV">—</b></label><div class="chr-starin" id="chrChatS" data-key="chatRating"></div></div>
+              </div>
               <div class="chr-row">
                 <div class="field"><label for="chrYear">Год</label><input type="text" id="chrYear" maxlength="30" placeholder="2024" autocomplete="off"></div>
-                <div class="field"><label for="chrRating">Оценка (из 10)</label><input type="number" id="chrRating" min="0" max="99" step="0.5" placeholder="8"></div>
                 <div class="field" id="chrHoursWrap"><label for="chrHours">Часов</label><input type="number" id="chrHours" min="0" step="0.5" placeholder="12"></div>
               </div>
               <div class="chr-row">
@@ -1175,10 +1186,11 @@
               </div>
               <div class="chr-row">
                 <div class="field"><label for="chrExtra">Пометка</label><input type="text" id="chrExtra" maxlength="80" placeholder="3 прохождения" autocomplete="off"></div>
+                <div class="field"><label for="chrGenres">Жанры через запятую</label><input type="text" id="chrGenres" list="chrGenreList" maxlength="150" placeholder="Ужасы, Фантастика" autocomplete="off"><datalist id="chrGenreList"></datalist></div>
                 <div class="field"><label for="chrTags">Теги через запятую</label><input type="text" id="chrTags" maxlength="120" placeholder="Платина, Дроп" autocomplete="off"></div>
               </div>
               <div class="field"><label for="chrLink">Ссылка на запись стрима</label><input type="url" id="chrLink" maxlength="500" placeholder="https://" autocomplete="off"></div>
-              <div class="field"><label for="chrComment">Комментарий после прохождения</label><textarea id="chrComment" rows="5" maxlength="4000"></textarea></div>
+              <div class="field"><label for="chrComment">Рецензия</label><textarea id="chrComment" rows="5" maxlength="4000"></textarea></div>
             </div>
           </div>
           <div class="chr-dlg-foot"><span class="form-message" id="chrMsg"></span><button class="btn btn-secondary" id="chrCancel" type="button">Отмена</button><button class="btn btn-primary" id="chrSave" type="button">Сохранить</button></div>
@@ -3371,7 +3383,7 @@
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
-<script src="chronicles.js?v=1"></script>
+<script src="chronicles.js?v=2"></script>
 <script src="whatsnew.js?v=19"></script>
 </body>
 </html>
