@@ -82,6 +82,12 @@
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
   const posterImg = (it) => (it.poster ? '<img loading="lazy" alt="" src="' + posterUrl(it) + '">' : '<span class="chr-ph">' + esc((it.title || '?').trim().charAt(0).toUpperCase()) + '</span>');
   const acts = '<div class="chr-acts"><button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
+  const ring = (v, s, lbl) => {
+    const ok = v != null; const n = ok ? Math.min(10, v) : 0;
+    const cls = !ok ? 'none' : n >= 9 ? 'top' : n >= 7 ? 'good' : n >= 5 ? 'mid' : 'bad';
+    return '<div class="chr-rg"><div class="chr-ring ' + cls + '" style="--p:' + n * 10 + ';--s:' + s + 'px" title="' + (ok ? esc(fmt(n)) + ' из 10' : 'Без оценки') + '"><b>' + (ok ? esc(fmt(n)) : '—') + '</b></div>' + (lbl ? '<span>' + lbl + '</span>' : '') + '</div>';
+  };
+  const rings = (it, big) => '<div class="chr-rings">' + ring(it.rating, big, 'Я') + (it.chatRating != null ? ring(it.chatRating, Math.round(big * 0.7), 'Чат') : '') + '</div>';
   const badge = (it) => '<div class="chr-rate ' + ratingClass(it.rating) + '" title="Моя оценка">' + (it.rating == null ? '—' : '★ ' + esc(fmt(it.rating))) + '</div>';
 
   function parts(it) {
@@ -108,7 +114,7 @@
     const p = parts(it); const id = ' data-id="' + esc(it.id) + '"';
     const rl = ratingLine('Я', it.rating) + ratingLine('Чат', it.chatRating);
     if (view === 'poster') {
-      return '<article class="chr-it chr-pv"' + id + '>' + posterImg(it) + badge(it) + acts +
+      return '<article class="chr-it chr-pv"' + id + '>' + posterImg(it) + '<div class="chr-pr">' + ring(it.rating, 46) + '</div>' + acts +
         '<div class="chr-ov"><div class="chr-meta">' + (p.meta || '&nbsp;') + '</div><h3 class="chr-title">' + esc(it.title) + '</h3>' + rl +
         (it.comment ? '<p class="chr-comment clamp3" title="' + esc(it.comment) + '">' + esc(it.comment) + '</p>' : '') +
         (it.by ? '<div class="chr-by">' + p.by + '</div>' : '') + '</div></article>';
@@ -123,7 +129,7 @@
     }
     if (view === 'review') {
       return '<article class="chr-it chr-rv"' + id + '><div class="chr-rvp">' + posterImg(it) + '</div><div class="chr-rvb">' +
-        '<div class="chr-meta">' + (it.type === 'game' ? 'Игра' : 'Фильм') + (p.meta ? ' · ' + p.meta : '') + '</div><h3 class="chr-title">' + esc(it.title) + '</h3>' +
+        '<div class="chr-rvh"><div><div class="chr-meta">' + (it.type === 'game' ? 'Игра' : 'Фильм') + (p.meta ? ' · ' + p.meta : '') + '</div><h3 class="chr-title">' + esc(it.title) + '</h3></div>' + rings(it, 72) + '</div>' +
         '<div class="chr-rvr">' + ratingLine('Моя оценка', it.rating) + ratingLine('Оценка чата', it.chatRating) + '</div>' +
         (it.comment ? '<blockquote class="chr-quote">' + esc(it.comment) + '</blockquote>' : '') + p.chips + p.by + p.link + '</div>' + acts + '</article>';
     }
@@ -134,13 +140,13 @@
     }
     if (view === 'cine') {
       return '<article class="chr-it chr-cn"' + id + '><div class="chr-cnbg" style="background-image:url(\'' + posterUrl(it) + '\')"></div><div class="chr-cnp">' + posterImg(it) + '</div><div class="chr-cnb">' +
-        '<div class="chr-cnh"><h3 class="chr-title">' + esc(it.title) + '</h3>' + (it.rating != null ? '<span class="chr-big ' + ratingClass(it.rating) + '">' + esc(fmt(it.rating)) + '</span>' : '') + '</div>' +
+        '<div class="chr-cnh"><h3 class="chr-title">' + esc(it.title) + '</h3>' + rings(it, 72) + '</div>' +
         '<div class="chr-meta">' + (p.meta || '&nbsp;') + '</div>' + rl + p.comment(true) + p.chips + p.by + p.link + '</div>' + acts + '</article>';
     }
     // row — «Лента»
     return '<article class="chr-it chr-rw"' + id + '><div class="chr-rwp">' + posterImg(it) + '</div><div class="chr-rwb">' +
       '<div class="chr-rwh"><h3 class="chr-title">' + esc(it.title) + '</h3>' + p.by + '</div><div class="chr-meta">' + (p.meta || '&nbsp;') + '</div>' +
-      '<div class="chr-rls">' + rl + '</div>' + p.comment(true) + p.chips + p.link + '</div>' + acts + '</article>';
+      '<div class="chr-rls">' + rl + '</div>' + p.comment(true) + p.chips + p.link + '</div>' + rings(it, 64) + acts + '</article>';
   }
 
   function fillSelects() {
