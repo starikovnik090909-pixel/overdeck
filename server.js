@@ -35,6 +35,7 @@ const themes = require('./themes');
 const teamData = require('./teamData');
 const teamPresets = require('./teamPresets');
 const mvpData = require('./mvpData');
+const chronicles = require('./chronicles');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -632,6 +633,7 @@ helpTexts.init();
 teamData.init();
 teamPresets.init();
 mvpData.init();
+chronicles.init();
 factData.init();
 factPresets.init();
 fundData.init();
@@ -1513,6 +1515,43 @@ app.post('/api/team/presets/delete', (req, res) => {
 });
 
 // ---------- REST API: виджет "MVP матча" (заполняется вручную) ----------
+
+
+// ---------- Хроники: игры и фильмы ----------
+app.use('/uploads/chronicles', express.static(chronicles.POSTERS_DIR));
+const chroniclesUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, chronicles.POSTERS_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
+      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+    },
+  }),
+  fileFilter: (req, file, cb) => cb(null, ['.png', '.jpg', '.jpeg', '.webp'].includes(path.extname(file.originalname).toLowerCase())),
+  limits: { fileSize: 8 * 1024 * 1024 },
+});
+app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list() }));
+app.post('/api/chronicles', (req, res) => {
+  const r = chronicles.save(req.body || {});
+  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
+  res.json({ success: true, item: r.item });
+});
+app.post('/api/chronicles/import', express.json({ limit: '5mb' }), (req, res) => {
+  res.json({ success: true, ...chronicles.importMany((req.body || {}).items) });
+});
+app.post('/api/chronicles/:id/poster', (req, res) => {
+  chroniclesUpload.single('poster')(req, res, (err) => {
+    if (err) return res.status(400).json({ success: false, error: err.message });
+    if (!req.file) return res.status(400).json({ success: false, error: 'Нужна картинка PNG, JPG или WebP до 8 МБ.' });
+    const item = chronicles.setPoster(req.params.id, req.file.filename);
+    if (!item) { try { fs.unlinkSync(req.file.path); } catch (e) {} return res.status(404).json({ success: false, error: 'Запись не найдена.' }); }
+    res.json({ success: true, item });
+  });
+});
+app.delete('/api/chronicles/:id', (req, res) => {
+  if (!chronicles.remove(req.params.id)) return res.status(404).json({ success: false, error: 'Запись не найдена.' });
+  res.json({ success: true });
+});
 
 app.get('/api/mvp', (req, res) => {
   res.json({ mvp: mvpData.get() });

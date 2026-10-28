@@ -103,3 +103,7 @@ follow_registry.json
 node-runtime/
 __pycache__/
 uploads/alert-custom/*
+
+# Хроники — личный журнал стримера
+chronicles.json
+uploads/chronicles/*
