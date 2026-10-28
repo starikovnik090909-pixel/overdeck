@@ -726,9 +726,8 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-widgets .wtool-bar1 .wtool-primary .wtool-btn .wtl{color:#fff!important;font-weight:600}
 #tab-widgets .wtool-bar1 .wtool-primary .wtool-btn:hover{background:var(--accent2)!important}
 /* пока одна секция раскрыта, остальные сжимаются до значка — всё остаётся в одну строку */
-#tab-widgets .wtool-bar1:has(.wsec:hover) .wsec:not(:hover) .wsec-hd>span,
 #tab-widgets .wtool-bar1:has(.wsec.open) .wsec:not(.open) .wsec-hd>span{display:none}
-#tab-widgets .wtool-bar1:has(.wsec:hover) .wtool-primary .wtl{display:none}
+#tab-widgets .wtool-bar1:has(.wsec.open) .wtool-primary .wtl{display:none}
 #tab-widgets .wtool-bar1 .fake-banner,#tab-widgets .wtool-bar1 .wtool-msg{flex-basis:100%}
 @media (max-width:700px){#tab-widgets .wtool-grow{display:none}}
 
