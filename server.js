@@ -36,6 +36,7 @@ const teamData = require('./teamData');
 const teamPresets = require('./teamPresets');
 const mvpData = require('./mvpData');
 const chronicles = require('./chronicles');
+const chatVote = require('./chatVote');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -914,6 +915,8 @@ function onChatMessage(tags, message) {
     // «Свой аккаунт»: бот и стример — один человек, его обычные сообщения в статистике нужны
     const isBotMessage = !!botUsername && !botPub.ownAccount && tags.username && tags.username.toLowerCase() === botUsername.toLowerCase();
 
+    if (!isBotMessage) chatVote.feed(String(tags.username || '').toLowerCase(), message); // голосование «Оценка чата» (вкладка «Хроники»)
+
     let clean;
     if (isBotMessage) {
       clean = stats.stripEmotesForDisplay(message, tags.emotes);
@@ -1562,6 +1565,29 @@ app.post('/api/chronicles', (req, res) => {
   const r = chronicles.save(req.body || {});
   if (!r.ok) return res.status(400).json({ success: false, error: r.error });
   res.json({ success: true, item: r.item });
+});
+// Голосование чата «Оценка чата» (1–10) для записи из «Хроник»: бот объявляет, зрители пишут число, итог пишется в оценку чата
+app.get('/api/chronicles/vote', (req, res) => res.json({ success: true, vote: chatVote.status() }));
+app.post('/api/chronicles/vote/stop', (req, res) => {
+  const r = chatVote.finish(!!(req.body || {}).cancel);
+  res.json({ success: true, result: r });
+});
+app.post('/api/chronicles/:id/vote', async (req, res) => {
+  const it = chronicles.list().find((x) => x.id === req.params.id);
+  if (!it) return res.status(404).json({ success: false, error: 'Запись не найдена.' });
+  const secs = 60;
+  const shortTitle = it.title.length > 60 ? it.title.slice(0, 57) + '…' : it.title;
+  const r = chatVote.start({
+    id: it.id, title: it.title, seconds: secs,
+    onEnd: (res2) => {
+      if (!res2.count) { chatBot.say(`Оценка чата для «${shortTitle}»: никто не проголосовал.`).catch(() => {}); return; }
+      chronicles.save({ id: it.id, chatRating: res2.rating });
+      chatBot.say(`Оценка чата для «${shortTitle}»: ${String(res2.avg).replace('.', ',')} из 10 (голосов: ${res2.count}). Спасибо!`).catch(() => {});
+    },
+  });
+  if (r.error) return res.status(400).json({ success: false, error: r.error });
+  const announced = await chatBot.say(`Оценка чата для «${shortTitle}»! Напишите в чат число от 1 до 10. Голосуем ${secs} сек.`);
+  res.json({ success: true, vote: r.status, announced });
 });
 app.post('/api/chronicles/:id/poster', (req, res) => {
   chroniclesUpload.single('poster')(req, res, (err) => {

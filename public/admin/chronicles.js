@@ -28,7 +28,7 @@
     return d;
   }
   async function load() {
-    try { const d = await api('/api/chronicles'); items = d.items || []; sources = d.sources || {}; loaded = true; render(); autoSync(); }
+    try { const d = await api('/api/chronicles'); items = d.items || []; sources = d.sources || {}; loaded = true; render(); autoSync(); pollVote(); }
     catch (e) { $('chrEmpty').hidden = false; $('chrEmpty').textContent = 'Не удалось загрузить: ' + e.message; }
   }
 
@@ -82,7 +82,8 @@
   const ratingClass = (r) => (r == null ? 'none' : r > 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
   const posterImg = (it) => (it.poster ? '<img loading="lazy" alt="" src="' + posterUrl(it) + '">' : '<span class="chr-ph">' + esc((it.title || '?').trim().charAt(0).toUpperCase()) + '</span>');
-  const acts = '<div class="chr-acts"><button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
+  const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить голосование в чате: оценка чата 1–10" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
+  let acts = buildActs();
   const ring = (v, s, lbl) => {
     const ok = v != null; const n = ok ? Math.min(10, v) : 0;
     const cls = !ok ? 'none' : n >= 9 ? 'top' : n >= 7 ? 'good' : n >= 5 ? 'mid' : 'bad';
@@ -179,7 +180,7 @@
     sec.querySelectorAll('#chrTabs span').forEach((s) => s.classList.toggle('on', s.dataset.t === tab));
     fillSelects(); renderStats(); renderViews();
     $('chrSync').hidden = !sources[tab];
-    const list = visible();
+    const list = visible(); acts = buildActs();
     const g = $('chrGrid');
     g.className = 'chr-list v-' + view + (showChat ? '' : ' no-chat');
     g.innerHTML = (view === 'table' && list.length ? '<div class="chr-th"><span></span><span>Название</span><span>Жанр</span><span>Я</span>' + (showChat ? '<span>Чат</span>' : '') + '<span>Рецензия</span></div>' : '') + list.map(card).join('');
@@ -359,7 +360,42 @@
     syncedTab[tab] = true; syncNow(true);
   }
 
+
+  /* ---------- голосование чата «Оценка чата» 1–10 ---------- */
+  let voteTimer = null; let voteWas = false;
+  const mmss = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  function renderVote(v) {
+    const el = $('chrVote');
+    if (!v || !v.active) { el.hidden = true; el.innerHTML = ''; return; }
+    el.hidden = false;
+    const bars = (v.dist || []).map((n, i) => '<i title="' + (i + 1) + ': ' + n + '" style="height:' + (v.count ? Math.max(6, Math.round(n / Math.max(...v.dist) * 100)) : 6) + '%"></i>').join('');
+    el.innerHTML = '<div class="chr-vote-main"><b>Голосование чата: «' + esc(v.title) + '»</b><span>Пишите в чат число от 1 до 10 · осталось ' + mmss(v.left) + ' · голосов: <b>' + v.count + '</b>' + (v.avg != null ? ' · сейчас <b>' + esc(fmt(v.avg)) + '</b>' : '') + '</span></div>' +
+      '<div class="chr-vote-bars" aria-hidden="true">' + bars + '</div>' +
+      '<div class="chr-vote-btns"><button type="button" class="btn btn-primary" data-vote="stop">Завершить сейчас</button><button type="button" class="btn btn-secondary" data-vote="cancel">Отмена</button></div>';
+  }
+  async function pollVote() {
+    try {
+      const v = (await api('/api/chronicles/vote')).vote;
+      renderVote(v);
+      if (v.active) { voteWas = true; if (!voteTimer) voteTimer = setInterval(pollVote, 1000); return; }
+    } catch (e) { /* связи нет — попробуем в следующий раз */ }
+    if (voteTimer) { clearInterval(voteTimer); voteTimer = null; }
+    if (voteWas) { voteWas = false; await load(); saved('Голосование завершено, оценка чата записана', 'ok'); }
+  }
+  async function startVote(it) {
+    try {
+      const d = await post('/api/chronicles/' + encodeURIComponent(it.id) + '/vote', {});
+      renderVote(d.vote); voteWas = true;
+      if (!voteTimer) voteTimer = setInterval(pollVote, 1000);
+      saved(d.announced ? 'Голосование запущено, бот объявил в чате' : 'Голосование запущено. Бот не подключён — объяви его сам: числа от 1 до 10', d.announced ? 'ok' : '');
+    } catch (e) { saved(e.message, ''); }
+  }
+
   /* ---------- события ---------- */
+  $('chrVote').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-vote]'); if (!b) return;
+    try { await post('/api/chronicles/vote/stop', { cancel: b.dataset.vote === 'cancel' }); voteWas = b.dataset.vote !== 'cancel'; await pollVote(); if (b.dataset.vote === 'cancel') saved('Голосование отменено', ''); } catch (x) { saved(x.message, ''); }
+  });
   $('chrImport').addEventListener('click', openImport);
   $('chrSync').addEventListener('click', () => syncNow(false));
   $('chrImpClose').addEventListener('click', () => { $('chrImpModal').hidden = true; });
@@ -397,6 +433,7 @@
     const el = b.closest('.chr-it'); const it = items.find((x) => x.id === el.dataset.id); if (!it) return;
     if (b.dataset.a === 'edit') openForm(it);
     else if (b.dataset.a === 'del') del(it);
+    else if (b.dataset.a === 'vote') startVote(it);
     else if (b.dataset.a === 'more') {
       if (b.classList.contains('chr-tcm')) { b.classList.toggle('open'); return; }
       const c = el.querySelector('.chr-comment'); const open = c.classList.toggle('clamp') === false; b.textContent = open ? 'Свернуть' : 'Показать полностью';

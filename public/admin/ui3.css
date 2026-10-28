@@ -909,3 +909,12 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-list.v-table.no-chat .chr-th,.chr-list.v-table.no-chat .chr-tr{grid-template-columns:48px minmax(0,1.3fr) minmax(0,1fr) 168px minmax(0,1.9fr)}
 .chr-row-stars .field[hidden]{display:none}
 @media (max-width:900px){.chr-list.v-table.no-chat .chr-tr{grid-template-columns:48px minmax(0,1fr)}}
+
+/* Хроники: голосование чата */
+.chr-vote{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 16px;margin:0 0 16px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--line2)}
+.chr-vote[hidden]{display:none}
+.chr-vote-main{display:flex;flex-direction:column;gap:3px;flex:1 1 260px;min-width:0;font-size:13px;color:var(--text-secondary)}
+.chr-vote-main>b{font-size:15px;color:var(--text-primary);overflow-wrap:anywhere}.chr-vote-main span b{color:var(--text-primary)}
+.chr-vote-bars{display:flex;align-items:flex-end;gap:3px;height:34px;width:130px}
+.chr-vote-bars i{flex:1;border-radius:3px 3px 0 0;background:var(--accent2);min-height:2px;opacity:.85}
+.chr-vote-btns{display:flex;gap:8px}
