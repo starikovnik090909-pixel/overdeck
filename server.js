@@ -36,7 +36,6 @@ const teamData = require('./teamData');
 const teamPresets = require('./teamPresets');
 const mvpData = require('./mvpData');
 const chronicles = require('./chronicles');
-const chatVote = require('./chatVote');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -915,8 +914,6 @@ function onChatMessage(tags, message) {
     // «Свой аккаунт»: бот и стример — один человек, его обычные сообщения в статистике нужны
     const isBotMessage = !!botUsername && !botPub.ownAccount && tags.username && tags.username.toLowerCase() === botUsername.toLowerCase();
 
-    if (!isBotMessage) chatVote.feed(String(tags.username || '').toLowerCase(), message); // голосование «Оценка чата» (вкладка «Хроники»)
-
     let clean;
     if (isBotMessage) {
       clean = stats.stripEmotesForDisplay(message, tags.emotes);
@@ -1566,28 +1563,75 @@ app.post('/api/chronicles', (req, res) => {
   if (!r.ok) return res.status(400).json({ success: false, error: r.error });
   res.json({ success: true, item: r.item });
 });
-// Голосование чата «Оценка чата» (1–10) для записи из «Хроник»: бот объявляет, зрители пишут число, итог пишется в оценку чата
-app.get('/api/chronicles/vote', (req, res) => res.json({ success: true, vote: chatVote.status() }));
-app.post('/api/chronicles/vote/stop', (req, res) => {
-  const r = chatVote.finish(!!(req.body || {}).cancel);
+// Голосование чата «Оценка чата» для записи из «Хроник»: опрос Twitch с вариантами 1-2, 3-4, 5-6, 7-8, 9-10.
+// Итог (среднее по серединам диапазонов, округлённое до 0,5) пишется в оценку чата. Нужен вход через Twitch с правом channel:manage:polls (как у опросов во вкладке «Чат»).
+const CHR_BINS = ['1-2', '3-4', '5-6', '7-8', '9-10'];
+const CHR_MID = [1.5, 3.5, 5.5, 7.5, 9.5];
+const CHR_POLL_SECONDS = 60;
+let chrPoll = null; // { id, itemId, title, short, seconds, endsAt, poll, timer, busy, cancelled }
+function chrPollSummary(p) {
+  const dist = CHR_BINS.map((_, i) => ((p && p.choices && p.choices[i] && p.choices[i].votes) || 0));
+  const count = dist.reduce((s2, n) => s2 + n, 0);
+  const avg = count ? Math.round(dist.reduce((s2, n, i) => s2 + n * CHR_MID[i], 0) / count * 10) / 10 : null;
+  return { count, avg, rating: avg == null ? null : Math.round(avg * 2) / 2, dist };
+}
+function chrPollStatus() {
+  if (!chrPoll) return { active: false };
+  return { active: true, id: chrPoll.itemId, title: chrPoll.title, seconds: chrPoll.seconds, endsAt: chrPoll.endsAt, left: Math.max(0, Math.round((chrPoll.endsAt - Date.now()) / 1000)), ...chrPollSummary(chrPoll.poll) };
+}
+function chrPollFinish(p) {
+  const cp = chrPoll; if (!cp) return null;
+  clearInterval(cp.timer); chrPoll = null;
+  if (cp.cancelled) return null;
+  const r = chrPollSummary(p || cp.poll);
+  if (!r.count) { chatBot.say(`Оценка чата для «${cp.short}»: никто не проголосовал.`).catch(() => {}); return r; }
+  chronicles.save({ id: cp.itemId, chatRating: r.rating });
+  chatBot.say(`Оценка чата для «${cp.short}»: около ${String(r.avg).replace('.', ',')} из 10 (голосов: ${r.count}). Спасибо!`).catch(() => {});
+  return r;
+}
+async function chrPollTick() {
+  const cp = chrPoll; if (!cp || cp.busy) return;
+  cp.busy = true;
+  try {
+    const creds = getPollCredentials();
+    if (creds.ok) {
+      const p = (await polls.getPolls(creds)).find((x) => x.id === cp.id);
+      if (p) { cp.poll = p; if (p.status !== 'ACTIVE') chrPollFinish(p); }
+      else if (Date.now() > cp.endsAt + 15000) chrPollFinish(null);
+    }
+  } catch (e) { /* сеть моргнула — следующий тик */ }
+  cp.busy = false;
+}
+app.get('/api/chronicles/vote', (req, res) => res.json({ success: true, vote: chrPollStatus() }));
+app.post('/api/chronicles/vote/stop', async (req, res) => {
+  if (!chrPoll) return res.json({ success: true, result: null });
+  const cancel = !!(req.body || {}).cancel;
+  const cp = chrPoll;
+  const creds = getPollCredentials();
+  try {
+    if (creds.ok) {
+      const p = await polls.endPoll({ ...creds, pollId: cp.id, status: cancel ? 'ARCHIVED' : 'TERMINATED' });
+      if (cancel) cp.cancelled = true;
+      const r = chrPollFinish(cancel ? null : (p || cp.poll));
+      return res.json({ success: true, result: r });
+    }
+  } catch (e) { return res.status(502).json({ success: false, error: pollErrorMessage(e) }); }
+  cp.cancelled = cancel; const r = chrPollFinish(cancel ? null : cp.poll);
   res.json({ success: true, result: r });
 });
 app.post('/api/chronicles/:id/vote', async (req, res) => {
   const it = chronicles.list().find((x) => x.id === req.params.id);
   if (!it) return res.status(404).json({ success: false, error: 'Запись не найдена.' });
-  const secs = 60;
-  const shortTitle = it.title.length > 60 ? it.title.slice(0, 57) + '…' : it.title;
-  const r = chatVote.start({
-    id: it.id, title: it.title, seconds: secs,
-    onEnd: (res2) => {
-      if (!res2.count) { chatBot.say(`Оценка чата для «${shortTitle}»: никто не проголосовал.`).catch(() => {}); return; }
-      chronicles.save({ id: it.id, chatRating: res2.rating });
-      chatBot.say(`Оценка чата для «${shortTitle}»: ${String(res2.avg).replace('.', ',')} из 10 (голосов: ${res2.count}). Спасибо!`).catch(() => {});
-    },
-  });
-  if (r.error) return res.status(400).json({ success: false, error: r.error });
-  const announced = await chatBot.say(`Оценка чата для «${shortTitle}»! Напишите в чат число от 1 до 10. Голосуем ${secs} сек.`);
-  res.json({ success: true, vote: r.status, announced });
+  if (chrPoll) return res.status(400).json({ success: false, error: `Голосование уже идёт: «${chrPoll.title}».` });
+  const creds = getPollCredentials();
+  if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
+  const short = it.title.length > 30 ? it.title.slice(0, 29) + '…' : it.title;
+  try {
+    const poll = await polls.createPoll({ ...creds, title: `Оценка чата: ${short}`.slice(0, 60), choices: CHR_BINS, durationSeconds: CHR_POLL_SECONDS });
+    chrPoll = { id: poll.id, itemId: it.id, title: it.title, short, seconds: CHR_POLL_SECONDS, endsAt: Date.now() + CHR_POLL_SECONDS * 1000, poll, timer: null, busy: false, cancelled: false };
+    chrPoll.timer = setInterval(chrPollTick, 3000);
+    res.json({ success: true, vote: chrPollStatus() });
+  } catch (e) { res.status(502).json({ success: false, error: pollErrorMessage(e) }); }
 });
 app.post('/api/chronicles/:id/poster', (req, res) => {
   chroniclesUpload.single('poster')(req, res, (err) => {

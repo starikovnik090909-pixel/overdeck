@@ -82,7 +82,7 @@
   const ratingClass = (r) => (r == null ? 'none' : r > 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
   const posterImg = (it) => (it.poster ? '<img loading="lazy" alt="" src="' + posterUrl(it) + '">' : '<span class="chr-ph">' + esc((it.title || '?').trim().charAt(0).toUpperCase()) + '</span>');
-  const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить голосование в чате: оценка чата 1–10" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
+  const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить в чате опрос «Оценка чата» (1-2, 3-4, 5-6, 7-8, 9-10)" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
   let acts = buildActs();
   const ring = (v, s, lbl) => {
     const ok = v != null; const n = ok ? Math.min(10, v) : 0;
@@ -369,7 +369,7 @@
     if (!v || !v.active) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false;
     const bars = (v.dist || []).map((n, i) => '<i title="' + (i + 1) + ': ' + n + '" style="height:' + (v.count ? Math.max(6, Math.round(n / Math.max(...v.dist) * 100)) : 6) + '%"></i>').join('');
-    el.innerHTML = '<div class="chr-vote-main"><b>Голосование чата: «' + esc(v.title) + '»</b><span>Пишите в чат число от 1 до 10 · осталось ' + mmss(v.left) + ' · голосов: <b>' + v.count + '</b>' + (v.avg != null ? ' · сейчас <b>' + esc(fmt(v.avg)) + '</b>' : '') + '</span></div>' +
+    el.innerHTML = '<div class="chr-vote-main"><b>Голосование чата: «' + esc(v.title) + '»</b><span>Опрос идёт в чате Twitch (1-2 … 9-10) · осталось ' + mmss(v.left) + ' · голосов: <b>' + v.count + '</b>' + (v.avg != null ? ' · сейчас ≈ <b>' + esc(fmt(v.avg)) + '</b>' : '') + '</span></div>' +
       '<div class="chr-vote-bars" aria-hidden="true">' + bars + '</div>' +
       '<div class="chr-vote-btns"><button type="button" class="btn btn-primary" data-vote="stop">Завершить сейчас</button><button type="button" class="btn btn-secondary" data-vote="cancel">Отмена</button></div>';
   }
@@ -384,10 +384,11 @@
   }
   async function startVote(it) {
     try {
+      saved('Запускаем опрос…', '');
       const d = await post('/api/chronicles/' + encodeURIComponent(it.id) + '/vote', {});
       renderVote(d.vote); voteWas = true;
       if (!voteTimer) voteTimer = setInterval(pollVote, 1000);
-      saved(d.announced ? 'Голосование запущено, бот объявил в чате' : 'Голосование запущено. Бот не подключён — объяви его сам: числа от 1 до 10', d.announced ? 'ok' : '');
+      saved('Голосование запущено: опрос появился в чате Twitch', 'ok');
     } catch (e) { saved(e.message, ''); }
   }
 
