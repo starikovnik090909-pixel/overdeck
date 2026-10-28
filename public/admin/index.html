@@ -1138,7 +1138,7 @@
       <div class="page-head"><div><h1 class="tab-title">Хроники</h1><p class="tab-description">Журнал пройденных игр и просмотренных фильмов: постер, оценка, кто заказал и твой комментарий.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="chrSaved"></span><button class="btn btn-secondary" id="chrSync" type="button" hidden title="Подтянуть новые записи из подключённой таблицы">↻ Синхронизировать</button><button class="btn btn-secondary" id="chrImport" type="button">Импорт</button><button class="btn btn-primary" id="chrAdd" type="button">+ Добавить</button></div></div>
       <div class="chr-vote" id="chrVote" hidden></div>
-      <div class="ui3-tabs" id="chrTabs"><span class="on" data-t="game">Игры <i id="chrCntGame"></i></span><span data-t="movie">Фильмы <i id="chrCntMovie"></i></span></div>
+      <div class="ui3-tabs" id="chrTabs"><span class="on" data-t="game">Игры <i id="chrCntGame"></i></span><span data-t="movie">Кино <i id="chrCntMovie"></i></span></div>
       <div class="chr-stats" id="chrStats"></div>
       <div class="chr-toolbar">
         <input type="search" id="chrSearch" class="chr-search" placeholder="Название, рецензия, ник…" autocomplete="off">
@@ -1203,7 +1203,7 @@
           <div class="chr-imp">
             <div id="chrImpStep1">
               <p class="chr-imp-hint">Подключи свою таблицу — админка сама возьмёт из неё записи. Подойдёт Google Таблица (с доступом «по ссылке») или файл CSV / JSON. Колонки определятся автоматически.</p>
-              <div class="chr-imp-line"><span>Это список:</span><div class="chr-seg" id="chrImpType"><button type="button" data-v="game">Игры</button><button type="button" data-v="movie">Фильмы</button></div></div>
+              <div class="chr-imp-line"><span>Это список:</span><div class="chr-seg" id="chrImpType"><button type="button" data-v="game">Игры</button><button type="button" data-v="movie">Кино</button></div></div>
               <div class="field"><label for="chrImpUrl">Ссылка на Google Таблицу</label>
                 <div class="chr-imp-row"><input type="url" id="chrImpUrl" placeholder="https://docs.google.com/spreadsheets/d/…" autocomplete="off"><button class="btn btn-primary" id="chrImpGo" type="button">Загрузить</button></div></div>
               <div class="chr-imp-or">или</div>
@@ -3408,7 +3408,7 @@
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
-<script src="chronicles.js?v=8"></script>
+<script src="chronicles.js?v=9"></script>
 <script src="whatsnew.js?v=19"></script>
 </body>
 </html>

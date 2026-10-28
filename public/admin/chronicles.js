@@ -7,7 +7,7 @@
   const NOUN = { game: ['игра', 'игры', 'игр'], movie: ['фильм', 'фильма', 'фильмов'] };
   const plural = (n, f) => { const a = Math.abs(n) % 100, b = a % 10; return f[a > 10 && a < 20 ? 2 : b > 1 && b < 5 ? 1 : b === 1 ? 0 : 2]; };
   const fmt = (n) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','));
-  const KEY = 'ovChrTab', VKEY = 'ovChrView', CKEY = 'ovChrChat';
+  const KEY = 'ovChrTab', SKEY = 'ovChrState';
   const VIEWS = [
     ['poster', 'Постеры'], ['row', 'Лента'], ['cine', 'Кино'], ['review', 'Рецензии'], ['table', 'Таблица'], ['duo', 'Две колонки'],
   ];
@@ -17,8 +17,22 @@
   let sources = {}; let syncedTab = {}; let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
   const sv = { rating: null, chatRating: null };
   if (['game', 'movie'].includes(lsGet(KEY))) tab = lsGet(KEY);
-  let showChat = lsGet(CKEY) !== '0';
-  if (VIEWS.some((v) => v[0] === lsGet(VKEY))) view = lsGet(VKEY);
+  // Настройки у «Игр» и «Кино» раздельные: вид, оценка чата, сортировка и фильтры хранятся для каждой вкладки отдельно
+  const DEF = { view: 'cine', chat: true, sort: 'new', genre: '', rf: '', origin: '', q: '' };
+  const S = { game: { ...DEF }, movie: { ...DEF } };
+  try {
+    const raw = JSON.parse(lsGet(SKEY) || 'null') || {};
+    ['game', 'movie'].forEach((t) => {
+      const r = raw[t] || {};
+      if (VIEWS.some((v) => v[0] === r.view)) S[t].view = r.view;
+      if (typeof r.chat === 'boolean') S[t].chat = r.chat;
+      if (typeof r.sort === 'string') S[t].sort = r.sort;
+    });
+  } catch (e) { /* настройки по умолчанию */ }
+  const saveState = () => lsSet(SKEY, JSON.stringify({ game: { view: S.game.view, chat: S.game.chat, sort: S.game.sort }, movie: { view: S.movie.view, chat: S.movie.chat, sort: S.movie.sort } }));
+  let showChat = S[tab].chat; view = S[tab].view;
+  function captureControls() { const s = S[tab]; s.q = $('chrSearch').value; s.sort = $('chrSort').value; s.genre = $('chrGenre').value; s.rf = $('chrRatingF').value; s.origin = $('chrOrigin').value; saveState(); }
+  function useTab(t) { if (t === tab) return; captureControls(); tab = t; lsSet(KEY, tab); view = S[t].view; showChat = S[t].chat; }
 
   const saved = (t, k) => { const el = $('chrSaved'); el.textContent = t; el.className = 'ui3-saved' + (k ? ' ' + k : ''); if (t && k === 'ok') setTimeout(() => { if (el.textContent === t) el.textContent = ''; }, 2500); };
   async function api(url, opt) {
@@ -34,7 +48,7 @@
 
   /* ---------- фильтры ---------- */
   function visible() {
-    const q = $('chrSearch').value.trim().toLowerCase(), o = $('chrOrigin').value, g = $('chrGenre').value, rf = $('chrRatingF').value, sort = $('chrSort').value;
+    const s0 = S[tab]; const q = s0.q.trim().toLowerCase(), o = s0.origin, g = s0.genre, rf = s0.rf, sort = s0.sort;
     let list = items.filter((it) => it.type === tab);
     if (o) list = list.filter((it) => (it.origin || '—') === o);
     if (g) list = list.filter((it) => (it.genres || []).includes(g));
@@ -154,7 +168,7 @@
   function fillSelects() {
     const mine = items.filter((it) => it.type === tab);
     const fill = (id, label, set) => {
-      const sel = $(id), cur = sel.value;
+      const sel = $(id), cur = id === 'chrGenre' ? S[tab].genre : S[tab].origin;
       sel.innerHTML = '<option value="">' + label + '</option>' + set.map((o) => '<option>' + esc(o) + '</option>').join('');
       sel.value = set.includes(cur) ? cur : '';
     };
@@ -170,7 +184,7 @@
     $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + VIEWS.map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('') +
       '<label class="chr-chatopt" title="Показывать оценку чата в списке и в форме"><input type="checkbox" id="chrShowChat"' + (showChat ? ' checked' : '') + '> Оценка чата</label>';
     const o = $('chrSort').querySelector('option[value="chat"]'); if (o) { o.hidden = !showChat; o.disabled = !showChat; }
-    if (!showChat && $('chrSort').value === 'chat') $('chrSort').value = 'new';
+    if (!showChat && S[tab].sort === 'chat') S[tab].sort = 'new';
     $('chrChatS').closest('.field').hidden = !showChat;
   }
 
@@ -179,6 +193,8 @@
     $('chrCntMovie').textContent = items.filter((it) => it.type === 'movie').length;
     sec.querySelectorAll('#chrTabs span').forEach((s) => s.classList.toggle('on', s.dataset.t === tab));
     fillSelects(); renderStats(); renderViews();
+    $('chrSearch').value = S[tab].q; $('chrSort').value = S[tab].sort; $('chrRatingF').value = S[tab].rf;
+    S[tab].genre = $('chrGenre').value; S[tab].origin = $('chrOrigin').value;
     $('chrSync').hidden = !sources[tab];
     const list = visible(); acts = buildActs();
     const g = $('chrGrid');
@@ -264,7 +280,7 @@
       }
       const i = items.findIndex((x) => x.id === it.id);
       if (i >= 0) items[i] = it; else items.unshift(it);
-      tab = it.type; lsSet(KEY, tab);
+      useTab(it.type);
       closeForm(); render(); saved(warn ? 'Сохранено, но постер не загрузился: ' + warn : 'Сохранено', warn ? '' : 'ok');
     } catch (e) { msg.textContent = e.message; msg.className = 'form-message error'; }
     btn.disabled = false;
@@ -337,7 +353,7 @@
     impMsg('Импортируем…'); $('chrImpRun').disabled = true;
     try {
       const d = await post('/api/chronicles/source/import', { token: imp.token, type: imp.type, mapping, reverse: $('chrImpRev').checked, remember: !!imp.url && $('chrImpRem').checked, url: imp.url });
-      sources = d.sources || sources; tab = imp.type; lsSet(KEY, tab);
+      sources = d.sources || sources; useTab(imp.type);
       $('chrImpModal').hidden = true;
       await load(); reloadSoon(d.posters);
       saved('Добавлено: ' + d.added + (d.skipped ? ', пропущено (уже есть): ' + d.skipped : '') + (d.posters ? ' · обложки подгружаются' : ''), 'ok');
@@ -425,10 +441,10 @@
   });
   $('chrPosterUrl').addEventListener('change', (e) => { const u = e.target.value.trim(); if (/^https?:\/\//i.test(u)) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; showPoster(u); } });
   $('chrPosterDel').addEventListener('click', () => { posterFile = null; posterCleared = true; $('chrPosterFile').value = ''; $('chrPosterUrl').value = ''; showPoster(''); });
-  $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; tab = s.dataset.t; lsSet(KEY, tab); render(); autoSync(); });
-  $('chrViews').addEventListener('change', (e) => { if (e.target.id === 'chrShowChat') { showChat = e.target.checked; lsSet(CKEY, showChat ? '1' : '0'); render(); } });
-  $('chrViews').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; lsSet(VKEY, view); render(); });
-  ['input', 'change'].forEach((ev) => ['chrSearch', 'chrOrigin', 'chrGenre', 'chrRatingF', 'chrSort'].forEach((id) => $(id).addEventListener(ev, render)));
+  $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; useTab(s.dataset.t); render(); autoSync(); });
+  $('chrViews').addEventListener('change', (e) => { if (e.target.id === 'chrShowChat') { showChat = e.target.checked; S[tab].chat = showChat; saveState(); render(); } });
+  $('chrViews').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; S[tab].view = view; saveState(); render(); });
+  ['input', 'change'].forEach((ev) => ['chrSearch', 'chrOrigin', 'chrGenre', 'chrRatingF', 'chrSort'].forEach((id) => $(id).addEventListener(ev, () => { captureControls(); render(); })));
   $('chrGrid').addEventListener('click', (e) => {
     const b = e.target.closest('[data-a]'); if (!b) return;
     const el = b.closest('.chr-it'); const it = items.find((x) => x.id === el.dataset.id); if (!it) return;
