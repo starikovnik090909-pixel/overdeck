@@ -583,6 +583,7 @@ async function pollCategoryOnce() {
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
     if (streamIsLive && fakeStream.isActive()) { fakeStream.stop(); broadcast(); console.log('[Фейк-режим] Начался настоящий стрим — фейк-режим выключен.'); } // фейк-данные не должны попасть в эфир
     if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
+    if (streamIsLive && !wasLive && streamStatusKnown) telegramAnnounce.onStreamStart(); // сервер, запущенный посреди стрима, повторно не анонсирует
     streamStatusKnown = true;
     if (streamIsLive !== wasLive) broadcastAdminStatus(); // статус в шапке админки обновится сразу, не дожидаясь следующего периодического тика
   }
@@ -636,6 +637,8 @@ teamData.init();
 teamPresets.init();
 mvpData.init();
 chronicles.init();
+const telegramAnnounce = require('./telegramAnnounce');
+telegramAnnounce.init(async () => ({ channel: config.channel, info: resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null }));
 const chrPublish = require('./chrPublish');
 chrPublish.init(chronicles);
 factData.init();
@@ -1560,6 +1563,14 @@ const chroniclesUpload = multer({
   }),
   fileFilter: (req, file, cb) => cb(null, ['.png', '.jpg', '.jpeg', '.webp'].includes(path.extname(file.originalname).toLowerCase())),
   limits: { fileSize: 8 * 1024 * 1024 },
+});
+app.get('/api/telegram', (req, res) => res.json({ success: true, ...telegramAnnounce.publicState() }));
+app.post('/api/telegram', (req, res) => res.json({ success: true, ...telegramAnnounce.update(req.body) }));
+app.post('/api/telegram/check', async (req, res) => {
+  try { res.json({ success: true, ...(await telegramAnnounce.check()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+app.post('/api/telegram/test', async (req, res) => {
+  try { res.json({ success: true, ...(await telegramAnnounce.test()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 app.get('/api/chronicles/publish', (req, res) => res.json({ success: true, ...chrPublish.status() }));
 app.post('/api/chronicles/publish/login', async (req, res) => {

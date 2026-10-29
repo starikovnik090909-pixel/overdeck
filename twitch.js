@@ -195,6 +195,12 @@ async function fetchStreamStatus(config, broadcasterId) {
   return !!(data && Array.isArray(data.data) && data.data.length > 0);
 }
 
+/** Данные идущей трансляции (название, категория, превью) или null, если стрим офлайн. */
+async function fetchStreamInfo(config, broadcasterId) {
+  const data = await helixGet(config, 'streams', new URLSearchParams({ user_id: broadcasterId }));
+  return (data && Array.isArray(data.data) && data.data[0]) || null;
+}
+
 async function fetchGameArt(config, gameId) {
   if (!gameId) return null;
   const data = await helixGet(config, 'games', new URLSearchParams({ id: gameId }));
@@ -344,6 +350,7 @@ module.exports = {
   resolveBroadcasterId,
   fetchChannelInfo,
   fetchStreamStatus,
+  fetchStreamInfo,
   fetchGameArt,
   fetchGlobalBadges,
   fetchChannelBadges,

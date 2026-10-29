@@ -934,3 +934,13 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-widgets .wsec:hover .wsec-body,#tab-widgets .wsec:has(:focus-visible) .wsec-body,#tab-widgets .wsec.open .wsec-body,#tab-widgets .wsec:has(.wtool-pop:not([hidden])) .wsec-body{opacity:1;visibility:visible;pointer-events:auto;transform:none;margin-left:4px!important;transition:opacity .14s,transform .14s,visibility 0s}
 /* мостик, чтобы курсор не терял наведение между заголовком и телом */
 #tab-widgets .wsec-body::before{content:"";position:absolute;left:-8px;top:0;bottom:0;width:8px}
+
+/* Телеграм */
+.tg-steps{margin:0 0 16px;padding-left:20px;color:var(--text-secondary);font-size:13px;line-height:1.7}
+.tg-steps code,.tg-hint code{background:var(--bg-card2);padding:1px 6px;border-radius:5px;font-size:12px}
+.tg-hint{font-size:12px;color:var(--text-mute);font-weight:400;margin:6px 0 0}
+.tg-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:14px 0 6px}
+#tab-telegram textarea{width:100%;resize:vertical;font:inherit}
+#tab-telegram .ui3-cb{padding:16px 18px 18px;display:flex;flex-direction:column;gap:4px}
+#tab-telegram .ui3-cb .field{margin:10px 0 0}
+#tab-telegram .ui3-ch .chr-chatopt{margin-left:auto}
