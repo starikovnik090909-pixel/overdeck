@@ -248,7 +248,10 @@ function parseTable(text) {
   const norm = (v) => String(v || '').trim().toLowerCase();
   const known = new Set(Object.values(HEADS).flat());
   let h = rows.slice(0, 6).findIndex((r) => r.some((c) => HEADS.title.includes(norm(c))) && r.filter((c) => known.has(norm(c))).length >= 1);
-  if (h < 0) h = 0;
+  if (h < 0) { // таблица без шапки: все строки — данные
+    const w = Math.max(...rows.map((r) => r.length));
+    return { headers: Array.from({ length: w }, (_, i) => `Колонка ${i + 1}`), rows, headless: true };
+  }
   const headers = rows[h].map((c, i) => String(c).trim() || `Колонка ${i + 1}`);
   return { headers, rows: rows.slice(h + 1) };
 }
@@ -260,6 +263,24 @@ function autoMap(headers) {
   });
   return map;
 }
+/** Таблица без шапки: угадываем колонки по содержимому (Респект/Аукцион, «55.8% 8/10», ссылки, длинный текст). */
+function guessMap(table) {
+  const n = table.headers.length; const rows = table.rows.slice(0, 60); const map = {};
+  const col = (i) => rows.map((r) => String(r[i] == null ? '' : r[i]).trim()).filter(Boolean);
+  const share = (i, re) => { const c = col(i); return c.length ? c.filter((v) => re.test(v)).length / c.length : 0; };
+  const find = (re, min) => { let best = -1; let bs = 0; for (let i = 0; i < n; i += 1) { const x = share(i, re); if (x > bs && x >= min) { best = i; bs = x; } } return best; };
+  const o = find(/^(респект|аукцион)$/i, 0.6); const sc = find(/\d\s*\/\s*10/, 0.5); const lk = find(/^https?:\/\//i, 0.5);
+  let t = -1; { let bs = 0; for (let i = 0; i < n; i += 1) { if (i === o || i === sc || i === lk) continue; const c = col(i); if (!c.length) continue; const avg = c.reduce((a, v) => a + v.length, 0) / c.length; const hasYear = share(i, /\(\d{4}/) ; const k = hasYear * 100 + (avg < 120 ? avg : 0); if (k > bs) { bs = k; t = i; } } }
+  let cm = -1; { let bs = 0; for (let i = 0; i < n; i += 1) { if ([o, sc, lk, t].includes(i)) continue; const c = col(i); const avg = c.length ? c.reduce((a, v) => a + v.length, 0) / c.length : 0; if (avg > bs && avg > 40) { bs = avg; cm = i; } } }
+  const by = (() => { for (let i = 0; i < n; i += 1) { if ([o, sc, lk, t, cm].includes(i)) continue; if (col(i).length) return i; } return -1; })();
+  const H = (i) => table.headers[i];
+  if (t >= 0) map.title = H(t); if (o >= 0) map.origin = H(o); if (by >= 0) map.by = H(by);
+  if (sc >= 0) { map.rating = H(sc); map.percent = H(sc); } if (cm >= 0) map.comment = H(cm); if (lk >= 0) map.link = H(lk);
+  return map;
+}
+/** Из «55.8% 8/10» достаём оценку (перед /10) и процент лота. */
+function ratingFrom(v) { const m = String(v == null ? '' : v).match(/(-?\d+(?:[.,]\d+)?)\s*\/\s*10/); return m ? Number(m[1].replace(',', '.')) : numFrom(v); }
+function percentFrom(v) { const m = String(v == null ? '' : v).match(/(-?\d+(?:[.,]\d+)?)\s*%/); return m ? Number(m[1].replace(',', '.')) : (/\//.test(String(v)) ? null : numFrom(v)); }
 function numFrom(v) { const m = String(v == null ? '' : v).match(/-?\d+(?:[.,]\d+)?/); return m ? Number(m[0].replace(',', '.')) : null; }
 function toRaw(table, mapping, type) {
   const idx = {};
@@ -272,8 +293,8 @@ function toRaw(table, mapping, type) {
     o.genres = get(r, 'genres').replace(/[;/|]/g, ',');
     o.tags = get(r, 'tags').replace(/[;/|]/g, ',');
     const cl = (v) => { const n = numFrom(v); return n == null ? '' : Math.min(10, Math.max(0, n)); };
-    o.rating = cl(get(r, 'rating')); o.chatRating = cl(get(r, 'chatRating'));
-    const pc = numFrom(get(r, 'percent')); o.percent = pc == null ? '' : pc;
+    o.rating = (() => { const n = ratingFrom(get(r, 'rating')); return n == null ? '' : Math.min(10, Math.max(0, n)); })(); o.chatRating = cl(get(r, 'chatRating'));
+    const pc = percentFrom(get(r, 'percent')); o.percent = pc == null ? '' : pc;
     const hr = numFrom(get(r, 'hours')); o.hours = hr == null ? '' : hr;
     o.posterUrl = get(r, 'poster');
     return o;
@@ -292,7 +313,8 @@ function previewTable(text) {
   let table;
   try { table = parseTable(text); } catch (e) { return { error: 'Не удалось прочитать файл. Нужен CSV или JSON.' }; }
   if (!table.headers.length || !table.rows.length) return { error: 'В файле нет строк с данными.' };
-  const mapping = autoMap(table.headers);
+  let mapping = autoMap(table.headers);
+  if (!mapping.title && table.headless) mapping = guessMap(table);
   return { token: remember(table), headers: table.headers, mapping, total: table.rows.length, sample: table.rows.slice(0, 3), labels: FIELD_LABELS };
 }
 function sheetCsvUrl(link) {
