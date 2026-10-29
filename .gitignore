@@ -107,3 +107,4 @@ uploads/alert-custom/*
 # Хроники — личный журнал стримера
 chronicles.json
 uploads/chronicles/*
+chronicles_publish.json

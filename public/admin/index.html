@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=41">
+<link rel="stylesheet" href="ui3.css?v=42">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1136,7 +1136,8 @@
 
     <section class="tab-section" id="tab-chronicles">
       <div class="page-head"><div><h1 class="tab-title">Хроники</h1><p class="tab-description">Журнал пройденных игр и просмотренных фильмов: постер, оценка, кто заказал и твой комментарий.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="chrSaved"></span><button class="btn btn-secondary" id="chrSync" type="button" hidden title="Подтянуть новые записи из подключённой таблицы">↻ Синхронизировать</button><button class="btn btn-secondary" id="chrImport" type="button">Импорт</button><button class="btn btn-primary" id="chrAdd" type="button">+ Добавить</button></div></div>
+        <div class="page-actions"><span class="ui3-saved" id="chrSaved"></span><button class="btn btn-secondary" id="chrSync" type="button" hidden title="Подтянуть новые записи из подключённой таблицы">↻ Синхронизировать</button><button class="btn btn-secondary" id="chrPub" type="button" title="Публичная страница журнала на GitHub Pages">🌐 Опубликовать</button><button class="btn btn-secondary" id="chrImport" type="button">Импорт</button><button class="btn btn-primary" id="chrAdd" type="button">+ Добавить</button></div></div>
+      <div class="chr-vote" id="chrPubTip" hidden><span>Хочешь, чтобы зрители могли смотреть журнал, пока ты офлайн? Админка сама создаст страницу на GitHub и будет её обновлять.</span><button class="btn btn-primary btn-sm" id="chrPubTipGo" type="button">Опубликовать</button><button class="btn btn-ghost btn-sm" id="chrPubTipX" type="button">Не сейчас</button></div>
       <div class="chr-vote" id="chrVote" hidden></div>
       <div class="ui3-tabs" id="chrTabs"><span class="on" data-t="game">Игры <i id="chrCntGame"></i></span><span data-t="movie">Кино <i id="chrCntMovie"></i></span></div>
       <div class="chr-stats" id="chrStats"></div>
@@ -1195,6 +1196,12 @@
             </div>
           </div>
           <div class="chr-dlg-foot"><span class="form-message" id="chrMsg"></span><button class="btn btn-secondary" id="chrCancel" type="button">Отмена</button><button class="btn btn-primary" id="chrSave" type="button">Сохранить</button></div>
+        </div>
+      </div>
+      <div class="chr-modal" id="chrPubModal" hidden>
+        <div class="chr-dlg chr-dlg-sm" role="dialog" aria-modal="true" aria-labelledby="chrPubTitle">
+          <div class="chr-dlg-head"><h2 id="chrPubTitle">Страница журнала на GitHub</h2><button class="chr-x" id="chrPubClose" type="button" aria-label="Закрыть">✕</button></div>
+          <div class="chr-imp" id="chrPubBody"></div>
         </div>
       </div>
       <div class="chr-modal" id="chrImpModal" hidden>
@@ -3408,7 +3415,7 @@
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
-<script src="chronicles.js?v=12"></script>
-<script src="whatsnew.js?v=20"></script>
+<script src="chronicles.js?v=13"></script>
+<script src="whatsnew.js?v=21"></script>
 </body>
 </html>

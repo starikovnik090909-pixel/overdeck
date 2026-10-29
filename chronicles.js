@@ -6,6 +6,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const FILE_PATH = path.join(__dirname, 'chronicles.json');
+const events = new (require('events'))();
 const POSTERS_DIR = path.join(__dirname, 'uploads', 'chronicles');
 const TYPES = ['game', 'movie'];
 const MAX_ITEMS = 2000;
@@ -92,6 +93,7 @@ function persist() {
     const tmp = `${FILE_PATH}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify({ items, sources }, null, 2));
     fs.renameSync(tmp, FILE_PATH);
+    events.emit('change');
   } catch (e) { console.warn('[Хроники] Не удалось сохранить chronicles.json:', e.message); }
 }
 
@@ -339,4 +341,4 @@ async function sync(type) {
 function forgetSource(type) { delete sources[type]; persist(); }
 function sourcesInfo() { const o = {}; Object.keys(sources).forEach((k) => { o[k] = { url: sources[k].url, at: sources[k].at }; }); return o; }
 
-module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR };
+module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR, events };

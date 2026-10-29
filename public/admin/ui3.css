@@ -925,3 +925,6 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .app-header .brand-name{grid-column:3;grid-row:1;font-size:19px;font-weight:700;letter-spacing:-.3px;line-height:1;align-self:end}
 .app-header .brand-by{grid-column:3;grid-row:2;font-size:9px;letter-spacing:3px;line-height:1;align-self:start;display:flex;align-items:center;gap:7px;white-space:nowrap}
 .app-header .brand-by::before{content:"";width:14px;height:1.5px;border-radius:2px;background:var(--accent)}
+
+.chr-pubcode{font:700 28px 'JetBrains Mono',monospace;letter-spacing:6px;text-align:center;padding:14px;margin:8px 0;border-radius:12px;background:var(--bg-card2);border:1px dashed var(--line2)}
+#chrPubTip[hidden]{display:none!important}

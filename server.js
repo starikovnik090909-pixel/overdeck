@@ -634,6 +634,8 @@ teamData.init();
 teamPresets.init();
 mvpData.init();
 chronicles.init();
+const chrPublish = require('./chrPublish');
+chrPublish.init(chronicles);
 factData.init();
 factPresets.init();
 fundData.init();
@@ -1557,6 +1559,17 @@ const chroniclesUpload = multer({
   fileFilter: (req, file, cb) => cb(null, ['.png', '.jpg', '.jpeg', '.webp'].includes(path.extname(file.originalname).toLowerCase())),
   limits: { fileSize: 8 * 1024 * 1024 },
 });
+app.get('/api/chronicles/publish', (req, res) => res.json({ success: true, ...chrPublish.status() }));
+app.post('/api/chronicles/publish/login', async (req, res) => {
+  try { res.json({ success: true, ...(await chrPublish.startLogin(req.body && req.body.clientId)), ...chrPublish.status() }); }
+  catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+app.post('/api/chronicles/publish/now', async (req, res) => {
+  try { await chrPublish.publish(true); res.json({ success: true, ...chrPublish.status() }); }
+  catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+app.post('/api/chronicles/publish/auto', (req, res) => { chrPublish.setAuto(!!(req.body && req.body.auto)); res.json({ success: true, ...chrPublish.status() }); });
+app.delete('/api/chronicles/publish', (req, res) => { chrPublish.disconnect(); res.json({ success: true, ...chrPublish.status() }); });
 app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list(), sources: chronicles.sourcesInfo() }));
 app.post('/api/chronicles', (req, res) => {
   const r = chronicles.save(req.body || {});

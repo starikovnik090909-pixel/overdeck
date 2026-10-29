@@ -458,6 +458,58 @@
       const c = el.querySelector('.chr-comment'); const open = c.classList.toggle('clamp') === false; b.textContent = open ? 'Свернуть' : 'Показать полностью';
     }
   });
+
+  // ---------- публикация на GitHub Pages ----------
+  let pub = null, pubTimer = null;
+  const PUBK = 'ovChrPubTip';
+  const ago = (t) => { if (!t) return ''; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'только что' : m < 60 ? m + ' мин назад' : Math.round(m / 60) + ' ч назад'; };
+  function pubButton() {
+    const b = $('chrPub'); if (!b || !pub) return;
+    b.textContent = pub.connected ? (pub.busy ? '🌐 Обновляется…' : '🌐 Моя страница') : '🌐 Опубликовать';
+    $('chrPubTip').hidden = !!(pub.connected || items.length < 5 || lsGet(PUBK) === '1');
+  }
+  async function pubLoad() { try { pub = await api('/api/chronicles/publish'); } catch (e) { /* нет связи */ } pubButton(); return pub; }
+  function pubDraw() {
+    const el = $('chrPubBody'); if (!pub) { el.textContent = 'Загрузка…'; return; }
+    const d = pub.device;
+    if (pub.connected) {
+      el.innerHTML = '<p class="chr-imp-hint">Страница журнала: <a href="' + esc(pub.url) + '" target="_blank" rel="noopener noreferrer">' + esc(pub.url) + '</a> <button type="button" class="btn-tiny" id="chrPubCopy">Копировать</button></p>' +
+        '<p class="chr-imp-hint">' + (pub.busy ? 'Обновляю…' : pub.queued ? 'Изменения будут опубликованы через пару минут.' : pub.lastAt ? 'Опубликовано ' + esc(ago(pub.lastAt)) + '.' : 'Первая публикация идёт, страница появится через 1–2 минуты.') + '</p>' +
+        (pub.lastError ? '<p class="chr-imp-hint" style="color:var(--danger,#e5484d)">' + esc(pub.lastError) + '</p>' : '') +
+        '<label class="chr-chatopt"><input type="checkbox" id="chrPubAuto"' + (pub.auto ? ' checked' : '') + '> Обновлять страницу автоматически</label>' +
+        '<p class="chr-imp-hint">В публичную страницу попадают название, год, жанры, оценки, рецензия и обложки. Ники заказавших и ссылки не публикуются. Репозиторий публичный.</p>' +
+        '<div class="chr-imp-line"><button type="button" class="btn btn-primary btn-sm" id="chrPubNow">Обновить сейчас</button><button type="button" class="btn btn-ghost btn-sm" id="chrPubOff">Отключить GitHub</button></div>';
+    } else if (d) {
+      el.innerHTML = d.error ? '<p class="chr-imp-hint">' + esc(d.error) + '</p><button type="button" class="btn btn-primary btn-sm" id="chrPubGo">Подключить заново</button>' :
+        '<p class="chr-imp-hint">1. Открой <a href="' + esc(d.uri) + '" target="_blank" rel="noopener noreferrer">' + esc(d.uri) + '</a> (нужен аккаунт GitHub).<br>2. Введи код и нажми «Authorize».</p><div class="chr-pubcode">' + esc(d.userCode) + '</div><p class="chr-imp-hint">Жду подтверждения… страница создастся сама.</p>';
+    } else {
+      el.innerHTML = '<p class="chr-imp-hint">Админка создаст на твоём GitHub публичную страницу с журналом (GitHub Pages, бесплатно). Зрители смогут листать его, пока ты офлайн. Нужен только аккаунт GitHub.</p>' +
+        (pub.needClientId ? '<div class="field"><label>Client ID OAuth-приложения GitHub</label><input type="text" id="chrPubCid" placeholder="Ov23li…"></div>' : '') +
+        '<div class="chr-imp-line"><button type="button" class="btn btn-primary" id="chrPubGo">Подключить GitHub</button></div><div class="form-message" id="chrPubMsg"></div>';
+    }
+  }
+  async function pubOpen() {
+    $('chrPubModal').hidden = false; await pubLoad(); pubDraw();
+    clearInterval(pubTimer); pubTimer = setInterval(async () => { if ($('chrPubModal').hidden) { clearInterval(pubTimer); return; } if (document.activeElement && document.activeElement.id === 'chrPubCid') return; await pubLoad(); pubDraw(); }, 3000);
+  }
+  $('chrPub').addEventListener('click', pubOpen);
+  $('chrPubTipGo').addEventListener('click', pubOpen);
+  $('chrPubTipX').addEventListener('click', () => { lsSet(PUBK, '1'); $('chrPubTip').hidden = true; });
+  $('chrPubClose').addEventListener('click', () => { $('chrPubModal').hidden = true; });
+  $('chrPubModal').addEventListener('mousedown', (e) => { if (e.target === $('chrPubModal')) $('chrPubModal').hidden = true; });
+  $('chrPubBody').addEventListener('click', async (e) => {
+    const id = e.target.id; if (!id) return;
+    try {
+      if (id === 'chrPubGo') { const c = $('chrPubCid'); pub = await post('/api/chronicles/publish/login', { clientId: c ? c.value : '' }); }
+      else if (id === 'chrPubNow') { e.target.disabled = true; pub = await post('/api/chronicles/publish/now'); }
+      else if (id === 'chrPubOff') { if (!confirm('Отключить GitHub? Страница останется, но обновляться перестанет.')) return; pub = await api('/api/chronicles/publish', { method: 'DELETE' }); }
+      else if (id === 'chrPubCopy') { navigator.clipboard.writeText(pub.url).catch(() => {}); e.target.textContent = 'Скопировано'; return; }
+      else return;
+      pubButton(); pubDraw();
+    } catch (err) { const m = $('chrPubMsg'); if (m) { m.textContent = err.message; m.className = 'form-message error'; } else alert(err.message); }
+  });
+  $('chrPubBody').addEventListener('change', async (e) => { if (e.target.id === 'chrPubAuto') { pub = await post('/api/chronicles/publish/auto', { auto: e.target.checked }); } });
+  setTimeout(pubLoad, 1500);
   document.querySelectorAll('.nav-item[data-tab="chronicles"]').forEach((n) => n.addEventListener('click', () => { if (!loaded) load(); }));
   new MutationObserver(() => { if (sec.classList.contains('active') && !loaded) load(); }).observe(sec, { attributes: true, attributeFilter: ['class'] });
   if (sec.classList.contains('active')) load();
