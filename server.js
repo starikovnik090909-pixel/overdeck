@@ -575,6 +575,7 @@ async function pollCategoryOnce() {
   if (SETUP_MODE) return;
   const { changed, entry } = await categories.poll(config, config.channel);
   if (changed && entry) {
+    if (streamIsLive) telegramAnnounce.onCategoryChange();
     handleTimelineWeightedEvent({ type: 'category', meta: { name: entry.name } });
   }
   if (resolvedBroadcasterId && twitch.hasCredentials(config)) {
@@ -583,7 +584,8 @@ async function pollCategoryOnce() {
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
     if (streamIsLive && fakeStream.isActive()) { fakeStream.stop(); broadcast(); console.log('[Фейк-режим] Начался настоящий стрим — фейк-режим выключен.'); } // фейк-данные не должны попасть в эфир
     if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
-    if (streamIsLive && !wasLive && streamStatusKnown) telegramAnnounce.onStreamStart(); // сервер, запущенный посреди стрима, повторно не анонсирует
+    if (streamIsLive && !wasLive && streamStatusKnown) telegramAnnounce.onStreamStart();
+    if (!streamIsLive && wasLive) telegramAnnounce.onStreamEnd(); // сервер, запущенный посреди стрима, повторно не анонсирует
     streamStatusKnown = true;
     if (streamIsLive !== wasLive) broadcastAdminStatus(); // статус в шапке админки обновится сразу, не дожидаясь следующего периодического тика
   }
@@ -638,7 +640,11 @@ teamPresets.init();
 mvpData.init();
 chronicles.init();
 const telegramAnnounce = require('./telegramAnnounce');
-telegramAnnounce.init(async () => ({ channel: config.channel, info: resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null }));
+telegramAnnounce.init(async () => {
+  const info = resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null;
+  const gameArt = info && info.game_id ? await twitch.fetchGameArt(config, info.game_id).catch(() => null) : null; // запасная картинка, если скриншот эфира не получится
+  return { channel: config.channel, info, gameArt };
+});
 const chrPublish = require('./chrPublish');
 chrPublish.init(chronicles);
 factData.init();

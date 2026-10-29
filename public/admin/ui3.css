@@ -949,3 +949,25 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .tg-code b{display:block;margin-top:6px;font:700 22px 'JetBrains Mono',monospace;letter-spacing:2px;color:var(--text-primary);user-select:all}
 .tg-linked{margin:10px 0;color:#3ecf8e;font-weight:600}
 #tgMode{margin:0 0 14px;align-self:flex-start}
+
+.tg-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tg-presets button,.tg-chips button{border:1px solid var(--divider);background:var(--bg-card2);color:var(--text-secondary);font:inherit;font-size:12.5px;padding:6px 12px;border-radius:9px;cursor:pointer}
+.tg-presets button:hover,.tg-chips button:hover{border-color:var(--accent)}
+.tg-presets button.on{background:var(--accent-soft);color:var(--accent2);border-color:var(--accent)}
+.tg-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tg-chips button{font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:4px 8px}
+.tg-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:900px){.tg-edit{grid-template-columns:1fr}}
+.tg-chat{background:var(--bg-card2);border-radius:14px;padding:14px;display:flex;align-items:flex-start}
+.tg-msg{background:var(--bg-card);color:var(--text-primary);border-radius:14px 14px 14px 4px;overflow:hidden;max-width:340px;box-shadow:0 1px 3px #0003}
+.tg-txt{padding:8px 11px 4px;white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.4}
+.tg-txt a{color:#6ab3f3}
+.tg-txt blockquote{margin:4px 0;padding:2px 0 2px 9px;border-left:3px solid var(--accent);background:var(--accent-soft)}
+.tg-txt .sp{background:var(--text-mute);color:transparent;border-radius:4px;cursor:pointer}
+.tg-txt .sp.open{background:none;color:inherit}
+.tg-meta{text-align:right;font-size:11px;color:var(--text-mute);padding:0 10px 5px}
+.tg-shot{aspect-ratio:16/9;background:linear-gradient(135deg,#2b1055,#7597de 70%,#d16ba5);position:relative;display:flex;align-items:flex-end;padding:8px}
+.tg-shot i{position:absolute;top:8px;left:8px;background:#e91916;color:#fff;font:700 10px sans-serif;padding:2px 6px;border-radius:4px;font-style:normal}
+.tg-shot b{color:#fff;font:600 11px sans-serif;background:#0007;padding:2px 7px;border-radius:4px}
+.tg-btn{display:block;margin-top:4px;background:var(--accent-soft);color:var(--accent2);text-align:center;padding:7px;border-radius:9px;font-weight:500;font-size:13px;max-width:340px}
+#tab-telegram .field select{max-width:420px}

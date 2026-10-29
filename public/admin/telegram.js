@@ -23,11 +23,29 @@
     $('tgUnlink').hidden = !linked; $('tgLinkGo').hidden = linked; $('tgAddBot').hidden = linked;
     if (linked) $('tgCode').hidden = true;
   }
+  const esc = (x) => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const SAMPLE = { channel: 'starikov', title: 'Проходим Resident Evil 4 на максимальной сложности', game: 'Resident Evil 4', url: 'twitch.tv/starikov' };
+  function renderPrev(t) {
+    let h = esc(t).replace(/&lt;(\/?)(b|i|u|s|code|blockquote)&gt;/g, '<$1$2>').replace(/&lt;tg-spoiler&gt;/g, '<span class="sp">').replace(/&lt;\/tg-spoiler&gt;/g, '</span>');
+    return h.replace(/\{(title|game|channel|url)\}/g, (m, k) => k === 'url' ? '<a>' + SAMPLE.url + '</a>' : esc(SAMPLE[k]));
+  }
+  function drawPrev() {
+    const shot = $('tgScreen').checked, btn = $('tgButton').checked;
+    $('tgPrev').innerHTML = '<div class="tg-msg">' + (shot ? '<div class="tg-shot"><i>LIVE</i><b>' + esc(SAMPLE.game) + '</b></div>' : '') + '<div class="tg-txt">' + renderPrev($('tgTpl').value) + '</div><div class="tg-meta">20:15</div></div>' + (btn ? '<span class="tg-btn">▶ Смотреть стрим</span>' : '');
+    $('tgPresets').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === $('tgTpl').value));
+  }
+  function drawPresets() {
+    $('tgPresets').innerHTML = (st.presets || []).map((p, i) => '<button type="button" data-t="' + esc(p.template) + '" title="' + esc(p.desc) + '">' + esc(p.name) + '</button>').join('');
+    $('tgChips').innerHTML = ['{title}', '{game}', '{channel}', '{url}', '<b></b>', '<i></i>', '<blockquote></blockquote>', '<tg-spoiler></tg-spoiler>'].map((x) => '<button type="button" data-v="' + esc(x) + '">' + esc(x) + '</button>').join('');
+  }
   function draw() {
     if (!st) return;
     drawMode();
+    drawPresets();
+    $('tgButton').checked = st.withButton; $('tgOnCat').value = st.onCategory; $('tgAfter').value = st.afterEnd;
     $('tgEnabled').checked = st.enabled; $('tgScreen').checked = st.withScreen; $('tgChat').value = st.chatId || '';
     $('tgDelay').value = st.delaySec; $('tgTpl').value = st.template; $('tgToken').value = '';
+    drawPrev();
     $('tgToken').placeholder = st.hasToken ? 'Токен сохранён (' + st.tokenHint + '), оставь пустым, чтобы не менять' : '123456:ABC-DEF…';
     $('tgLast').textContent = st.lastSentAt ? 'Последний анонс: ' + new Date(st.lastSentAt).toLocaleString('ru-RU') + '.' : '';
     if (st.lastError) $('tgLast').textContent += ' Ошибка: ' + st.lastError;
@@ -37,11 +55,16 @@
     try { const d = await post('/api/telegram/link/start'); $('tgAddBot').href = d.addUrl; } catch (e) { msg(e.message, 'error'); }
   }
   async function load() { try { st = await api('/api/telegram'); loaded = true; draw(); fillAddUrl(); } catch (e) { msg('Не удалось загрузить: ' + e.message, 'error'); } }
-  const form = () => ({ mode: st ? st.mode : 'relay', token: $('tgToken').value, chatId: $('tgChat').value, enabled: $('tgEnabled').checked, withScreen: $('tgScreen').checked, delaySec: Number($('tgDelay').value) || 0, template: $('tgTpl').value });
+  const form = () => ({ mode: st ? st.mode : 'relay', token: $('tgToken').value, chatId: $('tgChat').value, enabled: $('tgEnabled').checked, withScreen: $('tgScreen').checked, delaySec: Number($('tgDelay').value) || 0, template: $('tgTpl').value, withButton: $('tgButton').checked, onCategory: $('tgOnCat').value, afterEnd: $('tgAfter').value });
   async function save(quiet) { st = await post('/api/telegram', form()); draw(); if (!quiet) saved('Сохранено'); }
   $('tgSave').addEventListener('click', async () => { try { await save(); msg(''); } catch (e) { msg(e.message, 'error'); } });
   $('tgEnabled').addEventListener('change', async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } });
-  $('tgScreen').addEventListener('change', async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } });
+  $('tgScreen').addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } });
+  ['tgButton', 'tgOnCat', 'tgAfter'].forEach((id) => $(id).addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } }));
+  $('tgTpl').addEventListener('input', drawPrev);
+  $('tgPresets').addEventListener('click', (e) => { const b = e.target.closest('button[data-t]'); if (!b) return; $('tgTpl').value = b.dataset.t; drawPrev(); });
+  $('tgChips').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; const t = $('tgTpl'), s0 = t.selectionStart; t.value = t.value.slice(0, s0) + b.dataset.v + t.value.slice(t.selectionEnd); t.focus(); drawPrev(); });
+  document.addEventListener('click', (e) => { const sp = e.target.closest && e.target.closest('#tgPrev .sp'); if (sp) sp.classList.toggle('open'); });
   $('tgMode').addEventListener('click', async (e) => { const b = e.target.closest('button'); if (!b) return; try { st = await post('/api/telegram', { mode: b.dataset.v }); draw(); msg(''); } catch (err) { msg(err.message, 'error'); } });
   async function linkPoll() {
     clearInterval(poll); let n = 0;
@@ -61,7 +84,7 @@
     } catch (err) { msg(err.message, 'error'); }
   });
   $('tgUnlink').addEventListener('click', async () => { try { st = await post('/api/telegram', { unlink: true }); draw(); msg('Канал отвязан.'); } catch (err) { msg(err.message, 'error'); } });
-  $('tgReset').addEventListener('click', () => { $('tgTpl').value = st ? st.defaultTemplate : ''; });
+  $('tgReset').addEventListener('click', () => { $('tgTpl').value = st ? st.defaultTemplate : ''; drawPrev(); });
   $('tgCheck').addEventListener('click', async () => {
     msg('Проверяю…');
     try { await save(true); const d = await post('/api/telegram/check'); msg('Всё в порядке: бот ' + d.bot + (d.chat ? ', канал «' + d.chat + '»' : '. Укажи канал.'), 'success'); }

@@ -59,25 +59,38 @@ export default {
       }
       if (req.method === 'POST' && url.pathname === '/send') {
         const ct = req.headers.get('content-type') || '';
-        let key, text, photo = null;
+        let key, text, button = '', photo = null;
         if (ct.includes('multipart/form-data')) {
-          const f = await req.formData(); key = f.get('key'); text = f.get('text'); const p = f.get('photo');
+          const f = await req.formData(); key = f.get('key'); text = f.get('text'); button = f.get('button') || ''; const p = f.get('photo');
           if (p && typeof p !== 'string') photo = p;
-        } else { const b = await req.json(); key = b.key; text = b.text; }
+        } else { const b = await req.json(); key = b.key; text = b.text; button = b.button || ''; }
         const chatId = await verify(env, key);
         if (!chatId) return json({ ok: false, error: 'Ключ канала недействителен. Привяжи канал заново.' }, 401);
         text = String(text || '').slice(0, 3500);
         if (!text) return json({ ok: false, error: 'Пустой текст.' }, 400);
+        const markup = /^https:\/\/(www\.)?twitch\.tv\//.test(String(button)) ? { inline_keyboard: [[{ text: '▶ Смотреть стрим', url: String(button) }]] } : null;
+        let res;
         try {
           if (photo) {
             if (photo.size > 5 * 1024 * 1024) return json({ ok: false, error: 'Картинка больше 5 МБ.' }, 413);
             const fd = new FormData();
             fd.append('chat_id', chatId); fd.append('parse_mode', 'HTML'); fd.append('caption', text.slice(0, 1024));
+            if (markup) fd.append('reply_markup', JSON.stringify(markup));
             fd.append('photo', photo, 'stream.jpg');
-            await tg(env, 'sendPhoto', fd);
-          } else await tg(env, 'sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false });
+            res = await tg(env, 'sendPhoto', fd);
+          } else res = await tg(env, 'sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: false, ...(markup ? { reply_markup: markup } : {}) });
         } catch (e) { return json({ ok: false, error: friendly(e) }, 400); }
-        return json({ ok: true });
+        return json({ ok: true, id: res.message_id });
+      }
+      // Удаление постов, которые бот сам сделал в этом канале (не больше 30 за раз).
+      if (req.method === 'POST' && url.pathname === '/delete') {
+        const b = await req.json().catch(() => ({}));
+        const chatId = await verify(env, b.key);
+        if (!chatId) return json({ ok: false, error: 'Ключ канала недействителен. Привяжи канал заново.' }, 401);
+        const ids = (Array.isArray(b.ids) ? b.ids : []).map(Number).filter((n) => Number.isInteger(n) && n > 0).slice(0, 30);
+        let done = 0;
+        for (const id of ids) { try { await tg(env, 'deleteMessage', { chat_id: chatId, message_id: id }); done++; } catch (e) { /* уже удалён */ } }
+        return json({ ok: true, deleted: done });
       }
       if (url.pathname === '/') return new Response('Overdeck Telegram relay: работает.', { status: 200 });
       return json({ ok: false, error: 'Не найдено.' }, 404);
