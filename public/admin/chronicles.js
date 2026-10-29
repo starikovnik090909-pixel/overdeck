@@ -30,9 +30,9 @@
     });
   } catch (e) { /* настройки по умолчанию */ }
   const saveState = () => lsSet(SKEY, JSON.stringify({ game: { view: S.game.view, chat: S.game.chat, sort: S.game.sort }, movie: { view: S.movie.view, chat: S.movie.chat, sort: S.movie.sort } }));
-  let showChat = S[tab].chat; view = S[tab].view;
+  let showChat = tab !== 'game' && S[tab].chat; view = S[tab].view; // в «Играх» оценки чата нет
   function captureControls() { const s = S[tab]; s.q = $('chrSearch').value; s.sort = $('chrSort').value; s.genre = $('chrGenre').value; s.rf = $('chrRatingF').value; s.origin = $('chrOrigin').value; saveState(); }
-  function useTab(t) { if (t === tab) return; captureControls(); tab = t; lsSet(KEY, tab); view = S[t].view; showChat = S[t].chat; }
+  function useTab(t) { if (t === tab) return; captureControls(); tab = t; lsSet(KEY, tab); view = S[t].view; showChat = t !== 'game' && S[t].chat; }
 
   const saved = (t, k) => { const el = $('chrSaved'); el.textContent = t; el.className = 'ui3-saved' + (k ? ' ' + k : ''); if (t && k === 'ok') setTimeout(() => { if (el.textContent === t) el.textContent = ''; }, 2500); };
   async function api(url, opt) {
@@ -91,7 +91,7 @@
 
   /* ---------- карточки ---------- */
   const STARS = '★★★★★★★★★★';
-  const stars = (v) => '<span class="chr-st" style="--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
+  const stars = (v) => tab === 'game' ? '' : '<span class="chr-st" style="--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
   const ratingLine = (lbl, v) => '<div class="chr-rl"><span>' + lbl + '</span>' + stars(v) + '<b>' + (v == null ? '—' : esc(fmt(v))) + '</b></div>';
   const ratingClass = (r) => (r == null ? 'none' : r > 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
@@ -182,7 +182,7 @@
 
   function renderViews() {
     $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + VIEWS.map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('') +
-      '<label class="chr-chatopt" title="Показывать оценку чата в списке и в форме"><input type="checkbox" id="chrShowChat"' + (showChat ? ' checked' : '') + '> Оценка чата</label>';
+      (tab === 'game' ? '' : '<label class="chr-chatopt" title="Показывать оценку чата в списке и в форме"><input type="checkbox" id="chrShowChat"' + (showChat ? ' checked' : '') + '> Оценка чата</label>');
     const o = $('chrSort').querySelector('option[value="chat"]'); if (o) { o.hidden = !showChat; o.disabled = !showChat; }
     if (!showChat && S[tab].sort === 'chat') S[tab].sort = 'new';
     $('chrChatS').closest('.field').hidden = !showChat;
