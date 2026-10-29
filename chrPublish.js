@@ -10,7 +10,7 @@ const SITE_FILE = path.join(__dirname, 'chronicles-site', 'index.html');
 const REPO_NAME = 'overdeck-chronicles';
 // Client ID OAuth-приложения Overdeck на GitHub (публичное значение, не секрет).
 // Можно вписать сюда, в config.json ("githubClientId") или ввести один раз в окне публикации.
-const DEFAULT_CLIENT_ID = '';
+const DEFAULT_CLIENT_ID = 'Ov23liGykFAMWidkrAcC';
 const DEBOUNCE_MS = 90 * 1000;
 const UA = 'Overdeck-Chronicles';
 
