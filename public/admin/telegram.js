@@ -44,7 +44,8 @@
     if (!st) return;
     drawMode();
     drawPresets();
-    $('tgButton').checked = st.withButton; $('tgOnCat').value = st.onCategory; $('tgAfter').value = st.afterEnd;
+    $('tgButton').checked = st.withButton; $('tgLive').checked = st.liveUpdate; $('tgEndPost').checked = st.endPost; $('tgEndShot').checked = st.endShot; $('tgChr').checked = st.chrPost;
+    $('tgShotHint').textContent = st.browserFound ? 'Сделаем снимок страницы оверлея через установленный браузер' : 'На этом компьютере не найден Chrome или Edge: итог уйдёт без снимка'; $('tgOnCat').value = st.onCategory; $('tgAfter').value = st.afterEnd;
     $('tgEnabled').checked = st.enabled; $('tgScreen').checked = st.withScreen; $('tgChat').value = st.chatId || '';
     if (document.activeElement !== $('tgDelay')) { $('tgDelay').value = st.delaySec; $('tgDelayOut').textContent = st.delaySec + ' с'; }
     if (document.activeElement !== $('tgTpl')) $('tgTpl').value = st.template;
@@ -59,7 +60,7 @@
     try { const d = await post('/api/telegram/link/start'); $('tgAddBot').href = d.addUrl; } catch (e) { msg(e.message, 'error'); }
   }
   async function load() { try { st = await api('/api/telegram'); loaded = true; draw(); fillAddUrl(); } catch (e) { msg('Не удалось загрузить: ' + e.message, 'error'); } }
-  const form = () => ({ mode: st ? st.mode : 'relay', token: $('tgToken').value, chatId: $('tgChat').value, enabled: $('tgEnabled').checked, withScreen: $('tgScreen').checked, delaySec: Number($('tgDelay').value) || 0, template: $('tgTpl').value, withButton: $('tgButton').checked, onCategory: $('tgOnCat').value, afterEnd: $('tgAfter').value });
+  const form = () => ({ mode: st ? st.mode : 'relay', token: $('tgToken').value, chatId: $('tgChat').value, enabled: $('tgEnabled').checked, withScreen: $('tgScreen').checked, delaySec: Number($('tgDelay').value) || 0, template: $('tgTpl').value, withButton: $('tgButton').checked, liveUpdate: $('tgLive').checked, endPost: $('tgEndPost').checked, endShot: $('tgEndShot').checked, chrPost: $('tgChr').checked, onCategory: $('tgOnCat').value, afterEnd: $('tgAfter').value });
   async function save(quiet) { st = await post('/api/telegram', form()); draw(); if (!quiet) saved('Сохранено'); }
   let asT = null;
   const auto = () => { clearTimeout(asT); asT = setTimeout(async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } }, 600); };
@@ -71,7 +72,7 @@
   $('tgChat').addEventListener('change', auto);
   $('tgEnabled').addEventListener('change', async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } });
   $('tgScreen').addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } });
-  ['tgButton', 'tgOnCat', 'tgAfter'].forEach((id) => $(id).addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } }));
+  ['tgButton', 'tgOnCat', 'tgAfter', 'tgLive', 'tgEndPost', 'tgEndShot', 'tgChr'].forEach((id) => $(id).addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } }));
   $('tgTpl').addEventListener('input', drawPrev);
   $('tgPresets').addEventListener('click', (e) => { const b = e.target.closest('button[data-t]'); if (!b) return; $('tgTpl').value = b.dataset.t; drawPrev(); });
   $('tgChips').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; const t = $('tgTpl'), s0 = t.selectionStart; t.value = t.value.slice(0, s0) + b.dataset.v + t.value.slice(t.selectionEnd); t.focus(); drawPrev(); });
@@ -104,6 +105,11 @@
   $('tgTest').addEventListener('click', async () => {
     msg('Отправляю…');
     try { await save(true); const d = await post('/api/telegram/test'); msg('Отправлено' + (d.live ? '' : ' (стрим офлайн, поэтому текст без данных эфира)') + (d.kind === 'photo' ? ', со скриншотом.' : '.'), 'success'); }
+    catch (e) { msg(e.message, 'error'); }
+  });
+  $('tgTestEnd').addEventListener('click', async () => {
+    msg('Готовлю итог…');
+    try { await save(true); const d = await post('/api/telegram/test', { end: true }); msg('Пример итога отправлен' + (d.kind === 'photo' ? ' со снимком сцены.' : ' без снимка.') + (d.live ? '' : ' (цифры выдуманные: стрим сейчас офлайн)'), 'success'); }
     catch (e) { msg(e.message, 'error'); }
   });
   $('tgClear').addEventListener('click', async () => {

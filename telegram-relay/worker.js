@@ -92,6 +92,20 @@ export default {
         for (const id of ids) { try { await tg(env, 'deleteMessage', { chat_id: chatId, message_id: id }); done++; } catch (e) { /* уже удалён */ } }
         return json({ ok: true, deleted: done });
       }
+      // Правка своего поста (живой анонс): подпись к фото или текст сообщения.
+      if (req.method === 'POST' && url.pathname === '/edit') {
+        const b = await req.json().catch(() => ({}));
+        const chatId = await verify(env, b.key);
+        if (!chatId) return json({ ok: false, error: 'Ключ канала недействителен. Привяжи канал заново.' }, 401);
+        const id = Number(b.id), text = String(b.text || '').slice(0, 3500);
+        if (!Number.isInteger(id) || id < 1 || !text) return json({ ok: false, error: 'Неверные данные.' }, 400);
+        const markup = /^https:\/\/(www\.)?twitch\.tv\//.test(String(b.button || '')) ? { inline_keyboard: [[{ text: '▶ Смотреть стрим', url: String(b.button) }]] } : { inline_keyboard: [] };
+        try {
+          if (b.kind === 'photo') await tg(env, 'editMessageCaption', { chat_id: chatId, message_id: id, caption: text.slice(0, 1024), parse_mode: 'HTML', reply_markup: markup });
+          else await tg(env, 'editMessageText', { chat_id: chatId, message_id: id, text, parse_mode: 'HTML', disable_web_page_preview: false, reply_markup: markup });
+        } catch (e) { if (!/not modified/i.test(e.message)) return json({ ok: false, error: friendly(e) }, 400); }
+        return json({ ok: true });
+      }
       if (url.pathname === '/') return new Response('Overdeck Telegram relay: работает.', { status: 200 });
       return json({ ok: false, error: 'Не найдено.' }, 404);
     } catch (e) { return json({ ok: false, error: friendly(e) }, 502); }

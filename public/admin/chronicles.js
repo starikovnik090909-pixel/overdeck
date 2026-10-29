@@ -98,7 +98,7 @@
   const ratingClass = (r) => (r == null ? 'none' : r > 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
   const posterImg = (it) => (it.poster ? '<img loading="lazy" alt="" src="' + posterUrl(it) + '">' : '<span class="chr-ph">' + esc((it.title || '?').trim().charAt(0).toUpperCase()) + '</span>');
-  const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить в чате опрос «Оценка чата» (1-2, 3-4, 5-6, 7-8, 9-10)" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
+  const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить в чате опрос «Оценка чата» (1-2, 3-4, 5-6, 7-8, 9-10)" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="tg" title="Отправить карточку в Telegram-канал" aria-label="В Telegram">✈</button><button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';
   let acts = buildActs();
   const ring = (v, s, lbl) => {
     const ok = v != null; const n = ok ? Math.min(10, v) : 0;
@@ -453,6 +453,12 @@
     if (b.dataset.a === 'edit') openForm(it);
     else if (b.dataset.a === 'del') del(it);
     else if (b.dataset.a === 'vote') startVote(it);
+    else if (b.dataset.a === 'tg') {
+      saved('Отправляю в Telegram…');
+      fetch('/api/telegram/chronicle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: it.id }) })
+        .then((r) => r.json()).then((d) => { if (!d.success) throw new Error(d.error || 'Не удалось отправить.'); saved('Отправлено в Telegram', 'ok'); })
+        .catch((err) => saved(err.message, 'err'));
+    }
     else if (b.dataset.a === 'more') {
       if (b.classList.contains('chr-tcm')) { b.classList.toggle('open'); return; }
       const c = el.querySelector('.chr-comment'); const open = c.classList.toggle('clamp') === false; b.textContent = open ? 'Свернуть' : 'Показать полностью';

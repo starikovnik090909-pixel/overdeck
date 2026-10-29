@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=50">
+<link rel="stylesheet" href="ui3.css?v=51">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1176,12 +1176,18 @@
             <div class="tg-chips" id="tgChips"></div>
             <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgScreen"><i></i><span><b>Скриншот эфира</b><small>Если не получится, возьмётся обложка категории</small></span></label>
             <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgButton"><i></i><span><b>Кнопка «▶ Смотреть стрим»</b><small>Под постом, открывает твой канал на Twitch</small></span></label>
+            <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgLive"><i></i><span><b>Живой анонс</b><small>Во время эфира пост сам обновляется раз в 5 минут: сколько идёт стрим и сколько зрителей</small></span></label>
             <div class="tg-row"><button class="btn btn-ghost btn-sm" id="tgReset" type="button">Сбросить текст</button></div>
           </div>
           <div class="tg-node card ui3-card"><span class="tg-tag">2 · Смена категории</span><h3>Что делаем, если сменилась игра</h3><p class="tg-hint">Пост с новой категорией появится через 20 секунд.</p>
             <select id="tgOnCat" class="ui3-select"><option value="replace">Новый анонс, старый удалить</option><option value="new">Новый анонс, старый оставить</option><option value="off">Ничего не делать</option></select></div>
           <div class="tg-node card ui3-card"><span class="tg-tag">3 · Конец стрима</span><h3>Что с постами после эфира</h3><p class="tg-hint">Если связь оборвалась и стрим вернулся, посты не трогаем. Повторно в течение 30 минут бот не пишет.</p>
-            <select id="tgAfter" class="ui3-select"><option value="keep">Оставить все анонсы</option><option value="delete">Удалить анонсы этого стрима (через 2 минуты)</option></select></div>
+            <select id="tgAfter" class="ui3-select"><option value="keep">Оставить все анонсы</option><option value="delete">Удалить анонсы этого стрима (через 2 минуты)</option></select>
+            <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgEndPost"><i></i><span><b>Пост «Стрим закончился»</b><small>Длительность, пик и среднее число зрителей, игры, сообщения, новые фолловеры, подписки и донаты</small></span></label>
+            <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgEndShot"><i></i><span><b>Со снимком сцены статистики</b><small id="tgShotHint">Нужен Chrome или Edge на этом компьютере</small></span></label>
+            <div class="tg-row"><button class="btn btn-secondary btn-sm" id="tgTestEnd" type="button">Отправить пример итога</button></div></div>
+          <div class="tg-node card ui3-card"><span class="tg-tag">4 · Хроники</span><h3>Карточки из журнала</h3><p class="tg-hint">Когда ты добавляешь игру или фильм, в канал уходит карточка: обложка, оценка, жанры и твой комментарий. Отправить любую запись можно и вручную кнопкой ✈ на её карточке в Хрониках.</p>
+            <label class="tg-sw tg-sw-row"><input type="checkbox" id="tgChr"><i></i><span><b>Отправлять новые записи сами</b><small>Через 25 секунд после добавления, чтобы успела загрузиться обложка</small></span></label></div>
         </div>
         <div class="tg-side">
           <div class="tg-pvbox"><div class="tg-pvh">Так пост увидят в канале</div><div class="tg-chat"><div id="tgPrev"></div></div></div>
@@ -3472,8 +3478,8 @@
 <script src="guides.js?v=5"></script>
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
-<script src="chronicles.js?v=13"></script>
-<script src="telegram.js?v=4"></script>
+<script src="chronicles.js?v=14"></script>
+<script src="telegram.js?v=5"></script>
 <script src="whatsnew.js?v=25"></script>
 </body>
 </html>

@@ -325,6 +325,7 @@ async function raidExtras(data, force) {
 function fireEventAlert(kind, data, force) {
   const cfg = config.eventAlerts[kind];
   if (!cfg) return false;
+  if (!force && (kind === 'follow' || kind === 'sub') && !(data && data.type === 'resub')) telegramAnnounce.noteEvent(kind, data); // счётчики для итога стрима в Телеграм
   if (kind === 'raid' && data && data.avatar === undefined && cfg.style !== 'plain') {
     if (!force && !eventAlerts.shouldShow(kind, data, cfg)) return false;
     raidExtras(data, force).then((x) => fireEventAlert(kind, { ...data, ...x }, force)).catch(() => fireEventAlert(kind, { ...data, avatar: '' }, force));
@@ -586,6 +587,7 @@ async function pollCategoryOnce() {
     if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
     if (streamIsLive && !wasLive && streamStatusKnown) telegramAnnounce.onStreamStart();
     if (!streamIsLive && wasLive) telegramAnnounce.onStreamEnd(); // сервер, запущенный посреди стрима, повторно не анонсирует
+    telegramAnnounce.noteLive(streamIsLive);
     streamStatusKnown = true;
     if (streamIsLive !== wasLive) broadcastAdminStatus(); // статус в шапке админки обновится сразу, не дожидаясь следующего периодического тика
   }
@@ -640,10 +642,17 @@ teamPresets.init();
 mvpData.init();
 chronicles.init();
 const telegramAnnounce = require('./telegramAnnounce');
-telegramAnnounce.init(async () => {
+telegramAnnounce.init(async (opts) => {
   const info = resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null;
-  const gameArt = info && info.game_id ? await twitch.fetchGameArt(config, info.game_id).catch(() => null) : null; // запасная картинка, если скриншот эфира не получится
+  const gameArt = !(opts && opts.light) && info && info.game_id ? await twitch.fetchGameArt(config, info.game_id).catch(() => null) : null; // запасная картинка, если скриншот эфира не получится
   return { channel: config.channel, info, gameArt };
+}, {
+  port: config.port || 3001,
+  getTotalMessages: () => stats.getTotalMessages(),
+  getTopChatters: (n) => stats.getTopChatters(n),
+  chroniclesUrl: () => { try { return chrPublish.status().url || ''; } catch (e) { return ''; } },
+  getChronicle: (id) => chronicles.list().find((x) => x.id === id) || null,
+  posterFile: (name) => { const f = path.join(chronicles.POSTERS_DIR, path.basename(String(name))); return fs.existsSync(f) ? f : null; },
 });
 const chrPublish = require('./chrPublish');
 chrPublish.init(chronicles);
@@ -1572,6 +1581,13 @@ const chroniclesUpload = multer({
 });
 app.get('/api/telegram', (req, res) => res.json({ success: true, ...telegramAnnounce.publicState() }));
 app.post('/api/telegram', (req, res) => res.json({ success: true, ...telegramAnnounce.update(req.body) }));
+app.post('/api/telegram/chronicle', async (req, res) => {
+  try {
+    const it = chronicles.list().find((x) => x.id === (req.body && req.body.id));
+    if (!it) return res.status(404).json({ success: false, error: 'Запись не найдена.' });
+    res.json({ success: true, ...(await telegramAnnounce.postChronicle(it)) });
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
 app.post('/api/telegram/check', async (req, res) => {
   try { res.json({ success: true, ...(await telegramAnnounce.check()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
@@ -1582,7 +1598,7 @@ app.post('/api/telegram/link/check', async (req, res) => {
   try { res.json({ success: true, ...(await telegramAnnounce.linkCheck()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 app.post('/api/telegram/test', async (req, res) => {
-  try { res.json({ success: true, ...(await telegramAnnounce.test()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+  try { res.json({ success: true, ...(await (req.body && req.body.end ? telegramAnnounce.testEnd() : telegramAnnounce.test())) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 app.get('/api/chronicles/publish', (req, res) => res.json({ success: true, ...chrPublish.status() }));
 app.post('/api/chronicles/publish/login', async (req, res) => {
@@ -1599,6 +1615,7 @@ app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list(), so
 app.post('/api/chronicles', (req, res) => {
   const r = chronicles.save(req.body || {});
   if (!r.ok) return res.status(400).json({ success: false, error: r.error });
+  if (!(req.body && req.body.id)) telegramAnnounce.scheduleChronicle(r.item.id); // новая запись → карточка в Телеграм (если включено)
   res.json({ success: true, item: r.item });
 });
 // Голосование чата «Оценка чата» для записи из «Хроник»: опрос Twitch с вариантами 1-2, 3-4, 5-6, 7-8, 9-10.
@@ -4320,6 +4337,7 @@ async function processFundAlertQueue() {
 /** Общий обработчик для донатов с любой платформы: сохраняет в историю, обновляет топ донатеров и рассылает в реальном времени. */
 function handleDonation(donation) {
   const record = donations.addDonation(donation);
+  try { telegramAnnounce.noteEvent('donation', { rub: currency.toRub(record.amount, record.currency).rub }); } catch (e) { /* счётчик необязателен */ }
   donorLeaderboard.addDonation(record);
   handleTimelineWeightedEvent({ type: 'donation', username: record.username, meta: { amount: record.amount, currency: record.currency, amountRub: currency.toRub(record.amount, record.currency).rub, message: record.message || '' } }); // зелёный прямоугольник с суммой на таймлайне
   broadcastDonation(record);
