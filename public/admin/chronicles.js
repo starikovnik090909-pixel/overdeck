@@ -93,9 +93,9 @@
 
   /* ---------- карточки ---------- */
   const STARS = '★★★★★★★★★★';
-  const stars = (v) => tab === 'game' ? '' : '<span class="chr-st" style="--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
+  const stars = (v) => tab === 'game' ? '' : '<span class="chr-st' + (v >= 10 ? ' gold' : '') + '" style="--sc:' + (v >= 10 ? '#f6d86a' : v >= 7 ? '#3ecf8e' : v >= 5 ? '#f0883e' : '#e5484d') + ';--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
   const ratingLine = (lbl, v) => '<div class="chr-rl"><span>' + lbl + '</span>' + stars(v) + '<b>' + (v == null ? '—' : esc(fmt(v))) + '</b></div>';
-  const ratingClass = (r) => (r == null ? 'none' : r > 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
+  const ratingClass = (r) => (r == null ? 'none' : r >= 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
   const posterImg = (it) => (it.poster ? '<img loading="lazy" alt="" src="' + posterUrl(it) + '">' : '<span class="chr-ph">' + esc((it.title || '?').trim().charAt(0).toUpperCase()) + '</span>');
   const buildActs = () => '<div class="chr-acts">' + (showChat ? '<button type="button" class="chr-ab" data-a="vote" title="Запустить в чате опрос «Оценка чата» (1-2, 3-4, 5-6, 7-8, 9-10)" aria-label="Голосование чата">🗳</button>' : '') + '<button type="button" class="chr-ab" data-a="tg" title="Отправить карточку в Telegram-канал" aria-label="В Telegram">✈</button><button type="button" class="chr-ab" data-a="edit" title="Редактировать" aria-label="Редактировать">✎</button><button type="button" class="chr-ab" data-a="del" title="Удалить" aria-label="Удалить">🗑</button></div>';

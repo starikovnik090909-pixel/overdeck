@@ -86,6 +86,7 @@ function buildFiles() {
     rating: it.rating == null ? null : Math.min(10, it.rating),
     chatRating: it.type === 'game' ? null : it.chatRating,
     hours: it.hours, comment: it.comment || '', addedAt: it.addedAt,
+    origin: it.origin || '', by: it.by || '', percent: it.percent == null ? null : it.percent, link: it.link || '',
     poster: it.poster ? 'posters/' + it.poster : '',
   }));
   const files = new Map();

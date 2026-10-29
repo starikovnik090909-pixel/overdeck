@@ -1,44 +1,72 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Хроники</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Inter:wght@400;500;600;700&display=swap">
 <style>
-:root{--bg:#0e0e12;--card:#17171c;--line:#26262e;--mut:#9a9aa6;--fg:#f2f2f5;--ac:#e5484d}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.45 Inter,system-ui,sans-serif}
-.w{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
-.hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.logo{width:42px;height:42px;border-radius:12px;background:var(--ac);display:grid;place-items:center;font:700 18px Unbounded}
-h1{font:700 22px Unbounded;margin:0;letter-spacing:-.3px}.sub{font-size:11px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
-.tabs{display:flex;gap:4px;margin-left:auto;background:var(--card);padding:4px;border-radius:11px;border:1px solid var(--line)}
-.tabs button{all:unset;cursor:pointer;padding:7px 18px;border-radius:8px;font-weight:600;font-size:13px;color:var(--mut)}.tabs button.on{background:var(--ac);color:#fff}
-.tb{display:flex;gap:10px;margin:22px 0 20px;flex-wrap:wrap}
-.tb input,.tb select{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font:inherit;color:var(--fg);min-width:0}
-.tb input{flex:1;min-width:180px}
-.vw{display:flex;gap:4px}.vw button{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;color:var(--mut);font:inherit;cursor:pointer}.vw button.on{color:var(--fg);border-color:var(--ac)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px}
-.card{cursor:pointer}
-.po{position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#1f1f26;display:grid;place-items:center}
-.po img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.po em{font:700 70px Unbounded;font-style:normal;color:rgba(255,255,255,.12)}
-.ring{position:absolute;right:10px;top:10px;width:44px;height:44px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.18) 0);display:grid;place-items:center}
-.ring b{width:34px;height:34px;border-radius:50%;background:#0b0b0e;display:grid;place-items:center;font-size:13px}
-.t{font-weight:600;font-size:15px;margin-top:10px}.m{font-size:12px;color:var(--mut);margin-top:2px}
-.sr{display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:11px;color:var(--mut)}
-.stars{position:relative;display:inline-block;color:#33333c;letter-spacing:1px;font-size:13px}.stars:before{content:"★★★★★★★★★★"}
-.stars i{position:absolute;left:0;top:0;height:100%;overflow:hidden;color:#f5b942}.stars i:before{content:"★★★★★★★★★★";letter-spacing:1px}
+:root{--bg:#0E0E10;--bg2:#131316;--card:#18181B;--card2:#1f1f24;--line:#2a2a31;--mut:#9a9aa6;--fg:#f2f2f5;--ac:#D84B55;--ac2:#EC6670;
+--gold1:#f6d86a;--gold2:#d99a1c;--good:#3ecf8e;--mid:#f0883e;--bad:#e5484d}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(1100px 520px at 12% -10%,rgba(216,75,85,.16),transparent 60%),radial-gradient(900px 480px at 100% 0,rgba(236,102,112,.08),transparent 60%),var(--bg);background-attachment:fixed;color:var(--fg);font:14px/1.5 Inter,system-ui,sans-serif;min-height:100vh}
+.w{max-width:1200px;margin:0 auto;padding:32px 20px 56px}
+.hd{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--ac2),var(--ac) 60%,#a02a3a);display:grid;place-items:center;font:700 20px Unbounded;box-shadow:0 8px 26px rgba(216,75,85,.35)}
+h1{font:700 24px Unbounded;margin:0;letter-spacing:-.4px}.sub{font-size:11px;color:var(--mut);letter-spacing:2px;text-transform:uppercase;margin-top:5px}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--card);padding:4px;border-radius:13px;border:1px solid var(--line)}
+.tabs button{all:unset;cursor:pointer;padding:8px 18px;border-radius:9px;font-weight:600;font-size:13px;color:var(--mut);display:flex;gap:8px;align-items:center}
+.tabs button i{font-style:normal;font-size:11px;padding:1px 7px;border-radius:99px;background:rgba(255,255,255,.07)}
+.tabs button.on{background:var(--ac);color:#fff}.tabs button.on i{background:rgba(255,255,255,.22)}
+.st{display:flex;gap:12px;flex-wrap:wrap;margin:26px 0 0}
+.sc{flex:1 1 150px;max-width:230px;padding:14px 18px;border-radius:14px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line)}
+.sc b{display:block;font:700 22px Unbounded;letter-spacing:-.3px}.sc span{font-size:12px;color:var(--mut)}
+.sc.g b{background:linear-gradient(135deg,var(--gold1),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tb{display:flex;gap:10px;margin:22px 0 22px;flex-wrap:wrap}
+.tb input,.tb select{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px 14px;font:inherit;color:var(--fg);min-width:0;outline:none;transition:border-color .15s}
+.tb input:focus,.tb select:focus{border-color:var(--ac)}
+.tb input{flex:1 1 220px}
+.vw{display:flex;gap:4px;background:var(--card);padding:3px;border-radius:12px;border:1px solid var(--line)}.vw button{all:unset;cursor:pointer;padding:7px 14px;border-radius:9px;color:var(--mut);font-weight:500}.vw button.on{background:var(--card2);color:var(--fg)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:22px}
+.card{cursor:pointer;transition:transform .18s}.card:hover{transform:translateY(-4px)}
+.po{position:relative;aspect-ratio:2/3;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:linear-gradient(160deg,#25252c,#16161a);display:grid;place-items:center;transition:box-shadow .18s,border-color .18s}
+.card:hover .po{border-color:rgba(236,102,112,.55);box-shadow:0 14px 34px rgba(0,0,0,.5),0 0 0 1px rgba(236,102,112,.25)}
+.po img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.po em{font:700 72px Unbounded;font-style:normal;color:rgba(255,255,255,.1)}
+.po:after{content:"";position:absolute;inset:auto 0 0 0;height:46%;background:linear-gradient(transparent,rgba(8,8,10,.82));pointer-events:none}
+.rt{position:absolute;left:10px;top:10px;z-index:2;min-width:42px;height:32px;padding:0 10px;border-radius:10px;display:flex;gap:5px;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:rgba(14,14,16,.82);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14)}
+.rt.good{background:rgba(30,150,95,.92)}.rt.mid{background:rgba(224,110,40,.94)}.rt.bad{background:rgba(200,60,70,.94)}
+.rt.gold{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#2a1d00;border-color:rgba(255,236,160,.8);box-shadow:0 0 0 1px rgba(246,216,106,.5),0 0 18px rgba(246,200,70,.55)}
+.chips{position:absolute;left:10px;bottom:10px;z-index:2;display:flex;gap:5px;flex-wrap:wrap;right:10px}
+.cp{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:rgba(14,14,16,.78);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);color:#fff}
+.cp.o-Респект{background:rgba(216,75,85,.85);border-color:transparent}.cp.o-Аукцион{background:rgba(110,80,200,.85);border-color:transparent}
+.t{font-weight:650;font-size:15px;margin-top:11px;line-height:1.25;overflow-wrap:anywhere}.m{font-size:12px;color:var(--mut);margin-top:3px}
+.by{font-size:12px;color:var(--mut);margin-top:5px}.by b{color:var(--ac2);font-weight:600}
+.stars{position:relative;display:inline-block;color:#33333c;letter-spacing:1px;font-size:13px;white-space:nowrap}.stars:before{content:"★★★★★★★★★★"}
+.stars i{position:absolute;left:0;top:0;height:100%;overflow:hidden;color:var(--sc,#f0883e)}.stars i:before{content:"★★★★★★★★★★";letter-spacing:1px}
+.stars.gold i{background:linear-gradient(90deg,var(--gold1),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.stars.gold i:before{-webkit-text-fill-color:transparent}
+.sr{display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:11px;color:var(--mut)}
 .list{display:flex;flex-direction:column;gap:14px}
-.row{display:flex;gap:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer}
-.row .po{width:100px;flex:none;aspect-ratio:2/3}.row .po em{font-size:36px}.row .bd{min-width:0;flex:1}.row .t{margin-top:0;font-size:17px}
-.row .rv{margin-top:8px;color:#c9c9d1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.empty{color:var(--mut);padding:40px 0;text-align:center}
-.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}.mo.on{display:flex}
-.md{background:var(--card);border:1px solid var(--line);border-radius:18px;max-width:640px;width:100%;max-height:90vh;overflow:auto;display:flex;gap:20px;padding:20px}
-.md .po{width:180px;flex:none}.md h2{margin:0;font:700 20px Unbounded}.md .rv{margin-top:14px;white-space:pre-wrap;color:#dcdce3}
-.ft{margin-top:30px;text-align:center;font-size:12px;color:#6b6b77}
-@media(max-width:560px){.md{flex-direction:column}.md .po{width:100%;max-width:220px}.tabs{margin-left:0}}
+.row{display:flex;gap:20px;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s}
+.row:hover{border-color:rgba(236,102,112,.5);transform:translateX(3px)}
+.row .po{width:110px;flex:none}.row .po em{font-size:36px}.row .po:after{display:none}.row .bd{min-width:0;flex:1}.row .t{margin-top:0;font-size:17px}
+.rv{margin-top:10px;color:#cfcfd6;position:relative;padding-left:14px;border-left:2px solid var(--ac)}
+.row .rv{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.pl{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pl .cp{background:var(--card2);border-color:var(--line);color:var(--mut)}
+.pl .cp.o-Респект{background:rgba(216,75,85,.18);color:var(--ac2);border-color:rgba(216,75,85,.4)}.pl .cp.o-Аукцион{background:rgba(110,80,200,.2);color:#b6a3ff;border-color:rgba(110,80,200,.45)}
+.lnk{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:9px 16px;border-radius:11px;background:var(--ac);color:#fff;font-weight:600;text-decoration:none;transition:background .15s}.lnk:hover{background:var(--ac2)}
+.empty{color:var(--mut);padding:60px 0;text-align:center}
+.mo{position:fixed;inset:0;background:rgba(5,5,8,.78);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}.mo.on{display:flex}
+.md{position:relative;background:linear-gradient(180deg,var(--card),var(--bg2));border:1px solid var(--line);border-radius:22px;max-width:720px;width:100%;max-height:90vh;overflow:auto;display:flex;gap:24px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.md .po{width:210px;flex:none;align-self:flex-start}.md .po:after{display:none}.md h2{margin:0;font:700 21px Unbounded;line-height:1.25}.md .rv{white-space:pre-wrap}
+.md .bd{min-width:0;flex:1}.big{display:flex;gap:18px;align-items:center;margin-top:14px;flex-wrap:wrap}
+.bn{font:700 34px Unbounded;line-height:1}.bn small{font-size:15px;color:var(--mut);font-weight:500}.bn.gold{background:linear-gradient(135deg,var(--gold1),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.bn.good{color:var(--good)}.bn.mid{color:var(--mid)}.bn.bad{color:var(--bad)}
+.x{position:absolute;right:14px;top:12px;all:unset;cursor:pointer;width:30px;height:30px;border-radius:9px;text-align:center;line-height:30px;color:var(--mut);font-size:18px}.x:hover{background:var(--card2);color:#fff}
+.ft{margin-top:38px;text-align:center;font-size:12px;color:#6b6b77}.ft b{color:var(--ac2);font-weight:600}
+@media(max-width:600px){.md{flex-direction:column;padding:18px}.md .po{width:100%;max-width:230px}.tabs{margin-left:0;width:100%}.tabs button{flex:1;justify-content:center}.row .po{width:84px}.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}}
 </style></head><body><div class="w">
 <div class="hd"><div class="logo" id="lg">Х</div><div><h1 id="ttl">Хроники</h1><div class="sub">Игры и кино, которые мы прошли вместе</div></div>
-<div class="tabs" id="tabs"><button data-t="game" class="on">Игры</button><button data-t="movie">Кино</button></div></div>
-<div class="tb"><input id="q" type="search" placeholder="Поиск по названию…"><select id="g"><option value="">Все жанры</option></select>
+<div class="tabs" id="tabs"><button data-t="game" class="on">Игры<i id="cg">0</i></button><button data-t="movie">Кино<i id="cm">0</i></button></div></div>
+<div class="st" id="st"></div>
+<div class="tb"><input id="q" type="search" placeholder="Поиск по названию, рецензии, заказчику…"><select id="g"><option value="">Все жанры</option></select><select id="o"><option value="">Любой источник</option></select>
 <select id="s"><option value="new">Сначала новые</option><option value="rating">По оценке</option><option value="title">По названию</option></select>
 <div class="vw" id="vw"><button data-v="grid" class="on">Сетка</button><button data-v="list">Список</button></div></div>
 <div id="out"></div><div class="ft" id="ft"></div></div>
@@ -46,45 +74,67 @@ h1{font:700 22px Unbounded;margin:0;letter-spacing:-.3px}.sub{font-size:11px;col
 <script>
 (function(){
 var D=[],tab='game',view='grid',$=function(i){return document.getElementById(i)};
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function fmt(v){return String(v).replace('.',',')}
-function col(v){return v>=8?'#3ecf8e':v>=6?'#f5b942':'#e5484d'}
-function ring(v){return v==null?'':'<div class="ring" style="--p:'+v*10+';--c:'+col(v)+'"><b>'+fmt(v)+'</b></div>'}
-function stars(v){return '<span class="stars"><i style="width:'+(v==null?0:v*10)+'%"></i></span>'}
-function poster(it){return '<div class="po">'+(it.poster?'<img loading="lazy" alt="" src="'+esc(it.poster)+'">':'<em>'+esc(it.title.charAt(0).toUpperCase())+'</em>')+ring(it.rating)+'</div>'}
+function tier(v){return v==null?'none':v>=10?'gold':v>=7?'good':v>=5?'mid':'bad'}
+function tcol(v){return{gold:'#f6d86a',good:'#3ecf8e',mid:'#f0883e',bad:'#e5484d',none:'#888'}[tier(v)]}
+function stars(v){return '<span class="stars '+(tier(v)==='gold'?'gold':'')+'" style="--sc:'+tcol(v)+'"><i style="width:'+(v==null?0:v*10)+'%"></i></span>'}
+function badge(v){return v==null?'':'<div class="rt '+tier(v)+'" title="Моя оценка">'+(tier(v)==='gold'?'👑 ':'★ ')+fmt(v)+'</div>'}
+function cls(o){return (o||'').replace(/[^\wа-яё-]/gi,'')}
+function poster(it,full){return '<div class="po">'+(it.poster?'<img loading="lazy" alt="" src="'+esc(it.poster)+'">':'<em>'+esc(it.title.charAt(0).toUpperCase())+'</em>')+badge(it.rating)+(!full&&it.origin?'<div class="chips"><span class="cp o-'+cls(it.origin)+'">'+esc(it.origin)+(it.percent!=null?' · '+fmt(it.percent)+'%':'')+'</span></div>':'')+'</div>'}
 function meta(it){return [it.type==='game'?'Игра':'Фильм',it.year,it.type==='game'&&it.hours!=null?fmt(it.hours)+' ч':'',(it.genres||[]).join(', ')].filter(Boolean).join(' · ')}
 function chat(it){return it.type==='movie'&&it.chatRating!=null?'чат '+fmt(it.chatRating):''}
+function by(it){return it.by?'<div class="by">Заказал <b>'+esc(it.by)+'</b></div>':''}
+function chipsRow(it){var a=[];if(it.origin)a.push('<span class="cp o-'+cls(it.origin)+'">'+esc(it.origin)+'</span>');if(it.percent!=null)a.push('<span class="cp">лот '+fmt(it.percent)+'%</span>');return a.length?'<div class="pl">'+a.join('')+'</div>':''}
+function link(it){return it.link?'<a class="lnk" href="'+esc(it.link)+'" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">▶ Смотреть запись</a>':''}
+function mine(){return D.filter(function(i){return i.type===tab})}
 function list(){
-  var q=$('q').value.trim().toLowerCase(),g=$('g').value,s=$('s').value;
-  var r=D.filter(function(i){return i.type===tab&&(!q||i.title.toLowerCase().indexOf(q)>=0)&&(!g||(i.genres||[]).indexOf(g)>=0)});
+  var q=$('q').value.trim().toLowerCase(),g=$('g').value,o=$('o').value,s=$('s').value;
+  var r=mine().filter(function(i){return(!q||[i.title,i.comment,i.by,i.origin].join(' ').toLowerCase().indexOf(q)>=0)&&(!g||(i.genres||[]).indexOf(g)>=0)&&(!o||(i.origin||'—')===o)});
   r.sort(function(a,b){return s==='title'?a.title.localeCompare(b.title,'ru'):s==='rating'?(b.rating==null?-1:b.rating)-(a.rating==null?-1:a.rating):(b.addedAt||0)-(a.addedAt||0)});return r;
 }
-function genres(){
-  var set={};D.filter(function(i){return i.type===tab}).forEach(function(i){(i.genres||[]).forEach(function(x){set[x]=1})});
-  var cur=$('g').value,o='<option value="">Все жанры</option>';Object.keys(set).sort().forEach(function(x){o+='<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>'});$('g').innerHTML=o;
+function fill(id,first,vals){var cur=$(id).value,h='<option value="">'+first+'</option>';vals.forEach(function(x){h+='<option'+(x===cur?' selected':'')+'>'+esc(x)+'</option>'});$(id).innerHTML=h}
+function filters(){
+  var gs={},os={};mine().forEach(function(i){(i.genres||[]).forEach(function(x){gs[x]=1});os[i.origin||'—']=1});
+  fill('g','Все жанры',Object.keys(gs).sort());fill('o','Любой источник',Object.keys(os).sort());
+  $('o').style.display=Object.keys(os).length>1?'':'none';$('g').style.display=Object.keys(gs).length?'':'none';
+}
+function stats(){
+  var m=mine(),rated=m.filter(function(i){return i.rating!=null}),avg=rated.length?rated.reduce(function(a,i){return a+i.rating},0)/rated.length:null;
+  var tens=rated.filter(function(i){return i.rating>=10}).length,h=m.reduce(function(a,i){return a+(i.hours||0)},0);
+  var c=['<div class="sc"><b>'+m.length+'</b><span>'+(tab==='game'?'игр':'фильмов')+'</span></div>'];
+  if(avg!=null)c.push('<div class="sc"><b>'+fmt(Math.round(avg*10)/10)+'</b><span>средняя оценка</span></div>');
+  if(tens)c.push('<div class="sc g"><b>'+tens+'</b><span>с оценкой 10</span></div>');
+  if(tab==='game'&&h)c.push('<div class="sc"><b>'+fmt(Math.round(h))+'</b><span>часов наиграно</span></div>');
+  if(tab==='movie'){var a=m.filter(function(i){return i.origin==='Аукцион'}).length,r=m.filter(function(i){return i.origin==='Респект'}).length;if(a)c.push('<div class="sc"><b>'+a+'</b><span>с аукциона</span></div>');if(r)c.push('<div class="sc"><b>'+r+'</b><span>за респект</span></div>')}
+  $('st').innerHTML=c.join('');
 }
 function render(){
   var r=list(),h='';
   if(!r.length){$('out').innerHTML='<div class="empty">Здесь пока пусто.</div>';return}
-  if(view==='grid')h='<div class="grid">'+r.map(function(it){return '<div class="card" data-id="'+it.id+'">'+poster(it)+'<div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+(tab==='movie'?'<div class="sr">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+'</div>'}).join('')+'</div>';
-  else h='<div class="list">'+r.map(function(it){return '<div class="row" data-id="'+it.id+'">'+poster(it)+'<div class="bd"><div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+(tab==='movie'?'<div class="sr" style="justify-content:flex-start;gap:14px">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+(it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+'</div></div>'}).join('')+'</div>';
+  if(view==='grid')h='<div class="grid">'+r.map(function(it){return '<div class="card" data-id="'+it.id+'">'+poster(it)+'<div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+by(it)+(tab==='movie'?'<div class="sr">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+'</div>'}).join('')+'</div>';
+  else h='<div class="list">'+r.map(function(it){return '<div class="row" data-id="'+it.id+'">'+poster(it,1)+'<div class="bd"><div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+chipsRow(it)+by(it)+(tab==='movie'?'<div class="sr" style="justify-content:flex-start;gap:14px">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+(it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+link(it)+'</div></div>'}).join('')+'</div>';
   $('out').innerHTML=h;
 }
 function open(id){
   var it=D.filter(function(i){return i.id===id})[0];if(!it)return;
-  $('md').innerHTML=poster(it)+'<div><h2>'+esc(it.title)+'</h2><div class="m">'+esc(meta(it))+'</div>'+(tab==='movie'?'<div class="sr" style="justify-content:flex-start;gap:14px">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+(it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+'</div>';
-  $('mo').classList.add('on');
+  $('md').innerHTML='<button class="x" id="cl">×</button>'+poster(it,1)+'<div class="bd"><h2>'+esc(it.title)+'</h2><div class="m">'+esc(meta(it))+'</div>'+chipsRow(it)+by(it)+
+  (it.rating!=null||it.chatRating!=null?'<div class="big">'+(it.rating!=null?'<div><div class="bn '+tier(it.rating)+'">'+fmt(it.rating)+'<small>/10</small></div><div class="m">моя оценка</div></div>':'')+(chat(it)?'<div><div class="bn" style="font-size:24px">'+fmt(it.chatRating)+'<small>/10</small></div><div class="m">оценка чата</div></div>':'')+'</div>':'')+
+  (it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+link(it)+'</div>';
+  $('mo').classList.add('on');$('cl').onclick=function(){$('mo').classList.remove('on')};
 }
-$('tabs').onclick=function(e){var b=e.target.closest('button');if(!b)return;tab=b.dataset.t;[].forEach.call($('tabs').children,function(x){x.classList.toggle('on',x===b)});$('g').value='';genres();render()};
+function all(){stats();filters();render();$('cg').textContent=D.filter(function(i){return i.type==='game'}).length;$('cm').textContent=D.filter(function(i){return i.type==='movie'}).length}
+function setTab(t){tab=t;[].forEach.call($('tabs').children,function(x){x.classList.toggle('on',x.dataset.t===t)});$('g').value='';$('o').value='';all()}
+$('tabs').onclick=function(e){var b=e.target.closest('button');if(b)setTab(b.dataset.t)};
 $('vw').onclick=function(e){var b=e.target.closest('button');if(!b)return;view=b.dataset.v;[].forEach.call($('vw').children,function(x){x.classList.toggle('on',x===b)});render()};
-['q','g','s'].forEach(function(i){$(i).oninput=render});
-$('out').onclick=function(e){var c=e.target.closest('[data-id]');if(c)open(c.dataset.id)};
+['q','g','o','s'].forEach(function(i){$(i).oninput=render});
+$('out').onclick=function(e){if(e.target.closest('a'))return;var c=e.target.closest('[data-id]');if(c)open(c.dataset.id)};
 $('mo').onclick=function(e){if(e.target===$('mo'))$('mo').classList.remove('on')};
 document.addEventListener('keydown',function(e){if(e.key==='Escape')$('mo').classList.remove('on')});
 fetch('data.json?'+Date.now()).then(function(r){return r.json()}).then(function(j){
   D=j.items||[];if(j.owner){$('ttl').textContent='Хроники '+j.owner;document.title='Хроники '+j.owner;$('lg').textContent=j.owner.charAt(0).toUpperCase()}
-  if(!D.some(function(i){return i.type==='game'})&&D.some(function(i){return i.type==='movie'})){tab='movie';[].forEach.call($('tabs').children,function(x){x.classList.toggle('on',x.dataset.t==='movie')})}
-  genres();render();$('ft').textContent='Сделано в Overdeck';
+  if(!D.some(function(i){return i.type==='game'})&&D.some(function(i){return i.type==='movie'}))tab='movie';
+  setTab(tab);$('ft').innerHTML='Сделано в <b>Overdeck</b> by Starikov';
 }).catch(function(){$('out').innerHTML='<div class="empty">Не удалось загрузить данные.</div>'});
 })();
 </script></body></html>
