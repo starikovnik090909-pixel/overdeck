@@ -15,12 +15,14 @@
   let poll = null;
   function drawMode() {
     const relay = st.mode === 'relay';
-    $('tgRelay').hidden = !relay; $('tgOwn').hidden = relay;
+    $('tgOwn').hidden = relay;
     $('tgMode').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === st.mode));
     $('tgMode').hidden = false;
-    const linked = st.relayLinked;
-    $('tgLinked').hidden = !linked; $('tgLinked').textContent = linked ? '✓ Канал привязан: ' + (st.relayTitle || '') : '';
-    $('tgUnlink').hidden = !linked; $('tgLinkGo').hidden = linked; $('tgAddBot').hidden = linked;
+    const linked = st.relayLinked, own = st.mode === 'own';
+    $('tgLinked').hidden = !(linked || (own && st.hasToken && st.chatId)); $('tgUnlink').hidden = !linked;
+    $('tgChanName').textContent = own ? (st.chatId || 'Свой бот') : (linked ? (st.relayTitle || 'Канал') : 'Канал не привязан');
+    $('tgChanSub').textContent = own ? 'через твоего бота' : (linked ? 'через бота Overdeck' : 'Добавь бота Overdeck в канал');
+    $('tgRelay').hidden = own || linked;
     if (linked) $('tgCode').hidden = true;
   }
   const esc = (x) => String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -44,7 +46,9 @@
     drawPresets();
     $('tgButton').checked = st.withButton; $('tgOnCat').value = st.onCategory; $('tgAfter').value = st.afterEnd;
     $('tgEnabled').checked = st.enabled; $('tgScreen').checked = st.withScreen; $('tgChat').value = st.chatId || '';
-    $('tgDelay').value = st.delaySec; $('tgTpl').value = st.template; $('tgToken').value = '';
+    if (document.activeElement !== $('tgDelay')) { $('tgDelay').value = st.delaySec; $('tgDelayOut').textContent = st.delaySec + ' с'; }
+    if (document.activeElement !== $('tgTpl')) $('tgTpl').value = st.template;
+    $('tgToken').value = '';
     drawPrev();
     $('tgToken').placeholder = st.hasToken ? 'Токен сохранён (' + st.tokenHint + '), оставь пустым, чтобы не менять' : '123456:ABC-DEF…';
     $('tgLast').textContent = st.lastSentAt ? 'Последний анонс: ' + new Date(st.lastSentAt).toLocaleString('ru-RU') + '.' : '';
@@ -57,7 +61,14 @@
   async function load() { try { st = await api('/api/telegram'); loaded = true; draw(); fillAddUrl(); } catch (e) { msg('Не удалось загрузить: ' + e.message, 'error'); } }
   const form = () => ({ mode: st ? st.mode : 'relay', token: $('tgToken').value, chatId: $('tgChat').value, enabled: $('tgEnabled').checked, withScreen: $('tgScreen').checked, delaySec: Number($('tgDelay').value) || 0, template: $('tgTpl').value, withButton: $('tgButton').checked, onCategory: $('tgOnCat').value, afterEnd: $('tgAfter').value });
   async function save(quiet) { st = await post('/api/telegram', form()); draw(); if (!quiet) saved('Сохранено'); }
-  $('tgSave').addEventListener('click', async () => { try { await save(); msg(''); } catch (e) { msg(e.message, 'error'); } });
+  let asT = null;
+  const auto = () => { clearTimeout(asT); asT = setTimeout(async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } }, 600); };
+  $('tgTpl').addEventListener('input', auto);
+  $('tgDelay').addEventListener('input', () => { $('tgDelayOut').textContent = $('tgDelay').value + ' с'; auto(); });
+  $('tgPresets').addEventListener('click', auto);
+  $('tgChips').addEventListener('click', auto);
+  $('tgReset').addEventListener('click', auto);
+  $('tgChat').addEventListener('change', auto);
   $('tgEnabled').addEventListener('change', async () => { try { await save(); } catch (e) { msg(e.message, 'error'); } });
   $('tgScreen').addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } });
   ['tgButton', 'tgOnCat', 'tgAfter'].forEach((id) => $(id).addEventListener('change', async () => { drawPrev(); try { await save(); } catch (e) { msg(e.message, 'error'); } }));
