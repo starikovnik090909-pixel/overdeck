@@ -15,6 +15,8 @@
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
   let sources = {}; let syncedTab = {}; let items = []; let tab = 'game'; let view = 'cine'; let editing = null; let posterFile = null; let posterCleared = false; let loaded = false;
+  // в «Играх» только два вида, в «Кино» все
+  const viewsFor = (t) => t === 'game' ? VIEWS.filter((v) => v[0] === 'poster' || v[0] === 'cine') : VIEWS;
   const sv = { rating: null, chatRating: null };
   if (['game', 'movie'].includes(lsGet(KEY))) tab = lsGet(KEY);
   // Настройки у «Игр» и «Кино» раздельные: вид, оценка чата, сортировка и фильтры хранятся для каждой вкладки отдельно
@@ -24,7 +26,7 @@
     const raw = JSON.parse(lsGet(SKEY) || 'null') || {};
     ['game', 'movie'].forEach((t) => {
       const r = raw[t] || {};
-      if (VIEWS.some((v) => v[0] === r.view)) S[t].view = r.view;
+      if (viewsFor(t).some((v) => v[0] === r.view)) S[t].view = r.view;
       if (typeof r.chat === 'boolean') S[t].chat = r.chat;
       if (typeof r.sort === 'string') S[t].sort = r.sort;
     });
@@ -181,7 +183,7 @@
   }
 
   function renderViews() {
-    $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + VIEWS.map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('') +
+    $('chrViews').innerHTML = '<span class="chr-vl">Вид</span>' + viewsFor(tab).map((v) => '<button type="button" data-v="' + v[0] + '" class="' + (v[0] === view ? 'on' : '') + '">' + v[1] + '</button>').join('') +
       (tab === 'game' ? '' : '<label class="chr-chatopt" title="Показывать оценку чата в списке и в форме"><input type="checkbox" id="chrShowChat"' + (showChat ? ' checked' : '') + '> Оценка чата</label>');
     const o = $('chrSort').querySelector('option[value="chat"]'); if (o) { o.hidden = !showChat; o.disabled = !showChat; }
     if (!showChat && S[tab].sort === 'chat') S[tab].sort = 'new';
