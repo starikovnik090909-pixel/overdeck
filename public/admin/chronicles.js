@@ -9,7 +9,7 @@
   const fmt = (n) => (Number.isInteger(n) ? String(n) : String(n).replace('.', ','));
   const KEY = 'ovChrTab', SKEY = 'ovChrState';
   const VIEWS = [
-    ['poster', 'Постеры'], ['row', 'Лента'], ['cine', 'Кино'], ['review', 'Рецензии'], ['table', 'Таблица'], ['duo', 'Две колонки'],
+    ['poster', 'Сетка'], ['row', 'Список'], ['cine', 'Витрина'], ['review', 'Рецензии'], ['table', 'Таблица'], ['duo', 'Две колонки'],
   ];
   const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
