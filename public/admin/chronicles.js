@@ -93,7 +93,7 @@
 
   /* ---------- карточки ---------- */
   const STARS = '★★★★★★★★★★';
-  const stars = (v) => tab === 'game' ? '' : '<span class="chr-st' + (v >= 10 ? ' gold' : '') + '" style="--sc:' + (v >= 10 ? '#f6d86a' : v >= 7 ? '#3ecf8e' : v >= 5 ? '#f0883e' : '#e5484d') + ';--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
+  const stars = (v) => '<span class="chr-st' + (v >= 10 ? ' gold' : '') + '" style="--sc:' + (v >= 10 ? '#f6d86a' : v >= 7 ? '#3ecf8e' : v >= 5 ? '#f0883e' : '#e5484d') + ';--v:' + (v == null ? 0 : Math.min(100, Math.max(0, v * 10))) + '" title="' + (v == null ? 'Без оценки' : esc(fmt(v)) + ' из 10') + '">' + STARS + '</span>';
   const ratingLine = (lbl, v) => '<div class="chr-rl"><span>' + lbl + '</span>' + stars(v) + '<b>' + (v == null ? '—' : esc(fmt(v))) + '</b></div>';
   const ratingClass = (r) => (r == null ? 'none' : r >= 10 ? 'gold' : r >= 7 ? 'good' : r >= 5 ? 'mid' : 'bad');
   const posterUrl = (it) => (it.poster ? '/uploads/chronicles/' + encodeURIComponent(it.poster) : '');
@@ -447,8 +447,27 @@
   $('chrViews').addEventListener('change', (e) => { if (e.target.id === 'chrShowChat') { showChat = e.target.checked; S[tab].chat = showChat; saveState(); render(); } });
   $('chrViews').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (!b) return; view = b.dataset.v; S[tab].view = view; saveState(); render(); });
   ['input', 'change'].forEach((ev) => ['chrSearch', 'chrOrigin', 'chrGenre', 'chrRatingF', 'chrSort'].forEach((id) => $(id).addEventListener(ev, () => { captureControls(); render(); })));
+  /* ---------- просмотр записи с рецензией ---------- */
+  function openView(it) {
+    const p = parts(it); const m = $('chrView');
+    $('chrVwBody').innerHTML = '<div class="chr-vwp">' + posterImg(it) + '</div><div class="chr-vwb">' +
+      '<div class="chr-meta">' + (it.type === 'game' ? 'Игра' : 'Фильм') + (p.meta ? ' · ' + p.meta : '') + '</div><h2 class="chr-vwt">' + esc(it.title) + '</h2>' +
+      '<div class="chr-vwr">' + ratingLine('Моя оценка', it.rating) + (showChat ? ratingLine('Оценка чата', it.chatRating) : '') + '</div>' + p.chips + p.by +
+      (it.comment ? '<blockquote class="chr-quote">' + esc(it.comment) + '</blockquote>' : '<p class="chr-meta">Рецензии пока нет.</p>') + p.link + '</div>';
+    $('chrVwEdit').onclick = () => { m.hidden = true; openForm(it); };
+    m.hidden = false;
+  }
+  $('chrVwClose').addEventListener('click', () => { $('chrView').hidden = true; });
+  $('chrView').addEventListener('click', (e) => { if (e.target === $('chrView')) $('chrView').hidden = true; });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('chrView').hidden) $('chrView').hidden = true; });
   $('chrGrid').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-a]'); if (!b) return;
+    const b = e.target.closest('[data-a]');
+    if (!b) {
+      if (e.target.closest('a,button,.chr-acts')) return;
+      const card = e.target.closest('.chr-it'); const it0 = card && items.find((x) => x.id === card.dataset.id);
+      if (it0) openView(it0);
+      return;
+    }
     const el = b.closest('.chr-it'); const it = items.find((x) => x.id === el.dataset.id); if (!it) return;
     if (b.dataset.a === 'edit') openForm(it);
     else if (b.dataset.a === 'del') del(it);

@@ -37,7 +37,7 @@ h1{font:700 24px Unbounded;margin:0;letter-spacing:-.4px}.sub{font-size:11px;col
 .cp{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:rgba(14,14,16,.78);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);color:#fff}
 .cp.o-Респект{background:rgba(216,75,85,.85);border-color:transparent}.cp.o-Аукцион{background:rgba(110,80,200,.85);border-color:transparent}
 .t{font-weight:650;font-size:15px;margin-top:11px;line-height:1.25;overflow-wrap:anywhere}.m{font-size:12px;color:var(--mut);margin-top:3px}
-.by{font-size:12px;color:var(--mut);margin-top:5px}.by b{color:var(--ac2);font-weight:600}
+.by{font-size:12px;color:var(--mut);margin-top:5px}.by b{color:#ff6b75;font-weight:700}
 .stars{position:relative;display:inline-block;color:#33333c;letter-spacing:1px;font-size:13px;white-space:nowrap}.stars:before{content:"★★★★★★★★★★"}
 .stars i{position:absolute;left:0;top:0;height:100%;overflow:hidden;color:var(--sc,#f0883e)}.stars i:before{content:"★★★★★★★★★★";letter-spacing:1px}
 .stars.gold i{background:linear-gradient(90deg,var(--gold1),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -112,8 +112,8 @@ function stats(){
 function render(){
   var r=list(),h='';
   if(!r.length){$('out').innerHTML='<div class="empty">Здесь пока пусто.</div>';return}
-  if(view==='grid')h='<div class="grid">'+r.map(function(it){return '<div class="card" data-id="'+it.id+'">'+poster(it)+'<div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+by(it)+(tab==='movie'?'<div class="sr">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+'</div>'}).join('')+'</div>';
-  else h='<div class="list">'+r.map(function(it){return '<div class="row" data-id="'+it.id+'">'+poster(it,1)+'<div class="bd"><div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+chipsRow(it)+by(it)+(tab==='movie'?'<div class="sr" style="justify-content:flex-start;gap:14px">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>':'')+(it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+link(it)+'</div></div>'}).join('')+'</div>';
+  if(view==='grid')h='<div class="grid">'+r.map(function(it){return '<div class="card" data-id="'+it.id+'">'+poster(it)+'<div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+by(it)+'<div class="sr">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>'+'</div>'}).join('')+'</div>';
+  else h='<div class="list">'+r.map(function(it){return '<div class="row" data-id="'+it.id+'">'+poster(it,1)+'<div class="bd"><div class="t">'+esc(it.title)+'</div><div class="m">'+esc(meta(it))+'</div>'+chipsRow(it)+by(it)+'<div class="sr" style="justify-content:flex-start;gap:14px">'+stars(it.rating)+'<span>'+chat(it)+'</span></div>'+(it.comment?'<div class="rv">'+esc(it.comment)+'</div>':'')+link(it)+'</div></div>'}).join('')+'</div>';
   $('out').innerHTML=h;
 }
 function open(id){
