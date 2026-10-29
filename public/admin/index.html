@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=45">
+<link rel="stylesheet" href="ui3.css?v=46">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -1146,10 +1146,20 @@
         <div class="page-actions"><span class="ui3-saved" id="tgSaved"></span></div></div>
       <div class="card ui3-card"><div class="ui3-ch"><h3>Бот и канал</h3><label class="chr-chatopt"><input type="checkbox" id="tgEnabled"> Анонсировать стримы</label></div>
         <div class="ui3-cb">
-          <ol class="tg-steps"><li>В Telegram открой <b>@BotFather</b>, отправь <code>/newbot</code> и скопируй токен.</li><li>Добавь бота в свой канал администратором с правом публиковать сообщения.</li><li>Вставь токен и @имя канала (или числовой id) ниже и нажми «Проверить».</li></ol>
-          <div class="field"><label>Токен бота <span class="tg-hint" id="tgTokenHint"></span></label><input type="password" id="tgToken" autocomplete="off" placeholder="123456:ABC-DEF…"></div>
-          <div class="field"><label>Канал</label><input type="text" id="tgChat" autocomplete="off" placeholder="@мой_канал или -1001234567890"></div>
-          <div class="tg-row"><button class="btn btn-secondary" id="tgCheck" type="button">Проверить</button><button class="btn btn-secondary" id="tgTest" type="button">Отправить тестовый анонс</button><button class="btn btn-ghost btn-sm" id="tgClear" type="button">Удалить токен</button></div>
+          <div class="chr-seg" id="tgMode"><button type="button" data-v="relay">Через бота Overdeck</button><button type="button" data-v="own">Свой бот</button></div>
+          <div id="tgRelay">
+            <ol class="tg-steps"><li>Нажми «Добавить бота в канал»: Telegram предложит добавить бота админом с правом публиковать сообщения.</li><li>Вернись сюда, нажми «Я добавил» и опубликуй в канале сообщение с показанным кодом. Бот его удалит сам.</li></ol>
+            <div class="tg-row"><a class="btn btn-secondary" id="tgAddBot" href="#" target="_blank" rel="noopener noreferrer">Добавить бота в канал</a><button class="btn btn-secondary" id="tgLinkGo" type="button">Я добавил</button><button class="btn btn-ghost btn-sm" id="tgUnlink" type="button" hidden>Отвязать канал</button></div>
+            <div class="tg-code" id="tgCode" hidden></div>
+            <div class="tg-linked" id="tgLinked" hidden></div>
+          </div>
+          <div id="tgOwn" hidden>
+            <ol class="tg-steps"><li>В Telegram открой <b>@BotFather</b>, отправь <code>/newbot</code> и скопируй токен.</li><li>Добавь бота в свой канал администратором с правом публиковать сообщения.</li><li>Вставь токен и @имя канала (или числовой id) ниже и нажми «Проверить».</li></ol>
+            <div class="field"><label>Токен бота <span class="tg-hint" id="tgTokenHint"></span></label><input type="password" id="tgToken" autocomplete="off" placeholder="123456:ABC-DEF…"></div>
+            <div class="field"><label>Канал</label><input type="text" id="tgChat" autocomplete="off" placeholder="@мой_канал или -1001234567890"></div>
+            <div class="tg-row"><button class="btn btn-secondary" id="tgCheck" type="button">Проверить</button><button class="btn btn-ghost btn-sm" id="tgClear" type="button">Удалить токен</button></div>
+          </div>
+          <div class="tg-row"><button class="btn btn-secondary" id="tgTest" type="button">Отправить тестовый анонс</button></div>
           <div class="form-message" id="tgMsg"></div>
         </div></div>
       <div class="card ui3-card"><div class="ui3-ch"><h3>Что отправлять</h3></div>
@@ -3444,7 +3454,7 @@
 <script src="keyfile.js?v=4"></script>
 <script src="ui3.js?v=26"></script>
 <script src="chronicles.js?v=13"></script>
-<script src="telegram.js?v=1"></script>
+<script src="telegram.js?v=2"></script>
 <script src="whatsnew.js?v=23"></script>
 </body>
 </html>

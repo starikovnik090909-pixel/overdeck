@@ -1569,6 +1569,12 @@ app.post('/api/telegram', (req, res) => res.json({ success: true, ...telegramAnn
 app.post('/api/telegram/check', async (req, res) => {
   try { res.json({ success: true, ...(await telegramAnnounce.check()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
+app.post('/api/telegram/link/start', async (req, res) => {
+  try { res.json({ success: true, ...(await telegramAnnounce.linkStart()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
+app.post('/api/telegram/link/check', async (req, res) => {
+  try { res.json({ success: true, ...(await telegramAnnounce.linkCheck()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
+});
 app.post('/api/telegram/test', async (req, res) => {
   try { res.json({ success: true, ...(await telegramAnnounce.test()) }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });

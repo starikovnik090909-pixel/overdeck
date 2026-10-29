@@ -944,3 +944,8 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-telegram .ui3-cb{padding:16px 18px 18px;display:flex;flex-direction:column;gap:4px}
 #tab-telegram .ui3-cb .field{margin:10px 0 0}
 #tab-telegram .ui3-ch .chr-chatopt{margin-left:auto}
+
+.tg-code{margin:10px 0;padding:14px 16px;border-radius:12px;background:var(--bg-card2);border:1px dashed var(--line2);color:var(--text-secondary);font-size:13px}
+.tg-code b{display:block;margin-top:6px;font:700 22px 'JetBrains Mono',monospace;letter-spacing:2px;color:var(--text-primary);user-select:all}
+.tg-linked{margin:10px 0;color:#3ecf8e;font-weight:600}
+#tgMode{margin:0 0 14px;align-self:flex-start}
