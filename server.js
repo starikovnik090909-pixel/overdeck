@@ -569,6 +569,7 @@ function timelineWeightFor(type) {
 // ---------- Категории + статус трансляции (онлайн/офлайн): периодический опрос ----------
 
 let streamIsLive = false;
+let streamStatusKnown = false; // первый опрос после запуска сервера только узнаёт статус: данные идущего стрима не стираем
 
 async function pollCategoryOnce() {
   if (SETUP_MODE) return;
@@ -581,7 +582,8 @@ async function pollCategoryOnce() {
     streamIsLive = await twitch.fetchStreamStatus(config, resolvedBroadcasterId);
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
     if (streamIsLive && fakeStream.isActive()) { fakeStream.stop(); broadcast(); console.log('[Фейк-режим] Начался настоящий стрим — фейк-режим выключен.'); } // фейк-данные не должны попасть в эфир
-    if (streamIsLive && !wasLive && config.autoRecord && !replayActive) startNewRecording('автозапись при начале стрима'); // стрим только что начался — история для воспроизведения пишется заново
+    if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
+    streamStatusKnown = true;
     if (streamIsLive !== wasLive) broadcastAdminStatus(); // статус в шапке админки обновится сразу, не дожидаясь следующего периодического тика
   }
 }
@@ -3774,10 +3776,8 @@ app.post('/api/chat-settings', (req, res) => {
 
 // ---------- REST API: управление стримом (сброс статистики, воспроизведение истории) ----------
 
-app.post('/api/stream/reset', (req, res) => {
-  if (replayActive) {
-    return res.status(400).json({ success: false, error: 'Сейчас идёт воспроизведение истории — сначала останови его' });
-  }
+/** Начинает новую трансляцию с нуля: статистика, таймлайн, лента событий, история для воспроизведения. */
+function resetStreamSession(reason) {
   stats.reset();
   timeline.reset();
   eventFeed.reset();
@@ -3788,10 +3788,19 @@ app.post('/api/stream/reset', (req, res) => {
   pixelHeroes.newSession(); // новая трансляция: «заход на стрим» снова засчитывается всем
   if (pixelHeroes.clearRoster()) broadcastPixelHeroes(); // новая «сессия» — герои чаттеров прошлого стрима уходят со сцены
   sessionHistory = [];
+  recordingStartedAt = Date.now();
   pendingEmoteDrops = [];
   saveStats();
   broadcast();
   broadcastAdminStatus();
+  if (reason) console.log(`[История] Новая трансляция с нуля: ${reason}.`);
+}
+
+app.post('/api/stream/reset', (req, res) => {
+  if (replayActive) {
+    return res.status(400).json({ success: false, error: 'Сейчас идёт воспроизведение истории — сначала останови его' });
+  }
+  resetStreamSession();
   res.json({ success: true });
 });
 

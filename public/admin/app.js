@@ -2833,7 +2833,7 @@
     if (typeof state.autoRecord === 'boolean') {
       btnAutoRecord.classList.toggle('on', state.autoRecord);
       btnAutoRecord.title = state.autoRecord
-        ? 'Автозапись истории при начале стрима: ВКЛ (при старте стрима запись начнётся заново)'
+        ? 'Автозапись истории при начале стрима: ВКЛ (при старте стрима история, таймлайн и статистика начнутся заново)'
         : 'Автозапись истории при начале стрима: выкл';
       btnAutoRecord.setAttribute('aria-pressed', String(state.autoRecord));
     }
@@ -2890,7 +2890,7 @@
     renderStreamButtons({ autoRecord: enabled });
     try {
       const { ok, data } = await postJSON('/api/stream/auto-record', { enabled });
-      if (ok && data.success) showStreamControlMessage(enabled ? 'Автозапись включена: история начнётся заново, когда стрим стартует.' : 'Автозапись выключена.', 'success');
+      if (ok && data.success) showStreamControlMessage(enabled ? 'Автозапись включена: история, таймлайн и статистика начнутся заново, когда стрим стартует.' : 'Автозапись выключена.', 'success');
       else { renderStreamButtons({ autoRecord: !enabled }); showStreamControlMessage('Не удалось переключить автозапись.', 'error'); }
     } catch (e) { renderStreamButtons({ autoRecord: !enabled }); showStreamControlMessage('Сетевая ошибка при обращении к серверу.', 'error'); }
   });
