@@ -94,6 +94,7 @@
   function buildIndex() {
     const out = [];
     $$('.nav-item[data-tab]').forEach((n) => {
+      if (n.classList.contains('dev-hidden')) return; // закрытые вкладки в поиске не показываем, пока не включён режим разработчика
       const tab = n.dataset.tab, name = (n.querySelector('span') || n).textContent.trim();
       out.push({ tab, title: name, sub: 'Вкладка', el: null });
       const sec = document.getElementById('tab-' + tab);

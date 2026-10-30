@@ -132,6 +132,8 @@
 
   function refreshLockUi() {
     syncBotAvTab();
+    document.querySelectorAll('.dev-hidden, .dev-shown').forEach((el) => { el.classList.toggle('dev-hidden', !unlocked); el.classList.toggle('dev-shown', unlocked); });
+    devPaint();
     LOCKED.forEach((t) => {
       const item = $('.nav-item[data-tab="' + t + '"]');
       if (!item) return;
@@ -160,6 +162,25 @@
       if (tab.classList.contains('on')) { const c = $('#botTabs [data-pane="cmd"]'); if (c) c.click(); }
     }
   }
+  /* ---------- режим разработчика (тот же пароль, что и у замка) ---------- */
+  const devOffBox = document.getElementById('devOff'), devOnBox = document.getElementById('devOn'), devMsg = document.getElementById('devMsg'), devPass = document.getElementById('devPass');
+  function devPaint() { if (!devOffBox) return; devOffBox.style.display = unlocked ? 'none' : ''; devOnBox.style.display = unlocked ? '' : 'none'; }
+  const devSay = (t, bad) => { if (devMsg) { devMsg.textContent = t; devMsg.className = 'form-message' + (bad ? ' error' : t ? ' success' : ''); } };
+  async function devEnable() {
+    devSay('Проверяем…');
+    try {
+      const r = await fetch('/api/lock/unlock', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password: devPass.value }) });
+      const d = await r.json();
+      if (d.success) { store.set(LOCK_KEY, d.token); unlocked = true; devPass.value = ''; refreshLockUi(); devSay('Режим разработчика включён. Вкладки появились слева.'); }
+      else { devSay(d.error || 'Неверный пароль.', true); devPass.select(); }
+    } catch (e) { devSay('Сетевая ошибка.', true); }
+  }
+  if (devOffBox) {
+    document.getElementById('btnDevOn').addEventListener('click', devEnable);
+    devPass.addEventListener('keydown', (e) => { if (e.key === 'Enter') devEnable(); });
+    document.getElementById('btnDevOff').addEventListener('click', () => { relock(); devSay('Режим выключен, вкладки скрыты.'); });
+  }
+
   function relock() {
     store.del(LOCK_KEY); unlocked = false; refreshLockUi();
     if (LOCKED.includes(activeTab())) gotoSafe();

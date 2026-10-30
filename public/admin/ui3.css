@@ -1078,3 +1078,7 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .hp-tip::before{content:"";position:absolute;left:-7px;top:var(--ay,44px);width:12px;height:12px;background:var(--bg-card2);border-left:1px solid var(--accent,#D84B55);border-bottom:1px solid var(--accent,#D84B55);transform:rotate(45deg)}
 .hp-tip .btn{align-self:flex-end;margin-top:4px}
 @keyframes hpIn{from{opacity:0;transform:translateX(-8px)}}
+
+/* блок статусов в боковой панели убран: те же данные есть в шапке и на главной; закрытые модули скрыты до режима разработчика */
+.side-status{display:none!important}
+.dev-hidden{display:none!important}
