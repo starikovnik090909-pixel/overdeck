@@ -1279,47 +1279,11 @@ app.get('/admin', (req, res) => {
 // ---------- REST API: вкладка "Чат бот" ----------
 // Токен бота — секрет: наружу не отдаётся никогда (только hasToken/tokenPreview).
 
-app.get('/api/chat-bot', (req, res) => {
-  res.json({ chatBot: chatBot.getPublic() });
-});
-
-app.post('/api/chat-bot/save', (req, res) => {
-  const result = chatBot.save(req.body || {});
-  if (!result.ok) return res.status(400).json({ success: false, error: result.error });
-  res.json({ success: true, chatBot: chatBot.getPublic() });
-});
-
-app.post('/api/chat-bot/connect', async (req, res) => {
-  const result = await chatBot.connect();
-  // Проверка токена/полей — синхронная часть; сама подписка на чат подтвердится чуть позже (статус connecting → connected), админка его опрашивает.
-  res.status(result.ok ? 200 : 400).json({ success: result.ok, error: result.error, chatBot: chatBot.getPublic() });
-});
+require('./routes/chatbot').part6({ chatBot, app });
 
 // ---------- REST API: конструктор команд чат-бота ("!команда" → ответ) ----------
 
-app.get('/api/bot-commands', (req, res) => {
-  res.json({ commands: botCommands.list() });
-});
-
-app.post('/api/bot-commands', (req, res) => {
-  const { command, response } = req.body || {};
-  const result = botCommands.add(command, response);
-  if (!result.ok) return res.status(400).json({ success: false, error: result.error });
-  res.json({ success: true, commands: botCommands.list(), item: result.item });
-});
-
-app.post('/api/bot-commands/:id/update', (req, res) => {
-  const { command, response } = req.body || {};
-  const result = botCommands.update(req.params.id, command, response);
-  if (!result.ok) return res.status(result.error === 'Команда не найдена.' ? 404 : 400).json({ success: false, error: result.error });
-  res.json({ success: true, commands: botCommands.list(), item: result.item });
-});
-
-app.post('/api/bot-commands/:id/delete', (req, res) => {
-  const result = botCommands.remove(req.params.id);
-  if (!result.ok) return res.status(404).json({ success: false, error: result.error });
-  res.json({ success: true, commands: botCommands.list() });
-});
+require('./routes/chatbot').part5({ botCommands, app });
 
 // ---------- REST API: команды чат-аватаров («!аватар» → случайный герой, «!прыжок»…) ----------
 
@@ -1327,36 +1291,9 @@ app.get('/api/avatar-commands', (req, res) => {
   res.json({ success: true, ...avatarCommands.getState(), actions: avatarCommands.getActions(), chatters: pixelHeroes.getSettings().chatters, unlock: pixelHeroes.getUnlock() });
 });
 
-// Разблокировка аватаров за баллы канала: замок (менять можно только на открытые), название награды, текст сообщения бота.
-app.post('/api/pixel-heroes/unlock-settings', (req, res) => {
-  const u = pixelHeroes.setUnlock(req.body);
-  if (!u) return res.status(400).json({ success: false, error: 'Не удалось сохранить: название награды — до 60 символов, текст сообщения — от 1 до 300 символов, замок — да/нет.' });
-  res.json({ success: true, unlock: u });
-});
+require('./routes/pixel').part3({ pixelHeroes, chatBot, app, unlockAvatarFor });
 
-// Выдать аватар вручную (проверка награды или подарок): { login } — ник зрителя; открывает случайный закрытый аватар, бот пишет об этом в чат (если подключён).
-app.post('/api/pixel-heroes/unlock', (req, res) => {
-  const login = String((req.body && req.body.login) || '').trim().replace(/^@/, '').toLowerCase();
-  if (!/^[a-z0-9_]{1,40}$/.test(login)) return res.status(400).json({ success: false, error: 'Нужен ник зрителя (латиница, цифры и «_», как логин на Twitch).' });
-  const r = unlockAvatarFor(login, login);
-  if (!r.ok && r.reason === 'none-left') return res.status(409).json({ success: false, error: 'У этого зрителя уже открыты все закрытые аватары.' });
-  if (!r.ok && r.reason === 'no-closed') return res.status(409).json({ success: false, error: 'Закрытых аватаров нет: у всех героев стоит галочка «выдавать». Сними её у тех, кого хочешь отдавать только за награду.' });
-  res.json({ success: true, hero: r.hero, title: r.title, unlocked: r.unlocked, total: r.total, text: r.text, botConnected: chatBot.getPublic().status === 'connected' });
-});
-
-app.post('/api/avatar-commands', (req, res) => {
-  const b = req.body || {};
-  if ('enabled' in b && !avatarCommands.setEnabled(b.enabled)) return res.status(400).json({ success: false, error: 'Включено или нет — нужно да/нет.' });
-  if ('commands' in b) {
-    const r = avatarCommands.setCommands(b.commands);
-    if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  }
-  res.json({ success: true, ...avatarCommands.getState() });
-});
-
-app.post('/api/avatar-commands/reset', (req, res) => {
-  res.json({ success: true, ...avatarCommands.reset() });
-});
+require('./routes/chatbot').part4({ avatarCommands, app });
 
 // ---------- REST API: сообщения чат-бота по таймеру (раз в 15–60 минут) ----------
 
@@ -1364,119 +1301,22 @@ function botTimersPayload() {
   return { timers: botTimers.list(), settings: botTimers.getSettings(), limits: { minMinutes: botTimers.INTERVAL_MIN, maxMinutes: botTimers.INTERVAL_MAX, maxLength: botTimers.TEXT_MAX_LENGTH } };
 }
 
-app.get('/api/bot-timers', (req, res) => {
-  res.json(botTimersPayload());
-});
-
-app.post('/api/bot-timers/settings', (req, res) => {
-  botTimers.setSettings(req.body || {});
-  chatBot.syncTimers();
-  res.json({ success: true, ...botTimersPayload() });
-});
-
-app.post('/api/bot-timers', (req, res) => {
-  const { text, intervalMinutes, enabled } = req.body || {};
-  const result = botTimers.add(text, intervalMinutes, enabled);
-  if (!result.ok) return res.status(400).json({ success: false, error: result.error });
-  chatBot.syncTimers();
-  res.json({ success: true, ...botTimersPayload(), item: result.item });
-});
-
-app.post('/api/bot-timers/:id/update', (req, res) => {
-  const { text, intervalMinutes, enabled } = req.body || {};
-  const result = botTimers.update(req.params.id, text, intervalMinutes, enabled);
-  if (!result.ok) return res.status(result.error === 'Сообщение не найдено.' ? 404 : 400).json({ success: false, error: result.error });
-  chatBot.syncTimers();
-  res.json({ success: true, ...botTimersPayload(), item: result.item });
-});
-
-app.post('/api/bot-timers/:id/delete', (req, res) => {
-  const result = botTimers.remove(req.params.id);
-  if (!result.ok) return res.status(404).json({ success: false, error: result.error });
-  chatBot.syncTimers();
-  res.json({ success: true, ...botTimersPayload() });
-});
+require('./routes/chatbot').part3({ chatBot, botTimers, app, botTimersPayload });
 
 // ---------- REST API: автомодерация (список запрещённых слов) ----------
 // Сам список отдаётся ТОЛЬКО этим запросом — его использует модальное окно «Автомодерация»; в остальные ответы (статус бота и т.п.) слова не попадают.
 
-app.get('/api/automod', (req, res) => {
-  res.json(autoMod.getState());
-});
+require('./routes/chatbot').part2({ autoMod, app });
 
-app.get('/api/automod/defaults', (req, res) => {
-  res.json({ words: autoMod.getDefaults() });
-});
-
-app.post('/api/automod', (req, res) => {
-  const { words, enabled } = req.body || {};
-  const result = autoMod.save({ words, enabled });
-  if (!result.ok) return res.status(400).json({ success: false, error: result.error });
-  res.json({ success: true, wordCount: result.wordCount, enabled: autoMod.isEnabled() });
-});
-
-// Написать в чат от имени бота (поле ввода в доке чата для OBS и в админке)
-app.post('/api/chat-bot/say', async (req, res) => {
-  const text = String((req.body && req.body.text) || '').replace(/\s+/g, ' ').trim().slice(0, 450);
-  if (!text) return res.status(400).json({ success: false, error: 'Пустое сообщение.' });
-  try {
-    const ok = await chatBot.say(text);
-    if (!ok) return res.status(409).json({ success: false, error: 'Бот не подключён к чату. Подключи его на вкладке «Чат-бот».' });
-    res.json({ success: true });
-  } catch (e) { res.status(500).json({ success: false, error: 'Не удалось отправить: ' + (e && e.message || 'ошибка') }); }
-});
-
-app.post('/api/chat-bot/disconnect', (req, res) => {
-  chatBot.disconnect();
-  res.json({ success: true, chatBot: chatBot.getPublic() });
-});
+require('./routes/chatbot').main({ chatBot, app });
 
 // ---------- REST API: "Настройки админки" — темы оформления самой панели ----------
 
-app.get('/api/admin-themes', (req, res) => {
-  res.json({ adminThemes: adminThemes.get() });
-});
+require('./routes/themes').part4({ themes, adminThemes, app });
 
-app.post('/api/admin-themes', (req, res) => {
-  const { name, bgColor, textColor, accentColor } = req.body || {};
-  const result = adminThemes.addTheme(name, bgColor, textColor, accentColor);
-  if (!result.success) return res.status(400).json({ success: false, error: 'Проверь название и все три цвета (формат #rrggbb).' });
-  res.json({ success: true, adminThemes: result.data, theme: result.theme });
-});
+require('./routes/misc').part3({ tabLock, app });
 
-app.post('/api/admin-themes/:id/activate', (req, res) => {
-  const result = adminThemes.setActiveTheme(req.params.id);
-  if (!result.success) return res.status(404).json({ success: false, error: result.error });
-  res.json({ success: true, adminThemes: result.data });
-});
-
-app.post('/api/admin-themes/:id/delete', (req, res) => {
-  const result = adminThemes.deleteTheme(req.params.id);
-  if (!result.success) return res.status(400).json({ success: false, error: result.error });
-  res.json({ success: true, adminThemes: result.data });
-});
-
-// Замок на личные вкладки админки (пароль хранится только в виде хеша, см. lock.js)
-app.get('/api/lock/status', (req, res) => {
-  res.json({ lockedTabs: tabLock.LOCKED_TABS, unlocked: tabLock.isValidToken(req.get('X-Lock-Token')) });
-});
-app.post('/api/lock/unlock', (req, res) => {
-  const r = tabLock.verify((req.body || {}).password);
-  if (!r.ok) return res.status(r.error.startsWith('Слишком') ? 429 : 401).json({ success: false, error: r.error });
-  res.json({ success: true, token: r.token });
-});
-
-app.get('/api/help-texts', (req, res) => {
-  res.json({ texts: helpTexts.getAll() });
-});
-
-app.post('/api/help-texts', (req, res) => {
-  const { tabId, text } = req.body || {};
-  if (!helpTexts.setText(tabId, text)) {
-    return res.status(400).json({ success: false, error: 'Неизвестная вкладка' });
-  }
-  res.json({ success: true });
-});
+require('./routes/misc').part2({ helpTexts, app });
 
 // ---------- REST API: "Панель команды" (вкладка "Ивент") ----------
 
@@ -1484,63 +1324,7 @@ function validSide(side) {
   return side === 'left' || side === 'right';
 }
 
-app.get('/api/team', (req, res) => {
-  res.json({ teams: teamData.getAll(), recommendedSize: teamData.getRecommendedSize() });
-});
-
-app.post('/api/team/settings', (req, res) => {
-  const settings = teamData.updateSettings(req.body || {});
-  broadcastTeamUpdate('left');
-  broadcastTeamUpdate('right');
-  res.json({ success: true, settings, recommendedSize: teamData.getRecommendedSize() });
-});
-
-app.post('/api/team/settings/reset', (req, res) => {
-  const settings = teamData.resetSettings();
-  broadcastTeamUpdate('left');
-  broadcastTeamUpdate('right');
-  res.json({ success: true, settings, recommendedSize: teamData.getRecommendedSize() });
-});
-
-app.post('/api/team/settings/save-as-default', (req, res) => {
-  const settingsDefaults = teamData.saveCurrentAsDefaults();
-  res.json({ success: true, settingsDefaults });
-});
-
-// ---------- REST API: сохранённые пресеты команд ("Сохранить команду"/"Загрузить команду") ----------
-
-app.get('/api/team/presets', (req, res) => {
-  res.json({ presets: teamPresets.list() });
-});
-
-app.post('/api/team/presets/save', (req, res) => {
-  const { side, name } = req.body || {};
-  if (!validSide(side)) return res.status(400).json({ success: false, error: 'side должен быть left или right' });
-  if (!name || !String(name).trim()) return res.status(400).json({ success: false, error: 'Укажи имя пресета' });
-  const team = teamData.getSide(side);
-  const preset = teamPresets.save(name, team);
-  res.json({ success: true, preset });
-});
-
-app.post('/api/team/presets/load', (req, res) => {
-  const { side, id } = req.body || {};
-  if (!validSide(side)) return res.status(400).json({ success: false, error: 'side должен быть left или right' });
-  const preset = teamPresets.load(id);
-  if (!preset) return res.status(404).json({ success: false, error: 'Пресет не найден' });
-
-  teamData.updateText(side, { teamName: preset.teamName, players: preset.players });
-  preset.players.forEach((p, i) => teamData.setPlayerPhoto(side, i, p.photoUrl, p.crop));   // кадрирование фото — из пресета (у старых пресетов его нет → по центру)
-  teamData.setLogo(side, preset.logoUrl);
-  teamData.setLogoLayout(side, preset.logoLayout || null);   // размер/положение логотипа этой команды (нет → общие настройки)
-  broadcastTeamUpdate(side);
-  res.json({ success: true, team: teamData.getSide(side) });
-});
-
-app.post('/api/team/presets/delete', (req, res) => {
-  const { id } = req.body || {};
-  const removed = teamPresets.remove(id);
-  res.json({ success: removed });
-});
+require('./routes/team').part3({ teamData, teamPresets, app, validSide, broadcastTeamUpdate });
 
 // ---------- REST API: виджет "MVP матча" (заполняется вручную) ----------
 
@@ -1549,58 +1333,7 @@ const { chroniclesUpload } = require('./routes/chronicles').upload({ path, expre
 require('./routes/telegram').main({ chronicles, telegramAnnounce, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
-app.get('/api/mvp', (req, res) => {
-  res.json({ mvp: mvpData.get() });
-});
-
-app.post('/api/mvp/save', (req, res) => {
-  const mvp = mvpData.updateText(req.body || {});
-  broadcastMvpUpdate();
-  res.json({ success: true, mvp });
-});
-
-app.post('/api/mvp/photo', (req, res) => {
-  mvpUpload.single('photo')(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить фото' });
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не подходит (нужен .png/.jpg/.jpeg/.webp)' });
-    const url = `/uploads/mvp/${req.file.filename}`;
-    mvpData.setPhoto(url);
-    broadcastMvpUpdate();
-    res.json({ success: true, url });
-  });
-});
-
-let mvpAutoHideTimer = null;
-
-app.post('/api/mvp/show', (req, res) => {
-  clearTimeout(mvpAutoHideTimer); // повторный клик "Показать" перезапускает отсчёт с начала
-  const mvp = mvpData.setVisible(true);
-  broadcastMvpUpdate();
-  mvpAutoHideTimer = setTimeout(() => {
-    mvpData.setVisible(false);
-    broadcastMvpUpdate();
-  }, (mvp.settings.displaySeconds || 10) * 1000);
-  res.json({ success: true, mvp });
-});
-
-app.post('/api/mvp/hide', (req, res) => {
-  clearTimeout(mvpAutoHideTimer); // ручное скрытие раньше времени — автоскрытие по таймеру больше не нужно
-  const mvp = mvpData.setVisible(false);
-  broadcastMvpUpdate();
-  res.json({ success: true, mvp });
-});
-
-app.post('/api/mvp/settings', (req, res) => {
-  const settings = mvpData.updateSettings(req.body || {});
-  broadcastMvpUpdate();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/mvp/settings/reset', (req, res) => {
-  const settings = mvpData.resetSettings();
-  broadcastMvpUpdate();
-  res.json({ success: true, settings });
-});
+require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });
 
 // ---------- REST API: виджет "Факт / Инфо-панель" ----------
 
@@ -1687,109 +1420,19 @@ app.post('/api/fact/presets/:id/show', (req, res) => {
 
 // ---------- REST API: плашка "Сбор" (призовой фонд, всегда на экране) ----------
 
-app.get('/api/fund', (req, res) => {
-  res.json({ fund: fundData.get() });
-});
-
-app.post('/api/fund/save', (req, res) => {
-  const { title, currency } = req.body || {};
-  const fund = fundData.updateText({ title, currency });
-  broadcastFundUpdate();
-  res.json({ success: true, fund });
-});
-
-app.post('/api/fund/amount', (req, res) => {
-  const { amount } = req.body || {};
-  const fund = fundData.setAmount(amount);
-  broadcastFundUpdate();
-  res.json({ success: true, fund });
-});
-
-app.post('/api/fund/reset', (req, res) => {
-  const fund = fundData.resetAmount();
-  broadcastFundUpdate();
-  res.json({ success: true, fund });
-});
-
-app.post('/api/fund/settings', (req, res) => {
-  const settings = fundData.updateSettings(req.body || {});
-  broadcastFundUpdate();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/fund/settings/reset', (req, res) => {
-  const settings = fundData.resetSettings();
-  broadcastFundUpdate();
-  res.json({ success: true, settings });
-});
+require('./routes/fund').part5({ fundData, currency, app, broadcastFundUpdate });
 
 // ---------- REST API: «Цель сбора» (красная шкала с делениями, всегда на экране) ----------
 
-app.get('/api/goal', (req, res) => {
-  res.json({ goal: goalData.get() });
-});
-
-// текст, цель, валюта, тумблеры, громкость, размер (сумму не трогает)
-app.post('/api/goal/save', (req, res) => {
-  const goal = goalData.update(req.body || {});
-  broadcastGoal();
-  res.json({ success: true, goal });
-});
-
-app.post('/api/goal/amount', (req, res) => {
-  const n = Number((req.body || {}).amount);
-  if (!Number.isFinite(n) || n < 0) return res.status(400).json({ success: false, error: 'Сумма должна быть числом от 0' });
-  const goal = goalData.setAmount(n);
-  broadcastGoal();
-  res.json({ success: true, goal });
-});
-
-app.post('/api/goal/reset', (req, res) => {
-  const goal = goalData.resetAmount();
-  broadcastGoal();
-  res.json({ success: true, goal });
-});
-
-// тест: оверлей локально проигрывает донат (+1 500) или финал и возвращается к настоящей сумме — ничего не сохраняется
-app.post('/api/goal/test', (req, res) => {
-  const kind = (req.body || {}).kind === 'finale' ? 'finale' : 'donation';
-  broadcastGoal({ kind }, 'goal_test');
-  res.json({ success: true, kind });
-});
+require('./routes/fund').part4({ goalData, app, broadcastGoal });
 
 // ---------- REST API: алерт о донате для плашки "Сбор" ----------
 
-app.get('/api/fund/alert/settings', (req, res) => {
-  res.json({ alert: fundAlertData.get() });
-});
-
-app.post('/api/fund/alert/settings', (req, res) => {
-  const settings = fundAlertData.updateSettings(req.body || {});
-  res.json({ success: true, settings });
-});
-
-app.post('/api/fund/alert/settings/reset', (req, res) => {
-  const settings = fundAlertData.resetSettings();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/fund/alert/test', (req, res) => {
-  const text = fundAlertData.buildText('TestUser', 500, fundData.get().currency);
-  enqueueFundAlert(text);
-  res.json({ success: true, text });
-});
+require('./routes/fund').part3({ fundData, fundAlertData, app, enqueueFundAlert });
 
 // ---------- REST API: "Коробочка сбора" (внутри блока "Сбор") ----------
 
-app.get('/api/fundbox', (req, res) => {
-  res.json({ state: fundBoxData.get(), denomination: fundBoxData.getCurrentDenomination(), boxSize: fundBoxData.getCurrentBoxSize() });
-});
-
-app.post('/api/fundbox/preview-size', (req, res) => {
-  const { denomination, coinValue } = req.body || {};
-  const boxSize = fundBoxData.computeBoxAndCoinSize(Number(denomination) || 1000, Number(coinValue) || 100);
-  res.json({ boxSize });
-});
+require('./routes/fund').part2({ fundBoxData, app });
 
 // ---------- REST API: "Ставки" (Twitch Channel Points Predictions) ----------
 
@@ -1809,31 +1452,7 @@ function getPredictionCredentials() {
   };
 }
 
-app.get('/api/predictions/templates', (req, res) => {
-  res.json({ templates: predictions.listTemplates() });
-});
-
-app.post('/api/predictions/templates/delete', (req, res) => {
-  const removed = predictions.deleteTemplate(req.body && req.body.id);
-  res.json({ success: removed });
-});
-
-app.post('/api/predictions/create', async (req, res) => {
-  const { title, option1, option2, windowSeconds } = req.body || {};
-  const errors = predictions.validateCreateInput({ title, option1, option2, windowSeconds });
-  if (errors.length) return res.status(400).json({ success: false, error: errors.join(' ') });
-
-  const creds = getPredictionCredentials();
-  if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
-
-  try {
-    const prediction = await predictions.createPrediction({ ...creds, title, option1, option2, windowSeconds });
-    predictions.saveAsTemplate(title, option1, option2); // "все созданные вопросы должны сохраняться" — сохраняем автоматически при успешном запуске
-    res.json({ success: true, prediction });
-  } catch (e) {
-    res.status(502).json({ success: false, error: `Twitch отклонил запрос: ${e.message}` });
-  }
-});
+require('./routes/polls').part4({ predictions, app, getPredictionCredentials });
 
 app.patch('/api/predictions/resolve', async (req, res) => {
   const { predictionId, winningOutcomeId, status } = req.body || {};
@@ -1855,17 +1474,7 @@ app.patch('/api/predictions/resolve', async (req, res) => {
   }
 });
 
-app.get('/api/predictions/active', async (req, res) => {
-  const creds = getPredictionCredentials();
-  if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
-
-  try {
-    const prediction = await predictions.getActivePrediction(creds);
-    res.json({ success: true, prediction });
-  } catch (e) {
-    res.status(502).json({ success: false, error: `Twitch отклонил запрос: ${e.message}` });
-  }
-});
+require('./routes/polls').part3({ predictions, app, getPredictionCredentials });
 
 // ---------- REST API: "Опросы" (Twitch Polls, вкладка "Чат") ----------
 
@@ -1886,21 +1495,7 @@ function pollErrorMessage(e) {
   return `Twitch отклонил запрос: ${e.message}.${hint}`;
 }
 
-app.post('/api/polls/create', async (req, res) => {
-  const { title, choices, durationSeconds } = req.body || {};
-  const errors = polls.validateCreateInput({ title, choices, durationSeconds });
-  if (errors.length) return res.status(400).json({ success: false, error: errors.join(' ') });
-
-  const creds = getPollCredentials();
-  if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
-
-  try {
-    const poll = await polls.createPoll({ ...creds, title, choices, durationSeconds });
-    res.json({ success: true, poll });
-  } catch (e) {
-    res.status(502).json({ success: false, error: pollErrorMessage(e) });
-  }
-});
+require('./routes/polls').part2({ polls, app, getPollCredentials, pollErrorMessage });
 
 app.patch('/api/polls/end', async (req, res) => {
   const { pollId, status } = req.body || {};
@@ -1915,16 +1510,7 @@ app.patch('/api/polls/end', async (req, res) => {
   }
 });
 
-app.get('/api/polls/active', async (req, res) => {
-  const creds = getPollCredentials();
-  if (!creds.ok) return res.status(400).json({ success: false, error: creds.error });
-  try {
-    const { active, last } = await polls.getActiveAndLast(creds);
-    res.json({ success: true, poll: active, lastPoll: last });
-  } catch (e) {
-    res.status(502).json({ success: false, error: pollErrorMessage(e) });
-  }
-});
+require('./routes/polls').main({ polls, app, getPollCredentials, pollErrorMessage });
 
 // ---------- REST API: "Тема ивента" (общее оформление для MVP/Факта/Сбора/Алерта доната) ----------
 
@@ -1943,319 +1529,32 @@ function validThemeWidget(key) {
   return eventTheme.APPLICABLE_WIDGETS.includes(key);
 }
 
-app.get('/api/event-theme', (req, res) => {
-  res.json({ eventTheme: eventTheme.get(), widgetLabels: eventTheme.WIDGET_LABELS });
-});
-
-app.post('/api/event-theme/:widget', (req, res) => {
-  const { widget } = req.params;
-  if (!validThemeWidget(widget)) return res.status(400).json({ success: false, error: `Неизвестный виджет: ${widget}` });
-  const data = eventTheme.update(widget, req.body || {});
-  rebroadcastAllThemedWidgets();
-  res.json({ success: true, eventTheme: data });
-});
-
-app.post('/api/event-theme/:widget/preset', (req, res) => {
-  const { widget } = req.params;
-  const { preset } = req.body || {};
-  if (!validThemeWidget(widget)) return res.status(400).json({ success: false, error: `Неизвестный виджет: ${widget}` });
-  if (!eventTheme.PRESET_NAMES.includes(preset)) {
-    return res.status(400).json({ success: false, error: `Неизвестный пресет: ${preset}` });
-  }
-  const theme = eventTheme.applyPreset(widget, preset);
-  rebroadcastAllThemedWidgets();
-  res.json({ success: true, theme });
-});
-
-app.post('/api/event-theme/:widget/background/upload', (req, res) => {
-  const { widget } = req.params;
-  if (!validThemeWidget(widget)) return res.status(400).json({ success: false, error: `Неизвестный виджет: ${widget}` });
-  themeBackgroundUpload.single('file')(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить фон (проверь формат — jpg/png/gif/webp/mp4/webm — и что он не больше 300 МБ).' });
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не получен.' });
-    deleteOldThemeBackgroundFile(widget);
-    const data = eventTheme.setBackgroundImageUrl(widget, `/uploads/theme/${req.file.filename}`);
-    rebroadcastAllThemedWidgets();
-    res.json({ success: true, eventTheme: data });
-  });
-});
-
-app.post('/api/event-theme/:widget/background/remove', (req, res) => {
-  const { widget } = req.params;
-  if (!validThemeWidget(widget)) return res.status(400).json({ success: false, error: `Неизвестный виджет: ${widget}` });
-  deleteOldThemeBackgroundFile(widget);
-  const data = eventTheme.setBackgroundImageUrl(widget, null);
-  rebroadcastAllThemedWidgets();
-  res.json({ success: true, eventTheme: data });
-});
+require('./routes/event').part2({ eventTheme, app, themeBackgroundUpload, deleteOldThemeBackgroundFile, rebroadcastAllThemedWidgets, validThemeWidget });
 
 // ---------- REST API: обложка вкладки «Ивент» (только админка) ----------
 
-app.get('/api/event-cover', (req, res) => {
-  res.json({ success: true, cover: eventCover.get() });
-});
-
-app.post('/api/event-cover/name', (req, res) => {
-  const cover = eventCover.setName(req.body && req.body.name);
-  res.json({ success: true, cover });
-});
-
-app.post('/api/event-cover/upload', (req, res) => {
-  eventCoverUpload.single('file')(req, res, (err) => {
-    if (err) {
-      const tooBig = err.code === 'LIMIT_FILE_SIZE';
-      return res.status(400).json({ success: false, error: tooBig ? 'Файл больше 10 МБ — выберите картинку поменьше.' : (err.message || 'Не удалось загрузить обложку.') });
-    }
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не принят — нужна картинка png, jpg, webp или gif.' });
-    deleteOldEventCoverFile();
-    const cover = eventCover.setImageUrl(`/uploads/event/${req.file.filename}`);
-    res.json({ success: true, cover });
-  });
-});
-
-app.post('/api/event-cover/remove', (req, res) => {
-  deleteOldEventCoverFile();
-  const cover = eventCover.setImageUrl(null);
-  res.json({ success: true, cover });
-});
+require('./routes/event').main({ eventCover, app, eventCoverUpload, deleteOldEventCoverFile });
 
 // ---------- REST API: герои пиксельного алерта «ЧатАватары» (карточки в админке, «Показать в оверлее») ----------
 
-app.get('/api/pixel-heroes', (req, res) => {
-  res.json({ success: true, heroes: pixelHeroes.list(), active: pixelHeroes.getActive(), settings: pixelHeroes.getSettings(), groupScale: pixelHeroes.getGroupScales(), heroScale: pixelHeroes.getHeroScales(), tag: pixelHeroes.getTagStyle(), behavior: pixelHeroes.getBehavior(), unlock: pixelHeroes.getUnlock(), chatters: pixelHeroes.getRoster() });
-});
-
-// Настройки поведения героев: режим (бродят всегда / порциями / стоят), число прогулок, отдых, шансы доп. анимаций; любая часть полей, недопустимое — 400 и ничего не меняется.
-app.post('/api/pixel-heroes/behavior', (req, res) => {
-  const b = pixelHeroes.setBehavior(req.body);
-  if (!b) return res.status(400).json({ success: false, error: 'Не удалось сохранить поведение: проверь числа (прогулки 1–20, отдых 1–600 с, паузы 0–60 с, шансы 0–100 %), «от» не больше «до».' });
-  broadcastPixelHeroes();
-  res.json({ success: true, behavior: b });
-});
-
-app.post('/api/pixel-heroes/show', (req, res) => {
-  if (!pixelHeroes.show(req.body && req.body.id)) return res.status(404).json({ success: false, error: 'Такого героя нет.' });
-  broadcastPixelHeroes();
-  res.json({ success: true, active: pixelHeroes.getActive() });
-});
+require('./routes/pixel').part2({ pixelHeroes, app, broadcastPixelHeroes });
 
 // Топ чат-аватаров (вкладка «ЧатАватары»): по уровню, затем по опыту; в каждой записи — всё для профиля (ник, герой-аватар, уровень, опыт и длина шкалы).
 // ---------- REST API: расширение Twitch (только админка; секрет наружу не отдаётся) ----------
 
-app.get('/api/extension', (req, res) => {
-  res.json({ success: true, config: twitchExt.getPublic(), status: twitchExt.getStatus(), preview: (({ snapshot, ...rest }) => rest)(twitchExt.preview()) });
-});
-
-app.get('/api/extension/snapshot', (req, res) => {
-  res.json({ success: true, ...twitchExt.preview() });
-});
-
-app.post('/api/extension', (req, res) => {
-  const r = twitchExt.update(req.body || {});
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, config: r.config, status: twitchExt.getStatus() });
-});
-
-/** «Отправить сейчас»: проверочная отправка снимка (даже если расширение выключено, но данные заданы) — чтобы сразу увидеть ошибку Twitch. */
-app.post('/api/extension/send', async (req, res) => {
-  const r = await twitchExt.tick(true);
-  if (r.ok === false) return res.status(502).json({ success: false, error: r.error, status: twitchExt.getStatus() });
-  res.json({ success: true, result: r, status: twitchExt.getStatus() });
-});
+require('./routes/misc').main({ twitchExt, config, app });
 
 
-// ---------- Награды и события (ЧатАватары → «События») ----------
-app.get('/api/awards', (req, res) => {
-  res.json({ success: true, awards: awards.list(), event: awards.getEvent(), log: awards.getLog(), limits: awards.limits });
-});
-app.post('/api/awards/event/start', (req, res) => {
-  const b = req.body || {};
-  const r = awards.startEvent({ awardId: b.awardId, title: b.title, description: b.description, icon: b.icon, iconSmall: b.iconSmall, howTo: b.howTo, durationMin: b.durationMin });
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, event: r.event, awards: awards.list() });
-});
-app.post('/api/awards/event/finish', (req, res) => {
-  const r = awards.finishEvent(!(req.body && req.body.cancel === true));
-  if (!r.ok) return res.status(400).json({ success: false, error: 'Сейчас нет идущего события.' });
-  res.json({ success: true, granted: r.granted, awards: awards.list() });
-});
-app.post('/api/awards/create', (req, res) => {
-  const b = req.body || {};
-  const r = awards.createAward({ title: b.title, description: b.description, howTo: b.howTo, icon: b.icon, iconSmall: b.iconSmall });
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, award: r.award, awards: awards.list() });
-});
-app.post('/api/awards/delete', (req, res) => {
-  if (!awards.deleteAward(req.body && req.body.id)) return res.status(400).json({ success: false, error: 'Не удалось удалить: награды нет или она сейчас в идущем событии.' });
-  res.json({ success: true, awards: awards.list() });
-});
-app.post('/api/awards/grant', (req, res) => {
-  const b = req.body || {};
-  const logins = Array.isArray(b.logins) ? b.logins : String(b.logins || '').split(/[\s,;]+/);
-  const r = awards.grant(b.awardId, logins);
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, granted: r.granted, skipped: r.skipped, awards: awards.list() });
-});
-app.post('/api/awards/update', (req, res) => {
-  const b = req.body || {}; const patch = {};
-  for (const k of ['title', 'description', 'howTo', 'icon', 'iconSmall', 'available']) if (k in b) patch[k] = b[k];
-  const r = awards.updateAward(b.id, patch);
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, awards: awards.list() });
-});
-app.post('/api/awards/grant-all', (req, res) => {
-  const r = awards.grantAll(req.body && req.body.awardId, pixelHeroes.allLogins());
-  if (!r.ok) return res.status(400).json({ success: false, error: r.error });
-  res.json({ success: true, granted: r.granted, total: pixelHeroes.allLogins().length, awards: awards.list() });
-});
-app.post('/api/awards/revoke', (req, res) => {
-  const b = req.body || {};
-  if (!awards.revoke(b.awardId, b.login)) return res.status(400).json({ success: false, error: 'У этого игрока нет такой награды.' });
-  res.json({ success: true, awards: awards.list() });
-});
+require('./routes/awards').main({ pixelHeroes, awards, app });
 
 const withAwards = (p) => (p ? { ...p, awards: awards.awardsOf(p.login).map((id) => awards.getAward(id)).filter(Boolean).map((a) => ({ id: a.id, title: a.title, description: a.description, icon: a.icon })) } : p);
-app.get('/api/pixel-heroes/top', (req, res) => {
-  const limit = parseInt(req.query && req.query.limit, 10);
-  res.json({ success: true, top: pixelHeroes.getTop(Number.isFinite(limit) ? limit : 50).map(withAwards), rules: pixelHeroes.getRules() });
-});
+require('./routes/pixel').main({ twitch, pixelHeroes, app, withAwards, broadcastPixelHeroes });
 
-app.post('/api/pixel-heroes/settings', (req, res) => {
-  const settings = pixelHeroes.setSettings(req.body);
-  broadcastPixelHeroes();
-  res.json({ success: true, settings, active: pixelHeroes.getActive() });
-});
-
-// Размер героев категории (в %, 25–300): применяется на оверлее на лету, в том числе к героям, уже стоящим на сцене.
-app.post('/api/pixel-heroes/group-scale', (req, res) => {
-  const b = req.body || {};
-  if (!pixelHeroes.setGroupScale(b.group, b.percent)) return res.status(400).json({ success: false, error: 'Не удалось изменить размер: нет такой категории или значение не от 25 до 300 %.' });
-  broadcastPixelHeroes();
-  res.json({ success: true, groupScale: pixelHeroes.getGroupScales() });
-});
-
-// Размер одного героя (в %, 25–300): итоговый размер = категория × герой; применяется на оверлее на лету.
-app.post('/api/pixel-heroes/hero-scale', (req, res) => {
-  const b = req.body || {};
-  if (!pixelHeroes.setHeroScale(b.id, b.percent)) return res.status(400).json({ success: false, error: 'Не удалось изменить размер: нет такого героя или значение не от 25 до 300 %.' });
-  broadcastPixelHeroes();
-  res.json({ success: true, heroScale: pixelHeroes.getHeroScales() });
-});
-
-// Ручные правки профиля игрока из админки: смена аватара (героя) и уровня. Уровень ставится целым 0–99, опыт — на начало этого уровня.
-app.post('/api/pixel-heroes/profile/hero', (req, res) => {
-  const b = req.body || {};
-  const r = pixelHeroes.setProfileHero(b.login, b.hero);
-  if (!r.ok) return res.status(400).json({ success: false, error: 'Не удалось сменить аватар: нет такого игрока или героя.' });
-  if (r.changed) broadcastPixelHeroes();
-  res.json({ success: true, profile: withAwards(pixelHeroes.getProfile(b.login)) });
-});
-app.post('/api/pixel-heroes/profile/level', (req, res) => {
-  const b = req.body || {};
-  if (!pixelHeroes.hasProfile(b.login) || !Number.isInteger(b.level) || b.level < 0 || b.level > 99) {
-    return res.status(400).json({ success: false, error: 'Не удалось изменить уровень: нет такого игрока или уровень не целое число от 0 до 99.' });
-  }
-  pixelHeroes.setLevel(b.login, b.level);
-  broadcastPixelHeroes(); // уровень изменился — подпись над героем (если игрок на сцене) обновится
-  res.json({ success: true, profile: withAwards(pixelHeroes.getProfile(b.login)) });
-});
-
-// Цвета подписи над героем (ник и уровень «lvl N»).
-app.post('/api/pixel-heroes/tag-style', (req, res) => {
-  if (!pixelHeroes.setTagStyle(req.body)) return res.status(400).json({ success: false, error: 'Не удалось сохранить цвета: нужны цвета вида #rrggbb и режим ника «twitch» или «custom».' });
-  broadcastPixelHeroes();
-  res.json({ success: true, tag: pixelHeroes.getTagStyle() });
-});
-
-// Галочка героя «выдавать чаттерам»: влияет только на будущие выдачи, героев, уже стоящих на сцене, не трогает.
-app.post('/api/pixel-heroes/pool', (req, res) => {
-  const b = req.body || {};
-  if (!pixelHeroes.setPool(b.id, b.enabled)) return res.status(400).json({ success: false, error: 'Не удалось изменить: нет такого героя или значение не «да/нет».' });
-  res.json({ success: true, heroes: pixelHeroes.list() });
-});
-
-app.post('/api/pixel-heroes/hide', (req, res) => {
-  if (!pixelHeroes.hide(req.body && req.body.id)) return res.status(404).json({ success: false, error: 'Такого героя нет.' });
-  broadcastPixelHeroes();
-  res.json({ success: true, active: pixelHeroes.getActive() });
-});
-
-app.post('/api/fundbox/save', (req, res) => {
-  const { textTemplate, startDenomination, levelStep, coinValue, enabled } = req.body || {};
-  const state = fundBoxData.updateText({ textTemplate, startDenomination, levelStep, coinValue, enabled });
-  broadcastFundBoxState();
-  res.json({ success: true, state });
-});
-
-app.post('/api/fundbox/settings', (req, res) => {
-  const settings = fundBoxData.updateSettings(req.body || {});
-  broadcastFundBoxState();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/fundbox/settings/reset', (req, res) => {
-  const settings = fundBoxData.resetSettings();
-  broadcastFundBoxState();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/fundbox/reset', (req, res) => {
-  const state = fundBoxData.resetProgress();
-  broadcastFundBoxState();
-  res.json({ success: true, state });
-});
-
-app.post('/api/fundbox/test', (req, res) => {
-  const events = fundBoxData.addDonationAmount(500);
-  broadcastFundBoxEvents(events);
-  res.json({ success: true, events });
-});
+require('./routes/fund').main({ fundBoxData, app, broadcastFundBoxState, broadcastFundBoxEvents });
 
 // ---------- REST API: "Таймер" (обратный отсчёт мм:сс) ----------
 
-app.get('/api/timer', (req, res) => {
-  res.json({ state: timerData.get() });
-});
-
-app.post('/api/timer/save', (req, res) => {
-  const state = timerData.updateText({ enabled: req.body && req.body.enabled, labelText: req.body && req.body.labelText });
-  broadcastTimerUpdate();
-  res.json({ success: true, state });
-});
-
-app.post('/api/timer/settings', (req, res) => {
-  const settings = timerData.updateSettings(req.body || {});
-  broadcastTimerUpdate();
-  res.json({ success: true, settings });
-});
-
-app.post('/api/timer/set', (req, res) => {
-  const seconds = Number(req.body && req.body.seconds);
-  if (!Number.isFinite(seconds) || seconds < timerData.DURATION_LIMITS[0]) {
-    return res.status(400).json({ success: false, error: 'Укажи время больше 0.' });
-  }
-  const state = timerData.setDuration(seconds);
-  broadcastTimerUpdate();
-  res.json({ success: true, state });
-});
-
-app.post('/api/timer/start', (req, res) => {
-  const state = timerData.start();
-  broadcastTimerUpdate();
-  res.json({ success: true, state });
-});
-
-app.post('/api/timer/pause', (req, res) => {
-  const state = timerData.pause();
-  broadcastTimerUpdate();
-  res.json({ success: true, state });
-});
-
-app.post('/api/timer/reset', (req, res) => {
-  const state = timerData.reset();
-  broadcastTimerUpdate();
-  res.json({ success: true, state });
-});
+require('./routes/timer').main({ timerData, app, broadcastTimerUpdate });
 
 // ---------- REST API: полноэкранный фон трансляции (библиотека фонов) ----------
 
@@ -2274,42 +1573,7 @@ function scheduleBackgroundRotation() {
   }, state.settings.intervalMinutes * 60 * 1000);
 }
 
-app.get('/api/background', (req, res) => {
-  res.json({ background: backgroundData.get() });
-});
-
-app.post('/api/background/upload', (req, res) => {
-  backgroundUpload.single('file')(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить файл (проверь формат — gif/mp4/webm/mov/png/jpg/webp — и что он не больше 300 МБ).' });
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не получен.' });
-    broadcastBackgroundUpdate();
-    scheduleBackgroundRotation(); // список фонов только что вырос — если автосмена включена и раньше был только 1 файл, она теперь может заработать
-    res.json({ success: true, background: backgroundData.get() });
-  });
-});
-
-app.post('/api/background/select', (req, res) => {
-  const background = backgroundData.setActiveFile((req.body && req.body.file) || null);
-  broadcastBackgroundUpdate();
-  scheduleBackgroundRotation(); // ручной выбор — отсчёт интервала до следующей автосмены начинается заново от этого момента
-  res.json({ success: true, background });
-});
-
-app.post('/api/background/delete', (req, res) => {
-  const file = req.body && req.body.file;
-  if (!file) return res.status(400).json({ success: false, error: 'Не указан файл.' });
-  const background = backgroundData.deleteFile(file);
-  broadcastBackgroundUpdate();
-  scheduleBackgroundRotation(); // список фонов мог сократиться до одного — автосмена должна остановиться
-  res.json({ success: true, background });
-});
-
-app.post('/api/background/settings', (req, res) => {
-  const background = backgroundData.updateSettings(req.body || {});
-  broadcastBackgroundUpdate();
-  scheduleBackgroundRotation(); // интервал/тумблер автосмены могли измениться
-  res.json({ success: true, settings: background.settings });
-});
+require('./routes/background').main({ backgroundData, app, backgroundUpload, scheduleBackgroundRotation, broadcastBackgroundUpdate });
 
 // ---------- REST API: "Турнирная сетка" (генерация по количеству команд) ----------
 
@@ -2484,65 +1748,7 @@ app.post('/api/bracket/teams-roster/:id/delete', (req, res) => {
   res.json({ success: true, teams });
 });
 
-app.post('/api/team/:side/save', (req, res) => {
-  const { side } = req.params;
-  if (!validSide(side)) return res.status(400).json({ success: false, error: 'side должен быть left или right' });
-  const { teamName, players } = req.body || {};
-  teamData.updateText(side, { teamName, players });
-  broadcastTeamUpdate(side);
-  res.json({ success: true, team: teamData.getSide(side) });
-});
-
-app.post('/api/team/:side/photo/:slot', (req, res) => {
-  const { side, slot } = req.params;
-  const slotIndex = Number(slot);
-  if (!validSide(side) || !Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= teamData.PLAYERS_PER_TEAM) {
-    return res.status(400).json({ success: false, error: 'Некорректная команда или номер слота' });
-  }
-  teamUpload.single('photo')(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить фото' });
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не подходит (нужен .png/.jpg/.jpeg/.webp)' });
-    const url = `/uploads/team/${req.file.filename}`;
-    teamData.setPlayerPhoto(side, slotIndex, url);
-    broadcastTeamUpdate(side);
-    res.json({ success: true, url });
-  });
-});
-
-/** Кадрирование фото игрока: { x, y, zoom }. Сохраняется вместе с командой (и попадает в «Сохранить команду»). */
-app.post('/api/team/:side/photo/:slot/crop', (req, res) => {
-  const { side, slot } = req.params;
-  const slotIndex = Number(slot);
-  if (!validSide(side) || !Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex >= teamData.PLAYERS_PER_TEAM) {
-    return res.status(400).json({ success: false, error: 'Некорректная команда или номер слота' });
-  }
-  if (!teamData.setPlayerCrop(side, slotIndex, req.body)) return res.status(400).json({ success: false, error: 'Нужны x, y (0…1) и zoom (1…4).' });
-  broadcastTeamUpdate(side);
-  res.json({ success: true, crop: teamData.getSide(side).players[slotIndex].crop });
-});
-
-/** Размер и положение логотипа этой команды: { size, x, y } или { reset: true } — вернуть к общим настройкам. */
-app.post('/api/team/:side/logo-layout', (req, res) => {
-  const { side } = req.params;
-  if (!validSide(side)) return res.status(400).json({ success: false, error: 'side должен быть left или right' });
-  const b = req.body || {};
-  if (!teamData.setLogoLayout(side, b.reset === true ? null : b)) return res.status(400).json({ success: false, error: 'Нужны size (20…320), x и y (0…100).' });
-  broadcastTeamUpdate(side);
-  res.json({ success: true, logoLayout: teamData.getSide(side).logoLayout });
-});
-
-app.post('/api/team/:side/logo', (req, res) => {
-  const { side } = req.params;
-  if (!validSide(side)) return res.status(400).json({ success: false, error: 'side должен быть left или right' });
-  teamUpload.single('logo')(req, res, (err) => {
-    if (err) return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить логотип' });
-    if (!req.file) return res.status(400).json({ success: false, error: 'Файл не подходит (нужен .png/.jpg/.jpeg/.webp)' });
-    const url = `/uploads/team/${req.file.filename}`;
-    teamData.setLogo(side, url);
-    broadcastTeamUpdate(side);
-    res.json({ success: true, url });
-  });
-});
+require('./routes/team').main({ teamData, app, teamUpload, validSide, broadcastTeamUpdate });
 
 // ---------- REST API: авторизация Twitch (для панели управления) ----------
 
@@ -2809,30 +2015,7 @@ app.get('/api/twitch/mode', (req, res) => res.json({ publicApp: !!PUBLIC_CLIENT_
 
 // ---------- Донатный хаб: статус, история, сброс ----------
 
-app.get('/api/donations/status', (req, res) => {
-  const da = donationCredentials.get().donationAlerts;
-  const dx = donationCredentials.get().donateX;
-  res.json({
-    donationAlerts: {
-      connected: da.connected,
-      userName: da.userName,
-      hasCredentials: !!(da.clientId && da.clientSecret),
-      clientId: da.clientId || '',
-      remembered: authCredentials.isRemembered('donationAlerts'),
-    },
-    donateX: {
-      connected: dx.connected,
-      available: donateX.isAvailable(),
-      remembered: authCredentials.isRemembered('donateX'),
-    },
-    donatePay: {
-      connected: !!donationCredentials.get().donatePay.connected,
-      userName: donatePay.info().userName || '',
-      lastError: donatePay.info().lastError || '',
-      remembered: authCredentials.isRemembered('donatePay'),
-    },
-  });
-});
+require('./routes/donations').part6({ donations, donationCredentials, authCredentials, donateX, donatePay, donationAlerts, app });
 
 // ---------- Главная (3.0): сводка для первого экрана админки ----------
 app.get('/api/home', (req, res) => {
@@ -2880,123 +2063,13 @@ app.get('/api/home', (req, res) => {
   });
 });
 
-app.get('/api/donations/history', (req, res) => {
-  res.json({ donations: donations.getHistory() });
-});
-
-app.post('/api/donations/reset', (req, res) => {
-  donations.reset();
-  res.json({ success: true });
-});
+require('./routes/donations').part5({ donations, app });
 
 // ---------- Топ донатеров: сброс только топа за стрим + ручное добавление ----------
 
-app.post('/api/donortop/reset-session', (req, res) => {
-  donorLeaderboard.resetSession();
-  broadcast();
-  res.json({ success: true });
-});
+require('./routes/donations').part4({ donorLeaderboard, app, broadcast });
 
-app.get('/api/donortop/list', (req, res) => {
-  res.json({
-    session: donorLeaderboard.getTop('session', 50),
-    allTime: donorLeaderboard.getTop('allTime', 50),
-  });
-});
-
-app.post('/api/donortop/delete', (req, res) => {
-  const { scope, username } = req.body || {};
-  if (!username || (scope !== 'session' && scope !== 'allTime')) {
-    return res.status(400).json({ success: false, error: 'Нужны username и scope ("session" или "allTime")' });
-  }
-  donorLeaderboard.deleteDonor(scope, username);
-  broadcast();
-  res.json({ success: true });
-});
-
-app.post('/api/donortop/clear-alltime', (req, res) => {
-  donorLeaderboard.clearAllTime();
-  broadcast();
-  res.json({ success: true });
-});
-
-app.post('/api/donations/add-manual', (req, res) => {
-  const { username, amount, currency, platform } = req.body || {};
-  const cleanUsername = typeof username === 'string' ? username.trim() : '';
-  const cleanAmount = Number(amount);
-  if (!cleanUsername) {
-    return res.status(400).json({ success: false, error: 'Укажи ник донатера' });
-  }
-  if (!Number.isFinite(cleanAmount) || cleanAmount <= 0) {
-    return res.status(400).json({ success: false, error: 'Сумма должна быть положительным числом' });
-  }
-  const cleanPlatform = (platform === 'donatex' || platform === 'donatepay') ? platform : 'donationalerts'; // на что похоже больше — то и берём по умолчанию
-  handleDonation({
-    platform: cleanPlatform,
-    username: cleanUsername,
-    amount: cleanAmount,
-    currency: (typeof currency === 'string' && currency.trim()) || 'RUB',
-    message: '(добавлено вручную)',
-  });
-  res.json({ success: true });
-});
-
-// ---------- Донатный хаб: DonateX (API-токен, без OAuth) ----------
-
-app.post('/api/donations/donatex/connect', async (req, res) => {
-  const apiToken = req.body && req.body.apiToken;
-  const remember = req.body && req.body.remember;
-  if (!apiToken) {
-    return res.status(400).json({ success: false, error: 'Не указан API-токен DonateX' });
-  }
-  try {
-    await donateX.connect(apiToken, handleDonation);
-    donationCredentials.get().donateX = { apiToken, connected: true };
-    donationCredentials.save(); // сам токен сюда уже не попадёт (см. donationCredentials.js) — ниже отдельно
-    authCredentials.setRemembered('donateX', !!remember, { apiToken });
-    broadcastAdminStatus();
-    res.json({ success: true });
-  } catch (e) {
-    res.status(400).json({ success: false, error: e.message });
-  }
-});
-
-app.post('/api/donations/donatex/disconnect', (req, res) => {
-  donateX.disconnect();
-  donationCredentials.get().donateX.connected = false;
-  donationCredentials.save();
-  broadcastAdminStatus();
-  res.json({ success: true });
-});
-
-// ---------- Донатный хаб: DonatePay (API-ключ, без OAuth; опрос транзакций) ----------
-
-app.post('/api/donations/donatepay/connect', async (req, res) => {
-  const apiKey = String((req.body && req.body.apiKey) || '').trim();
-  const remember = req.body && req.body.remember;
-  if (!apiKey) {
-    return res.status(400).json({ success: false, error: 'Вставь API-ключ DonatePay' });
-  }
-  try {
-    const user = await donatePay.connect(apiKey, handleDonation, handleDonatePayAuthError);
-    donationCredentials.get().donatePay = { apiKey, connected: true };
-    donationCredentials.save(); // сам ключ в этот файл не попадёт — см. donationCredentials.js
-    authCredentials.setRemembered('donatePay', !!remember, { apiKey });
-    broadcastAdminStatus();
-    res.json({ success: true, userName: (user && user.userName) || '' });
-  } catch (e) {
-    res.status(400).json({ success: false, error: e.message });
-  }
-});
-
-app.post('/api/donations/donatepay/disconnect', (req, res) => {
-  donatePay.disconnect();
-  donationCredentials.get().donatePay.connected = false;
-  donationCredentials.get().donatePay.apiKey = null;
-  donationCredentials.save();
-  broadcastAdminStatus();
-  res.json({ success: true });
-});
+require('./routes/donations').part3({ donations, donationCredentials, authCredentials, currency, donateX, donatePay, handleDonatePayAuthError, app, broadcastAdminStatus, handleDonation });
 
 // ---------- Чат с других платформ (Kick, YouTube, VK Live) ----------
 
@@ -3095,15 +2168,7 @@ app.post('/api/chat/external/disconnect', (req, res) => {
 
 // ---------- Донатный хаб: DonationAlerts (Client ID/Secret + OAuth + Centrifugo) ----------
 
-app.post('/api/donations/donationalerts/credentials', (req, res) => {
-  const { clientId, clientSecret, remember } = req.body || {};
-  const da = donationCredentials.get().donationAlerts;
-  if (typeof clientId === 'string') da.clientId = clientId.trim();
-  if (typeof clientSecret === 'string') da.clientSecret = clientSecret.trim();
-  donationCredentials.save(); // сами ключи сюда уже не попадут (см. donationCredentials.js) — ниже отдельно
-  authCredentials.setRemembered('donationAlerts', !!remember, { clientId: da.clientId, clientSecret: da.clientSecret });
-  res.json({ success: true });
-});
+require('./routes/donations').part2({ donations, donationCredentials, authCredentials, donationAlerts, app });
 
 app.get('/auth/donationalerts/login', (req, res) => {
   const da = donationCredentials.get().donationAlerts;
@@ -3148,16 +2213,7 @@ app.get('/auth/donationalerts/callback', async (req, res) => {
   }
 });
 
-app.post('/api/donations/donationalerts/disconnect', (req, res) => {
-  donationAlerts.disconnect();
-  const da = donationCredentials.get().donationAlerts;
-  da.connected = false;
-  da.accessToken = null;
-  da.socketToken = null;
-  donationCredentials.save();
-  broadcastAdminStatus();
-  res.json({ success: true });
-});
+require('./routes/donations').main({ donations, donationCredentials, donationAlerts, app, broadcastAdminStatus });
 
 // ---------- REST API: тема оверлея ----------
 
@@ -3183,44 +2239,11 @@ function sanitizeTheme(body, base) {
   };
 }
 
-app.post('/api/theme', (req, res) => {
-  config.theme = sanitizeTheme(req.body || {}, config.theme);
-  saveConfigToDisk();
-  broadcast(); // немедленно применяем на оверлее, без ожидания следующего тика
-  res.json({ success: true, theme: config.theme });
-});
-
-app.post('/api/theme/reset', (req, res) => {
-  config.theme = { ...DEFAULT_THEME };
-  saveConfigToDisk();
-  broadcast();
-  res.json({ success: true, theme: config.theme });
-});
+require('./routes/themes').part3({ config, saveConfigToDisk, DEFAULT_THEME, app, sanitizeTheme, broadcast });
 
 // ---------- REST API: готовые темы (блок "Темы" в Основных настройках) ----------
 
-app.get('/api/themes', (req, res) => {
-  res.json({ themes: themes.listThemes(), selected: config.selectedTheme || 'default' });
-});
-
-app.post('/api/themes/apply', (req, res) => {
-  const { themeId } = req.body || {};
-  const preset = themes.getTheme(themeId);
-  if (!preset) {
-    return res.status(400).json({ success: false, error: 'Такой темы не найдено' });
-  }
-  const defaultTimelineSettings = widgets.getDefaultWidgetSettings().timeline;
-  const { theme, timeline: timelinePatch } = themes.applyPreset(preset.params, DEFAULT_THEME, defaultTimelineSettings);
-
-  config.theme = theme;
-  config.widgetSettings = widgets.sanitizeWidgetSettings({ timeline: timelinePatch }, config.widgetSettings);
-  config.selectedTheme = themeId;
-
-  saveConfigToDisk();
-  widgetsPersistence.saveSettingsDebounced(config.widgetSettings);
-  broadcast();
-  res.json({ success: true, theme: config.theme, widgetSettings: config.widgetSettings, selected: themeId });
-});
+require('./routes/themes').part2({ timeline, widgets, widgetsPersistence, themes, config, saveConfigToDisk, DEFAULT_THEME, app, broadcast });
 
 // ---------- REST API: свои шрифты (загрузка в fonts/) ----------
 
@@ -3257,40 +2280,7 @@ const GOOGLE_FONT_WEIGHTS = {
   'Rubik': [{ weight: 500, label: 'Medium' }, { weight: 700, label: 'Bold' }],
   'Georgia': [{ weight: 400, label: 'Regular' }, { weight: 700, label: 'Bold' }],
 };
-app.get('/api/fonts/weights', (req, res) => {
-  const font = req.query.font || '';
-  if (font === 'Beaufort for LOL') {
-    const weights = customFonts.getAvailableWeights('beaufort');
-    return res.json({ weights: weights.length ? weights : [{ weight: 400, label: 'Regular (файл ещё не загружен)' }] });
-  }
-  if (font === 'Spiegel') {
-    const weights = customFonts.getAvailableWeights('spiegel');
-    return res.json({ weights: weights.length ? weights : [{ weight: 400, label: 'Regular (файл ещё не загружен)' }] });
-  }
-  res.json({ weights: GOOGLE_FONT_WEIGHTS[font] || [{ weight: 400, label: 'Regular' }] });
-});
-
-// Генерируется на лету при каждом запросе (не кэшируется) — как только шрифты
-// Riot появляются в fonts/, эта CSS подхватывает их без перезапуска сервера.
-app.get('/api/fonts/riot.css', (req, res) => {
-  res.type('text/css').send(customFonts.generateRiotFontFaceCss());
-});
-
-app.post('/api/fonts/upload', (req, res) => {
-  fontUpload.array('fonts', 20)(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ success: false, error: err.message || 'Не удалось загрузить файлы.' });
-    }
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Не выбрано ни одного подходящего файла шрифта (.ttf, .otf, .woff, .woff2).',
-      });
-    }
-    broadcast(); // оверлей сразу узнаёт о новых шрифтах через customFonts в снапшоте
-    res.json({ success: true, fonts: customFonts.listFonts() });
-  });
-});
+require('./routes/fonts').main({ customFonts, app, fontUpload, GOOGLE_FONT_WEIGHTS, broadcast });
 
 // ---------- REST API: виджеты оверлея (позиция/размер/вкл-выкл) ----------
 
@@ -3302,82 +2292,15 @@ app.get('/api/widgets', (req, res) => {
   });
 });
 
-app.post('/api/layout', (req, res) => {
-  const rawLayout = (req.body && req.body.layout) || {};
-  config.layout = widgets.sanitizeLayout(rawLayout, config.layout);
-  widgetsPersistence.saveLayoutDebounced(config.layout);
-  broadcast(); // применяем на оверлее сразу же
-  res.json({ success: true, layout: config.layout });
-});
-
-app.post('/api/layout/reset', (req, res) => {
-  const id = req.body && req.body.id;
-  if (id) {
-    if (!widgets.DEFAULT_LAYOUT[id]) {
-      return res.status(400).json({ success: false, error: 'Неизвестный виджет' });
-    }
-    config.layout[id] = { ...widgets.DEFAULT_LAYOUT[id] };
-  } else {
-    config.layout = widgets.getDefaultLayout();
-  }
-  widgetsPersistence.saveLayoutDebounced(config.layout);
-  broadcast();
-  res.json({ success: true, layout: config.layout });
-});
+require('./routes/widgets').part2({ widgets, widgetsPersistence, config, app, broadcast });
 
 // ---------- REST API: стиль оформления виджетов оверлея ----------
 
-app.get('/api/overlay-style', (req, res) => {
-  res.json({ styles: overlayStyle.STYLES, current: overlayStyle.get() });
-});
-
-app.post('/api/overlay-style', (req, res) => {
-  const current = overlayStyle.update(req.body || {});
-  broadcast(); // применяем на оверлее сразу
-  res.json({ success: true, current });
-});
+require('./routes/themes').main({ overlayStyle, app, broadcast });
 
 // ---------- REST API: настройки СОДЕРЖИМОГО виджетов (аватарки/ник/полоска и т.п.) ----------
 
-app.get('/api/widget-settings', (req, res) => {
-  res.json({
-    schema: widgets.WIDGET_SETTINGS_SCHEMA,
-    settings: config.widgetSettings,
-    defaults: widgets.getDefaultWidgetSettings(),
-  });
-});
-
-app.post('/api/widget-settings', (req, res) => {
-  const widgetId = req.body && req.body.widgetId;
-  if (!widgetId || !widgets.WIDGET_SETTINGS_SCHEMA[widgetId]) {
-    return res.status(400).json({ success: false, error: 'Неизвестный виджет или у него нет настроек' });
-  }
-  const patch = { [widgetId]: (req.body && req.body.settings) || {} };
-  config.widgetSettings = widgets.sanitizeWidgetSettings(patch, config.widgetSettings);
-  if (widgetId === 'timeline') timeline.setWindowSec(config.widgetSettings.timeline.windowSec);
-  widgetsPersistence.saveSettingsDebounced(config.widgetSettings);
-  broadcast(); // применяем на оверлее сразу же
-  broadcastAdminStatus(); // и в живом превью админки (другие открытые вкладки/устройства)
-  res.json({ success: true, settings: config.widgetSettings });
-});
-
-app.post('/api/widget-settings/reset', (req, res) => {
-  const widgetId = req.body && req.body.widgetId;
-  const defaults = widgets.getDefaultWidgetSettings();
-  if (widgetId) {
-    if (!widgets.WIDGET_SETTINGS_SCHEMA[widgetId]) {
-      return res.status(400).json({ success: false, error: 'Неизвестный виджет или у него нет настроек' });
-    }
-    config.widgetSettings[widgetId] = defaults[widgetId];
-  } else {
-    config.widgetSettings = defaults;
-  }
-  widgetsPersistence.saveSettingsDebounced(config.widgetSettings);
-  timeline.setWindowSec(config.widgetSettings.timeline.windowSec);
-  broadcast();
-  broadcastAdminStatus();
-  res.json({ success: true, settings: config.widgetSettings });
-});
+require('./routes/widgets').main({ timeline, widgets, widgetsPersistence, config, app, broadcastAdminStatus, broadcast });
 
 // ---------- REST API: алерт доната ----------
 app.get('/api/donation-alert', (req, res) => { res.json({ settings: config.donationAlert, defaults: donationAlert.DEFAULTS }); });
@@ -3408,19 +2331,7 @@ const removeAlertTexture = () => {
   const old = config.donationAlert.texture;
   if (old && /^[A-Za-z0-9_.\-]+$/.test(old)) fs.unlink(path.join(ALERT_TEX_DIR, old), () => {});
 };
-app.post('/api/donation-alert/texture', alertTexUpload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ success: false, error: 'Нужна картинка JPG, PNG, WEBP или GIF до 10 МБ.' });
-  removeAlertTexture();
-  config.donationAlert = donationAlert.sanitize({ texture: req.file.filename }, config.donationAlert);
-  saveConfigToDisk();
-  res.json({ success: true, settings: config.donationAlert });
-});
-app.delete('/api/donation-alert/texture', (req, res) => {
-  removeAlertTexture();
-  config.donationAlert = donationAlert.sanitize({ texture: '' }, config.donationAlert);
-  saveConfigToDisk();
-  res.json({ success: true, settings: config.donationAlert });
-});
+require('./routes/alerts').part7({ config, saveConfigToDisk, donationAlert, app, alertTexUpload, removeAlertTexture });
 // Свои файлы стандартного алерта: картинка/гиф и звук в uploads/alert-custom/ (по одному каждого вида)
 const ALERT_CUSTOM_DIR = path.join(__dirname, 'uploads', 'alert-custom');
 fs.mkdirSync(ALERT_CUSTOM_DIR, { recursive: true });
@@ -3444,105 +2355,9 @@ const removeCustomFile = (kind) => {
   const old = config.donationAlert[CUSTOM_KINDS[kind].key];
   if (old && /^[A-Za-z0-9_.\-]+$/.test(old)) fs.unlink(path.join(ALERT_CUSTOM_DIR, old), () => {});
 };
-app.post('/api/donation-alert/custom/:kind', (req, res) => {
-  const k = CUSTOM_KINDS[req.params.kind];
-  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
-  customUploads[req.params.kind](req, res, (err) => {
-    if (err || !req.file) return res.status(400).json({ success: false, error: k.err });
-    removeCustomFile(req.params.kind);
-    config.donationAlert = donationAlert.sanitize({ [k.key]: req.file.filename }, config.donationAlert);
-    saveConfigToDisk();
-    res.json({ success: true, settings: config.donationAlert });
-  });
-});
-app.delete('/api/donation-alert/custom/:kind', (req, res) => {
-  const k = CUSTOM_KINDS[req.params.kind];
-  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
-  removeCustomFile(req.params.kind);
-  config.donationAlert = donationAlert.sanitize({ [k.key]: '' }, config.donationAlert);
-  saveConfigToDisk();
-  res.json({ success: true, settings: config.donationAlert });
-});
-/** Тестовый алерт: в историю донатов и в «Топ донатеров» не попадает. */
-app.post('/api/donation-alert/card', (req, res) => {   // карточка по сохранённым настройкам — для предпросмотра на странице «Ссылки для OBS»
-  const s = config.donationAlert;
-  const rec = { username: 'Тестовый зритель', amount: 1500, currency: 'RUB', message: 'Привет! Держи на новый микрофон', platform: 'donationalerts' };
-  res.json({ success: true, card: donationAlert.buildCard(rec, s, { rub: 1500, stat: s.donorStat !== false ? 'Донат №3 · всего 1 500 ₽' : '', no: 3 }) });
-});
-app.post('/api/donation-alert/test', (req, res) => {
-  const b = req.body || {};
-  fireDonationAlert({ username: String(b.username || 'Тестовый зритель').slice(0, 40), amount: Number(b.amount) > 0 ? Number(b.amount) : 500, currency: String(b.currency || 'RUB'), message: String(b.message == null ? 'Привет, как дела, чем занимаешься, держи деньги на трусы новые, всем удачи!' : b.message), platform: (b.platform === 'donatex' || b.platform === 'donatepay') ? b.platform : 'donationalerts' }, true);
-  res.json({ success: true });
-});
-// ---------- REST API: алерты событий ----------
-app.get('/api/event-alerts', (req, res) => { res.json({ settings: config.eventAlerts, defaults: eventAlerts.DEFAULTS }); });
-// Свои картинка/гифка и звук для алерта фоллоу (стандартный вид): те же файлы в uploads/alert-custom/
-const removeEventCustomFile = (ev, kind) => {
-  const old = config.eventAlerts[ev][CUSTOM_KINDS[kind].key];
-  if (old && /^[A-Za-z0-9_.\-]+$/.test(old)) fs.unlink(path.join(ALERT_CUSTOM_DIR, old), () => {});
-};
-app.post('/api/event-alerts/:ev(follow|sub)/custom/:kind', (req, res) => {
-  const ev = req.params.ev, k = CUSTOM_KINDS[req.params.kind];
-  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
-  customUploads[req.params.kind](req, res, (err) => {
-    if (err || !req.file) return res.status(400).json({ success: false, error: k.err });
-    removeEventCustomFile(ev, req.params.kind);
-    config.eventAlerts[ev] = eventAlerts.sanitizeKind(ev, { [k.key]: req.file.filename }, config.eventAlerts[ev]);
-    saveConfigToDisk();
-    res.json({ success: true, settings: config.eventAlerts[ev] });
-  });
-});
-app.delete('/api/event-alerts/:ev(follow|sub)/custom/:kind', (req, res) => {
-  const ev = req.params.ev, k = CUSTOM_KINDS[req.params.kind];
-  if (!k) return res.status(404).json({ success: false, error: 'Неизвестный тип файла' });
-  removeEventCustomFile(ev, req.params.kind);
-  config.eventAlerts[ev] = eventAlerts.sanitizeKind(ev, { [k.key]: '' }, config.eventAlerts[ev]);
-  saveConfigToDisk();
-  res.json({ success: true, settings: config.eventAlerts[ev] });
-});
-app.post('/api/event-alerts/:kind', (req, res) => {
-  const k = req.params.kind;
-  if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
-  config.eventAlerts[k] = eventAlerts.sanitizeKind(k, req.body || {}, config.eventAlerts[k]);
-  saveConfigToDisk();
-  if (k === 'nowplaying') applyNowPlayingConfig();
-  res.json({ success: true, settings: config.eventAlerts[k] });
-});
-app.post('/api/event-alerts/:kind/reset', (req, res) => {
-  const k = req.params.kind;
-  if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
-  config.eventAlerts[k] = eventAlerts.sanitizeKind(k, {}, null);
-  saveConfigToDisk();
-  if (k === 'nowplaying') applyNowPlayingConfig();
-  res.json({ success: true, settings: config.eventAlerts[k] });
-});
-// данные от расширения браузера: что играет на открытых вкладках (video/audio на любом сайте)
-app.post('/api/nowplaying/browser', express.json({ limit: '200kb' }), (req, res) => {
-  try { nowPlaying.setBrowser(req.body || {}); res.json({ success: true, enabled: !!config.eventAlerts.nowplaying.enabled }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
-});
-// кнопка «Установить расширение» в админке: открывает страницу расширений браузера и папку с расширением (Windows). Магазин — если задан extensionStoreUrl в config.json.
-app.get('/api/nowplaying/extension', (req, res) => { res.json({ success: true, dir: path.join(__dirname, 'browser-extension'), store: /^https:\/\//.test(String(config.nowplayingExtensionStoreUrl || '')) ? config.nowplayingExtensionStoreUrl : '' }); });
-app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (req, res) => {
-  const dir = path.join(__dirname, 'browser-extension');
-  const b = String((req.body && req.body.browser) || '');
-  const BR = { chrome: ['chrome', 'chrome://extensions'], edge: ['msedge', 'edge://extensions'], yandex: [path.join(process.env.LOCALAPPDATA || '', 'Yandex', 'YandexBrowser', 'Application', 'browser.exe'), 'browser://extensions/'] };
-  if (b === 'yandex' && process.platform === 'win32' && !require('fs').existsSync(BR.yandex[0])) BR.yandex[0] = 'browser';   // нестандартная установка: пробуем через PATH
-  const store = String(config.nowplayingExtensionStoreUrl || '');
-  if (/^https:\/\//.test(store)) return res.json({ success: true, store, dir });
-  let opened = false;
-  const what = String((req.body && req.body.what) || 'both');
-  if (process.platform === 'win32') {
-    if (what !== 'page') { try { require('child_process').spawn('explorer.exe', [dir], { detached: true, stdio: 'ignore' }).unref(); } catch (e) { /* не критично */ } }
-    if (what !== 'folder' && BR[b]) { try { require('child_process').spawn('cmd.exe', ['/c', 'start', '', BR[b][0], BR[b][1]], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); opened = true; } catch (e) { /* откроют сами */ } }
-  }
-  res.json({ success: true, dir, opened, page: BR[b] ? BR[b][1] : 'chrome://extensions' });
-});
-app.get('/api/nowplaying', (req, res) => { res.json({ success: true, ...nowPlayingPayload() }); });
-app.get('/api/nowplaying/cover', (req, res) => {
-  const c = nowPlaying.getCover(req.query.k);
-  if (!c) return res.status(404).end();
-  res.set('Content-Type', c.mime); res.set('Cache-Control', 'no-cache'); res.send(c.buf);
-});
+require('./routes/alerts').part6({ currency, config, saveConfigToDisk, donationAlert, fireDonationAlert, app, CUSTOM_KINDS, customUploads, removeCustomFile });
+require('./routes/alerts').part5({ fs, path, config, saveConfigToDisk, eventAlerts, applyNowPlayingConfig, app, ALERT_CUSTOM_DIR, CUSTOM_KINDS, customUploads });
+require('./routes/alerts').part4({ fs, path, express, config, nowPlaying, nowPlayingPayload, app });
 
 /** Тест: показывает алерт события на оверлее (даже если событие выключено). */
 app.post('/api/event-alerts/:kind/test', (req, res) => {
@@ -3553,101 +2368,21 @@ app.post('/api/event-alerts/:kind/test', (req, res) => {
   res.json({ success: true });
 });
 /** Стена фолловеров: статистика и разовая подгрузка всех текущих фолловеров из Twitch (нужно право moderator:read:followers). */
-app.get('/api/follow-wall', (req, res) => { res.json({ success: true, ...followRegistry.stats() }); });
-app.post('/api/follow-wall/sync', async (req, res) => {
-  const a = config.twitchAuth;
-  if (!config.twitch.clientId || !a || !a.accessToken || !a.userId) return res.status(400).json({ success: false, error: 'Сначала войди через Twitch (вкладка «Подключения»).' });
-  try {
-    const r = await followRegistry.syncFrom(async (cursor) => {
-      const qs = new URLSearchParams({ broadcaster_id: a.userId, first: '100' }); if (cursor) qs.set('after', cursor);
-      const resp = await fetch('https://api.twitch.tv/helix/channels/followers?' + qs, { headers: { 'Client-ID': config.twitch.clientId, Authorization: 'Bearer ' + a.accessToken } });
-      const j = await resp.json().catch(() => ({}));
-      if (!resp.ok) { const e = new Error(j.message || ('HTTP ' + resp.status)); e.status = resp.status; throw e; }
-      return { items: (j.data || []).map((x) => ({ login: x.user_login, name: x.user_name, at: x.followed_at })), cursor: j.pagination && j.pagination.cursor, total: j.total };
-    });
-    res.json({ success: true, ...r, count: followRegistry.count() });
-  } catch (e) {
-    const hint = (e.status === 401 || e.status === 403) ? ' Похоже, токен выдан без права moderator:read:followers — войди через Twitch заново (вкладка «Подключения»).' : '';
-    res.status(500).json({ success: false, error: 'Twitch отклонил запрос: ' + e.message + '.' + hint });
-  }
-});
+require('./routes/alerts').part3({ config, followRegistry, app });
 /** Карточка события для предпросмотра в админке (по сохранённым настройкам). */
-app.post('/api/event-alerts/:kind/card', async (req, res) => {
-  const k = req.params.kind;
-  if (!eventAlerts.KINDS.includes(k)) return res.status(404).json({ success: false, error: 'Неизвестное событие' });
-  const body = { ...(req.body || {}) };
-  if (k === 'follow' && config.eventAlerts.follow.style === 'badge') { body.avatar = await avatarUrlFor(config.channel); body.channel = config.channel; }
-  if (k === 'raid' && body.avatar === undefined && config.eventAlerts.raid.style !== 'plain') Object.assign(body, await raidExtras(body, true));
-  const built = eventAlerts.buildCard(k, withWall(k, body, false), config.eventAlerts[k], config.donationAlert);
-  res.json({ success: !!built, card: built && built.card });
-});
+require('./routes/alerts').part2({ config, eventAlerts, withWall, avatarUrlFor, raidExtras, app });
 /** Библиотека звуков алертов: готовые (public/alert-sounds/manifest.json) + любые свои .ogg/.mp3/.wav, положенные в ту же папку. */
-app.get('/api/alert-sounds', (req, res) => {
-  const dir = path.join(__dirname, 'public', 'alert-sounds');
-  let manifest = [];
-  try { manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')); } catch (e) { manifest = []; }
-  const known = new Set(manifest.map((m) => m.file));
-  let own = [];
-  try { own = fs.readdirSync(dir).filter((f) => /\.(ogg|mp3|wav)$/i.test(f) && !known.has(f)).map((f) => ({ id: f, label: f.replace(/\.[^.]+$/, ''), group: 'Мои звуки', file: f })); } catch (e) { own = []; }
-  res.json({ sounds: manifest.concat(own) });
-});
+require('./routes/alerts').main({ fs, path, app });
 app.post('/api/donation-alert/skip', (req, res) => { sendToOverlay({ type: 'donation_alert_skip' }); res.json({ success: true });});
 
 
 // ---------- REST API: озвучка чата (Piper) ----------
 
-app.get('/api/tts', (req, res) => {
-  res.json({ tts: config.tts, defaults: tts.getDefaultTts(), voices: tts.getVoices(), catalog: tts.getCatalog() });
-});
-
-app.post('/api/tts', (req, res) => {
-  config.tts = tts.sanitizeTts(req.body || {}, config.tts);
-  saveConfigToDisk();
-  broadcast(); // настройки едут в общем снапшоте оверлея
-  res.json({ success: true, tts: config.tts });
-});
-
-app.post('/api/tts/reset', (req, res) => {
-  config.tts = tts.getDefaultTts();
-  saveConfigToDisk();
-  broadcast();
-  res.json({ success: true, tts: config.tts });
-});
-
-app.get('/api/tts/catalog', (req, res) => { res.json({ voices: tts.getVoices(), catalog: tts.getCatalog() }); });
-app.post('/api/tts/voices/install', (req, res) => { res.json(tts.installVoice(String((req.body || {}).id || ''))); });
-/** Прослушать голос: короткая фраза, синтез тем же Piper; звук возвращается в админку и играет там. */
-app.post('/api/tts/preview', async (req, res) => {
-  const b = req.body || {};
-  const voice = String(b.voice || config.tts.voice);
-  if (!/^[A-Za-z0-9_.:\-]{1,80}$/.test(voice)) return res.status(400).json({ success: false, error: 'bad voice' });
-  try {
-    const r = await tts.synthesize(String(b.text || 'Привет! Это проверка голоса. Спасибо за донат!').slice(0, 200), { ...config.tts, voice });
-    res.json({ success: true, audio: `data:${r.mime};base64,` + r.buffer.toString('base64') });
-  } catch (e) {
-    res.json({ success: false, error: voice.startsWith('edge:') ? 'Не удалось озвучить через Edge: ' + String(e.message || e).slice(0, 160) : voice.startsWith('silero:') ? 'Silero: ' + String(e.message || e).slice(0, 200) : 'Не удалось озвучить: голос не установлен или не найден Piper' });
-  }
-});
-app.post('/api/tts/stop', (req, res) => {
-  tts.clearQueue();
-  sendToOverlay({ type: 'tts_stop' });
-  res.json({ success: true });
-});
+require('./routes/tts').main({ tts, config, saveConfigToDisk, app, broadcast, sendToOverlay });
 
 // ---------- REST API: настройки отображения чата ----------
 
-app.get('/api/chat-settings', (req, res) => {
-  res.json({ settings: config.chatSettings, defaults: DEFAULT_CHAT_SETTINGS });
-});
-
-app.post('/api/chat-settings', (req, res) => {
-  const b = req.body || {};
-  // Принимаем только известные поля и только булевы значения; остальное остаётся как было.
-  config.chatSettings = Object.fromEntries(Object.keys(DEFAULT_CHAT_SETTINGS).map((k) => [k, (k === 'platformTagStyle' ? ['outline', 'icon'].includes(b[k]) : typeof b[k] === 'boolean') ? b[k] : config.chatSettings[k]]));
-  saveConfigToDisk();
-  broadcastChatSettings();
-  res.json({ success: true, settings: config.chatSettings });
-});
+require('./routes/chat-settings').main({ config, saveConfigToDisk, DEFAULT_CHAT_SETTINGS, app, broadcastChatSettings });
 
 // ---------- REST API: управление стримом (сброс статистики, воспроизведение истории) ----------
 
