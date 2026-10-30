@@ -91,7 +91,7 @@ const CHECKS = [
 /** Проверка живого сервера: админка и оверлей отвечают. */
 async function checkHttp(port) {
   const out = [];
-  for (const p of ['/admin/', '/overlay.html']) {
+  for (const p of ['/admin/', '/overlay.html', '/api/chat-bot', '/api/telegram', '/api/chronicles', '/api/bracket', '/api/fund', '/api/goal', '/api/timer', '/api/tts']) {
     try {
       const r = await fetch('http://127.0.0.1:' + port + p, { signal: AbortSignal.timeout(4000) });
       if (!r.ok) out.push(p + ' отвечает кодом ' + r.status);
