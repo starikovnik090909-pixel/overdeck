@@ -87,4 +87,20 @@
     document.body.insertBefore(bar, document.body.firstChild);
     $('setupGo').addEventListener('click', () => { const g = $('adminSettingsGear'); if (g) g.click(); setTimeout(() => $('keyCard').scrollIntoView({ block: 'center' }), 100); });
   });
+
+  // автокопия: раз в сутки приложение само кладёт файл в папку backups (последние 7)
+  const abInfo = $('autoBackupInfo'), abBtn = $('btnAutoBackup');
+  function abPaint(list) {
+    if (!abInfo) return;
+    if (!list || !list.length) { abInfo.textContent = 'Автокопия настроек делается раз в сутки в папку backups рядом с приложением. Первая появится через минуту после запуска.'; return; }
+    const d = new Date(list[0].at);
+    abInfo.textContent = 'Автокопия: раз в сутки в папку backups, хранятся последние 7. Последняя от ' + d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) + ' (' + mb(list[0].bytes) + '). Открой её кнопкой «Открыть файл авторизации», пароль не нужен.';
+  }
+  async function abLoad() { try { abPaint((await (await fetch('/api/backup/auto')).json()).list); } catch (e) { /* без списка не страшно */ } }
+  if (abBtn) abBtn.addEventListener('click', async () => {
+    abBtn.disabled = true;
+    try { const r = await (await fetch('/api/backup/auto', { method: 'POST' })).json(); if (r.success) { abPaint(r.list); if (window.ui3Toast) window.ui3Toast('Копия сохранена в папку backups'); } else if (window.ui3Toast) window.ui3Toast(r.error || 'Не получилось', true); } catch (e) { if (window.ui3Toast) window.ui3Toast('Не получилось', true); }
+    abBtn.disabled = false;
+  });
+  abLoad();
 })();

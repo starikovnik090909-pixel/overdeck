@@ -3038,6 +3038,8 @@
           <input type="file" id="keyFile" accept=".overdeckkey,.json,application/json" style="display:none">
         </div>
         <div class="form-message" id="keyMsg"></div>
+        <p class="card-hint" id="autoBackupInfo" style="margin-top:14px;">Автокопия настроек: проверяем…</p>
+        <div class="actions"><button class="btn btn-secondary" id="btnAutoBackup" type="button">Сделать копию сейчас</button></div>
         <div id="keyChannelRow" style="display:none; margin-top:14px;">
           <p class="card-hint">Файла нет? Впиши имя своего канала Twitch — этого достаточно, чтобы запустить оверлей (остальное настроишь во вкладках).</p>
           <div class="field"><input type="text" id="keyChannel" maxlength="25" placeholder="Например, mychannel"></div>
@@ -3483,7 +3485,7 @@
 <script src="app.js?v=183"></script>
 <script src="guides-data.js?v=10"></script>
 <script src="guides.js?v=5"></script>
-<script src="keyfile.js?v=4"></script>
+<script src="keyfile.js?v=5"></script>
 <script src="ui3.js?v=27"></script>
 <script src="chronicles.js?v=16"></script>
 <script src="telegram.js?v=5"></script>
