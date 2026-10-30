@@ -1215,6 +1215,7 @@
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'status') {
+        if (window.ui3SelfCheck) window.ui3SelfCheck(data.selfCheck);
         setSidebarStatus(data.overlayOnline);
         setAuthSummary(data.twitch);
         setOauthUI(data.twitch.oauth);

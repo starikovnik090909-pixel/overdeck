@@ -1046,3 +1046,11 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-vw .chr-quote{margin:4px 0;white-space:pre-wrap}
 .chr-vw .chr-dlg-foot{border-top:1px solid var(--divider);padding:12px 20px;display:flex;justify-content:flex-end}
 @media (max-width:620px){.chr-vwbody{flex-direction:column}.chr-vwp{width:100%;max-width:220px}}
+
+/* тихая самопроверка: плашка только при проблемах */
+.ui3-sc{position:fixed;left:24px;bottom:24px;z-index:2090;width:min(440px,calc(100vw - 48px));background:var(--bg-card2);border:1px solid var(--line2);border-left:3px solid var(--err);border-radius:12px;padding:12px 14px;box-shadow:0 14px 36px rgba(0,0,0,.5);transform:translateY(14px);opacity:0;pointer-events:none;transition:.22s}
+.ui3-sc.show{transform:none;opacity:1;pointer-events:auto}
+.ui3-sc-h{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ui3-sc-x{all:unset;cursor:pointer;font-size:20px;line-height:1;padding:0 4px;color:var(--text-dim,#9a9aa6)}
+.ui3-sc ul{margin:8px 0 4px;padding-left:18px;font-size:13px;line-height:1.45}
+.ui3-sc-f{display:flex;justify-content:flex-end;margin-top:8px}

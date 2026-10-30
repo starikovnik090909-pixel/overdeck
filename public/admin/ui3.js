@@ -24,6 +24,24 @@
   let toastT = 0;
   function toast(text, err) { toastEl.textContent = text; toastEl.classList.toggle('err', !!err); toastEl.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('show'), 2600); }
   window.ui3Toast = toast;
+
+  /* ---------- тихая самопроверка: плашка видна только если есть проблемы ---------- */
+  const scEl = document.createElement('div'); scEl.className = 'ui3-sc'; document.body.appendChild(scEl);
+  let scSig = '', scSeen = '';
+  try { scSeen = localStorage.getItem('ui3.sc.seen') || ''; } catch (e) { /* без хранилища просто покажем снова */ }
+  const scEsc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  window.ui3SelfCheck = function (s) {
+    if (!s || s.ok || !s.problems || !s.problems.length) { scEl.classList.remove('show'); scSig = ''; return; }
+    const sig = s.problems.map((p) => p.id + ':' + p.text).join('|');
+    if (sig === scSig) return;
+    scSig = sig;
+    scEl.innerHTML = '<div class="ui3-sc-h"><b>Проверка нашла проблемы</b><button type="button" class="ui3-sc-x" title="Скрыть">×</button></div>' +
+      '<ul>' + s.problems.map((p) => '<li><b>' + scEsc(p.title) + '.</b> ' + scEsc(p.text) + '</li>').join('') + '</ul>' +
+      '<div class="ui3-sc-f"><button type="button" class="btn btn-secondary ui3-sc-re">Проверить снова</button></div>';
+    scEl.querySelector('.ui3-sc-x').onclick = () => { scEl.classList.remove('show'); try { localStorage.setItem('ui3.sc.seen', sig); } catch (e) {} scSeen = sig; };
+    scEl.querySelector('.ui3-sc-re').onclick = async (ev) => { ev.target.textContent = 'Проверяю…'; try { await fetch('/api/selfcheck/run', { method: 'POST' }); } catch (e) {} };
+    if (sig !== scSeen) scEl.classList.add('show');
+  };
   async function copy(text) {
     try { await navigator.clipboard.writeText(text); }
     catch (e) { const t = document.createElement('textarea'); t.value = text; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }

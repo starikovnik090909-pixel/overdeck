@@ -1064,6 +1064,7 @@ app.use(netGuard.middleware(() => config)); // доступ только с эт
 // ---------- Ключ авторизации (файл со всеми данными и настройками) ----------
 // Маршруты стоят ДО общего express.json(): у файла свой, большой лимит тела запроса.
 const keyBundle = require('./keyBundle');
+const selfCheck = require('./selfCheck');
 function restartAfterKey(res, extra) {
   const auto = !!process.env.OVERDECK_LAUNCHER;
   res.json(Object.assign({ success: true, restart: auto ? 'auto' : 'manual' }, extra || {}));
@@ -3979,6 +3980,7 @@ function getAdminStatusPayload() {
       oauth: getOauthStatusPayload(),
     },
     channel: config.channel,
+    selfCheck: selfCheck.get(), // тихие автопроверки: админка показывает плашку, только если есть проблемы
     streamLive: streamIsLive,
     widgetSettings: config.widgetSettings,
     donations: {
@@ -4368,10 +4370,12 @@ setInterval(() => {
 }, 2000);
 
 const port = config.port || 3001;
+app.post('/api/selfcheck/run', async (req, res) => { try { const s = await selfCheck.runAll(port); broadcastAdminStatus(); res.json(s); } catch (e) { res.status(500).json({ ok: false, error: e.message }); } });
 server.listen(port, netGuard.listenHost(config), () => {
   try { if (config.eventAlerts.nowplaying.enabled) nowPlaying.start(() => broadcastNowPlaying(false)); } catch (e) { console.log('[Сейчас играет] не запустилось:', e.message); }
   console.log(`\nOverdeck запущен: http://localhost:${port}` + (config.allowLan ? '  (виджеты доступны из локальной сети)' : ''));
   console.log(`Оверлей (OBS Browser Source): http://localhost:${port}/overlay.html  (1920x1080)`);
   console.log(`Панель управления: http://localhost:${port}/admin`);
   console.log('Остановить сервер — закрой это окно или нажми Ctrl+C.\n');
+  selfCheck.start(port, () => { if (adminClients.size > 0) broadcastAdminStatus(); });
 });

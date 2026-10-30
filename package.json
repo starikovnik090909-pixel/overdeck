@@ -1,11 +1,12 @@
 {
   "name": "twitch-overlay-v2",
-  "version": "3.0.49-beta",
+  "version": "3.0.50-beta",
   "description": "Twitch-оверлей для OBS: активность, таймлайн, коробка эмодзи, облако слов, категории",
   "main": "server.js",
   "engines": { "node": ">=18" },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests/run.js"
   },
   "dependencies": {
     "tmi.js": "^1.8.5",
