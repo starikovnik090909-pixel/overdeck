@@ -31,7 +31,9 @@
   try { scSeen = localStorage.getItem('ui3.sc.seen') || ''; } catch (e) { /* без хранилища просто покажем снова */ }
   const scEsc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   window.ui3SelfCheck = function (s) {
+    window.ui3LastSelfCheck = s || null;
     if (!s || s.ok || !s.problems || !s.problems.length) { scEl.classList.remove('show'); scSig = ''; return; }
+    window.ui3LastSelfCheck = s;
     const sig = s.problems.map((p) => p.id + ':' + p.text).join('|');
     if (sig === scSig) return;
     scSig = sig;

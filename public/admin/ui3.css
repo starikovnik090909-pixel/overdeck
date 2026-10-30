@@ -1054,3 +1054,27 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .ui3-sc-x{all:unset;cursor:pointer;font-size:20px;line-height:1;padding:0 4px;color:var(--text-dim,#9a9aa6)}
 .ui3-sc ul{margin:8px 0 4px;padding-left:18px;font-size:13px;line-height:1.45}
 .ui3-sc-f{display:flex;justify-content:flex-end;margin-top:8px}
+
+/* связь с автором: кнопки в боковой панели, окно и разовая подсказка */
+.side-help{display:flex;flex-direction:column;gap:2px;margin-top:10px;padding-top:10px;border-top:1px solid var(--divider)}
+.side-help button{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--text-secondary)}
+.side-help button:hover{background:var(--bg-card);color:var(--text-primary)}
+.side-help button:focus-visible{outline:2px solid var(--accent,#D84B55);outline-offset:1px}
+.side-help button.love svg{color:#ec6670}
+.side-help.pulse{animation:hpPulse 1.6s ease-in-out infinite;border-radius:10px}
+@keyframes hpPulse{0%,100%{box-shadow:0 0 0 0 rgba(216,75,85,0)}50%{box-shadow:0 0 0 4px rgba(216,75,85,.35)}}
+.hp-ov{position:fixed;inset:0;z-index:2200;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px}
+.hp-ov.open{display:flex}
+.hp-card{position:relative;width:min(440px,100%);background:var(--bg-card2);border:1px solid var(--line2);border-radius:14px;padding:22px 22px 20px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.hp-x{all:unset;cursor:pointer;position:absolute;right:12px;top:10px;font-size:22px;line-height:1;padding:2px 6px;color:var(--text-mute)}
+.hp-t{margin:0 0 10px;font-size:18px}
+.hp-b{display:flex;flex-direction:column;gap:10px}
+.hp-b p{margin:0;line-height:1.5}.hp-b .hp-mut{font-size:12.5px;color:var(--text-mute)}
+.hp-btn{all:unset;box-sizing:border-box;cursor:pointer;text-align:center;padding:10px 14px;border-radius:10px;border:1px solid var(--line2);background:var(--bg-card);font-weight:600}
+.hp-btn:hover{background:var(--bg-sidebar)}.hp-btn.primary{background:var(--accent,#D84B55);border-color:transparent;color:#fff}
+.hp-btn.primary:hover{filter:brightness(1.1)}.hp-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.hp-tip{position:fixed;z-index:2150;width:270px;background:var(--bg-card2);border:1px solid var(--accent,#D84B55);border-radius:12px;padding:12px 14px;box-shadow:0 14px 36px rgba(0,0,0,.5);display:none;flex-direction:column;gap:6px;font-size:13px;line-height:1.45}
+.hp-tip.show{display:flex;animation:hpIn .3s ease-out}
+.hp-tip::before{content:"";position:absolute;left:-7px;top:var(--ay,44px);width:12px;height:12px;background:var(--bg-card2);border-left:1px solid var(--accent,#D84B55);border-bottom:1px solid var(--accent,#D84B55);transform:rotate(45deg)}
+.hp-tip .btn{align-self:flex-end;margin-top:4px}
+@keyframes hpIn{from{opacity:0;transform:translateX(-8px)}}
