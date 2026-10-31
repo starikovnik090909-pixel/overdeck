@@ -79,6 +79,8 @@ app.post('/api/admin-themes/:id/activate', (req, res) => {
   res.json({ success: true, adminThemes: result.data });
 });
 
+app.post('/api/admin-themes/picked', (req, res) => res.json({ success: true, adminThemes: adminThemes.markPicked().data }));
+
 app.post('/api/admin-themes/:id/delete', (req, res) => {
   const result = adminThemes.deleteTheme(req.params.id);
   if (!result.success) return res.status(400).json({ success: false, error: result.error });

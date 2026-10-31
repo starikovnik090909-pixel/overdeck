@@ -1082,3 +1082,18 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 /* блок статусов в боковой панели убран: те же данные есть в шапке и на главной; закрытые модули скрыты до режима разработчика */
 .side-status{display:none!important}
 .dev-hidden{display:none!important}
+
+/* ---------- Окно выбора темы панели ---------- */
+.btn-primary { color: var(--on-accent, #fff) !important; }
+.tp-ov { position: fixed; inset: 0; z-index: 3100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(5,5,7,.62); backdrop-filter: blur(3px); }
+.tp-box { width: min(560px, 100%); max-height: 100%; overflow: auto; background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--line2); border-radius: 16px; padding: 22px; box-shadow: 0 24px 60px rgba(0,0,0,.45); }
+.tp-box h2 { margin: 0 0 6px; font-size: 20px; }
+.tp-sub, .tp-hint { margin: 0 0 14px; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+.tp-hint { margin: 14px 0; padding: 10px 12px; border-radius: 10px; background: var(--accent-soft); }
+.tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.tp-chip { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--divider); background: var(--bg-card2); color: var(--text-primary); cursor: pointer; font: inherit; font-size: 13px; text-align: left; }
+.tp-chip:hover { background: var(--bg-hover); }
+.tp-chip.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.tp-sw { display: flex; flex: none; border-radius: 6px; overflow: hidden; border: 1px solid var(--line2); }
+.tp-sw i { width: 12px; height: 22px; }
+.tp-act { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }

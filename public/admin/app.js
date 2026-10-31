@@ -48,30 +48,64 @@
     }[c]));
   }
 
-  /** Применяет активную тему поверх светлой/тёмной — Starikov (все цвета null) ничего не переопределяет, своя тема выставляет все три CSS-переменные напрямую инлайн-стилем на <html> (приоритет выше, чем у :root[data-theme]). */
+  /* Из трёх цветов (фон, текст, акцент) выводится вся палитра панели: боковое меню, карточки, наведение, линии, кнопки. */
+  function adminThemeMix(a, b, t) {
+    const x = parseInt(a.slice(1), 16), y = parseInt(b.slice(1), 16);
+    const c = (s) => Math.round(((x >> s) & 255) + (((y >> s) & 255) - ((x >> s) & 255)) * t);
+    return '#' + [16, 8, 0].map((s) => c(s).toString(16).padStart(2, '0')).join('');
+  }
+  function adminThemeLum(h) {
+    const n = parseInt(h.slice(1), 16);
+    const l = [n >> 16, n >> 8, n].map((v) => { v = (v & 255) / 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * l[0] + 0.7152 * l[1] + 0.0722 * l[2];
+  }
+  function deriveAdminPalette(bg, tx, ac) {
+    const m = adminThemeMix, light = adminThemeLum(bg) > 0.5, a = hexToRgba;
+    const o = {
+      '--bg-app': bg,
+      '--bg-sidebar': light ? m(bg, tx, 0.04) : m(bg, tx, 0.025),
+      '--bg-card': light ? m(bg, '#ffffff', 0.65) : m(bg, tx, 0.05),
+      '--bg-card2': light ? m(bg, '#ffffff', 0.85) : m(bg, tx, 0.085),
+      '--bg-hover': light ? m(bg, tx, 0.09) : m(bg, tx, 0.125),
+      '--text-primary': tx, '--text-secondary': m(tx, bg, 0.32), '--text-mute': m(tx, bg, 0.55),
+      '--divider': a(tx, light ? 0.1 : 0.07), '--line2': a(tx, light ? 0.17 : 0.12), '--hover': a(tx, 0.04),
+      '--accent': ac, '--accent2': light ? m(ac, '#000000', 0.15) : m(ac, '#ffffff', 0.18),
+      '--accent-soft': a(ac, light ? 0.13 : 0.14), '--accent-glow': a(ac, light ? 0.18 : 0.22),
+      '--on-accent': adminThemeLum(ac) > 0.45 ? '#101114' : '#ffffff',
+      '--ok': light ? '#1B8F5A' : '#3DD68C', '--ok-soft': light ? 'rgba(27,143,90,.13)' : 'rgba(61,214,140,.12)',
+      '--warn': light ? '#B7791F' : '#F2A93B', '--warn-soft': light ? 'rgba(183,121,31,.14)' : 'rgba(242,169,59,.12)',
+    };
+    return { vars: o, light };
+  }
+  let adminThemeApplied = [];
+  function clearAdminThemeVars() {
+    adminThemeApplied.forEach((k) => root.style.removeProperty(k));
+    adminThemeApplied = [];
+    root.style.removeProperty('color-scheme');
+    root.setAttribute('data-theme', localStorage.getItem(THEME_KEY) || 'dark'); // вернуть светлую/тёмную, выбранную переключателем
+  }
+  function applyAdminColors(bg, tx, ac) {
+    const p = deriveAdminPalette(bg, tx, ac);
+    adminThemeApplied.forEach((k) => { if (!(k in p.vars)) root.style.removeProperty(k); });
+    Object.keys(p.vars).forEach((k) => root.style.setProperty(k, p.vars[k]));
+    adminThemeApplied = Object.keys(p.vars);
+    root.style.setProperty('color-scheme', p.light ? 'light' : 'dark');
+    root.setAttribute('data-theme', p.light ? 'light' : 'dark'); // без записи в localStorage: переключатель светлая/тёмная не трогаем
+  }
+
+  /** Применяет активную тему. «Overdeck» (все цвета null) ничего не переопределяет, остальные выводят всю палитру из трёх цветов. */
   function applyActiveAdminTheme(adminThemeData) {
     const active = adminThemeData.themes.find((t) => t.id === adminThemeData.activeThemeId) || adminThemeData.themes[0];
     const themeToggleEl = document.getElementById('themeToggle');
     if (!active || active.isDefault) {
-      root.style.removeProperty('--bg-app');
-      root.style.removeProperty('--text-primary');
-      root.style.removeProperty('--accent');
-      root.style.removeProperty('--accent-soft');
-      themeToggleEl.style.display = ''; // Starikov ничего не переопределяет — переключатель светлая/тёмная снова имеет смысл
+      clearAdminThemeVars();
+      themeToggleEl.style.display = ''; // «Overdeck» ничего не переопределяет, переключатель светлая/тёмная снова имеет смысл
       return;
     }
-    root.style.setProperty('--bg-app', active.bgColor);
-    root.style.setProperty('--text-primary', active.textColor);
-    root.style.setProperty('--accent', active.accentColor);
-    root.style.setProperty('--accent-soft', hexToRgba(active.accentColor, 0.15));
-    // БАГ, который тут чинится: инлайн-стиль на <html> имеет приоритет выше,
-    // чем :root[data-theme="dark"/"light"], поэтому пока активна СВОЯ тема,
-    // клик по солнцу/луне визуально ничего не менял — data-theme менялся, а
-    // цвета оставались зафиксированы этой темой. Раз своя тема сама решает
-    // фон/текст/акцент, кнопка на время её активности прячется, а не
-    // притворяется рабочей.
-    themeToggleEl.style.display = 'none';
+    applyAdminColors(active.bgColor, active.textColor, active.accentColor);
+    themeToggleEl.style.display = 'none'; // своя тема сама решает цвета, переключатель на её время прячется
   }
+  window.adminThemesApi = { apply: applyActiveAdminTheme, applyColors: applyAdminColors, render: null };
 
   function hexToRgba(hex, alpha) {
     const n = parseInt(hex.slice(1), 16);
@@ -79,18 +113,15 @@
   }
 
   function renderAdminThemeList(adminThemeData) {
+    const sw = (t) => t.isDefault ? ['#0E0E10', '#EDEDEF', '#D84B55'] : [t.bgColor, t.textColor, t.accentColor];
     adminThemeList.innerHTML = adminThemeData.themes.map((t) => `
       <div class="admin-theme-row">
-        <div class="admin-theme-swatch">
-          <span style="background:${t.isDefault ? '#0E0E10' : t.bgColor}"></span>
-          <span style="background:${t.isDefault ? '#EFEFF1' : t.textColor}"></span>
-          <span style="background:${t.isDefault ? '#B14846' : t.accentColor}"></span>
-        </div>
+        <div class="admin-theme-swatch">${sw(t).map((c) => `<span style="background:${c}"></span>`).join('')}</div>
         <span class="admin-theme-row-name">${escapeHtmlAdminTheme(t.name)}${t.isDefault ? '<span class="admin-theme-default-tag">по умолчанию</span>' : ''}</span>
         ${t.id === adminThemeData.activeThemeId
           ? '<span class="badge">Активна</span>'
           : `<button class="btn btn-secondary" type="button" data-activate-theme="${t.id}">Выбрать</button>`}
-        ${!t.isDefault ? `<button class="btn-tiny" type="button" data-delete-theme="${t.id}">Удалить</button>` : ''}
+        ${!t.isDefault && !t.isBuiltin ? `<button class="btn-tiny" type="button" data-delete-theme="${t.id}">Удалить</button>` : ''}
       </div>
     `).join('');
     adminThemeList.querySelectorAll('[data-activate-theme]').forEach((btn) => {
@@ -115,6 +146,10 @@
       });
     });
   }
+  window.adminThemesApi.render = renderAdminThemeList;
+  let adminThemesCache = null; // последние данные с сервера, чтобы вернуть активную тему после живого просмотра цветов
+  const adminThemeLive = () => applyAdminColors(adminThemeBgColor.value, adminThemeTextColor.value, adminThemeAccentColor.value);
+  [adminThemeBgColor, adminThemeTextColor, adminThemeAccentColor].forEach((el) => el.addEventListener('input', adminThemeLive)); // видно сразу, ещё до сохранения
 
   document.getElementById('btnAdminThemeAdd').addEventListener('click', () => {
     adminThemeName.value = '';
@@ -124,6 +159,7 @@
   });
   document.getElementById('btnAdminThemeCancel').addEventListener('click', () => {
     adminThemeFormCard.style.display = 'none';
+    if (adminThemesCache) applyActiveAdminTheme(adminThemesCache); // живой просмотр цветов отменяется
   });
   document.getElementById('btnAdminThemeSave').addEventListener('click', async () => {
     const name = adminThemeName.value.trim();
@@ -148,8 +184,10 @@
     try {
       const res = await fetch('/api/admin-themes');
       const data = await res.json();
+      adminThemesCache = data.adminThemes;
       renderAdminThemeList(data.adminThemes);
       applyActiveAdminTheme(data.adminThemes);
+      window.dispatchEvent(new CustomEvent('adminthemes-ready', { detail: data.adminThemes }));
     } catch (e) {
       // не критично — просто останется встроенная тема Starikov (ничего не переопределено)
     }
