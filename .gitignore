@@ -128,3 +128,4 @@ soon_settings.json
 soon_settings.json.tmp
 uploads/soon/*
 !uploads/soon/.gitkeep
+music_settings.json

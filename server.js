@@ -38,6 +38,7 @@ const mvpData = require('./mvpData');
 const chronicles = require('./chronicles');
 const gazetteService = require('./gazetteService');
 const soonData = require('./soonData');
+const music = require('./musicRequests');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -984,6 +985,7 @@ function onChatMessage(tags, message) {
       awards.noteActivity(chatMsg.login);
       if (given.changed) broadcastPixelHeroes();
       runAvatarCommand(chatMsg.login, username, message);
+      music.onChat({ login: chatMsg.login, name: username, message, roles: { sub: roles.sub, vip: roles.vip, mod: roles.mod, broadcaster: !!(tags.badges && tags.badges.broadcaster) } }).catch((e) => console.warn('[Музыка]', e.message));
     }
     if (!isBotMessage) gazetteService.journal.noteChat(username, message);
     pushChatHistory(chatMsg);
@@ -1356,6 +1358,8 @@ soonData.init(async () => {
   return { title: info.title || '', game: info.game_name || '', login: config.channel || '', art };
 });
 require('./routes/soon').main({ soonData, app });
+music.init({ say: (t) => chatBot.say(t) });
+require('./routes/music').main({ music, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });

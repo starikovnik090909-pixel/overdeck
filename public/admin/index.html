@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
 <link rel="stylesheet" href="extras.css?v=8">
+<link rel="stylesheet" href="music.css?v=1">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -325,6 +326,13 @@
           <path d="m8.8 12.6 8.4-5.2-6.4 8.9" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
         <span>Телеграм</span>
+      </div>
+      <div class="nav-item" data-tab="music">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18V6l10-2v12" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="6.5" cy="18" r="2.5" stroke-width="1.5"/><circle cx="16.5" cy="16" r="2.5" stroke-width="1.5"/>
+        </svg>
+        <span>Заказ музыки</span>
       </div>
       <div class="nav-item dev-hidden" data-tab="extras">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3109,6 +3117,55 @@
       </div>
     </section>
 
+    <section class="tab-section" id="tab-music">
+      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а сам клип можно вывести на экран кнопкой — рамка уже стоит там, где ты её расположил.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span></div></div>
+      <div class="mu-grid">
+        <section class="card ui3-card mu-card">
+          <h4 class="ex-h">Сейчас играет</h4>
+          <div class="mu-now" id="muNow"><b>Тишина</b><span>Очередь пуста — ждём заказы из чата</span></div>
+          <div class="mu-btns">
+            <button class="btn btn-primary" type="button" id="muShow">Показать клип на экране</button>
+            <button class="btn btn-secondary" type="button" id="muPause">Пауза</button>
+            <button class="btn btn-secondary" type="button" id="muSkip">Пропустить</button>
+          </div>
+          <h4 class="ex-h">Очередь <span class="ex-sm" id="muCount"></span></h4>
+          <ol class="mu-queue" id="muQueue"></ol>
+          <div class="mu-add"><input type="text" id="muQuery" maxlength="200" placeholder="Название песни или ссылка на YouTube"><button class="btn btn-secondary" type="button" id="muAdd">Добавить</button></div>
+          <div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить очередь</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div>
+          <div class="form-message" id="muMsg"></div>
+        </section>
+        <section class="card ui3-card mu-card">
+          <h4 class="ex-h">Предпросмотр экрана</h4>
+          <div class="mu-prev"><iframe id="muPrev" title="Предпросмотр: заказ музыки" tabindex="-1"></iframe></div>
+          <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly id="muUrl" title="Источник «Браузер» 1920×1080, включи «Управлять звуком через OBS»"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
+          <p class="ex-sm">Добавь как «Браузер» 1920×1080 и держи включённым всё время стрима: сверху сцены, прозрачный фон. Клип рисуется в рамке, звук идёт всегда.</p>
+          <h4 class="ex-h">Положение клипа <span class="ex-sm">экран 1920×1080</span></h4>
+          <div class="mu-pos">
+            <label>X<input type="number" data-m="x" min="0" max="1900"></label><label>Y<input type="number" data-m="y" min="0" max="1060"></label>
+            <label>Ширина<input type="number" data-m="w" min="160" max="1920"></label><label>Высота<input type="number" data-m="h" min="90" max="1080"></label>
+          </div>
+          <div class="mu-corners"><button type="button" data-c="tl">Лево‑верх</button><button type="button" data-c="tr">Право‑верх</button><button type="button" data-c="bl">Лево‑низ</button><button type="button" data-c="br">Право‑низ</button><button type="button" data-c="c">Центр</button></div>
+          <h4 class="ex-h">Правила</h4>
+          <label class="tg-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки включён</span></label>
+          <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
+          <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Показывать клип сразу при старте трека</span></label>
+          <label class="tg-sw"><input type="checkbox" data-m="showTitle"><i></i><span>Плашка с названием под клипом</span></label>
+          <div class="mu-form">
+            <label>Кто может заказывать<select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
+            <label>Громкость, %<input type="number" data-m="volume" min="0" max="100"></label>
+            <label>Заказов от одного зрителя<input type="number" data-m="perUser" min="1" max="20"></label>
+            <label>Пауза между заказами, с<input type="number" data-m="cooldown" min="0" max="600"></label>
+            <label>Макс. очередь<input type="number" data-m="maxQueue" min="1" max="100"></label>
+            <label>Макс. длина клипа, мин<input type="number" data-m="maxMinutes" min="1" max="60"></label>
+            <label>Команды заказа<input type="text" data-m="commands" maxlength="80"></label>
+            <label>Команды «пропустить» (модеры)<input type="text" data-m="skipCommands" maxlength="80"></label>
+            <label>Цвет рамки<input type="color" data-m="accent"></label>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <section class="tab-section" id="tab-extras">
       <div class="page-head"><div><h1 class="tab-title">Доп. функционал</h1><p class="tab-description">Вечерний выпуск: Overdeck следит за чатом и событиями стрима и сам собирает из них финальный экран, газету и «эфир» для OBS. Заголовки подбираются по правилам из того, что реально было в эфире.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="exSaved"></span></div></div>
@@ -3645,6 +3702,7 @@
 <script src="telegram.js?v=5"></script>
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
+<script src="music.js?v=1"></script>
 <script src="whatsnew.js?v=31"></script>
 </body>
 </html>
