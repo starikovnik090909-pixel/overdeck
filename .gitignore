@@ -28,6 +28,9 @@ goal_data.json
 timer_data.json
 prediction_templates.json
 event_theme.json
+# Выбранный стиль виджетов сцены — личная настройка, при обновлении не затирается
+overlay_style.json
+overlay_style.json.tmp
 admin_themes.json
 chat_bot.json
 chat_bot.json.tmp

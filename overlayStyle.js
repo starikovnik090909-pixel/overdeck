@@ -44,13 +44,18 @@ function init() {
   } catch (e) { console.warn('[Стиль оверлея] Не удалось прочитать overlay_style.json:', e.message); }
 }
 function get() { return { ...state }; }
+function write() {
+  clearTimeout(saveTimer); saveTimer = null;
+  try {
+    fs.writeFileSync(FILE_PATH + '.tmp', JSON.stringify(state, null, 2));
+    fs.renameSync(FILE_PATH + '.tmp', FILE_PATH); // целиком или никак, файл не остаётся недописанным
+  } catch (e) { console.warn('[Стиль оверлея] Не удалось сохранить:', e.message); }
+}
 function update(raw) {
   state = sanitize(raw, state);
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    try { fs.writeFileSync(FILE_PATH, JSON.stringify(state, null, 2)); } catch (e) { console.warn('[Стиль оверлея] Не удалось сохранить:', e.message); }
-  }, 300);
+  write(); // сразу, без задержки: выбор не теряется, даже если окно закроют через секунду
   return get();
 }
+process.on('exit', () => { if (saveTimer) write(); });
 
 module.exports = { init, get, update, STYLES };
