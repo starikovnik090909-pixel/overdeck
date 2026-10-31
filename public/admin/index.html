@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=58">
+<link rel="stylesheet" href="extras.css?v=1">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -324,6 +325,13 @@
           <path d="m8.8 12.6 8.4-5.2-6.4 8.9" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
         <span>Телеграм</span>
+      </div>
+      <div class="nav-item" data-tab="extras">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9L12 3.5Z" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M18.5 15.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        <span>Доп. функционал</span>
       </div>
       <div class="nav-group">Оформление</div><div class="nav-item" data-tab="widgets">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3098,6 +3106,71 @@
       </div>
     </section>
 
+    <section class="tab-section" id="tab-extras">
+      <div class="page-head"><div><h1 class="tab-title">Доп. функционал</h1><p class="tab-description">Вечерний выпуск: Overdeck следит за чатом и событиями стрима и сам собирает из них финальный экран, газету и «эфир» для OBS. Заголовки подбираются по правилам из того, что реально было в эфире.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="exSaved"></span></div></div>
+
+      <div class="card ui3-card ex-top">
+        <div class="ex-jr"><b>Журнал стрима</b><span id="exJournal">…</span></div>
+        <div class="ex-row">
+          <label class="tg-sw"><input type="checkbox" id="exJournalOn"><i></i><span>Вести журнал чата<small class="ex-sm">Тексты сообщений хранятся только в файле на этом ПК (stream_journal.json), никуда не отправляются и не входят в файл авторизации. Новый стрим начинает журнал заново.</small></span></label>
+          <button class="btn btn-ghost btn-sm" id="exJournalClear" type="button">Очистить журнал</button>
+        </div>
+        <div class="ex-row"><div class="field ex-src"><label>Что показывать в предпросмотре и по кнопке «Показать»</label>
+          <select id="exSrc"><option value="">Текущий стрим (по журналу)</option><option value="A">Тест-вечер: «Камбэк»</option><option value="B">Тест-вечер: «Тихий вечер»</option><option value="C">Тест-вечер: «Донат-вечер»</option><option value="D">Тест-вечер: «Слив»</option></select></div>
+          <span class="ex-sm" style="max-width:420px">Тест-вечера — выдуманные данные, чтобы посмотреть оформление без стрима. Они же показываются в OBS, если выбрать их и нажать «Показать».</span></div>
+      </div>
+
+      <div class="ex-grid">
+        <div class="card ui3-card ex-card" data-fmt="credits">
+          <div class="ex-prev"><iframe data-page="credits" title="Предпросмотр: афиша" tabindex="-1"></iframe></div>
+          <div class="ex-info"><span class="ex-tag">Финал стрима</span><h3>Афиша с титрами</h3>
+            <p>Вечер как фильм: название-заголовок, постер (обложка игры с Twitch), счётчики, пульс чата и титры на весь экран: хроника, «в главных ролях» — самые активные зрители, щедрые, новые лица, слово и цитата вечера, а в конце все, кто писал.</p>
+            <div class="ex-actions"><button class="btn btn-primary" type="button" data-act="show">Показать на стриме</button><button class="btn btn-secondary" type="button" data-act="hide">Скрыть</button><span class="ex-now" data-now="credits"></span></div>
+            <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="credits.html" title="Источник «Браузер» 1920×1080. Пока не нажата «Показать», страница прозрачная"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
+          </div>
+        </div>
+        <div class="card ui3-card ex-card" data-fmt="gazette">
+          <div class="ex-prev"><iframe data-page="gazette" title="Предпросмотр: газета" tabindex="-1"></iframe></div>
+          <div class="ex-info"><span class="ex-tag">Итог вечера</span><h3>Газета</h3>
+            <p>Первая полоса вечера на весь экран: заголовок «печатается», штамп «Свежий выпуск», кадр с обложкой игры, хроника, цитата, слово вечера и «шёпот на полях» из живых реплик чата.</p>
+            <div class="ex-actions"><button class="btn btn-primary" type="button" data-act="show">Показать на стриме</button><button class="btn btn-secondary" type="button" data-act="hide">Скрыть</button><span class="ex-now" data-now="gazette"></span></div>
+            <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="gazette.html" title="Источник «Браузер» 1920×1080. Пока не нажата «Показать», страница прозрачная"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
+          </div>
+        </div>
+        <div class="card ui3-card ex-card" data-fmt="onair">
+          <div class="ex-prev"><iframe data-page="onair" title="Предпросмотр: эфир" tabindex="-1"></iframe></div>
+          <div class="ex-info"><span class="ex-tag">Во время стрима</span><h3>Эфир</h3>
+            <p>Прозрачный слой поверх игры в стиле новостей: бегущая строка «Сводка» с событиями вечера и плашка «Главная новость», которая сама выезжает раз в несколько минут, когда в эфире произошло что-то заметное.</p>
+            <div class="ex-actions"><button class="btn btn-primary" type="button" data-act="pulse">Показать плашку сейчас</button></div>
+            <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="onair.html" title="Источник «Браузер» 1920×1080, фон прозрачный"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ui3-card ex-set">
+        <h3>Настройки</h3>
+        <div class="ex-cols">
+          <div>
+            <div class="field"><label>Название в титрах и газете</label><input type="text" id="exStudio" maxlength="30" placeholder="по умолчанию — имя канала"></div>
+            <div class="field"><label>Скорость титров</label><div class="chr-seg" id="exSpeed"><button type="button" data-v="slow">Медленно</button><button type="button" data-v="normal">Обычно</button><button type="button" data-v="fast">Быстро</button></div></div>
+            <div class="field"><label>Убрать экран после титров через, сек <span class="ex-sm">0 — не убирать, пока не нажмёшь «Скрыть»</span></label><input type="number" id="exHold" min="0" max="600" step="5"></div>
+            <label class="tg-sw"><input type="checkbox" id="exGhost"><i></i><span>Реплики чата плывут по фону</span></label><br><br>
+            <label class="tg-sw"><input type="checkbox" id="exWall"><i></i><span>В конце титров — все, кто писал в чат</span></label>
+          </div>
+          <div>
+            <div class="ex-sm" style="margin-bottom:8px;font-weight:600">Эфир</div>
+            <label class="tg-sw"><input type="checkbox" id="exOaTicker"><i></i><span>Бегущая строка «Сводка»</span></label><br><br>
+            <label class="tg-sw"><input type="checkbox" id="exOaPlate"><i></i><span>Плашка «Главная новость»</span></label><br><br>
+            <label class="tg-sw"><input type="checkbox" id="exOaBug"><i></i><span>Значок «● ЭФИР» в углу</span></label>
+            <div class="field" style="margin-top:14px"><label>Плашка выезжает раз в, мин</label><input type="number" id="exOaInt" min="2" max="120"></div>
+            <div class="field"><label>Плашка висит, сек</label><input type="number" id="exOaSec" min="8" max="90"></div>
+          </div>
+        </div>
+        <p class="ex-sm" style="margin-top:12px">Плашка не выезжает, пока в эфире нет заметных событий, и не повторяет один и тот же заголовок дважды. Тихие вечера остаются без «новостей» — вместо выдуманного события показывается только сводка.</p>
+      </div>
+    </section>
+
     <section class="tab-section" id="tab-chatavatars">
       <h1 class="tab-title">Чат-аватары</h1>
       <p class="tab-description">Полноэкранный алерт с прозрачным фоном: пиксельные герои бродят по экрану, над головой у каждого — ник и уровень, сообщения чата звучат в пиксельных облаках.</p>
@@ -3497,7 +3570,7 @@
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
 <script src="app.js?v=186"></script>
-<script src="guides-data.js?v=10"></script>
+<script src="guides-data.js?v=11"></script>
 <script src="tabtips.js?v=2"></script>
 <script src="guides.js?v=7"></script>
 <script src="keyfile.js?v=5"></script>
@@ -3506,6 +3579,7 @@
 <script src="themepick.js?v=2"></script>
 <script src="chronicles.js?v=17"></script>
 <script src="telegram.js?v=5"></script>
-<script src="whatsnew.js?v=29"></script>
+<script src="extras.js?v=2"></script>
+<script src="whatsnew.js?v=30"></script>
 </body>
 </html>

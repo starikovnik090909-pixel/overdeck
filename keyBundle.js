@@ -12,7 +12,7 @@ const VERSION = 1;
 const MAX_FILE = 300 * 1024 * 1024;
 
 // корневые .json, которые НЕ входят в ключ (это часть самого приложения)
-const ROOT_DENY = new Set(['package.json', 'package-lock.json', 'config.example.json', 'launcher.json']);
+const ROOT_DENY = new Set(['stream_journal.json', 'package.json', 'package-lock.json', 'config.example.json', 'launcher.json']);
 // папки с пользовательскими файлами; media=true — только по галочке «картинки и фоны»
 const DIRS = [
   { dir: 'uploads', media: false },

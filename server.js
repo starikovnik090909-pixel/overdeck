@@ -36,6 +36,7 @@ const teamData = require('./teamData');
 const teamPresets = require('./teamPresets');
 const mvpData = require('./mvpData');
 const chronicles = require('./chronicles');
+const gazetteService = require('./gazetteService');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -326,6 +327,7 @@ function fireEventAlert(kind, data, force) {
   const cfg = config.eventAlerts[kind];
   if (!cfg) return false;
   if (!force && (kind === 'follow' || kind === 'sub') && !(data && data.type === 'resub')) telegramAnnounce.noteEvent(kind, data); // счётчики для итога стрима в Телеграм
+  if (!force && kind === 'follow' && data) { try { gazetteService.journal.noteEvent({ type: 'follow', username: data.username }); } catch (e) { /* журнал необязателен */ } }
   if (kind === 'raid' && data && data.avatar === undefined && cfg.style !== 'plain') {
     if (!force && !eventAlerts.shouldShow(kind, data, cfg)) return false;
     raidExtras(data, force).then((x) => fireEventAlert(kind, { ...data, ...x }, force)).catch(() => fireEventAlert(kind, { ...data, avatar: '' }, force));
@@ -546,6 +548,7 @@ function handleTimelineWeightedEvent(evt) {
   if (evt && evt.type === 'channelpoints') unlockAvatarForReward(evt);   // награда за баллы «Разблокировать аватар» открывает зрителю случайный закрытый аватар
   if (evt && evt.type === 'raid') chatRoles.noteRaid(); // открывает окно, в котором первые сообщения новых людей считаются рейдерскими
   timeline.addEvent({ ...evt, weight: timelineWeightFor(evt.type) });
+  try { gazetteService.journal.noteEvent(evt); } catch (e) { /* журнал необязателен */ }
   eventFeed.add(evt);
   dirty = true;
 }
@@ -579,13 +582,17 @@ async function pollCategoryOnce() {
     if (streamIsLive) telegramAnnounce.onCategoryChange();
     handleTimelineWeightedEvent({ type: 'category', meta: { name: entry.name } });
   }
+  try { const cur = categories.getSnapshot && categories.getSnapshot(); const c0 = cur && (cur.current || (cur.history && cur.history[0])); if (c0 && c0.name) gazetteService.journal.noteGame(c0.name, c0.boxArtUrl); } catch (e) { /* журнал необязателен */ }
   if (resolvedBroadcasterId && twitch.hasCredentials(config)) {
     const wasLive = streamIsLive;
-    streamIsLive = await twitch.fetchStreamStatus(config, resolvedBroadcasterId);
+    const liveInfo = await twitch.fetchStreamInfo(config, resolvedBroadcasterId);
+    streamIsLive = !!liveInfo;
+    if (liveInfo) { try { gazetteService.journal.noteViewers(liveInfo.viewer_count); } catch (e) { /* журнал необязателен */ } }
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
     if (streamIsLive && fakeStream.isActive()) { fakeStream.stop(); broadcast(); console.log('[Фейк-режим] Начался настоящий стрим — фейк-режим выключен.'); } // фейк-данные не должны попасть в эфир
     if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
     if (streamIsLive && !wasLive && streamStatusKnown) telegramAnnounce.onStreamStart();
+    if (streamIsLive && !wasLive && streamStatusKnown) { try { gazetteService.journal.reset(); } catch (e) { /* журнал необязателен */ } } // новый стрим — новый выпуск, даже если автозапись истории выключена
     if (!streamIsLive && wasLive) telegramAnnounce.onStreamEnd(); // сервер, запущенный посреди стрима, повторно не анонсирует
     telegramAnnounce.noteLive(streamIsLive);
     streamStatusKnown = true;
@@ -641,6 +648,7 @@ teamData.init();
 teamPresets.init();
 mvpData.init();
 chronicles.init();
+gazetteService.init({ channel: config.channel }); // журнал чата и событий для «Вечернего выпуска»
 const telegramAnnounce = require('./telegramAnnounce');
 telegramAnnounce.init(async (opts) => {
   const info = resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null;
@@ -976,6 +984,7 @@ function onChatMessage(tags, message) {
       if (given.changed) broadcastPixelHeroes();
       runAvatarCommand(chatMsg.login, username, message);
     }
+    if (!isBotMessage) gazetteService.journal.noteChat(username, message);
     pushChatHistory(chatMsg);
     broadcastChat(chatMsg);
 
@@ -1331,6 +1340,7 @@ require('./routes/team').part3({ teamData, teamPresets, app, validSide, broadcas
 
 const { chroniclesUpload } = require('./routes/chronicles').upload({ path, express, multer, chronicles, app });
 require('./routes/telegram').main({ chronicles, telegramAnnounce, app });
+require('./routes/gazette').main({ gazetteService, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });
@@ -2226,6 +2236,7 @@ function resetStreamSession(reason) {
   donorLeaderboard.resetSession(); // топ за всё время (donations_alltime.json) не трогаем
   chatHistory = [];
   chatRoles.reset();
+  gazetteService.journal.reset(); // новый стрим — новый выпуск
   pixelHeroes.newSession(); // новая трансляция: «заход на стрим» снова засчитывается всем
   if (pixelHeroes.clearRoster()) broadcastPixelHeroes(); // новая «сессия» — герои чаттеров прошлого стрима уходят со сцены
   sessionHistory = [];

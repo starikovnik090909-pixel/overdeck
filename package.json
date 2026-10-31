@@ -6,7 +6,7 @@
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/run.js"
+    "test": "node tests/run.js && node tests/gazette.test.js"
   },
   "dependencies": {
     "tmi.js": "^1.8.5",

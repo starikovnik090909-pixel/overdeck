@@ -115,3 +115,9 @@ telegram.json
 
 # Автокопии настроек (в них ключи и токены)
 backups/
+
+# Журнал чата и событий текущего стрима (вечерний выпуск) — только на этом ПК
+stream_journal.json
+stream_journal.json.tmp
+gazette_settings.json
+gazette_settings.json.tmp
