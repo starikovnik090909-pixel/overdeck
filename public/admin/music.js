@@ -119,6 +119,13 @@
   $('#muAdd').addEventListener('click', add);
   $('#muQuery').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
 
+  $('#muCheck').addEventListener('click', () => {
+    const m = $('#muCheckMsg'); m.textContent = 'Проверяю…';
+    clearTimeout(t);
+    const patch = {}; fields.forEach((f) => { patch[f.dataset.m] = f.type === 'checkbox' ? f.checked : (f.type === 'number' ? Number(f.value) : f.value); });
+    post('/api/music/settings', patch).then(() => post('/api/music/check', {})).then((r) => { m.textContent = r && r.ok ? 'Работает (' + r.ms + ' мс)' : 'Не получилось: ' + ((r && r.error) || 'нет ответа'); });
+  });
+
   function save() {
     clearTimeout(t);
     t = setTimeout(() => {

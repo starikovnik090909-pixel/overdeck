@@ -15,6 +15,7 @@ function main(ctx) {
   app.post('/api/music/ban', (req, res) => { const b = req.body || {}; try { music.banTrack(b.id, b.title); ok(res); } catch (e) { fail(res, e); } });
   app.post('/api/music/unban', (req, res) => { music.unbanTrack((req.body || {}).id); ok(res); });
   app.get('/api/music/stats', (req, res) => res.json(Object.assign({ success: true }, music.stats(req.query.since))));
+  app.post('/api/music/check', async (req, res) => res.json(Object.assign({ success: true }, await music.checkYoutube())));
   app.post('/api/music/chart/say', async (req, res) => { const sent = await music.sayChart((req.body || {}).since); res.json({ success: sent !== false && !!sent, error: sent ? undefined : 'Бот не подключён к чату или чарт пока пуст.' }); });
   app.post('/api/music/pause', (req, res) => { music.setPaused(!!(req.body || {}).paused); ok(res); });
   app.post('/api/music/show', (req, res) => { music.setShow(!!(req.body || {}).show); ok(res); });

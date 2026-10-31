@@ -3234,6 +3234,11 @@
             <h4 class="ex-h">Приоритет</h4>
             <label class="tg-sw"><input type="checkbox" data-m="prioSub"><i></i><span>Подписчики и VIP заказывают вне общей очереди</span></label>
 
+            <h4 class="ex-h">YouTube без VPN</h4>
+            <label class="mu-fl"><em>Прокси для поиска (адрес HTTP-порта твоего VPN, например 127.0.0.1:10809). Пусто — напрямую</em><input type="text" data-m="proxy" maxlength="200" placeholder="127.0.0.1:10809"></label>
+            <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muCheck">Проверить YouTube</button><span class="ex-sm" id="muCheckMsg"></span></div>
+            <div class="ex-sm">Прокси нужен только боту для поиска. Видео в OBS грузится самим OBS — там нужен VPN на весь компьютер (режим TUN) или обход блокировок.</div>
+
             <h4 class="ex-h">Чёрный список</h4>
             <label class="mu-fl"><em>Слова (через запятую или с новой строки). Проверяются в запросе, названии ролика и имени канала</em><textarea data-m="blWords" rows="3" maxlength="3000" placeholder="казино, 18+"></textarea></label>
             <div class="ex-sm">Запрещённые треки</div>
@@ -3783,7 +3788,7 @@
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=9"></script>
+<script src="music.js?v=10"></script>
 <script src="whatsnew.js?v=34"></script>
 </body>
 </html>

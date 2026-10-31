@@ -24,6 +24,7 @@ const DEFAULTS = {
   prioSub: false,                   // заказы подписчиков и VIP встают в очереди выше обычных
   pointsOn: false, pointsReward: '', // заказ за баллы канала: название награды (с полем «ввод текста»)
   donateOn: false, donateMinRub: 50, donatePrioRub: 200, donateBypass: true, // заказ донатом: от какой суммы, от какой — вне очереди, снимать ли лимиты
+  proxy: '',                        // HTTP-прокси для поиска на YouTube, например http://127.0.0.1:10809
   blWords: '',                      // чёрный список слов (через запятую или с новой строки)
   blTracks: [],                     // чёрный список треков [{id, title}]
 };
@@ -48,6 +49,7 @@ function sanitize(src, base) {
   const out = Object.assign({}, base), b = src || {};
   BOOL.forEach((k) => { if (typeof b[k] === 'boolean') out[k] = b[k]; });
   if (typeof b.pointsReward === 'string') out.pointsReward = b.pointsReward.replace(/[\r\n]+/g, ' ').trim().slice(0, 100);
+  if (typeof b.proxy === 'string') { const px = b.proxy.trim().slice(0, 200); out.proxy = !px || /^https?:\/\/[^\s]+$/i.test(px) ? px : (/^[^\s:\/]+:\d{2,5}$/.test(px) ? 'http://' + px : out.proxy); }
   if (typeof b.blWords === 'string') out.blWords = b.blWords.slice(0, 3000);
   if (Array.isArray(b.blTracks) && b.__keepTracks) out.blTracks = b.blTracks;
   ['commands', 'skipCommands'].forEach((k) => { if (typeof b[k] === 'string') out[k] = b[k].replace(/[!\r\n]/g, '').slice(0, 80); });
@@ -130,21 +132,47 @@ function parseResults(html) {
   })(data);
   return out;
 }
-async function defaultSearch(query) {
-  const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 10000);
-  try {
-    const id = videoIdFrom(query);
-    if (id) {
-      const r = await fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id), { signal: ctl.signal });
-      const j = r.ok ? await r.json() : null;
-      return [{ id, title: (j && j.title) || 'Видео YouTube', channel: (j && j.author_name) || '', seconds: 0 }];
-    }
-    const r = await fetch('https://www.youtube.com/results?hl=ru&gl=RU&search_query=' + encodeURIComponent(query), {
-      signal: ctl.signal, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36', 'Accept-Language': 'ru-RU,ru;q=0.9' },
+/** Скачать страницу; если задан прокси (HTTP CONNECT) — через него, иначе напрямую. */
+function getText(url, headers, proxy, ms) {
+  if (!proxy) {
+    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), ms);
+    return fetch(url, { signal: ctl.signal, headers }).then(async (r) => ({ status: r.status, body: r.ok ? await r.text() : '' })).finally(() => clearTimeout(to));
+  }
+  const http = require('http'), https = require('https'), tls = require('tls');
+  return new Promise((resolve, reject) => {
+    const u = new URL(url), px = new URL(proxy);
+    let done = false;
+    const fin = (e, v) => { if (done) return; done = true; clearTimeout(to); e ? reject(e) : resolve(v); };
+    const to = setTimeout(() => { fin(new Error('прокси не отвечает')); try { req.destroy(); } catch (e) { /* уже закрыт */ } }, ms);
+    const auth = px.username ? { 'Proxy-Authorization': 'Basic ' + Buffer.from(decodeURIComponent(px.username) + ':' + decodeURIComponent(px.password)).toString('base64') } : {};
+    const req = (px.protocol === 'https:' ? https : http).request({ host: px.hostname, port: px.port || (px.protocol === 'https:' ? 443 : 80), method: 'CONNECT', path: u.hostname + ':443', headers: Object.assign({ Host: u.hostname + ':443' }, auth) });
+    req.on('error', fin);
+    req.on('connect', (res, socket) => {
+      if (res.statusCode !== 200) { socket.destroy(); return fin(new Error('прокси ответил ' + res.statusCode)); }
+      const sock = tls.connect({ socket, servername: u.hostname });
+      sock.on('error', fin);
+      const rq = https.request({ host: u.hostname, path: u.pathname + u.search, method: 'GET', headers, createConnection: () => sock }, (r) => {
+        const chunks = []; r.on('data', (c) => chunks.push(c));
+        r.on('end', () => { sock.destroy(); fin(null, { status: r.statusCode, body: r.statusCode === 200 ? Buffer.concat(chunks).toString('utf8') : '' }); });
+        r.on('error', fin);
+      });
+      rq.on('error', fin); rq.end();
     });
-    if (!r.ok) throw new Error('YouTube ответил ' + r.status);
-    return parseResults(await r.text());
-  } finally { clearTimeout(to); }
+    req.end();
+  });
+}
+async function defaultSearch(query) {
+  const px = cfg.proxy || '';
+  const hd = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36', 'Accept-Language': 'ru-RU,ru;q=0.9' };
+  const id = videoIdFrom(query);
+  if (id) {
+    let j = null;
+    try { const r = await getText('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + id), hd, px, 10000); j = r.body ? JSON.parse(r.body) : null; } catch (e) { /* название необязательно */ }
+    return [{ id, title: (j && j.title) || 'Видео YouTube', channel: (j && j.author_name) || '', seconds: 0 }];
+  }
+  const r = await getText('https://www.youtube.com/results?hl=ru&gl=RU&search_query=' + encodeURIComponent(query), hd, px, 12000);
+  if (r.status !== 200) throw new Error('YouTube ответил ' + r.status);
+  return parseResults(r.body);
 }
 
 /* ---------- Чёрный список ---------- */
@@ -231,7 +259,7 @@ async function place(o) {
   }
   lastAt.set(login, Date.now());
   let hits;
-  try { hits = await searcher(q); } catch (e) { await reply(`@${name}, не получилось найти трек (YouTube не отвечает).`); return false; }
+  try { hits = await searcher(q); } catch (e) { await reply(`@${name}, не получилось найти трек (YouTube не отвечает — стримеру нужен VPN или прокси).`); return false; }
   const hit = pickHit(hits);
   if (!hit) { await reply(`@${name}, ничего не нашлось по запросу «${q.slice(0, 60)}» (нет такого клипа, он длиннее ${cfg.maxMinutes} мин или в чёрном списке).`); return false; }
   const playingNow = !current;
@@ -327,4 +355,10 @@ async function sayChart(since) {
   return say('🏆 Чарт: ' + st.map((t, i) => `${i + 1}) ${t.title.slice(0, 40)}${t.count > 1 ? ' ×' + t.count : ''}`).join(' · '));
 }
 
-module.exports = { DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
+async function checkYoutube() {
+  const t0 = Date.now();
+  try { const h = await searcher('music'); return { ok: h.length > 0, ms: Date.now() - t0, error: h.length ? '' : 'YouTube открылся, но ничего не нашлось.' }; }
+  catch (e) { return { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) }; }
+}
+
+module.exports = { checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
