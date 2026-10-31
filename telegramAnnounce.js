@@ -88,8 +88,12 @@ async function pickImage(data) {
   return null;
 }
 
+function netError(e) {
+  const c = (e && e.cause && (e.cause.code || e.cause.message)) || (e && e.name) || '';
+  return new Error('Не удалось связаться с сервером анонсов Overdeck (' + c + '). Скорее всего, у тебя блокируется адрес overdeck-telegram…workers.dev (провайдер, DNS или антивирус). Попробуй включить VPN или сменить DNS на 1.1.1.1 и повтори.');
+}
 async function relayPost(path, body) {
-  const r = await fetch(RELAY_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) });
+  let r; try { r = await fetch(RELAY_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) }); } catch (e) { throw netError(e); }
   const j = await r.json().catch(() => null);
   if (!j || !j.ok) throw new Error((j && j.error) || 'Сервер анонсов не ответил.');
   return j;
@@ -102,7 +106,7 @@ async function deliver(text, img, url, btn) {
     fd.append('key', cfg.relayKey); fd.append('text', text);
     if (btn) fd.append('button', url);
     if (img) fd.append('photo', new Blob([img], { type: 'image/jpeg' }), 'stream.jpg');
-    const r = await fetch(RELAY_URL + '/send', { method: 'POST', body: fd, signal: AbortSignal.timeout(40000) });
+    let r; try { r = await fetch(RELAY_URL + '/send', { method: 'POST', body: fd, signal: AbortSignal.timeout(40000) }); } catch (e) { throw netError(e); }
     const j = await r.json().catch(() => null);
     if (!j || !j.ok) throw new Error((j && j.error) || 'Сервер анонсов не ответил.');
     return { kind: img ? 'photo' : 'text', id: j.id };
@@ -384,7 +388,7 @@ function update(b) {
 
 /** Проверка токена и доступа бота к каналу. */
 async function relayCall(path, opt) {
-  let r; try { r = await fetch(RELAY_URL + path, { ...opt, signal: AbortSignal.timeout(20000) }); } catch (e) { throw new Error('Сервер анонсов Overdeck недоступен.'); }
+  let r; try { r = await fetch(RELAY_URL + path, { ...opt, signal: AbortSignal.timeout(20000) }); } catch (e) { throw netError(e); }
   const j = await r.json().catch(() => null);
   return { status: r.status, j: j || {} };
 }
