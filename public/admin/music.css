@@ -1,6 +1,4 @@
 #tab-music{--mu-r:16px}
-#tab-music .mu-hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:24px;padding:20px;margin-bottom:16px;border-radius:var(--mu-r);background:linear-gradient(135deg,var(--bg-card),var(--bg-card2))}
-@media(max-width:1000px){#tab-music .mu-hero{grid-template-columns:1fr}}
 #tab-music .mu-video{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:#07070a;border:1px solid var(--divider)}
 #tab-music .mu-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 #tab-music .mu-vph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;background:repeating-linear-gradient(45deg,#101015,#101015 16px,#14141a 16px,#14141a 32px)}
@@ -20,7 +18,7 @@
 #tab-music .mu-info .mu-btns{margin-top:8px}
 #tab-music .mu-big{padding-left:22px;padding-right:22px}
 #tab-music .mu-note{margin:6px 0 0;font-size:12px;opacity:.6}
-#tab-music .mu-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start;margin-bottom:16px}
+#tab-music .mu-grid{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:16px;align-items:start;margin-bottom:16px}
 @media(max-width:1100px){#tab-music .mu-grid{grid-template-columns:1fr}}
 #tab-music .mu-card{margin:0;padding:18px;display:flex;flex-direction:column;gap:12px;border-radius:var(--mu-r)}
 #tab-music .mu-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -41,8 +39,6 @@
 #tab-music .mu-cmds{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;padding-top:4px;border-top:1px dashed var(--divider)}
 #tab-music .mu-cmds code{background:var(--bg-card2);border:1px solid var(--divider);border-radius:6px;padding:2px 8px}
 #tab-music .mu-cmds small{opacity:.6;width:100%}
-#tab-music .mu-prev{position:relative;width:100%;aspect-ratio:16/9;border-radius:12px;overflow:hidden;border:1px solid var(--divider);background:repeating-conic-gradient(#8883 0 25%,#0000 0 50%) 0 0/18px 18px,#0b0b0d}
-#tab-music .mu-prev iframe{position:absolute;left:0;top:0;width:640px;height:360px;border:0;transform-origin:0 0;pointer-events:none}
 #tab-music .mu-sw{display:flex;flex-wrap:wrap;gap:10px 28px}
 #tab-music .mu-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
 #tab-music .mu-form label{display:flex;flex-direction:column;gap:4px;font-size:12px;opacity:.9}
@@ -53,3 +49,17 @@
 #tab-music .mu-sk .fit{position:absolute;left:50%;top:50%;pointer-events:none}
 #tab-music .mu-sk em{position:absolute;right:4px;bottom:3px;font-style:normal;font-size:10px;background:#000a;color:#fff;border-radius:4px;padding:1px 5px}
 #tab-music .form-message:empty{display:none}
+#tab-music .mu-now{gap:16px}
+#tab-music .mu-drawer{position:fixed;inset:0;z-index:1000;display:flex;justify-content:flex-end}
+#tab-music .mu-drawer[hidden]{display:none}
+#tab-music .mu-dim{position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px)}
+#tab-music .mu-panel{position:relative;width:min(480px,100%);height:100%;background:var(--bg-card);border-left:1px solid var(--divider);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);animation:muIn .22s ease}
+@keyframes muIn{from{transform:translateX(30px);opacity:0}}
+#tab-music .mu-ph{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--divider)}
+#tab-music .mu-ph h3{margin:0;font-size:18px}
+#tab-music .mu-x{border:0;background:none;color:inherit;font-size:26px;cursor:pointer;opacity:.7;line-height:1}
+#tab-music .mu-x:hover{opacity:1}
+#tab-music .mu-pb{padding:16px 20px 28px;overflow:auto;display:flex;flex-direction:column;gap:12px}
+#tab-music .mu-pb .ex-h{margin:10px 0 0}
+#tab-music .mu-pb .mu-form{grid-template-columns:1fr 1fr}
+#tab-music .mu-pb .mu-skins{grid-template-columns:repeat(3,1fr)}

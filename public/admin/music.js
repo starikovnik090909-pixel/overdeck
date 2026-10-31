@@ -13,9 +13,6 @@
   const fmt = (s) => { s = Math.floor(s || 0); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '0:00'; };
 
   const url = $('#muUrl'); url.value = location.origin + '/music.html';
-  const prev = $('#muPrev');
-  function fitPrev() { const w = prev.parentElement.clientWidth; if (w) prev.style.transform = 'scale(' + w / 640 + ')'; }
-  addEventListener('resize', fitPrev);
   $('#muCopy').addEventListener('click', () => { url.select(); (navigator.clipboard ? navigator.clipboard.writeText(url.value) : Promise.reject()).catch(() => { try { document.execCommand('copy'); } catch (e) { /* выделено — скопировать можно вручную */ } }); const b = $('#muCopy'); b.textContent = 'Скопировано'; setTimeout(() => { b.textContent = 'Копировать'; }, 1300); });
 
   function say(m, bad) { const e = $('#muMsg'); e.textContent = m || ''; e.className = 'form-message' + (bad ? ' error' : m ? ' success' : ''); }
@@ -101,8 +98,15 @@
     fitSkins();
   }
 
+  // --- панель настроек (шестерёнка) ---
+  const drawer = $('#muDrawer');
+  const openD = (v) => { drawer.hidden = !v; if (v) setTimeout(fitSkins, 30); };
+  $('#muGear').addEventListener('click', () => openD(true));
+  drawer.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) openD(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) openD(false); });
+
   let started = false;
-  function start() { if (started) return; started = true; prev.src = '/music.html?preview=1'; fitPrev(); refresh(); setInterval(() => { if (sec.offsetParent) refresh(); }, 2000); }
-  document.querySelectorAll('.nav-item[data-tab="music"]').forEach((n) => n.addEventListener('click', () => { start(); setTimeout(() => { fitPrev(); fitSkins(); }, 50); }));
+  function start() { if (started) return; started = true; refresh(); setInterval(() => { if (sec.offsetParent) refresh(); }, 2000); }
+  document.querySelectorAll('.nav-item[data-tab="music"]').forEach((n) => n.addEventListener('click', () => { start(); setTimeout(fitSkins, 50); }));
   if (sec.offsetParent) start();
 })();
