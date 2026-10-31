@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=10">
+<link rel="stylesheet" href="music.css?v=11">
 <link rel="stylesheet" href="../music-skins.css?v=4">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3120,8 +3120,9 @@
 
     <section class="tab-section" id="tab-music">
       <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) ты выводишь на экран кнопкой.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
+        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
 
+      <div id="muLive">
       <div class="mu-grid">
         <div class="mu-left">
         <section class="card ui3-card mu-card">
@@ -3176,10 +3177,28 @@
               <button class="btn btn-primary mu-big" type="button" id="muShow">Показать на экране</button>
               <button class="btn btn-secondary" type="button" id="muPause">Пауза</button>
               <button class="btn btn-secondary" type="button" id="muSkip">Пропустить</button>
+              <button class="btn btn-ghost btn-sm mu-banbtn" type="button" id="muBan" title="Убрать трек и больше не ставить">В чёрный список</button>
             </div>
             <p class="mu-note">Превью без звука, нужно только тебе. В стрим идёт то, что выведено кнопкой «Показать на экране». Если пишет «Video unavailable», у клипа запрещено встраивание: в OBS бот сам перейдёт к следующему.</p>
           </div>
         </section>
+      </div>
+
+      </div>
+
+      <div id="muStats" hidden>
+        <div class="mu-sbar">
+          <div class="chr-seg" id="muPeriod"><button type="button" data-d="today" class="on">Сегодня</button><button type="button" data-d="7">7 дней</button><button type="button" data-d="0">Всё время</button></div>
+          <span class="mu-stot" id="muTotal"></span>
+          <button class="btn btn-secondary" type="button" id="muChartSay">Отправить чарт в чат</button>
+        </div>
+        <div class="mu-grid mu-sgrid">
+          <section class="card ui3-card mu-card"><h4 class="ex-h">Чарт треков</h4><ol class="mu-chart" id="muChart"></ol></section>
+          <div class="mu-left">
+            <section class="card ui3-card mu-card"><h4 class="ex-h">Кто заказывает чаще всех</h4><ol class="mu-users" id="muUsers"></ol></section>
+            <section class="card ui3-card mu-card"><h4 class="ex-h">История</h4><ol class="mu-hist" id="muHist"></ol></section>
+          </div>
+        </div>
       </div>
 
       <div class="mu-modal" id="muModal" hidden>
@@ -3195,6 +3214,30 @@
             <h4 class="ex-h">Источник для OBS</h4>
             <div class="obs-url-compact"><span class="obs-url-compact-title">Браузер</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
             <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
+
+            <h4 class="ex-h">Способы заказа</h4>
+            <div class="mu-opt">
+              <label class="tg-sw"><input type="checkbox" data-m="pointsOn"><i></i><span>За баллы канала</span></label>
+              <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
+              <p class="ex-sm">Создай награду в Twitch (Баллы канала → Награды) с включённым полем «Требовать ввод текста от зрителя» и впиши сюда её точное название. Зритель вводит название песни, трек встаёт в очередь выше обычных. Возврат баллов при ошибке Overdeck не делает.</p>
+            </div>
+            <div class="mu-opt">
+              <label class="tg-sw"><input type="checkbox" data-m="donateOn"><i></i><span>За донат</span></label>
+              <div class="mu-form">
+                <label><em>Заказ от суммы, ₽</em><input type="number" data-m="donateMinRub" min="1" max="100000"></label>
+                <label><em>Вне очереди от, ₽ (0 — выкл.)</em><input type="number" data-m="donatePrioRub" min="0" max="100000"></label>
+              </div>
+              <label class="tg-sw"><input type="checkbox" data-m="donateBypass"><i></i><span>Донат снимает лимиты и паузу</span></label>
+              <p class="ex-sm">Название песни зритель пишет в сообщении к донату (можно с «!муз» в начале). Донат от суммы заказа встаёт выше чатовых заказов, от суммы «вне очереди» — первым в очереди. Работает с DonationAlerts, DonatePay и DonateX.</p>
+            </div>
+
+            <h4 class="ex-h">Приоритет</h4>
+            <label class="tg-sw"><input type="checkbox" data-m="prioSub"><i></i><span>Подписчики и VIP заказывают вне общей очереди</span></label>
+
+            <h4 class="ex-h">Чёрный список</h4>
+            <label class="mu-fl"><em>Слова (через запятую или с новой строки). Проверяются в запросе, названии ролика и имени канала</em><textarea data-m="blWords" rows="3" maxlength="3000" placeholder="казино, 18+"></textarea></label>
+            <div class="ex-sm">Запрещённые треки</div>
+            <ul class="mu-bl" id="muBl"></ul>
 
             <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Выводить на экран сразу при старте трека</span></label>
             <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
@@ -3740,7 +3783,7 @@
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=8"></script>
+<script src="music.js?v=9"></script>
 <script src="whatsnew.js?v=33"></script>
 </body>
 </html>

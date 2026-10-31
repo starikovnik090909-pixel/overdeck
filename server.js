@@ -401,7 +401,9 @@ function handleEventAlertRaw(type, e) {
     case 'channel.hype_train.end':
       fireEventAlert('hype', { phase: 'end', level: e.level, total: e.total }); hypeLevel = 0; break;
     case 'channel.channel_points_custom_reward_redemption.add':
-      fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input }); break;
+      fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
+      music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).catch((er) => console.warn('[Музыка]', er.message));
+      break;
     default: break;
   }
 }
@@ -508,7 +510,7 @@ function saveStats() {
   });
 }
 setInterval(saveStats, config.saveIntervalMs || 15000);
-process.on('SIGINT', () => { saveStats(); process.exit(0); });
+process.on('SIGINT', () => { saveStats(); try { music.flush(); } catch (e) { /* не критично */ } process.exit(0); });
 
 // ---------- Аватарки (кэш только в памяти) ----------
 
@@ -2769,6 +2771,7 @@ async function processFundAlertQueue() {
 /** Общий обработчик для донатов с любой платформы: сохраняет в историю, обновляет топ донатеров и рассылает в реальном времени. */
 function handleDonation(donation) {
   const record = donations.addDonation(donation);
+  try { music.onDonation({ username: record.username, message: record.message || '', rub: currency.toRub(record.amount, record.currency).rub }).catch((er) => console.warn('[Музыка]', er.message)); } catch (e) { /* музыка необязательна */ }
   try { telegramAnnounce.noteEvent('donation', { rub: currency.toRub(record.amount, record.currency).rub }); } catch (e) { /* счётчик необязателен */ }
   donorLeaderboard.addDonation(record);
   handleTimelineWeightedEvent({ type: 'donation', username: record.username, meta: { amount: record.amount, currency: record.currency, amountRub: currency.toRub(record.amount, record.currency).rub, message: record.message || '' } }); // зелёный прямоугольник с суммой на таймлайне

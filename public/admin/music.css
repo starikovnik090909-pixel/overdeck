@@ -117,3 +117,41 @@
 #tab-music .mu-mbox .mu-x{position:absolute;right:10px;top:4px;z-index:2}
 #tab-music .mu-mprev{position:relative;aspect-ratio:16/9;border-radius:12px;overflow:hidden;background:repeating-conic-gradient(#8883 0 25%,#0000 0 50%) 0 0/22px 22px,#0b0b0d}
 #tab-music .mu-mprev iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
+#tab-music .page-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#tab-music .mu-opt{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--divider);border-radius:12px;background:var(--bg-card2)}
+#tab-music .mu-opt .ex-sm{margin:0}
+#tab-music .mu-fl{display:flex;flex-direction:column;gap:4px;font-size:12px}
+#tab-music .mu-fl em{font-style:normal;opacity:.65}
+#tab-music .mu-fl textarea,#tab-music .mu-fl input{width:100%}
+#tab-music .mu-bl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+#tab-music .mu-bl li{display:flex;gap:8px;align-items:center;font-size:13px;padding:6px 10px;border:1px solid var(--divider);border-radius:10px}
+#tab-music .mu-bl li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#tab-music .mu-bl li button{border:0;background:none;color:inherit;opacity:.6;cursor:pointer;font-size:12px;text-decoration:underline}
+#tab-music .mu-bl .none{opacity:.5;border-style:dashed}
+#tab-music .mu-queue li{cursor:grab}
+#tab-music .mu-queue li.drag{opacity:.35}
+#tab-music .mu-queue li.over{box-shadow:0 -2px 0 var(--accent)}
+#tab-music .mu-queue li .grip{opacity:.35;font-size:14px;letter-spacing:-2px}
+#tab-music .mu-queue li .pr{font-size:11px;padding:1px 6px;border-radius:8px;background:var(--accent-soft);color:var(--accent2);flex:none}
+#tab-music .mu-queue li .ban{font-size:12px;opacity:.5}
+#tab-music .mu-banbtn{margin-left:auto}
+#tab-music .mu-sbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+#tab-music .mu-stot{opacity:.65;font-size:13px;flex:1}
+#tab-music .mu-chart,#tab-music .mu-users,#tab-music .mu-hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+#tab-music .mu-chart li{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px;border-radius:12px;overflow:hidden;border:1px solid var(--divider)}
+#tab-music .mu-chart li::before{content:"";position:absolute;left:0;top:0;bottom:0;width:var(--w,0);background:var(--accent-soft);z-index:0}
+#tab-music .mu-chart li>*{position:relative;z-index:1}
+#tab-music .mu-chart .rk{width:26px;font-weight:800;font-size:18px;opacity:.7;text-align:center}
+#tab-music .mu-chart li:nth-child(1) .rk{color:#f5c542;opacity:1}#tab-music .mu-chart li:nth-child(2) .rk{color:#c0c7d1;opacity:1}#tab-music .mu-chart li:nth-child(3) .rk{color:#d88b4a;opacity:1}
+#tab-music .mu-chart img,#tab-music .mu-hist img{width:64px;height:36px;object-fit:cover;border-radius:6px;flex:none;background:#222}
+#tab-music .mu-chart .t,#tab-music .mu-hist .t{flex:1;min-width:0;display:flex;flex-direction:column}
+#tab-music .mu-chart .t b,#tab-music .mu-hist .t b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+#tab-music .mu-chart .t small,#tab-music .mu-hist .t small{opacity:.6;font-size:12px}
+#tab-music .mu-chart .cnt{font-weight:800;font-size:16px;flex:none}
+#tab-music .mu-users li{display:flex;justify-content:space-between;padding:6px 10px;border-radius:10px;border:1px solid var(--divider);font-size:14px}
+#tab-music .mu-hist{max-height:420px;overflow:auto}
+#tab-music .mu-hist li{display:flex;align-items:center;gap:10px;font-size:13px}
+#tab-music .mu-hist .acts{display:flex;gap:4px;flex:none}
+#tab-music .mu-hist .acts button{border:1px solid var(--divider);background:none;color:inherit;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:12px}
+#tab-music .mu-hist .acts button:hover{border-color:var(--accent)}
+#tab-music .mu-empty{opacity:.55;text-align:center;padding:18px;border:1px dashed var(--divider);border-radius:12px;font-size:13px}

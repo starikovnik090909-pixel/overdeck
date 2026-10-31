@@ -39,5 +39,56 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   fresh(); m.update({ enabled: false }); ok(!(await m.onChat(msg('!муз x'))) && !m.state().current, 'выключено');
   fresh(); m.update({ skin: 99, view: 'zzz', line: 'top', accent: 'red', volume: 500 }); const s = m.getSettings(); ok(s.skin === 5 && s.view === 'clip' && s.line === 'top' && s.accent === '#e5484d' && s.volume === 100, 'настройки ограничиваются');
   fresh(); await m.addByQuery('x', 'Я'); m.setShow(true); ok(m.state().settings.showVideo, 'показ клипа'); m.stop(); ok(!m.state().current, 'стоп');
+
+  // --- чёрный список ---
+  fresh(); m.update({ blWords: 'казино, 18+' });
+  await m.onChat(msg('!муз казино тест')); ok(!m.state().current && /запрещён/.test(said[said.length - 1]), 'слово из запроса в чёрном списке');
+  fresh(async () => [{ id: 'CCCCCCCCCCC', title: 'Видео про КАЗИНО', channel: 'x', seconds: 100 }, hits[0]]); m.update({ blWords: 'казино' });
+  await m.onChat(msg('!муз песня')); ok(m.state().current.id === 'AAAAAAAAAAA', 'трек с запрещённым словом в названии пропускается, берётся следующий');
+  fresh(); await m.onChat(msg('!муз a')); m.banTrack('AAAAAAAAAAA', 'Дорадура'); ok(!m.state().current && m.getSettings().blTracks.length === 1, 'бан играющего трека пропускает его');
+  await m.onChat(msg('!муз b', { login: 'z', name: 'Z' })); ok(!m.state().current && /ничего не нашлось/.test(said[said.length - 1]), 'забаненный трек не ставится');
+  m.unbanTrack('AAAAAAAAAAA'); ok(m.getSettings().blTracks.length === 0, 'разбан');
+
+  // --- приоритеты и перестановка ---
+  fresh(async (q) => [{ id: 'ID' + q.padEnd(9, 'x').slice(0, 9), title: 'T ' + q, channel: '', seconds: 100 }]); m.update({ cooldown: 0, perUser: 9, prioSub: true });
+  await m.onChat(msg('!муз one', { login: 'a', name: 'A' })); await m.onChat(msg('!муз two', { login: 'b', name: 'B' })); await m.onChat(msg('!муз three', { login: 'c', name: 'C' }));
+  await m.onChat(msg('!муз vip', { login: 'v', name: 'V', roles: { vip: true } }));
+  ok(m.state().queue.map((q) => q.by).join() === 'V,B,C', 'VIP встаёт перед обычными (текущий — A)');
+  await m.onChat(msg('!муз sub2', { login: 's', name: 'S', roles: { sub: true } })); ok(m.state().queue.map((q) => q.by).join() === 'V,S,B,C', 'подписчик после VIP, до обычных');
+  const last = m.state().queue[3].uid; m.move(last, 0); ok(m.state().queue[0].by === 'C', 'перетаскивание в начало');
+  await m.onChat(msg('!отмена', { login: 'c', name: 'C' })); ok(m.state().queue.every((q) => q.by !== 'C'), '!отмена убирает свой заказ');
+
+  // --- баллы канала ---
+  fresh(); m.update({ pointsOn: true, pointsReward: 'Заказать песню' });
+  ok(!(await m.onPoints({ name: 'P', login: 'p', reward: 'Другая награда', input: 'x' })) && !m.state().current, 'чужая награда игнорируется');
+  ok(await m.onPoints({ name: 'P', login: 'p', reward: 'заказать песню', input: 'Дора' }) && m.state().current.by === 'P', 'заказ за баллы');
+  fresh(); m.update({ pointsOn: false, pointsReward: 'R' }); ok(!(await m.onPoints({ name: 'P', login: 'p', reward: 'R', input: 'x' })), 'баллы выключены');
+
+  // --- донаты ---
+  fresh(); m.update({ donateOn: true, donateMinRub: 50, donatePrioRub: 200, cooldown: 0, perUser: 1 });
+  ok(!(await m.onDonation({ username: 'D', message: 'Дора', rub: 10 })), 'мало для заказа');
+  ok(!(await m.onDonation({ username: 'D', message: '', rub: 500 })), 'без текста заказа нет');
+  await m.onChat(msg('!муз first', { login: 'a', name: 'A' })); await m.onChat(msg('!муз second', { login: 'b', name: 'B' }));
+  await m.onDonation({ username: 'D1', message: '!муз Дора', rub: 100 }); ok(m.state().queue.map((q) => q.by).join() === 'D1,B', 'обычный донат встаёт выше чата');
+  await m.onDonation({ username: 'D2', message: 'Дора', rub: 300 }); ok(m.state().queue[0].by === 'D2', 'крупный донат — вне очереди');
+  await m.onDonation({ username: 'D2', message: 'ещё', rub: 300 }); ok(m.state().queue.filter((q) => q.by === 'D2').length === 2, 'донат снимает лимит заказов от зрителя');
+
+  // --- сохранение очереди и история ---
+  const fs = require('fs'), os = require('os'), pth = require('path');
+  const dir = fs.mkdtempSync(pth.join(os.tmpdir(), 'music-'));
+  m.reset(); m.init({ dir, search: async (q) => [{ id: 'ID' + q.padEnd(9, 'x').slice(0, 9), title: 'T ' + q, channel: '', seconds: 100 }], say: async () => true });
+  m.update({ cooldown: 0, perUser: 9, blWords: 'abc' }); m.banTrack('ZZZZZZZZZZZ', 'bad');
+  await m.onChat(msg('!муз one', { login: 'a', name: 'A' })); await m.onChat(msg('!муз two', { login: 'b', name: 'B' })); await m.onChat(msg('!муз three', { login: 'c', name: 'C' }));
+  m.flush(); const before = m.state();
+  m.reset(); m.init({ dir, say: async () => true });
+  const after = m.state();
+  ok(after.current.uid === before.current.uid && after.queue.length === 2 && after.queue[0].by === 'B', 'очередь и текущий трек переживают перезапуск');
+  ok(after.settings.blWords === 'abc' && after.settings.blTracks.length === 1, 'чёрный список и настройки сохраняются');
+  m.ended(after.current.uid); m.flush();
+  const st = m.stats(0); ok(st.total === 2 && st.tracks.length === 2 && st.recent.length === 2, 'история воспроизведений сохраняется');
+  m.reset(); m.init({ dir, say: async () => true }); ok(m.stats(0).total === 2, 'история после перезапуска');
+  ok(m.stats(Date.now() + 1000).total === 0, 'фильтр по периоду');
+  fs.rmSync(dir, { recursive: true, force: true });
+
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

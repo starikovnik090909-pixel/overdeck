@@ -129,3 +129,5 @@ soon_settings.json.tmp
 uploads/soon/*
 !uploads/soon/.gitkeep
 music_settings.json
+music_state.json
+music_plays.json

@@ -8,6 +8,7 @@
   const api = (p, o) => fetch(p, o).then((r) => r.json());
   const post = (p, b) => api(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) });
   const fields = $$('[data-m]');
+  var dragUid = 0;
   let st = null, t = 0;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const fmt = (s) => { s = Math.floor(s || 0); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '0:00'; };
@@ -42,7 +43,10 @@
     ph.hidden = !!want;
     if (!want) { ph.innerHTML = cur ? '<span>⏸</span><b>Пауза</b><small>' + esc(cur.title) + '</small>' : '<span>♪</span><b>Тишина</b><small>Ждём заказы из чата</small>'; }
     $('#muCount').textContent = s.queue.length ? s.queue.length : '';
-    $('#muQueue').innerHTML = s.queue.length ? s.queue.map((q, i) => '<li><span class="n">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(q.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(q.title) + '</b><small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : '<li class="empty">Очередь пуста</li>';
+    $('#muQueue').innerHTML = s.queue.length ? s.queue.map((q, i) => '<li draggable="true" data-uid="' + q.uid + '"><span class="grip" aria-hidden="true">⋮⋮</span><span class="n">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(q.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(q.title) + '</b><small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span>' + (q.prio >= 2 ? '<span class="pr">вне очереди</span>' : q.prio === 1 ? '<span class="pr">приоритет</span>' : '') + '<button type="button" class="ban" data-ban="' + q.uid + '" title="В чёрный список">⛔</button><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : '<li class="empty">Очередь пуста</li>';
+    $('#muBan').disabled = !cur;
+    const bl = s.settings.blTracks || [];
+    $('#muBl').innerHTML = bl.length ? bl.map((t) => '<li><span>' + esc(t.title || t.id) + '</span><button type="button" data-unban="' + esc(t.id) + '">убрать</button></li>').join('') : '<li class="none">Пока пусто</li>';
     paintView(s.settings);
     fields.forEach((f) => { const v = s.settings[f.dataset.m]; if (f.type === 'checkbox') f.checked = !!v; else if (document.activeElement !== f) f.value = v == null ? '' : v; });
     tickProg();
@@ -54,7 +58,8 @@
     $('#muPg').style.width = d ? Math.min(100, t / d * 100) + '%' : '0';
   }
   setInterval(tickProg, 500);
-  const refresh = () => api('/api/music/state').then((s) => { if (s && s.success) render(s); }).catch(() => {});
+  const refresh = () => api('/api/music/state').then((s) => { if (s && s.success && !dragUid) render(s); }).catch(() => {});
+  const liveVisible = () => sec.offsetParent && !$('#muLive').hidden;
   const act = (p, b) => post(p, b).then((s) => { if (s && s.success) render(s); else say((s && s.error) || 'Ошибка', true); return s; });
 
   $('#muShow').addEventListener('click', () => act('/api/music/show', { show: !(st && st.settings.showVideo) }));
@@ -63,6 +68,49 @@
   $('#muClear').addEventListener('click', () => act('/api/music/clear'));
   $('#muStop').addEventListener('click', () => act('/api/music/stop'));
   $('#muQueue').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b) act('/api/music/remove', { uid: Number(b.dataset.rm) }); });
+  $('#muQueue').addEventListener('click', (e) => { const b = e.target.closest('[data-ban]'); if (!b || !lastSt) return; const q = lastSt.queue.find((x) => x.uid === Number(b.dataset.ban)); if (q) act('/api/music/ban', { id: q.id, title: q.title }); });
+  $('#muBan').addEventListener('click', () => { if (lastSt && lastSt.current) act('/api/music/ban', { id: lastSt.current.id, title: lastSt.current.title }); });
+  $('#muBl').addEventListener('click', (e) => { const b = e.target.closest('[data-unban]'); if (b) act('/api/music/unban', { id: b.dataset.unban }); });
+  // перетаскивание очереди
+  const qEl = $('#muQueue');
+  qEl.addEventListener('dragstart', (e) => { const li = e.target.closest('li[data-uid]'); if (!li) return; dragUid = Number(li.dataset.uid); li.classList.add('drag'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', String(dragUid)); } catch (x) { /* не критично */ } });
+  qEl.addEventListener('dragend', () => { dragUid = 0; qEl.querySelectorAll('li').forEach((l) => l.classList.remove('drag', 'over')); });
+  qEl.addEventListener('dragover', (e) => { if (!dragUid) return; e.preventDefault(); const li = e.target.closest('li[data-uid]'); qEl.querySelectorAll('li').forEach((l) => l.classList.toggle('over', l === li)); });
+  qEl.addEventListener('drop', (e) => {
+    if (!dragUid) return; e.preventDefault();
+    const li = e.target.closest('li[data-uid]'); if (!li || !lastSt) return;
+    const to = lastSt.queue.findIndex((q) => q.uid === Number(li.dataset.uid)), from = lastSt.queue.findIndex((q) => q.uid === dragUid);
+    if (to < 0 || from < 0 || to === from) return;
+    act('/api/music/move', { uid: dragUid, to });
+  });
+
+  // --- вкладки «Эфир» / «Чарт и история» ---
+  let pane = 'live', since = 'today';
+  const sinceMs = () => since === 'today' ? new Date(new Date().setHours(0, 0, 0, 0)).getTime() : since === '7' ? Date.now() - 7 * 864e5 : 0;
+  function showPane(p) {
+    pane = p; $('#muLive').hidden = p !== 'live'; $('#muStats').hidden = p !== 'stats';
+    $$('#muTabs button').forEach((b) => b.classList.toggle('on', b.dataset.p === p));
+    if (p === 'stats') loadStats();
+  }
+  $$('#muTabs button').forEach((b) => b.addEventListener('click', () => showPane(b.dataset.p)));
+  $$('#muPeriod button').forEach((b) => b.addEventListener('click', () => { since = b.dataset.d; $$('#muPeriod button').forEach((x) => x.classList.toggle('on', x === b)); loadStats(); }));
+  function loadStats() {
+    api('/api/music/stats?since=' + sinceMs()).then((r) => {
+      if (!r || !r.success) return;
+      $('#muTotal').textContent = r.total ? 'Воспроизведений: ' + r.total : 'За этот период ещё ничего не играло';
+      const max = r.tracks.length ? r.tracks[0].count : 1;
+      $('#muChart').innerHTML = r.tracks.length ? r.tracks.slice(0, 15).map((t, i) => '<li style="--w:' + Math.round(t.count / max * 100) + '%"><span class="rk">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(t.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(t.title) + '</b><small>' + esc(t.channel) + '</small></span><span class="cnt">×' + t.count + '</span></li>').join('') : '<li class="mu-empty">Чарт появится, когда зрители закажут первые треки</li>';
+      $('#muUsers').innerHTML = r.users.length ? r.users.map((u) => '<li><span>' + esc(u.name) + '</span><b>' + u.count + '</b></li>').join('') : '<li class="mu-empty">Пока никого</li>';
+      $('#muHist').innerHTML = r.recent.length ? r.recent.map((h) => '<li><img src="https://i.ytimg.com/vi/' + esc(h.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(h.title) + '</b><small>' + new Date(h.at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + (h.by ? ' · ' + esc(h.by) : '') + '</small></span><span class="acts"><button type="button" data-again="' + esc(h.id) + '" title="Поставить ещё раз">↻</button><button type="button" data-hban="' + esc(h.id) + '" data-t="' + esc(h.title) + '" title="В чёрный список">⛔</button></span></li>').join('') : '<li class="mu-empty">История пуста</li>';
+    }).catch(() => {});
+  }
+  $('#muHist').addEventListener('click', (e) => {
+    const a = e.target.closest('[data-again]'), b = e.target.closest('[data-hban]');
+    if (a) act('/api/music/add', { query: 'https://youtu.be/' + a.dataset.again }).then((r) => { if (r && r.success) flash('Добавлено в очередь'); });
+    if (b) act('/api/music/ban', { id: b.dataset.hban, title: b.dataset.t }).then((r) => { if (r && r.success) flash('В чёрном списке'); });
+  });
+  $('#muChartSay').addEventListener('click', () => post('/api/music/chart/say', { since: sinceMs() }).then((r) => { flash(r && r.success ? 'Отправлено в чат' : (r && r.error) || 'Не удалось'); }));
+
   function add() {
     const q = $('#muQuery').value.trim(); if (!q) return;
     const b = $('#muAdd'); b.disabled = true; say('Ищу на YouTube…');
