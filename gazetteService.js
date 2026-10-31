@@ -7,6 +7,7 @@ const demo = require('./gazetteDemo');
 const journal = require('./streamJournal');
 
 const FILE = path.join(__dirname, 'gazette_settings.json');
+const MEM_FILE = path.join(__dirname, 'gazette_memory.json'); // память выпусков: какие фразы уже были и кого помним (только на этом ПК)
 
 const DEFAULTS = {
   studioName: '',          // пусто — берётся имя канала
@@ -23,6 +24,44 @@ let screen = { format: null, rev: 0, demo: null };
 let pulse = { rev: 0, demo: null };
 let channel = '';
 let cache = { key: '', at: 0, val: null };
+let mem = { used: {}, nicks: {}, streams: 0, committed: 0 };
+let lastPicks = null; // фразы последнего живого выпуска — фиксируются в памяти, когда выпуск показали в OBS
+
+function loadMem() {
+  try { const m = JSON.parse(fs.readFileSync(MEM_FILE, 'utf8')); mem = { used: m.used || {}, nicks: m.nicks || {}, streams: m.streams || 0, committed: m.committed || 0 }; } catch (e) { mem = { used: {}, nicks: {}, streams: 0, committed: 0 }; }
+}
+function saveMem() {
+  try { const tmp = MEM_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(mem)); fs.renameSync(tmp, MEM_FILE); } catch (e) { /* память необязательна */ }
+}
+/** Ники, которых помним между стримами: сколько эфиров были в чате, сколько раз донатили, о чём просили. Хранится только локально. */
+function commitSession(S) {
+  if (!S || !S.chat || S.chat.length < 20 || S.startTs === mem.committed) return;
+  const A = Gazette.analyze(S, {});
+  const seen = new Set();
+  Object.keys(A.byUser || {}).forEach((u) => {
+    const k = u.toLowerCase(); seen.add(k);
+    const n = mem.nicks[k] || (mem.nicks[k] = { s: 0, m: 0, d: 0, t: {} });
+    n.s += 1; n.m += A.byUser[u]; n.l = S.startTs;
+    Object.entries((A.userTopics || {})[u] || {}).forEach(([id, c]) => { n.t[id] = (n.t[id] || 0) + c; });
+  });
+  S.events.filter((e) => e.type === 'donation' && e.user).forEach((e) => {
+    const k = e.user.toLowerCase(); const n = mem.nicks[k] || (mem.nicks[k] = { s: 0, m: 0, d: 0, t: {} }); n.d += 1; n.ds = (n.ds || 0) + (e.amount || 0);
+  });
+  // не копим бесконечно: оставляем самых активных и тех, кто донатил
+  const keys = Object.keys(mem.nicks);
+  if (keys.length > 3000) keys.sort((a, b) => (mem.nicks[b].s + mem.nicks[b].d * 3) - (mem.nicks[a].s + mem.nicks[a].d * 3)).slice(2500).forEach((k) => delete mem.nicks[k]);
+  mem.streams += 1; mem.committed = S.startTs;
+  saveMem();
+}
+function commitPicks() {
+  if (!lastPicks || !lastPicks.length) return;
+  lastPicks.forEach(({ key, idx }) => {
+    const arr = (mem.used[key] = mem.used[key] || []);
+    if (arr.indexOf(idx) < 0) arr.push(idx);
+    while (arr.length > 40) arr.shift();
+  });
+  lastPicks = null; saveMem();
+}
 
 function clamp(n, a, b, d) { n = Number(n); return Number.isFinite(n) ? Math.min(b, Math.max(a, Math.round(n))) : d; }
 
@@ -51,6 +90,9 @@ function init(opts) {
   channel = (opts && opts.channel) || '';
   try { cfg = normalize(JSON.parse(fs.readFileSync(FILE, 'utf8'))); } catch (e) { cfg = normalize({}); }
   journal.init({ enabled: cfg.journalEnabled });
+  loadMem();
+  const origReset = journal.reset; // перед новым стримом запоминаем зрителей прошлого
+  journal.reset = function () { try { commitSession(journal.getSession()); } catch (e) { /* память необязательна */ } return origReset.apply(this, arguments); };
 }
 function setChannel(c) { channel = c || ''; }
 
@@ -79,6 +121,7 @@ function state() {
 function show(format, demoId) {
   if (!['credits', 'gazette'].includes(format)) return state();
   screen = { format, rev: screen.rev + 1, demo: demo.ids.includes(demoId) ? demoId : null };
+  if (!screen.demo) commitPicks(); // выпуск показан — его фразы больше не повторяем
   return state();
 }
 function hide() { screen = { format: null, rev: screen.rev + 1, demo: null }; return state(); }
@@ -112,7 +155,9 @@ function buildIssue(opts) {
   const name = studio();
   S.streamer = name;
   S.tzOffsetMin = demoId ? 0 : -new Date().getTimezoneOffset(); // время в хронике — по часам этого ПК
-  const g = Gazette.build(S, { seed, masthead: 'ВЕСТНИК ' + name.toUpperCase() });
+  // демо-вечера строим без памяти, живой — с памятью прошлых выпусков и зрителей (копия, чтобы опрос раз в секунду ничего не менял)
+  const g = Gazette.build(S, { seed, masthead: 'ВЕСТНИК ' + name.toUpperCase(), memory: demoId ? null : JSON.parse(JSON.stringify({ used: mem.used, nicks: mem.nicks })) });
+  if (!demoId) lastPicks = g.picks;
   const gamesByTime = (S.games || []).slice().sort((a, b) => a.from - b.from);
   mainGame = g && gamesByTime.length ? (gamesByTime.slice().sort((a, b) => b.from - a.from)[0].name) : '';
   const mg = (S.games || []).length ? longestGame(S) : '';
@@ -166,4 +211,4 @@ function pickGhost(S) {
   return out;
 }
 
-module.exports = { init, setChannel, getSettings, update, state, show, hide, firePulse, buildIssue, journal, demo, DEFAULTS, normalize };
+module.exports = { MEM_FILE, commitSession, init, setChannel, getSettings, update, state, show, hide, firePulse, buildIssue, journal, demo, DEFAULTS, normalize };

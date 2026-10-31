@@ -121,3 +121,5 @@ stream_journal.json
 stream_journal.json.tmp
 gazette_settings.json
 gazette_settings.json.tmp
+gazette_memory.json
+gazette_memory.json.tmp

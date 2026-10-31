@@ -7,7 +7,7 @@ let fails = 0, total = 0;
 function t(name, fn) { total++; try { fn(); } catch (e) { fails++; console.log('✗ ' + name + ': ' + e.message); } }
 
 // 1. Тест-вечера дают ожидаемую главную тему
-const expect = { A: 'comeback', B: 'quietWord|quiet|thin', C: 'donationBig|donationTop', D: 'tech' };
+const expect = { A: 'comeback', B: 'quietWord|quiet|thin', C: 'donationBig|donationTop', D: 'tech', E: 'donAgain3' };
 demo.ids.forEach((id) => t('вечер ' + id + ': тема', () => {
   const g = Gazette.build(demo.make(id, 7), { seed: 1 });
   assert(new RegExp('^(' + expect[id] + ')$').test(g.leadKind) || id === 'B', 'тема ' + g.leadKind);
@@ -23,6 +23,34 @@ demo.ids.forEach((id) => t('вечер ' + id + ': заголовки чисты
     });
   }
 }));
+
+
+// 5. Память фраз: один и тот же вечер подряд не повторяет формулировки заголовка
+t('память фраз: заголовки не повторяются', () => {
+  const memory = { used: {}, nicks: {} };
+  const seen = [];
+  for (let i = 0; i < 6; i++) { const g = Gazette.build(demo.make('C', 7), { seed: 5, memory }); seen.push(g.headline); }
+  assert(new Set(seen).size === seen.length, 'повтор: ' + seen.join(' | '));
+});
+
+// 6. Повторный донор и «старая» просьба
+t('повторные донаты и просьбы', () => {
+  const g = Gazette.build(demo.make('E', 7), { seed: 2, memory: { used: {}, nicks: { 'nonamebro': { s: 4, d: 2, t: {} }, 'toxic_tomato': { s: 5, d: 0, t: { points: 3 } } } } });
+  const kinds = g.stories.map((s) => s.kind).concat(g.timeline.map((x) => x.kind));
+  assert(kinds.some((k) => /^donAgain/.test(k)), 'нет повторного доната: ' + kinds);
+  assert(g.timeline.some((x) => /Vasya_98/.test(x.text)), 'донор не назван');
+  const topics = Gazette.analyze(demo.make('E', 7), {}).topics.map((x) => x.id);
+  ['movie', 'dub', 'points', 'gift'].forEach((id) => assert(topics.indexOf(id) >= 0, 'нет темы ' + id));
+});
+
+// 7. Словарь: у каждого повторяющегося события — не меньше 6 вариантов; в тексте нет мужских причастий при нике
+t('словарь: объём и грамматика', () => {
+  const Lex = require('../gazetteLexicon');
+  const total = Object.values(Lex.T).reduce((a, b) => a + b.length, 0) + Object.values(Lex.TOPIC_T).reduce((a, b) => a + b.length, 0);
+  assert(total >= 380, 'фраз всего: ' + total);
+  ['donation', 'raid', 'subWave', 'comeback', 'donAgain2', 'donAgain3', 'stormWord', 'tech', 'duel', 'reqRepeat'].forEach((k) => assert(Lex.T[k].length >= 6, k + ': ' + Lex.T[k].length));
+  Object.values(Lex.T).flat().filter((x) => /%u[^a-z]*(оставил|отправил|подарил|привёл|задонатил|написал|пришёл)/.test(x)).forEach((x) => { throw new Error('род при нике: ' + x); });
+});
 
 // 3. Пустой вечер не падает
 t('пустой журнал', () => {

@@ -226,7 +226,7 @@
       const d = new Date(issue.startTs + (issue.clockOffsetMin || 0) * 60000);
       const date = String(d.getUTCDate()).padStart(2, '0') + '.' + String(d.getUTCMonth() + 1).padStart(2, '0') + '.' + d.getUTCFullYear();
       const photo = issue.art ? `<img alt="" src="${esc(issue.art)}">` : wideVignette(issue.leadKind, (issue.emote && issue.emote.w) || (issue.word && issue.word.w) || 'GG');
-      const tl = (issue.timeline || []).length ? `<ul class="tl">${issue.timeline.map((t) => `<li><time>${esc(t.time)}</time><span>${esc(t.text)}</span></li>`).join('')}</ul>` : '<p><i>Происшествий не было — и это тоже новость.</i></p>';
+      const tl = (issue.timeline || []).length ? `<ul class="tl">${issue.timeline.slice().sort((a, b) => (b.score || 0) - (a.score || 0)).slice(0, 6).sort((a, b) => (a.time < b.time ? -1 : 1)).map((t) => `<li><time>${esc(t.time)}</time><span>${esc(t.text)}</span></li>`).join('')}</ul>` : '<p><i>Происшествий не было — и это тоже новость.</i></p>';
       const heroes = [issue.heroes && issue.heroes.talker ? `Главный болтун: <b>${esc(issue.heroes.talker.user)}</b> (${issue.heroes.talker.n})` : '', issue.heroes && issue.heroes.donor ? `Щедрее всех: <b>${esc(issue.heroes.donor.user)}</b> (${money(issue.heroes.donor.sum)})` : ''].filter(Boolean).join('<br>');
       stage.innerHTML = `<div class="sheet"><div class="mast"><b>${esc(issue.masthead)}</b><small><span>Вечерний выпуск · ${date}</span><span>${esc(issue.weather.icon + ' ' + issue.weather.label)}</span><span>${dur(F.mins || 0)} в эфире</span></small></div>
       <h2 class="hl typing" id="gzHl"></h2><p class="dk">${esc(issue.deck || '')}</p>
