@@ -99,3 +99,8 @@
 #tab-extras [hidden]{display:none!important}
 #tab-extras .soon-g input[type=text],#tab-extras .soon-g input[type=number],#tab-extras .soon-g input[type=time]{padding:8px 11px;border:1px solid var(--divider);border-radius:8px;background:var(--bg-card2);color:inherit;font:inherit;font-size:13.5px;width:100%;min-width:0}
 #tab-extras .soon-g input[type=range]{width:100%;accent-color:var(--c)}
+#tab-extras .soon-tw{display:flex;gap:12px;align-items:center;padding:10px;border:1px solid var(--divider);border-radius:12px;background:var(--bg-card2)}
+#tab-extras .soon-tw-art{flex:none;width:54px;height:72px;border-radius:8px;background:var(--bg-hover) center/cover no-repeat}
+#tab-extras .soon-tw-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+#tab-extras .soon-tw-t b{font-size:16px;line-height:1.2}
+#tab-extras .soon-tw-t .ex-sm{overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}

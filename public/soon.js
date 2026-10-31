@@ -25,7 +25,14 @@
     style.setProperty('--glow', rgba(s.accent2, 0.5));
     style.setProperty('--chatline', rgba(s.accent, 0.55));
     style.setProperty('--chat-w', s.chatWidth + 'px');
-    style.setProperty('--tx-left', (s.chat === 'left' ? s.chatWidth + 120 : 100) + 'px');
+    stage.dataset.layout = s.layout;
+    let left = s.chat === 'left' ? s.chatWidth + 120 : 100, right = s.chat === 'right' ? 1920 - 60 - s.chatWidth - 40 : 1860;
+    const colSide = s.chat === 'left' ? 'r' : 'l'; // обложка стоит с противоположной от чата стороны
+    if (s.layout === 'column') { if (colSide === 'l') left = Math.max(left, 580); else right = Math.min(right, 1920 - 480 - 40); }
+    style.setProperty('--tx-left', left + 'px'); style.setProperty('--tx-w', Math.max(400, right - left) + 'px');
+    ['colp', 'edge'].forEach((id) => { $(id).className = id + ' ' + colSide; });
+    const art = $('colart'), au = (ch.art && s.layout === 'column') ? ch.art : '';
+    if (art.dataset.u !== au) { art.dataset.u = au; art.style.backgroundImage = au ? 'url("' + au + '")' : 'none'; }
     $('base').style.background = 'radial-gradient(ellipse at 40% 130%,' + mix(s.bg, s.accent, 0.55) + ' 0,' + mix(s.bg, s.accent, 0.18) + ' 45%,' + s.bg + ' 100%)';
     const img = $('bgimg'), dim = $('dim');
     if (st.bgUrl) { img.style.display = 'block'; if (img.dataset.u !== st.bgUrl) { img.style.backgroundImage = 'url("' + st.bgUrl + '")'; img.dataset.u = st.bgUrl; } img.style.filter = s.bgBlur ? 'blur(' + s.bgBlur + 'px)' : 'none'; img.style.transform = s.bgBlur ? 'scale(1.06)' : 'none'; dim.style.display = 'block'; dim.style.opacity = s.bgDim / 100; }
@@ -37,10 +44,23 @@
     $('catLabel').hidden = !s.showCategory; $('catLabel').textContent = s.categoryLabel;
     const c = $('cat'); c.hidden = !s.showCategory; c.textContent = s.categoryText || ch.game || 'Без категории'; c.classList.toggle('grad', !!s.gradientTitle);
     const t = $('title'); t.hidden = !s.showTitle; t.textContent = s.titleText || ch.title || '';
+    fitName(s);
     $('footer').hidden = !s.showFooter; $('footer').textContent = (s.footer || ((ch.login || '') + ' · OVERDECK')).toUpperCase();
     srvOffset = st.timer.now - Date.now();
     tick();
   }
+
+  /** Длинное название категории уменьшаем, пока оно не поместится в строку. */
+  function fitName(s) {
+    const c = $('cat'), tx = $('tx'); if (c.hidden) return;
+    c.style.whiteSpace = 'nowrap';
+    let size = s.layout === 'column' ? 104 : 150; c.style.fontSize = size + 'px';
+    const max = tx.clientWidth || 1160;
+    while (c.scrollWidth > max && size > 76) { size -= 4; c.style.fontSize = size + 'px'; }
+    if (c.scrollWidth > max) { c.style.whiteSpace = 'normal'; c.style.fontSize = '72px'; } // совсем длинное название: в две строки
+  }
+
+  if (document.fonts) { const re = () => { if (S) fitName(S.settings); }; document.fonts.ready.then(re); document.fonts.load('700 100px Oswald').then(re, () => {}); document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', re); }
 
   function target() {
     const s = S.settings;

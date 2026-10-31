@@ -1343,10 +1343,17 @@ require('./routes/team').part3({ teamData, teamPresets, app, validSide, broadcas
 const { chroniclesUpload } = require('./routes/chronicles').upload({ path, express, multer, chronicles, app });
 require('./routes/telegram').main({ chronicles, telegramAnnounce, app });
 require('./routes/gazette').main({ gazetteService, app });
+let soonArt = { id: '', url: null };
 soonData.init(async () => {
   if (!(resolvedBroadcasterId && twitch.hasCredentials(config))) return null;
   const info = await twitch.fetchChannelInfo(config, resolvedBroadcasterId);
-  return info ? { title: info.title || '', game: info.game_name || '', login: config.channel || '' } : null;
+  if (!info) return null;
+  let art = null; // обложка категории крупного размера для экрана «Скоро начнём»
+  if (info.game_id) {
+    if (soonArt.id === info.game_id && soonArt.url) art = soonArt.url;
+    else { art = await twitch.fetchGameArt(config, info.game_id, 720, 960).catch(() => null); soonArt = { id: info.game_id, url: art }; }
+  }
+  return { title: info.title || '', game: info.game_name || '', login: config.channel || '', art };
 });
 require('./routes/soon').main({ soonData, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });

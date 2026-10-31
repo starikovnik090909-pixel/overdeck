@@ -15,10 +15,11 @@ const DEFAULTS = {
   showFooter: true, footer: '',                                         // пусто — «ИМЯ КАНАЛА · OVERDECK»
   accent: '#e5484d', accent2: '#ff6a3c', bg: '#0b0305', text: '#ffffff',
   gradientTitle: true, glow: true, embers: true, emberCount: 110,
+  layout: 'embers',                                                     // вид: embers («Угли») или column («Колонка» с обложкой категории)
   chat: 'right', chatBorder: true, chatWidth: 520,
   bgImage: '', bgDim: 35, bgBlur: 0,
 };
-const ENUM = { timerMode: ['minutes', 'clock'], chat: ['right', 'left', 'off'] };
+const ENUM = { timerMode: ['minutes', 'clock'], chat: ['right', 'left', 'off'], layout: ['embers', 'column'] };
 const BOOL = ['showKicker', 'showCategory', 'showTitle', 'showTimer', 'showFooter', 'gradientTitle', 'glow', 'embers', 'chatBorder'];
 const STR = { kicker: 60, categoryLabel: 30, categoryText: 80, titleText: 140, timerLabel: 30, timerEndText: 30, footer: 60 };
 const COLOR = ['accent', 'accent2', 'bg', 'text'];
@@ -75,9 +76,11 @@ async function channelInfo() {
   if (v || !cache.val) cache = { at: Date.now(), val: v }; else cache.at = Date.now();
   return cache.val;
 }
+/** Принудительно спросить Twitch сейчас (кнопка «Синхронизировать»). Возвращает данные канала или null. */
+async function sync() { let v = null; try { v = await provider(); } catch (e) { v = null; } if (v) cache = { at: Date.now(), val: v }; return v; }
 async function state() {
   const ci = await channelInfo();
-  return { settings: getSettings(), timer: { endAt, now: Date.now() }, channel: ci || { title: '', game: '', login: '' }, bgUrl: cfg.bgImage ? '/uploads/soon/' + cfg.bgImage : '' };
+  return { settings: getSettings(), timer: { endAt, now: Date.now() }, channel: ci || { title: '', game: '', login: '', art: null }, bgUrl: cfg.bgImage ? '/uploads/soon/' + cfg.bgImage : '' };
 }
 
-module.exports = { DEFAULTS, DIR, EXT, init, getSettings, update, resetColors, startTimer, resetTimer, setBackground, clearBackground, state };
+module.exports = { DEFAULTS, DIR, EXT, init, getSettings, update, resetColors, sync, startTimer, resetTimer, setBackground, clearBackground, state };

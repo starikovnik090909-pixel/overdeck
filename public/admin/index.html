@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
-<link rel="stylesheet" href="extras.css?v=7">
+<link rel="stylesheet" href="extras.css?v=8">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -3187,12 +3187,19 @@
           <div class="ex-body">
             <div class="ex-col"><h4 class="ex-h">О функции</h4><span class="ex-tag">Перед стримом</span><p class="ex-one">Полноэкранный экран ожидания: «стрим скоро начнётся», категория и название с Twitch, таймер и место под чат.</p><div class="ex-tags"><span>Категория с Twitch</span><span>Таймер</span><span>Свои цвета</span><span>Фон: картинка или гиф</span><span>Искры</span></div><p>Категория и название подтягиваются сами, даже пока стрим не начался. Любое поле можно заменить своим текстом или выключить. Справа или слева оставлено вертикальное место под чат: наложи на него источник чата в OBS.</p></div>
             <div class="ex-col ex-show"><h4 class="ex-h">Показ на стриме</h4>
+              <div class="soon-tw" id="soonTw"><div class="soon-tw-art" id="soonTwArt"></div><div class="soon-tw-t"><span class="ex-h">Сейчас на Twitch</span><b id="soonTwGame">…</b><span class="ex-sm" id="soonTwTitle"></span></div></div>
+              <div class="ex-actions"><button class="btn btn-secondary" type="button" id="soonSync">Синхронизировать с Twitch</button></div>
+              <p class="ex-sm">Экран сам подхватывает категорию и название с твоего канала раз в 20 секунд. Кнопка нужна, если ты только что поменял их на Twitch и хочешь увидеть сразу.</p>
               <div class="ex-actions"><button class="btn btn-primary" type="button" id="soonStart">Запустить таймер</button><button class="btn btn-secondary" type="button" id="soonReset">Сбросить</button></div>
               <p class="ex-sm">«Запустить» ставит таймер на выбранные минуты. В режиме «по часам» кнопка не нужна.</p>
               <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="soon.html" title="Источник «Браузер» 1920×1080"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
               <div class="form-message" id="soonMsg"></div>
             </div>
             <div class="ex-col ex-opts soon-opts"><h4 class="ex-h">Настройки <span class="ui3-saved" id="soonSaved"></span></h4>
+              <div class="soon-g"><b>Вид экрана</b>
+                <div class="chr-seg" id="soonLayout"><button type="button" data-v="embers">Угли</button><button type="button" data-v="column">Колонка с обложкой</button></div>
+                <p class="ex-sm">«Колонка» показывает обложку категории с Twitch сбоку на всю высоту.</p>
+              </div>
               <div class="soon-g"><b>Тексты</b>
                 <label class="tg-sw"><input type="checkbox" data-s="showKicker"><i></i><span>Надпись сверху</span></label><input type="text" data-s="kicker" maxlength="60">
                 <label class="tg-sw"><input type="checkbox" data-s="showCategory"><i></i><span>Категория</span></label><input type="text" data-s="categoryText" maxlength="80" placeholder="из Twitch (пусто — как на канале)">
@@ -3637,7 +3644,7 @@
 <script src="chronicles.js?v=17"></script>
 <script src="telegram.js?v=5"></script>
 <script src="extras.js?v=4"></script>
-<script src="soon.js?v=1"></script>
+<script src="soon.js?v=2"></script>
 <script src="whatsnew.js?v=31"></script>
 </body>
 </html>

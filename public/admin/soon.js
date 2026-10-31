@@ -22,6 +22,7 @@
     fields.forEach((f) => { const v = s[f.dataset.s]; if (f.type === 'checkbox') f.checked = !!v; else if (document.activeElement !== f) f.value = v == null ? '' : v; });
     $$('#soonMode button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.timerMode));
     $$('#soonChat button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.chat));
+    $$('#soonLayout button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.layout));
     $('#soonBgDel').hidden = !s.bgImage;
     $('#soonBgName').textContent = s.bgImage ? 'Свой фон загружен. Можно заменить новой картинкой или убрать.' : 'Свой фон не задан, используется градиент выбранных цветов.';
     $$('#soonPal button').forEach((b) => b.classList.toggle('on', b.dataset.a === s.accent && b.dataset.b === s.accent2 && b.dataset.c === s.bg));
@@ -29,8 +30,8 @@
   function collect() {
     const o = {};
     fields.forEach((f) => { o[f.dataset.s] = f.type === 'checkbox' ? f.checked : (f.type === 'range' || f.type === 'number') ? Number(f.value) : f.value; });
-    const m = $('#soonMode button.on'), c = $('#soonChat button.on');
-    if (m) o.timerMode = m.dataset.v; if (c) o.chat = c.dataset.v;
+    const m = $('#soonMode button.on'), c = $('#soonChat button.on'), l = $('#soonLayout button.on');
+    if (m) o.timerMode = m.dataset.v; if (c) o.chat = c.dataset.v; if (l) o.layout = l.dataset.v;
     return o;
   }
   function save() {
@@ -40,7 +41,7 @@
     }, 350);
   }
   fields.forEach((f) => f.addEventListener(f.type === 'checkbox' || f.type === 'color' || f.type === 'time' ? 'input' : 'input', save));
-  ['#soonMode', '#soonChat'].forEach((sel) => $$(sel + ' button').forEach((b) => b.addEventListener('click', () => { $$(sel + ' button').forEach((x) => x.classList.toggle('on', x === b)); save(); })));
+  ['#soonMode', '#soonChat', '#soonLayout'].forEach((sel) => $$(sel + ' button').forEach((b) => b.addEventListener('click', () => { $$(sel + ' button').forEach((x) => x.classList.toggle('on', x === b)); save(); })));
 
   const pal = $('#soonPal');
   PAL.forEach((p) => {
@@ -68,5 +69,20 @@
   });
   $('#soonBgDel').addEventListener('click', async () => { try { const r = await api('/api/soon/background', { method: 'DELETE' }); if (r.success) fill(r.settings); } catch (e) { /* ничего */ } });
 
+  function showTw(ch) {
+    const g = ch && (ch.game || ch.title);
+    $('#soonTwGame').textContent = g ? (ch.game || 'Без категории') : 'нет данных';
+    $('#soonTwTitle').textContent = ch && ch.title ? ch.title : 'Подключи Twitch во вкладке «Подключения», тогда здесь появятся категория и название канала.';
+    const art = $('#soonTwArt'); art.style.backgroundImage = ch && ch.art ? 'url("' + ch.art + '")' : 'none';
+  }
+  $('#soonSync').addEventListener('click', async () => {
+    const b = $('#soonSync'); b.disabled = true; say('Спрашиваем Twitch…');
+    try {
+      const r = await post('/api/soon/sync');
+      if (r.success) { showTw(r.channel); say('Готово: данные канала обновлены.'); setTimeout(() => say(''), 2500); } else say(r.error || 'Не получилось.', true);
+    } catch (e) { say('Сервер не ответил.', true); }
+    b.disabled = false;
+  });
+  api('/api/soon/state').then((r) => { if (r.success) showTw(r.channel); }).catch(() => {});
   api('/api/soon/settings').then((r) => { if (r.success) fill(r.settings); }).catch(() => {});
 })();

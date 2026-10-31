@@ -24,3 +24,19 @@ html,body{margin:0;height:100%;overflow:hidden;background:transparent}
 .sub{margin-top:8px;font:500 26px Oswald,sans-serif;letter-spacing:.4em;color:var(--soft)}
 .ft{left:var(--tx-left);bottom:50px;font:500 24px Oswald,sans-serif;letter-spacing:.3em;color:var(--soft)}
 [hidden]{display:none!important}
+
+/* вид «Колонка»: обложка категории во всю высоту сбоку */
+.colp,.edge{display:none}
+.st[data-layout="column"] .colp{display:block;top:0;bottom:0;width:480px;overflow:hidden;background:linear-gradient(165deg,var(--accent2),var(--bg) 70%)}
+.st[data-layout="column"] .colp.l{left:0}.st[data-layout="column"] .colp.r{right:0}
+.colart{position:absolute;inset:-40px;background-size:cover;background-position:center;animation:cdrift 22s ease-in-out infinite alternate}
+@keyframes cdrift{to{transform:scale(1.12) translateX(-18px)}}
+.colp:after{content:"";position:absolute;inset:0}
+.colp.l:after{background:linear-gradient(90deg,transparent 62%,rgba(0,0,0,.75))}
+.colp.r:after{background:linear-gradient(270deg,transparent 62%,rgba(0,0,0,.75))}
+.st[data-layout="column"] .edge{display:block;top:0;bottom:0;width:6px;background:linear-gradient(180deg,var(--accent2),var(--accent));box-shadow:0 0 30px var(--accent)}
+.st[data-layout="column"] .edge.l{left:478px}.st[data-layout="column"] .edge.r{right:478px}
+.st[data-layout="column"] .cn{font-size:104px;white-space:nowrap}
+.st[data-layout="column"] .tm{font-size:140px;margin-top:40px}
+.st[data-layout="column"] .tt{font-size:46px}
+.st[data-layout="column"] .tx{width:var(--tx-w,720px)}

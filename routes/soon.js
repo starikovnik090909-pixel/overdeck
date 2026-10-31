@@ -16,6 +16,11 @@ function main(ctx) {
   app.get('/api/soon/settings', (req, res) => res.json({ success: true, settings: soonData.getSettings(), defaults: soonData.DEFAULTS }));
   app.post('/api/soon/settings', (req, res) => res.json({ success: true, settings: soonData.update(req.body) }));
   app.post('/api/soon/colors/reset', (req, res) => res.json({ success: true, settings: soonData.resetColors() }));
+  app.post('/api/soon/sync', async (req, res) => {
+    const ch = await soonData.sync();
+    if (!ch) return res.status(502).json({ success: false, error: 'Не удалось получить данные с Twitch. Проверь, что Overdeck подключён к Twitch (вкладка «Подключения»).' });
+    res.json({ success: true, channel: ch });
+  });
   app.post('/api/soon/timer', (req, res) => {
     const b = req.body || {};
     if (b.action === 'reset') soonData.resetTimer(); else soonData.startTimer(b.minutes);

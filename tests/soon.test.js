@@ -15,6 +15,8 @@ assert.strictEqual(s.kicker, 'a b', 'переносы строк убирают�
 assert.strictEqual(s.bgImage, '', 'имя фона нельзя задать общим сохранением');
 assert.strictEqual(s.clock, before.clock, 'неверное время не принимается');
 assert.strictEqual(s.timerMode, 'clock');
+assert.strictEqual(soon.update({ layout: 'column' }).layout, 'column', 'вид «Колонка» принимается');
+assert.strictEqual(soon.update({ layout: 'bad' }).layout, 'column', 'неверный вид не принимается');
 
 (async () => {
   let st = await soon.state();
@@ -22,9 +24,10 @@ assert.strictEqual(s.timerMode, 'clock');
   assert.strictEqual(st.channel.game, 'Игра', 'категория приходит с Twitch');
   const end = soon.startTimer(5);
   assert.ok(end > Date.now() + 299000 && end < Date.now() + 301000, 'таймер на 5 минут');
+  const sy = await soon.sync(); assert.strictEqual(sy.game, 'Игра', 'синхронизация берёт данные Twitch');
   soon.resetTimer(); st = await soon.state(); assert.strictEqual(st.timer.endAt, 0);
   soon.resetColors(); assert.strictEqual(soon.getSettings().accent, soon.DEFAULTS.accent);
   soon.update(before); // вернуть как было, чтобы тест не менял настройки
   try { fs.unlinkSync(path.join(__dirname, '..', 'soon_settings.json')); } catch (e) { /* файла может не быть */ }
-  console.log('✓ Экран «Скоро начнём»: 12 проверок пройдено');
+  console.log('✓ Экран «Скоро начнём»: 15 проверок пройдено');
 })().catch((e) => { console.error('✗', e.message); process.exit(1); });

@@ -201,14 +201,14 @@ async function fetchStreamInfo(config, broadcasterId) {
   return (data && Array.isArray(data.data) && data.data[0]) || null;
 }
 
-async function fetchGameArt(config, gameId) {
+async function fetchGameArt(config, gameId, w, h) {
   if (!gameId) return null;
   const data = await helixGet(config, 'games', new URLSearchParams({ id: gameId }));
   const game = data && data.data && data.data[0];
   if (!game || !game.box_art_url) return null;
   // 285x380 — стандартный размер обложки Twitch. Раньше было 144x192, но теперь обложка растягивается плиткой на всю высоту
   // блока таймлайна (фон из категорий), и на такой высоте 144x192 выглядело бы мыльным. Старые записи истории остаются как были.
-  return game.box_art_url.replace('{width}', '285').replace('{height}', '380');
+  return game.box_art_url.replace('{width}', String(w || 285)).replace('{height}', String(h || 380));
 }
 
 async function fetchGlobalBadges(config) {
