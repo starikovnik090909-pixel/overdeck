@@ -164,6 +164,7 @@ function startTracking(info) {
 /** Вызывается каждый опрос статуса стрима: если эфир идёт, а слежения ещё нет (сервер запущен посреди стрима), начинаем. */
 function noteLive(isLive) {
   if (!isLive || live || !cfg.enabled || !ready()) return;
+  if (!timer && !cfg.posts.length && !cfg.lastError) { cfg.lastError = 'Overdeck запущен уже во время эфира, поэтому анонс не отправляется (только при начале стрима при включённом Overdeck). Тестовая кнопка работает всегда.'; save(); }
   getInfo({ light: true }).then((d) => { if (d && d.info) startTracking(d.info); }).catch(() => {});
 }
 function noteEvent(kind, data) {
@@ -292,7 +293,11 @@ function scheduleChronicle(id) {
 
 async function announce() {
   if (!cfg.enabled || !ready()) return;
-  if (Date.now() - cfg.lastSentAt < COOLDOWN_MS) return;
+  if (Date.now() - cfg.lastSentAt < COOLDOWN_MS) {
+    const left = Math.ceil((COOLDOWN_MS - (Date.now() - cfg.lastSentAt)) / 60000);
+    cfg.lastError = `Анонс пропущен: с прошлого прошло меньше 30 минут (ещё ~${left} мин). Это защита от повторов при обрыве связи.`; save();
+    console.log('[Telegram] ' + cfg.lastError); return;
+  }
   try {
     const data = await getInfo();
     if (!data || !data.info) { cfg.lastError = 'Стрим уже не идёт, анонс не отправлен.'; save(); return; }
@@ -307,7 +312,10 @@ async function announce() {
 /** Вызывается, когда стрим только что начался. */
 function onStreamStart() {
   clearTimeout(endTimer); endTimer = null; // стрим вернулся (обрыв связи): посты не удаляем
-  if (!cfg.enabled || !ready()) return;
+  if (!cfg.enabled || !ready()) {
+    cfg.lastError = !cfg.enabled ? 'Стрим начался, но анонсы выключены.' : 'Стрим начался, но канал не привязан.'; save();
+    return;
+  }
   noteLive(true);
   clearTimeout(timer);
   timer = setTimeout(announce, Math.max(0, Math.min(600, Number(cfg.delaySec) || 0)) * 1000);
