@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   const GUIDES = window.OVERLAY_GUIDES || {};
-  const LOCKED = ['event', 'chatavatars', 'twitchext'];
+  const LOCKED = ['event', 'chatavatars', 'twitchext', 'extras'];
   const HIDE_KEY = 'guideHidden_v1';
   const LOCK_KEY = 'tabLockToken_v1';
   const origin = location.origin;
