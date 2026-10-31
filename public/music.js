@@ -4,32 +4,20 @@
   'use strict';
   var preview = /[?&]preview=1/.test(location.search);
   var $ = function (i) { return document.getElementById(i); };
-  var wrap = $('wrap'), pl = $('pl'), mq = $('mq'), by = $('by'), pg = $('pg'), cu = $('cu'), to = $('to'), cv = $('cv');
+  var wrap = $('wrap'), pl = $('pl');
+  var skinNo = 0, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
   var lines = [$('lnTop'), $('lnBot')];
   var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0;
   if (preview) document.body.classList.add('pv');
 
   function fit() {
     document.documentElement.style.setProperty('--u', (innerWidth / 40) + 'px');
-    pl.style.transform = 'scale(' + Math.min(innerWidth / 660, innerHeight / 220) + ')';
+    pl.style.transform = 'scale(' + Math.min(innerWidth / (dim[0] + 20), innerHeight / (dim[1] + 20)) + ')';
   }
   addEventListener('resize', fit); fit();
   var post = function (p, b) { return fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) }).catch(function () {}); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var fmt = function (t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
-
-  // Бегущая строка: если текст не помещается — дублируем и крутим.
-  function marquee(el, html, inner) {
-    el.innerHTML = '<span>' + html + '</span>';
-    var w = inner || el;
-    requestAnimationFrame(function () {
-      var sp = el.firstChild; el.classList.remove('run');
-      if (sp.scrollWidth > w.clientWidth + 2) {
-        sp.innerHTML = html + '<span style="display:inline-block;width:3em"></span>' + html + '<span style="display:inline-block;width:3em"></span>';
-        el.style.setProperty('--d', Math.max(8, sp.scrollWidth / 2 / 70) + 's'); el.classList.add('run');
-      }
-    });
-  }
 
   function paint(st) {
     var s = st.settings, cur = st.current || (preview ? { uid: 0, id: '', title: 'Дора — Дорадура', by: 'Зритель', seconds: 130 } : null);
@@ -56,14 +44,11 @@
             w.style.setProperty('--d', Math.max(8, sp.scrollWidth / 2 / 70) + 's'); w.className = 'w run';
           }
         });
-        marquee(mq, esc(cur.title));
-        by.textContent = who ? 'заказал ' + who : ''; by.style.display = who ? '' : 'none';
-        to.textContent = fmt(cur.seconds);
-        cv.src = cur.id ? 'https://i.ytimg.com/vi/' + cur.id + '/mqdefault.jpg' : '';
-        cv.style.visibility = cur.id ? '' : 'hidden';
+        info = { title: cur.title, by: who, cover: cur.id ? 'https://i.ytimg.com/vi/' + cur.id + '/mqdefault.jpg' : '', dur: cur.seconds || 0 };
       }
     }
-    pl.className = 'mp sk' + s.skin;
+    if (skinNo !== s.skin) { skinNo = s.skin; pl.innerHTML = MusicSkins.html(skinNo); card = pl.firstChild; dim = [MusicSkins.list[skinNo - 1].w, MusicSkins.list[skinNo - 1].h]; pl.style.width = dim[0] + 'px'; pl.style.height = dim[1] + 'px'; fit(); card._k = 0; }
+    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur });
     if (preview || !ready) return;
     if (!cur) { if (loadedUid) { try { player.stopVideo(); } catch (e) {} loadedUid = 0; } return; }
     if (loadedUid !== cur.uid) { loadedUid = cur.uid; try { player.loadVideoById(cur.id); } catch (e) {} }
@@ -76,10 +61,11 @@
   }
 
   setInterval(function () {
-    var t = 0, d = 0;
-    if (preview) { fake = (fake + 0.5) % 130; t = fake; d = 130; }
-    else if (ready) { try { t = player.getCurrentTime(); d = player.getDuration(); } catch (e) {} }
-    if (d > 0) { pg.style.width = Math.min(100, t / d * 100) + '%'; cu.textContent = fmt(t); to.textContent = fmt(d); }
+    var t = 0, d = info.dur;
+    if (preview) { fake = (fake + 0.5) % 130; t = fake; d = 130; info.dur = 130; }
+    else if (ready) { try { t = player.getCurrentTime(); d = player.getDuration() || d; } catch (e) {} }
+    curT = t; if (d > 0) info.dur = d;
+    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur });
   }, 500);
 
   function poll() {

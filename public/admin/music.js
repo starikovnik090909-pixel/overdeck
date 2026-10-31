@@ -61,10 +61,10 @@
   }
   fields.forEach((f) => f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'input', save));
   // --- вид на экране: клип / плеер, строка, 10 видов плеера ---
-  const NAMES = ['Минимал', 'Неон', 'Винил', 'Кассета', 'Стекло', 'Эквалайзер', 'Терминал', 'Светлая', 'Пилюля', 'Постер'];
   const skinsEl = $('#muSkins');
-  skinsEl.innerHTML = NAMES.map((n, i) => '<button type="button" class="mu-sk" data-k="' + (i + 1) + '" title="' + n + '"><div class="mp sk' + (i + 1) + '"><div class="cov"></div><div class="inf"><div class="mq">Дора — Дорадура</div><div class="by">заказал Зритель</div><div class="bar"><i style="width:40%"></i></div><div class="tm"><b>0:52</b><b>2:10</b></div></div><div class="eq"><s></s><s></s><s></s><s></s><s></s></div></div><em>' + n + '</em></button>').join('');
-  function fitSkins() { $$('.mu-sk').forEach((b) => { const w = b.clientWidth; if (w) b.firstChild.style.transform = 'scale(' + w / 640 + ')'; }); }
+  skinsEl.innerHTML = MusicSkins.list.map((d, i) => '<button type="button" class="mu-sk" data-k="' + (i + 1) + '" title="' + d.name + '"><div class="fit">' + MusicSkins.html(i + 1) + '</div><em>' + (i + 1) + '. ' + d.name + '</em></button>').join('');
+  skinsEl.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, { title: 'дора — Дорадура', by: 'Зритель', cover: '', cur: 52, dur: 130 }));
+  function fitSkins() { $$('.mu-sk').forEach((b) => { const d = MusicSkins.list[Number(b.dataset.k) - 1], w = b.clientWidth, h = b.clientHeight; if (w) b.firstChild.style.transform = 'translate(-50%,-50%) scale(' + Math.min((w - 8) / d.w, (h - 8) / d.h) + ')'; }); }
   addEventListener('resize', fitSkins);
   const setS = (patch) => post('/api/music/settings', patch).then((r) => { if (r && r.success) { render(r); flash('Сохранено'); } });
   $$('#muView button').forEach((b) => b.addEventListener('click', () => setS({ view: b.dataset.v })));
