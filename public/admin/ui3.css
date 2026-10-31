@@ -1158,3 +1158,6 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .tg-warn b{color:var(--text-primary,inherit)}
 .tg-warn ul{margin:6px 0 0;padding-left:20px}
 .tg-warn code{background:var(--bg-hover);padding:1px 6px;border-radius:5px;font-size:12px}
+
+.nav-sub{display:none!important}
+.scene-sw{display:inline-flex;margin:8px 0 6px}

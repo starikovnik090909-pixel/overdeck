@@ -1137,7 +1137,8 @@
   let currentTabId = 'auth';
   function activateTab(tabName) {
     currentTabId = tabName;
-    navItems.forEach((item) => item.classList.toggle('active', item.dataset.tab === tabName));
+    navItems.forEach((item) => item.classList.toggle('active', item.dataset.tab === tabName || (item.dataset.tab === 'widgets' && tabName === 'extras')));
+    document.querySelectorAll('[data-scene-sw] button').forEach((b) => b.classList.toggle('on', b.dataset.go === tabName));
     tabSections.forEach((section) => section.classList.toggle('active', section.id === `tab-${tabName}`));
     localStorage.setItem(TAB_KEY, tabName);
   }
@@ -1145,6 +1146,8 @@
   navItems.forEach((item) => {
     item.addEventListener('click', () => activateTab(item.dataset.tab));
   });
+
+  document.querySelectorAll('[data-scene-sw] button').forEach((b) => b.addEventListener('click', () => activateTab(b.dataset.go)));
 
   const savedTab = localStorage.getItem(TAB_KEY);
   if (savedTab && document.getElementById(`tab-${savedTab}`)) {
