@@ -8,7 +8,9 @@ const pageShot = require('./pageShot');
 const FILE = path.join(__dirname, 'telegram.json');
 const COOLDOWN_MS = 30 * 60 * 1000; // повторный старт стрима в течение 30 минут (обрыв связи) заново не анонсируем
 // Общий бот Overdeck: сообщения отправляет маленький Cloudflare Worker (код в telegram-relay/), токен бота лежит только у него.
-const RELAY_URL = 'https://overdeck-telegram.starikovnik090909.workers.dev';
+const RELAY_URLS = ['https://overdeck-telegram.starikovnik090909.workers.dev', 'https://endearing-conkies-67f51c.netlify.app']; // основной (Cloudflare) и запасной (Netlify): один код, один токен бота
+const RELAY_URL = RELAY_URLS[0];
+let relayFirst = 0; // индекс сервера, который отвечал последним: пробуем его первым
 const OLD_DEFAULT = '🔴 {channel} в эфире!\n\n{title}\n🎮 {game}\n\n{url}';
 // Готовые шаблоны анонса. Разрешены теги <b> <i> <u> <s> <code> <blockquote> <tg-spoiler>.
 const PRESETS = [
@@ -88,12 +90,25 @@ async function pickImage(data) {
   return null;
 }
 
+/** fetch к серверу анонсов: при сетевой ошибке (блокировка адреса, обрыв) пробуем следующий сервер. Ответ сервера, даже с ошибкой, возвращаем как есть. */
+async function relayFetch(path, opt, ms) {
+  let lastErr;
+  for (let k = 0; k < RELAY_URLS.length; k++) {
+    const i = (relayFirst + k) % RELAY_URLS.length;
+    try {
+      const r = await fetch(RELAY_URLS[i] + path, { ...opt, signal: AbortSignal.timeout(ms) });
+      if (relayFirst !== i) { relayFirst = i; console.log('[Telegram] Работаем через запасной сервер анонсов: ' + RELAY_URLS[i]); }
+      return r;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr;
+}
 function netError(e) {
   const c = (e && e.cause && (e.cause.code || e.cause.message)) || (e && e.name) || '';
-  return new Error('Не удалось связаться с сервером анонсов Overdeck (' + c + '). Скорее всего, у тебя блокируется адрес overdeck-telegram…workers.dev (провайдер, DNS или антивирус). Попробуй включить VPN или сменить DNS на 1.1.1.1 и повтори.');
+  return new Error('Не удалось связаться с сервером анонсов Overdeck (' + c + '). Скорее всего, у тебя блокируются оба адреса сервера анонсов, workers.dev и netlify.app (провайдер, DNS или антивирус). Попробуй включить VPN или сменить DNS на 1.1.1.1 и повтори.');
 }
 async function relayPost(path, body) {
-  let r; try { r = await fetch(RELAY_URL + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: AbortSignal.timeout(40000) }); } catch (e) { throw netError(e); }
+  let r; try { r = await relayFetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }, 40000); } catch (e) { throw netError(e); }
   const j = await r.json().catch(() => null);
   if (!j || !j.ok) throw new Error((j && j.error) || 'Сервер анонсов не ответил.');
   return j;
@@ -106,7 +121,7 @@ async function deliver(text, img, url, btn) {
     fd.append('key', cfg.relayKey); fd.append('text', text);
     if (btn) fd.append('button', url);
     if (img) fd.append('photo', new Blob([img], { type: 'image/jpeg' }), 'stream.jpg');
-    let r; try { r = await fetch(RELAY_URL + '/send', { method: 'POST', body: fd, signal: AbortSignal.timeout(40000) }); } catch (e) { throw netError(e); }
+    let r; try { r = await relayFetch('/send', { method: 'POST', body: fd }, 40000); } catch (e) { throw netError(e); }
     const j = await r.json().catch(() => null);
     if (!j || !j.ok) throw new Error((j && j.error) || 'Сервер анонсов не ответил.');
     return { kind: img ? 'photo' : 'text', id: j.id };
@@ -388,7 +403,7 @@ function update(b) {
 
 /** Проверка токена и доступа бота к каналу. */
 async function relayCall(path, opt) {
-  let r; try { r = await fetch(RELAY_URL + path, { ...opt, signal: AbortSignal.timeout(20000) }); } catch (e) { throw netError(e); }
+  let r; try { r = await relayFetch(path, opt, 20000); } catch (e) { throw netError(e); }
   const j = await r.json().catch(() => null);
   return { status: r.status, j: j || {} };
 }
