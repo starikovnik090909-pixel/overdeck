@@ -105,8 +105,15 @@
   drawer.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) openD(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !drawer.hidden) openD(false); });
 
+  // --- предпросмотр экрана в карточке и в отдельном окне ---
+  const prev = $('#muPrev'), modal = $('#muModal'), big = $('#muPrevBig');
+  const openM = (v) => { modal.hidden = !v; if (v) big.src = '/music.html?preview=1'; else big.removeAttribute('src'); };
+  $('#muZoom').addEventListener('click', () => openM(true));
+  modal.addEventListener('click', (e) => { if (e.target.closest('[data-mclose]')) openM(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) openM(false); });
+
   let started = false;
-  function start() { if (started) return; started = true; refresh(); setInterval(() => { if (sec.offsetParent) refresh(); }, 2000); }
+  function start() { if (started) return; started = true; prev.src = '/music.html?preview=1'; refresh(); setInterval(() => { if (sec.offsetParent) refresh(); }, 2000); }
   document.querySelectorAll('.nav-item[data-tab="music"]').forEach((n) => n.addEventListener('click', () => { start(); setTimeout(fitSkins, 50); }));
   if (sec.offsetParent) start();
 })();
