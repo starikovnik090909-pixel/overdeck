@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=8">
+<link rel="stylesheet" href="music.css?v=9">
 <link rel="stylesheet" href="../music-skins.css?v=4">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3123,6 +3123,7 @@
         <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
 
       <div class="mu-grid">
+        <div class="mu-left">
         <section class="card ui3-card mu-card">
           <div class="mu-h"><h4 class="ex-h">Очередь <span class="mu-cnt" id="muCount"></span></h4><div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div></div>
           <div class="mu-add"><input type="text" id="muQuery" maxlength="200" placeholder="Добавить: название песни или ссылка на YouTube"><button class="btn btn-secondary" type="button" id="muAdd">Добавить</button></div>
@@ -3131,6 +3132,29 @@
           <div class="mu-cmds"><span>В чате</span><code>!муз название</code><code>!скип</code><small>скип — только стример и модераторы</small></div>
         </section>
 
+        <section class="card ui3-card mu-card mu-quick">
+          <div class="mu-qrow">
+            <div class="mu-q"><span class="mu-ql">Что на экране</span>
+              <div class="chr-seg mu-seg" id="muView"><button type="button" data-v="clip">▶ Клип</button><button type="button" data-v="player">♫ Плеер</button></div>
+            </div>
+            <label class="mu-tile"><input type="checkbox" data-m="enabled"><i></i><span><b>Заказ музыки</b><small>включён</small></span></label>
+            <label class="mu-tile"><input type="checkbox" data-m="showUser"><i></i><span><b>Ник заказчика</b><small>показывать на экране</small></span></label>
+          </div>
+          <div class="mu-rules">
+            <span class="mu-ql">Правила заказа</span>
+            <div class="mu-form">
+              <label><em>Кто заказывает</em><select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
+              <label><em>Громкость, %</em><input type="number" data-m="volume" min="0" max="100"></label>
+              <label><em>Заказов от зрителя</em><input type="number" data-m="perUser" min="1" max="20"></label>
+              <label><em>Пауза между заказами, с</em><input type="number" data-m="cooldown" min="0" max="600"></label>
+              <label><em>Макс. очередь</em><input type="number" data-m="maxQueue" min="1" max="100"></label>
+              <label><em>Макс. длина клипа, мин</em><input type="number" data-m="maxMinutes" min="1" max="60"></label>
+              <label><em>Команды заказа</em><input type="text" data-m="commands" maxlength="80"></label>
+              <label><em>Команды «пропустить»</em><input type="text" data-m="skipCommands" maxlength="80"></label>
+            </div>
+          </div>
+        </section>
+        </div>
         <section class="card ui3-card mu-card mu-now">
           <div class="mu-video" id="muVideo">
             <div class="mu-vph" id="muVph"><span>♪</span><b>Тишина</b><small>Ждём заказы из чата</small></div>
@@ -3162,26 +3186,11 @@
             <div class="obs-url-compact"><span class="obs-url-compact-title">Браузер</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
             <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
 
-            <h4 class="ex-h">Что показывать на экране</h4>
-            <div class="chr-seg" id="muView"><button type="button" data-v="clip">Клип</button><button type="button" data-v="player">Только плеер</button></div>
+            <h4 class="ex-h">Вид на экране</h4>
             <div id="muLineBox"><div class="ex-sm">Строка с названием у клипа</div><div class="chr-seg" id="muLine"><button type="button" data-v="top">Сверху</button><button type="button" data-v="bottom">Снизу</button><button type="button" data-v="off">Без строки</button></div></div>
             <div id="muSkinBox"><div class="ex-sm">Вид плеера</div><div class="mu-skins" id="muSkins"></div></div>
-            <label class="tg-sw"><input type="checkbox" data-m="showUser"><i></i><span>Показывать ник заказчика</span></label>
             <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Выводить на экран сразу при старте трека</span></label>
-
-            <h4 class="ex-h">Правила заказа</h4>
-            <label class="tg-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки включён</span></label>
             <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
-            <div class="mu-form">
-              <label>Кто может заказывать<select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
-              <label>Громкость, %<input type="number" data-m="volume" min="0" max="100"></label>
-              <label>Заказов от одного зрителя<input type="number" data-m="perUser" min="1" max="20"></label>
-              <label>Пауза между заказами, с<input type="number" data-m="cooldown" min="0" max="600"></label>
-              <label>Макс. очередь<input type="number" data-m="maxQueue" min="1" max="100"></label>
-              <label>Макс. длина клипа, мин<input type="number" data-m="maxMinutes" min="1" max="60"></label>
-              <label>Команды заказа<input type="text" data-m="commands" maxlength="80"></label>
-              <label>Команды «пропустить»<input type="text" data-m="skipCommands" maxlength="80"></label>
-            </div>
           </div>
         </aside>
       </div>
@@ -3724,7 +3733,7 @@
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=6"></script>
+<script src="music.js?v=7"></script>
 <script src="whatsnew.js?v=32"></script>
 </body>
 </html>
