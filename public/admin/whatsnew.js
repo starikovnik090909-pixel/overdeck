@@ -85,6 +85,7 @@
   }
   function show(list) {
     if (!list.length) return;
+    if (document.querySelector('.tt-ov')) { setTimeout(() => show(list), 1200); return; } // сначала окно подсказок вкладки
     list.forEach((i) => { seen[i.id] = 1; });
     save(); paint();
     const msg = list.map((i) => 'Что нового: ' + i.title + '\n\n' + i.text).join('\n\n');

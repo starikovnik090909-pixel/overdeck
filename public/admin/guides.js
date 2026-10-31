@@ -30,7 +30,8 @@
     '<button class="help-modal-close" id="guideClose" type="button" title="Закрыть">✕</button></div>' +
     '<div class="guide-body" id="guideBody"></div>' +
     '<div class="help-modal-actions guide-actions"><button class="btn btn-primary" id="guideOk" type="button">Понятно</button>' +
-    '<button class="btn btn-secondary" id="guideNever" type="button">Больше не показывать</button></div></div>';
+    '<button class="btn btn-secondary" id="guideNever" type="button">Больше не показывать</button>' +
+    '<button class="btn btn-secondary" id="guideTips" type="button" style="display:none">Показать подсказки</button></div></div>';
   document.body.appendChild(ov);
   const body = $('#guideBody', ov);
   let openFor = null;
@@ -65,6 +66,7 @@
     body.innerHTML = render(g);
     body.scrollTop = 0;
     $('#guideNever').style.display = hiddenMap()[tab] ? 'none' : '';
+    $('#guideTips').style.display = window.OvTips && window.OvTips.has(tab) ? '' : 'none';
     ov.classList.add('open');
   }
   function closeGuide() { ov.classList.remove('open'); if (openFor) sessionSeen.add(openFor); openFor = null; }
@@ -78,6 +80,7 @@
   });
   $('#guideClose', ov).addEventListener('click', closeGuide);
   $('#guideOk', ov).addEventListener('click', closeGuide);
+  $('#guideTips', ov).addEventListener('click', () => { const t = openFor; closeGuide(); if (t && window.OvTips) window.OvTips.open(t); });
   $('#guideNever', ov).addEventListener('click', () => {
     if (openFor) { const m = hiddenMap(); m[openFor] = 1; store.set(HIDE_KEY, JSON.stringify(m)); }
     closeGuide();
@@ -211,6 +214,7 @@
     const t = activeTab();
     if (guard()) return;
     if (!GUIDES[t] || hiddenMap()[t] || sessionSeen.has(t) || ov.classList.contains('open') || lockOv.classList.contains('open')) return;
+    if (window.OvTips && window.OvTips.auto(t)) return; // у вкладки есть анимированные подсказки, они показываются вместо гайда
     openGuide(t, true);
   }
   const nav = $('.sidebar');
