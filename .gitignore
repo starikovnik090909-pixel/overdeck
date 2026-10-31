@@ -123,3 +123,8 @@ gazette_settings.json
 gazette_settings.json.tmp
 gazette_memory.json
 gazette_memory.json.tmp
+
+soon_settings.json
+soon_settings.json.tmp
+uploads/soon/*
+!uploads/soon/.gitkeep

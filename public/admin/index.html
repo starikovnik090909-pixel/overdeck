@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="style.css?v=135">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
-<link rel="stylesheet" href="extras.css?v=5">
+<link rel="stylesheet" href="extras.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -3179,6 +3179,52 @@
             <div class="ex-col ex-opts"><h4 class="ex-h">Настройки</h4><label class="tg-sw"><input type="checkbox" id="exOaTicker"><i></i><span>Бегущая строка «Сводка»</span></label><br><br><label class="tg-sw"><input type="checkbox" id="exOaPlate"><i></i><span>Плашка «Главная новость»</span></label><br><br><label class="tg-sw"><input type="checkbox" id="exOaBug"><i></i><span>Значок «● ЭФИР» в углу</span></label><div class="field" style="margin-top:14px"><label>Плашка выезжает раз в, мин</label><input type="number" id="exOaInt" min="2" max="120"></div><div class="field"><label>Плашка висит, сек</label><input type="number" id="exOaSec" min="8" max="90"></div></div>
           </div>
         </div>
+        <div class="card ui3-card ex-card" data-fmt="soon">
+          <div class="ex-head" role="button" tabindex="0" aria-expanded="false">
+            <div class="ex-prev"><iframe data-page="soon" title="Предпросмотр: Скоро начнём" tabindex="-1"></iframe></div>
+            <div class="ex-main"><h3>Скоро начнём</h3><span class="ex-hint">Настройки и ссылка</span><span class="ex-chev" aria-hidden="true"></span></div>
+          </div>
+          <div class="ex-body">
+            <div class="ex-col"><h4 class="ex-h">О функции</h4><span class="ex-tag">Перед стримом</span><p class="ex-one">Полноэкранный экран ожидания: «стрим скоро начнётся», категория и название с Twitch, таймер и место под чат.</p><div class="ex-tags"><span>Категория с Twitch</span><span>Таймер</span><span>Свои цвета</span><span>Фон: картинка или гиф</span><span>Искры</span></div><p>Категория и название подтягиваются сами, даже пока стрим не начался. Любое поле можно заменить своим текстом или выключить. Справа или слева оставлено вертикальное место под чат: наложи на него источник чата в OBS.</p></div>
+            <div class="ex-col ex-show"><h4 class="ex-h">Показ на стриме</h4>
+              <div class="ex-actions"><button class="btn btn-primary" type="button" id="soonStart">Запустить таймер</button><button class="btn btn-secondary" type="button" id="soonReset">Сбросить</button></div>
+              <p class="ex-sm">«Запустить» ставит таймер на выбранные минуты. В режиме «по часам» кнопка не нужна.</p>
+              <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="soon.html" title="Источник «Браузер» 1920×1080"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
+              <div class="form-message" id="soonMsg"></div>
+            </div>
+            <div class="ex-col ex-opts soon-opts"><h4 class="ex-h">Настройки <span class="ui3-saved" id="soonSaved"></span></h4>
+              <div class="soon-g"><b>Тексты</b>
+                <label class="tg-sw"><input type="checkbox" data-s="showKicker"><i></i><span>Надпись сверху</span></label><input type="text" data-s="kicker" maxlength="60">
+                <label class="tg-sw"><input type="checkbox" data-s="showCategory"><i></i><span>Категория</span></label><input type="text" data-s="categoryText" maxlength="80" placeholder="из Twitch (пусто — как на канале)">
+                <label class="tg-sw"><input type="checkbox" data-s="showTitle"><i></i><span>Название стрима</span></label><input type="text" data-s="titleText" maxlength="140" placeholder="из Twitch (пусто — как на канале)">
+                <label class="tg-sw"><input type="checkbox" data-s="showFooter"><i></i><span>Подпись внизу</span></label><input type="text" data-s="footer" maxlength="60" placeholder="пусто — «имя канала · OVERDECK»">
+              </div>
+              <div class="soon-g"><b>Таймер</b>
+                <label class="tg-sw"><input type="checkbox" data-s="showTimer"><i></i><span>Показывать таймер</span></label>
+                <div class="chr-seg" id="soonMode"><button type="button" data-v="minutes">Минуты</button><button type="button" data-v="clock">К времени</button></div>
+                <div class="soon-row"><label>Минут <input type="number" min="1" max="600" data-s="minutes"></label><label>К времени <input type="time" data-s="clock"></label></div>
+                <div class="soon-row"><label>Подпись <input type="text" data-s="timerLabel" maxlength="30"></label><label>В конце <input type="text" data-s="timerEndText" maxlength="30"></label></div>
+              </div>
+              <div class="soon-g"><b>Цвета</b>
+                <div class="soon-pal" id="soonPal"></div>
+                <div class="soon-row soon-col"><label>Основной <input type="color" data-s="accent"></label><label>Свечение и искры <input type="color" data-s="accent2"></label><label>Фон <input type="color" data-s="bg"></label><label>Текст <input type="color" data-s="text"></label></div>
+              </div>
+              <div class="soon-g"><b>Фон и эффекты</b>
+                <div class="ex-actions"><label class="btn btn-secondary soon-up">Загрузить картинку или гиф<input type="file" id="soonFile" accept=".png,.jpg,.jpeg,.webp,.gif" hidden></label><button class="btn btn-ghost btn-sm" type="button" id="soonBgDel" hidden>Убрать фон</button></div>
+                <p class="ex-sm" id="soonBgName">Свой фон не задан, используется градиент выбранных цветов.</p>
+                <div class="soon-row"><label>Затемнение <input type="range" min="0" max="90" data-s="bgDim"></label><label>Размытие <input type="range" min="0" max="30" data-s="bgBlur"></label></div>
+                <label class="tg-sw"><input type="checkbox" data-s="embers"><i></i><span>Искры</span></label><label class="soon-one">Количество <input type="range" min="0" max="300" data-s="emberCount"></label>
+                <label class="tg-sw"><input type="checkbox" data-s="glow"><i></i><span>Свечение снизу</span></label>
+                <label class="tg-sw"><input type="checkbox" data-s="gradientTitle"><i></i><span>Цветной градиент в категории</span></label>
+              </div>
+              <div class="soon-g"><b>Место под чат</b>
+                <div class="chr-seg" id="soonChat"><button type="button" data-v="right">Справа</button><button type="button" data-v="left">Слева</button><button type="button" data-v="off">Нет</button></div>
+                <label class="tg-sw"><input type="checkbox" data-s="chatBorder"><i></i><span>Тонкая рамка вокруг чата</span></label>
+                <label class="soon-one">Ширина <input type="range" min="300" max="800" step="10" data-s="chatWidth"></label>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -3591,6 +3637,7 @@
 <script src="chronicles.js?v=17"></script>
 <script src="telegram.js?v=5"></script>
 <script src="extras.js?v=4"></script>
+<script src="soon.js?v=1"></script>
 <script src="whatsnew.js?v=31"></script>
 </body>
 </html>

@@ -37,6 +37,7 @@ const teamPresets = require('./teamPresets');
 const mvpData = require('./mvpData');
 const chronicles = require('./chronicles');
 const gazetteService = require('./gazetteService');
+const soonData = require('./soonData');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -1245,6 +1246,7 @@ const themeBackgroundUpload = multer({
 const EVENT_COVER_DIR = path.join(__dirname, 'uploads', 'event');
 fs.mkdirSync(EVENT_COVER_DIR, { recursive: true });
 app.use('/uploads/event', express.static(EVENT_COVER_DIR));
+app.use('/uploads/soon', express.static(soonData.DIR));
 
 const EVENT_COVER_ALLOWED_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
 const EVENT_COVER_MAX_BYTES = 10 * 1024 * 1024;
@@ -1341,6 +1343,12 @@ require('./routes/team').part3({ teamData, teamPresets, app, validSide, broadcas
 const { chroniclesUpload } = require('./routes/chronicles').upload({ path, express, multer, chronicles, app });
 require('./routes/telegram').main({ chronicles, telegramAnnounce, app });
 require('./routes/gazette').main({ gazetteService, app });
+soonData.init(async () => {
+  if (!(resolvedBroadcasterId && twitch.hasCredentials(config))) return null;
+  const info = await twitch.fetchChannelInfo(config, resolvedBroadcasterId);
+  return info ? { title: info.title || '', game: info.game_name || '', login: config.channel || '' } : null;
+});
+require('./routes/soon').main({ soonData, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });

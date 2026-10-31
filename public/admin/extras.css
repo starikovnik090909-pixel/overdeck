@@ -79,3 +79,23 @@
 #tab-extras .obs-url-compact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin:0}
 #tab-extras .obs-url-compact .obs-url-compact-title{grid-column:1/-1}
 #tab-extras .obs-url-compact input{min-width:0;width:100%}
+
+/* --- плитка «Скоро начнём» --- */
+#tab-extras .ex-card[data-fmt="soon"]{--c:#e5484d;animation-delay:.21s}
+#tab-extras .soon-opts{gap:14px}
+#tab-extras .soon-g{display:flex;flex-direction:column;gap:9px;padding-bottom:14px;border-bottom:1px solid var(--divider)}
+#tab-extras .soon-g:last-child{border-bottom:0;padding-bottom:0}
+#tab-extras .soon-g>b{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-secondary)}
+#tab-extras .soon-g input[type=text]{width:100%;min-width:0}
+#tab-extras .soon-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+#tab-extras .soon-row label,#tab-extras .soon-one{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--text-secondary)}
+#tab-extras .soon-col{grid-template-columns:repeat(2,1fr)}
+#tab-extras .soon-col input[type=color]{width:100%;height:34px;padding:2px;border:1px solid var(--divider);border-radius:8px;background:var(--bg-card2);cursor:pointer}
+#tab-extras .soon-pal{display:flex;flex-wrap:wrap;gap:8px}
+#tab-extras .soon-pal button{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:transform .15s,border-color .15s}
+#tab-extras .soon-pal button:hover{transform:scale(1.12)}
+#tab-extras .soon-pal button.on{border-color:var(--text-primary,#fff);box-shadow:0 0 0 2px var(--bg-card2)}
+#tab-extras .soon-up{cursor:pointer}
+#tab-extras [hidden]{display:none!important}
+#tab-extras .soon-g input[type=text],#tab-extras .soon-g input[type=number],#tab-extras .soon-g input[type=time]{padding:8px 11px;border:1px solid var(--divider);border-radius:8px;background:var(--bg-card2);color:inherit;font:inherit;font-size:13.5px;width:100%;min-width:0}
+#tab-extras .soon-g input[type=range]{width:100%;accent-color:var(--c)}

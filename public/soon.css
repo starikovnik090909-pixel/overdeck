@@ -1,0 +1,26 @@
+/* Экран «Скоро начнём»: 1920×1080, цвета и тексты задаются переменными из настроек (см. soon.js). */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+.st{--accent:#e5484d;--accent2:#ff6a3c;--bg:#0b0305;--text:#fff;--kick:#ff6b70;--soft:rgba(255,255,255,.65);--tx-left:100px;--chat-w:520px;position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--text);font-family:Inter,sans-serif}
+.st>*{position:absolute}
+.base{inset:0}
+.bgimg{inset:0;background-size:cover;background-position:center;display:none}
+.dim{inset:0;background:#000;opacity:0;display:none}
+.glow{left:-100px;right:-100px;bottom:-200px;height:440px;background:radial-gradient(ellipse at 50% 100%,var(--glow),transparent 70%);animation:gw 3s ease-in-out infinite alternate;pointer-events:none}
+@keyframes gw{to{opacity:.55;transform:scaleY(1.2)}}
+#embers{left:0;top:0;width:1920px;height:1080px;pointer-events:none}
+.chat{top:60px;height:960px;width:var(--chat-w);border-radius:22px;background:rgba(0,0,0,.18)}
+.chat.b{border:2px solid var(--chatline)}
+.chat.right{right:60px}.chat.left{left:60px}.chat.off{display:none}
+.tx{left:var(--tx-left);top:0;bottom:0;width:1160px;display:flex;flex-direction:column;justify-content:center}
+.tx>*{position:static}
+.k{font:500 34px Oswald,sans-serif;letter-spacing:.5em;color:var(--kick);margin-bottom:46px}
+.cl{font:500 26px Oswald,sans-serif;letter-spacing:.4em;color:var(--soft);margin-bottom:6px}
+.cn{font:700 150px/1.02 Oswald,sans-serif;text-transform:uppercase;letter-spacing:.01em;max-width:1160px;overflow-wrap:anywhere}
+.cn.grad{background:linear-gradient(180deg,var(--text),var(--g1) 60%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tt{font:400 52px/1.2 Inter,sans-serif;margin-top:22px;max-width:1000px;opacity:.92}
+.tm{font:700 190px/1 Oswald,sans-serif;font-variant-numeric:tabular-nums;margin-top:70px;letter-spacing:.04em}
+.tm.end{font-size:120px}
+.sub{margin-top:8px;font:500 26px Oswald,sans-serif;letter-spacing:.4em;color:var(--soft)}
+.ft{left:var(--tx-left);bottom:50px;font:500 24px Oswald,sans-serif;letter-spacing:.3em;color:var(--soft)}
+[hidden]{display:none!important}
