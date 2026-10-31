@@ -29,6 +29,7 @@
     mark();
     ov.querySelectorAll('.tp-chip').forEach((b) => b.addEventListener('click', () => {
       sel = b.dataset.id; mark();
+      api.syncMode(data.themes.find((x) => x.id === sel));
       api.apply({ themes: data.themes, activeThemeId: sel }); // живой просмотр, ничего не сохраняется
     }));
     const finish = async (goOwn) => {

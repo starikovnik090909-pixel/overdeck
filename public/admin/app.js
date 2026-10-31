@@ -20,6 +20,7 @@
   document.getElementById('themeToggle').addEventListener('click', () => {
     const current = root.getAttribute('data-theme');
     applyTheme(current === 'dark' ? 'light' : 'dark');
+    if (window.adminThemesApi && window.adminThemesApi.reapply) window.adminThemesApi.reapply(); // у своей темы светлый/тёмный вариант считается из её же цветов
   });
 
   /* ---------- "Настройки админки" — собственные цветовые темы панели ---------- */
@@ -93,19 +94,34 @@
     root.setAttribute('data-theme', p.light ? 'light' : 'dark'); // без записи в localStorage: переключатель светлая/тёмная не трогаем
   }
 
+  /* Светлый/тёмный вариант темы из тех же акцентных цветов. Светлый нарочно приглушённый, не белый. */
+  function adminThemeVariant(t, wantLight) {
+    const m = adminThemeMix, ac = t.accentColor;
+    if (wantLight) {
+      return { bg: m('#D8D5CF', ac, 0.07), tx: '#1A1B1F', ac: adminThemeLum(ac) > 0.4 ? m(ac, '#000000', 0.3) : ac };
+    }
+    return { bg: m('#151518', ac, 0.06), tx: '#ECECEE', ac: adminThemeLum(ac) < 0.12 ? m(ac, '#ffffff', 0.35) : ac };
+  }
+  function adminThemeNaturalMode(t) { return t.isDefault || !t.bgColor || adminThemeLum(t.bgColor) <= 0.5 ? 'dark' : 'light'; }
+  /** Тема выбрана заново: переключатель встаёт в её родной режим. */
+  function syncModeToTheme(t) { if (t && !t.isDefault) localStorage.setItem(THEME_KEY, adminThemeNaturalMode(t)); }
+
   /** Применяет активную тему. «Overdeck» (все цвета null) ничего не переопределяет, остальные выводят всю палитру из трёх цветов. */
+  let adminThemeLastData = null;
   function applyActiveAdminTheme(adminThemeData) {
+    adminThemeLastData = adminThemeData;
     const active = adminThemeData.themes.find((t) => t.id === adminThemeData.activeThemeId) || adminThemeData.themes[0];
-    const themeToggleEl = document.getElementById('themeToggle');
+    const wantLight = (localStorage.getItem(THEME_KEY) || 'dark') === 'light';
     if (!active || active.isDefault) {
-      clearAdminThemeVars();
-      themeToggleEl.style.display = ''; // «Overdeck» ничего не переопределяет, переключатель светлая/тёмная снова имеет смысл
+      if (!wantLight) { clearAdminThemeVars(); return; }
+      const v = adminThemeVariant({ accentColor: '#D84B55' }, true); // светлый вариант «Overdeck» считается так же, как у остальных тем
+      applyAdminColors(v.bg, v.tx, v.ac);
       return;
     }
-    applyAdminColors(active.bgColor, active.textColor, active.accentColor);
-    themeToggleEl.style.display = 'none'; // своя тема сама решает цвета, переключатель на её время прячется
+    if (wantLight === (adminThemeNaturalMode(active) === 'light')) applyAdminColors(active.bgColor, active.textColor, active.accentColor);
+    else { const v = adminThemeVariant(active, wantLight); applyAdminColors(v.bg, v.tx, v.ac); }
   }
-  window.adminThemesApi = { apply: applyActiveAdminTheme, applyColors: applyAdminColors, render: null };
+  window.adminThemesApi = { apply: applyActiveAdminTheme, applyColors: applyAdminColors, render: null, syncMode: syncModeToTheme, reapply: () => { if (adminThemeLastData) applyActiveAdminTheme(adminThemeLastData); } };
 
   function hexToRgba(hex, alpha) {
     const n = parseInt(hex.slice(1), 16);
@@ -128,7 +144,7 @@
       btn.addEventListener('click', async () => {
         try {
           const { ok, data } = await postJSON(`/api/admin-themes/${btn.dataset.activateTheme}/activate`, {});
-          if (ok && data.success) { renderAdminThemeList(data.adminThemes); applyActiveAdminTheme(data.adminThemes); }
+          if (ok && data.success) { syncModeToTheme(data.adminThemes.themes.find((t) => t.id === data.adminThemes.activeThemeId)); renderAdminThemeList(data.adminThemes); applyActiveAdminTheme(data.adminThemes); }
         } catch (e) {
           showAdminThemeMessage('Сетевая ошибка при обращении к серверу.', 'error');
         }
@@ -159,7 +175,7 @@
   });
   document.getElementById('btnAdminThemeCancel').addEventListener('click', () => {
     adminThemeFormCard.style.display = 'none';
-    if (adminThemesCache) applyActiveAdminTheme(adminThemesCache); // живой просмотр цветов отменяется
+    if (adminThemeLastData) applyActiveAdminTheme(adminThemeLastData); // живой просмотр цветов отменяется
   });
   document.getElementById('btnAdminThemeSave').addEventListener('click', async () => {
     const name = adminThemeName.value.trim();
@@ -169,6 +185,7 @@
         name, bgColor: adminThemeBgColor.value, textColor: adminThemeTextColor.value, accentColor: adminThemeAccentColor.value,
       });
       if (ok && data.success) {
+        syncModeToTheme(data.adminThemes.themes.find((t) => t.id === data.adminThemes.activeThemeId));
         renderAdminThemeList(data.adminThemes);
         applyActiveAdminTheme(data.adminThemes);
         adminThemeFormCard.style.display = 'none';

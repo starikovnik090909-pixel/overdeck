@@ -59,7 +59,7 @@ html, body { background: var(--bg-app) !important; color: var(--text-primary); f
 .top-icon svg { width: 18px; height: 18px; }
 .admin-settings-gear svg { width: 18px; height: 18px; }
 .top-icon:hover, .admin-settings-gear:hover { color: var(--text-primary); border-color: var(--line2); transform: none; }
-.theme-toggle { display: none !important; } /* в 3.0 одна тёмная тема */
+.theme-toggle { margin-right: 4px; } /* светлый/тёмный режим работает поверх любой темы панели */
 .help-fab:not(.top-icon) { display: none !important; }
 
 .test-menu { position: relative; }
