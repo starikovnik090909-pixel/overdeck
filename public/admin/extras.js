@@ -37,6 +37,14 @@
   const active = () => sec.classList.contains('active');
   new MutationObserver(() => { if (active()) { if (!framesOn) { loadFrames(true); refresh(); } } else if (framesOn) unloadFrames(); }).observe(sec, { attributes: true, attributeFilter: ['class'] });
 
+  // --- карточки раскрываются по клику на шапку ---
+  $$('.ex-card', sec).forEach((card) => {
+    const head = $('.ex-head', card);
+    const toggle = () => { const on = card.classList.toggle('open'); head.setAttribute('aria-expanded', on ? 'true' : 'false'); store.set('exOpen_' + card.dataset.fmt, on ? '1' : ''); };
+    head.addEventListener('click', toggle);
+    head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+  });
+
   // --- кнопки ---
   $$('.ex-card', sec).forEach((card) => {
     const fmt = card.dataset.fmt;
@@ -60,7 +68,7 @@
       $('#exJournal').textContent = j.enabled
         ? `${j.chat} ${pl(j.chat, ['сообщение', 'сообщения', 'сообщений'])} · ${j.events} ${pl(j.events, ['событие', 'события', 'событий'])} · с начала ${j.minutes} мин`
         : 'журнал чата выключен: тексты сообщений не записываются';
-      ['credits', 'gazette'].forEach((f) => { const n = $(`[data-now="${f}"]`, sec); const on = st.screen.format === f; n.textContent = on ? '● сейчас на экране' : ''; n.classList.toggle('on', on); });
+      ['credits', 'gazette'].forEach((f) => { const n = $(`[data-now="${f}"]`, sec); const on = st.screen.format === f; n.textContent = on ? '● на экране' : ''; });
     } catch (e) { /* ждём */ }
   }
   setInterval(refresh, 4000);
