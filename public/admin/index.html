@@ -11,7 +11,8 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=1">
+<link rel="stylesheet" href="music.css?v=3">
+<link rel="stylesheet" href="../music-skins.css?v=2">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -3118,14 +3119,14 @@
     </section>
 
     <section class="tab-section" id="tab-music">
-      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а сам клип можно вывести на экран кнопкой — рамка уже стоит там, где ты её расположил.</p></div>
+      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) выводишь на экран кнопкой — источник уже стоит в сцене там, где ты его расположил.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="muSaved"></span></div></div>
       <div class="mu-grid">
         <section class="card ui3-card mu-card">
           <h4 class="ex-h">Сейчас играет</h4>
           <div class="mu-now" id="muNow"><b>Тишина</b><span>Очередь пуста — ждём заказы из чата</span></div>
           <div class="mu-btns">
-            <button class="btn btn-primary" type="button" id="muShow">Показать клип на экране</button>
+            <button class="btn btn-primary" type="button" id="muShow">Показать на экране</button>
             <button class="btn btn-secondary" type="button" id="muPause">Пауза</button>
             <button class="btn btn-secondary" type="button" id="muSkip">Пропустить</button>
           </div>
@@ -3138,19 +3139,18 @@
         <section class="card ui3-card mu-card">
           <h4 class="ex-h">Предпросмотр экрана</h4>
           <div class="mu-prev"><iframe id="muPrev" title="Предпросмотр: заказ музыки" tabindex="-1"></iframe></div>
-          <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly id="muUrl" title="Источник «Браузер» 1920×1080, включи «Управлять звуком через OBS»"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
-          <p class="ex-sm">Добавь как «Браузер» 1920×1080 и держи включённым всё время стрима: сверху сцены, прозрачный фон. Клип рисуется в рамке, звук идёт всегда.</p>
-          <h4 class="ex-h">Положение клипа <span class="ex-sm">экран 1920×1080</span></h4>
-          <div class="mu-pos">
-            <label>X<input type="number" data-m="x" min="0" max="1900"></label><label>Y<input type="number" data-m="y" min="0" max="1060"></label>
-            <label>Ширина<input type="number" data-m="w" min="160" max="1920"></label><label>Высота<input type="number" data-m="h" min="90" max="1080"></label>
-          </div>
-          <div class="mu-corners"><button type="button" data-c="tl">Лево‑верх</button><button type="button" data-c="tr">Право‑верх</button><button type="button" data-c="bl">Лево‑низ</button><button type="button" data-c="br">Право‑низ</button><button type="button" data-c="c">Центр</button></div>
+          <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
+          <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Звук идёт всегда, а картинка появляется по кнопке «Показать на экране».</p>
+          <h4 class="ex-h">Что показывать на экране</h4>
+          <div class="chr-seg" id="muView"><button type="button" data-v="clip">Клип</button><button type="button" data-v="player">Только плеер</button></div>
+          <div id="muLineBox"><div class="ex-sm">Строка с названием у клипа</div><div class="chr-seg" id="muLine"><button type="button" data-v="top">Сверху</button><button type="button" data-v="bottom">Снизу</button><button type="button" data-v="off">Без строки</button></div></div>
+          <div id="muSkinBox"><div class="ex-sm">Вид плеера</div><div class="mu-skins" id="muSkins"></div></div>
+          <label class="tg-sw"><input type="checkbox" data-m="showUser"><i></i><span>Показывать ник заказчика</span></label>
+          <p class="ex-sm">Размер и место на экране ты задаёшь сам в OBS — страница заполняет весь источник.</p>
           <h4 class="ex-h">Правила</h4>
           <label class="tg-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки включён</span></label>
           <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
           <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Показывать клип сразу при старте трека</span></label>
-          <label class="tg-sw"><input type="checkbox" data-m="showTitle"><i></i><span>Плашка с названием под клипом</span></label>
           <div class="mu-form">
             <label>Кто может заказывать<select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
             <label>Громкость, %<input type="number" data-m="volume" min="0" max="100"></label>
@@ -3160,7 +3160,6 @@
             <label>Макс. длина клипа, мин<input type="number" data-m="maxMinutes" min="1" max="60"></label>
             <label>Команды заказа<input type="text" data-m="commands" maxlength="80"></label>
             <label>Команды «пропустить» (модеры)<input type="text" data-m="skipCommands" maxlength="80"></label>
-            <label>Цвет рамки<input type="color" data-m="accent"></label>
           </div>
         </section>
       </div>
@@ -3702,7 +3701,7 @@
 <script src="telegram.js?v=5"></script>
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
-<script src="music.js?v=1"></script>
+<script src="music.js?v=2"></script>
 <script src="whatsnew.js?v=31"></script>
 </body>
 </html>

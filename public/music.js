@@ -1,31 +1,69 @@
-// music.js — страница OBS «Заказ музыки»: играет очередь зрителей (звук всегда), клип показывается по кнопке в админке.
+// music.js — страница OBS «Заказ музыки». Размер и положение задаются источником в OBS: страница заполняет весь источник.
+// Звук играет всегда; на экране — клип с бегущей строкой или карточка плеера (по кнопке «Показать» в админке).
 (function () {
   'use strict';
   var preview = /[?&]preview=1/.test(location.search);
-  if (preview) document.body.className = 'pv';
-  var stage = document.getElementById('stage'), box = document.getElementById('box'), bar = document.getElementById('bar');
-  var ttl = document.getElementById('ttl'), by = document.getElementById('by');
-  var player = null, ready = false, loadedUid = 0, last = null, vol = -1;
+  var $ = function (i) { return document.getElementById(i); };
+  var wrap = $('wrap'), pl = $('pl'), mq = $('mq'), by = $('by'), pg = $('pg'), cu = $('cu'), to = $('to'), cv = $('cv');
+  var lines = [$('lnTop'), $('lnBot')];
+  var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0;
+  if (preview) document.body.classList.add('pv');
 
-  function fit() { stage.style.transform = 'scale(' + innerWidth / 1920 + ')'; }
+  function fit() {
+    document.documentElement.style.setProperty('--u', (innerWidth / 40) + 'px');
+    pl.style.transform = 'scale(' + Math.min(innerWidth / 660, innerHeight / 220) + ')';
+  }
   addEventListener('resize', fit); fit();
+  var post = function (p, b) { return fetch(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) }).catch(function () {}); };
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  var fmt = function (t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
 
-  function post(path, body) { return fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }).catch(function () {}); }
-
-  function layout(s) {
-    document.documentElement.style.setProperty('--ac', s.accent);
-    box.style.cssText += ';left:' + s.x + 'px;top:' + s.y + 'px;width:' + s.w + 'px;height:' + s.h + 'px';
-    bar.style.left = s.x + 'px'; bar.style.top = (s.y + s.h + 10) + 'px'; bar.style.width = s.w + 'px';
+  // Бегущая строка: если текст не помещается — дублируем и крутим.
+  function marquee(el, html, inner) {
+    el.innerHTML = '<span>' + html + '</span>';
+    var w = inner || el;
+    requestAnimationFrame(function () {
+      var sp = el.firstChild; el.classList.remove('run');
+      if (sp.scrollWidth > w.clientWidth + 2) {
+        sp.innerHTML = html + '<span style="display:inline-block;width:3em"></span>' + html + '<span style="display:inline-block;width:3em"></span>';
+        el.style.setProperty('--d', Math.max(8, sp.scrollWidth / 2 / 70) + 's'); el.classList.add('run');
+      }
+    });
   }
 
   function paint(st) {
-    var s = st.settings, cur = st.current;
-    layout(s);
+    var s = st.settings, cur = st.current || (preview ? { uid: 0, id: '', title: 'Дора — Дорадура', by: 'Зритель', seconds: 130 } : null);
+    var isPl = s.view === 'player';
+    document.body.classList.toggle('pl', isPl);
+    document.documentElement.style.setProperty('--ac', s.accent);
     var show = !!(s.showVideo && cur);
-    box.classList.toggle('on', show); box.classList.toggle('off', preview && !show);
-    bar.classList.toggle('on', !!(s.showTitle && cur && (show || preview)));
-    ttl.textContent = cur ? cur.title : (preview ? 'Название трека' : '');
-    by.textContent = cur && cur.by ? 'заказал ' + cur.by : (preview ? 'заказал зритель' : '');
+    wrap.classList.toggle('on', show); document.body.classList.toggle('off', preview && !show);
+    if (preview && !show) wrap.classList.add('on');
+    var who = s.showUser && cur && cur.by ? cur.by : '';
+    var key = [cur && cur.uid, cur && cur.title, who, s.line, s.skin, s.view].join('|');
+    if (key !== textKey) {
+      textKey = key;
+      lines[0].className = 'ln' + (!isPl && s.line === 'top' && cur ? ' show' : '');
+      lines[1].className = 'ln' + (!isPl && s.line === 'bottom' && cur ? ' show' : '');
+      var ln = s.line === 'top' ? lines[0] : lines[1];
+      if (cur) {
+        var html = esc(cur.title) + (who ? ' <em>· заказал ' + esc(who) + '</em>' : '');
+        ln.innerHTML = '<span class="ic">♪</span><div class="w"><span>' + html + '</span></div>';
+        var w = ln.querySelector('.w'), sp = w.firstChild;
+        requestAnimationFrame(function () {
+          if (sp.scrollWidth > w.clientWidth + 2) {
+            sp.innerHTML = html + '<span style="display:inline-block;width:3em"></span>' + html + '<span style="display:inline-block;width:3em"></span>';
+            w.style.setProperty('--d', Math.max(8, sp.scrollWidth / 2 / 70) + 's'); w.className = 'w run';
+          }
+        });
+        marquee(mq, esc(cur.title));
+        by.textContent = who ? 'заказал ' + who : ''; by.style.display = who ? '' : 'none';
+        to.textContent = fmt(cur.seconds);
+        cv.src = cur.id ? 'https://i.ytimg.com/vi/' + cur.id + '/mqdefault.jpg' : '';
+        cv.style.visibility = cur.id ? '' : 'hidden';
+      }
+    }
+    pl.className = 'mp sk' + s.skin;
     if (preview || !ready) return;
     if (!cur) { if (loadedUid) { try { player.stopVideo(); } catch (e) {} loadedUid = 0; } return; }
     if (loadedUid !== cur.uid) { loadedUid = cur.uid; try { player.loadVideoById(cur.id); } catch (e) {} }
@@ -37,9 +75,16 @@
     } catch (e) {}
   }
 
+  setInterval(function () {
+    var t = 0, d = 0;
+    if (preview) { fake = (fake + 0.5) % 130; t = fake; d = 130; }
+    else if (ready) { try { t = player.getCurrentTime(); d = player.getDuration(); } catch (e) {} }
+    if (d > 0) { pg.style.width = Math.min(100, t / d * 100) + '%'; cu.textContent = fmt(t); to.textContent = fmt(d); }
+  }, 500);
+
   function poll() {
     fetch('/api/music/state').then(function (r) { return r.json(); }).then(function (st) { if (st && st.success) { last = st; paint(st); } }).catch(function () {})
-      .then(function () { setTimeout(poll, preview ? 1500 : 1000); });
+      .then(function () { setTimeout(poll, preview ? 1200 : 1000); });
   }
 
   if (!preview) {

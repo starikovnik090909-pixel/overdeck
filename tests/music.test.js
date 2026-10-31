@@ -37,7 +37,7 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   m.ended(uid); ok(m.state().current === null, 'конец трека, очередь пуста');
 
   fresh(); m.update({ enabled: false }); ok(!(await m.onChat(msg('!муз x'))) && !m.state().current, 'выключено');
-  fresh(); m.update({ x: 99999, w: 5, accent: 'red', volume: 500 }); const s = m.getSettings(); ok(s.x === 1900 && s.w === 160 && s.accent === '#e5484d' && s.volume === 100, 'настройки ограничиваются');
+  fresh(); m.update({ skin: 99, view: 'zzz', line: 'top', accent: 'red', volume: 500 }); const s = m.getSettings(); ok(s.skin === 10 && s.view === 'clip' && s.line === 'top' && s.accent === '#e5484d' && s.volume === 100, 'настройки ограничиваются');
   fresh(); await m.addByQuery('x', 'Я'); m.setShow(true); ok(m.state().settings.showVideo, 'показ клипа'); m.stop(); ok(!m.state().current, 'стоп');
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

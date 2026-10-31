@@ -15,13 +15,15 @@ const DEFAULTS = {
   reply: true,                      // отвечать в чат от бота
   showVideo: false,                 // клип сейчас на экране
   autoShow: false,                  // показывать клип сразу при старте каждого трека
-  showTitle: true,                  // плашка «Сейчас играет» под клипом
-  x: 1380, y: 60, w: 480, h: 270,   // рамка клипа на экране 1920×1080
+  view: 'clip',                     // что на экране: clip — клип, player — только плеер (без видео)
+  line: 'bottom',                   // бегущая строка с названием у клипа: top | bottom | off
+  skin: 1,                          // вид плеера 1…10
+  showUser: true,                   // писать, кто заказал
   accent: '#e5484d',
 };
-const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showTitle'];
-const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], x: [0, 1900], y: [0, 1060], w: [160, 1920], h: [90, 1080] };
-const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'] };
+const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser'];
+const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 10] };
+const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
 let cfg = Object.assign({}, DEFAULTS);
 let searcher = defaultSearch;
