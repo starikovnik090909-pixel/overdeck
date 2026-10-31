@@ -41,6 +41,7 @@
   $$('.ex-card', sec).forEach((card) => {
     const head = $('.ex-head', card);
     const toggle = () => { const on = card.classList.toggle('open'); head.setAttribute('aria-expanded', on ? 'true' : 'false'); store.set('exOpen_' + card.dataset.fmt, on ? '1' : ''); };
+    if (store.get('exOpen_' + card.dataset.fmt) === '1') { card.classList.add('open'); head.setAttribute('aria-expanded', 'true'); }
     head.addEventListener('click', toggle);
     head.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   });

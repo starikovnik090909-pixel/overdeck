@@ -1,35 +1,81 @@
 /* extras.css — вкладка «Доп. функционал» (вечерний выпуск) */
-#tab-extras .ex-top{display:grid;gap:14px;margin-bottom:16px}
-#tab-extras .ex-jr{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
-#tab-extras .ex-jr span{color:var(--text-secondary);font-size:13px}
-#tab-extras .ex-row{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
-#tab-extras .ex-sm{display:block;color:var(--text-secondary);font-size:12.5px;font-weight:400;line-height:1.45;margin-top:3px}
-#tab-extras .tg-sw>span{max-width:560px}
-#tab-extras .ex-src{min-width:280px}
-#tab-extras .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;align-items:start}
-#tab-extras .ex-card{padding:0;overflow:hidden}
-#tab-extras .ex-card.open{grid-column:1/-1}
-#tab-extras .ex-head{display:flex;flex-direction:column;gap:10px;padding:10px;cursor:pointer;transition:background .15s}
-#tab-extras .ex-card.open .ex-head{flex-direction:row;align-items:center;gap:16px}
-#tab-extras .ex-card.open .ex-prev{width:240px;flex:none}
-#tab-extras .ex-head:hover{background:var(--bg-hover)}
-#tab-extras .ex-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-#tab-extras .ex-prev{position:relative;aspect-ratio:16/9;border-radius:8px;overflow:hidden;background:#0b0d12;border:1px solid var(--divider)}
+#tab-extras{--ex-r:16px}
+
+/* --- три шага --- */
+#tab-extras .ex-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:2px 0 14px}
+#tab-extras .ex-steps>div{display:flex;gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--divider);border-radius:14px;background:var(--bg-card2)}
+#tab-extras .ex-steps b{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:14px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent)}
+#tab-extras .ex-steps span{font-weight:600;font-size:14px;line-height:1.3}
+#tab-extras .ex-steps small{display:block;margin-top:2px;font-weight:400;font-size:12.5px;color:var(--text-secondary)}
+@media(max-width:900px){#tab-extras .ex-steps{grid-template-columns:1fr}}
+
+/* --- общие панели --- */
+#tab-extras .ex-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:22px}
+#tab-extras .ex-top>.card{margin:0}
+#tab-extras .ex-panel{display:flex;flex-direction:column;gap:12px;padding:16px 18px;border-radius:var(--ex-r)}
+#tab-extras .ex-h{margin:0;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-secondary)}
+#tab-extras .ex-jr span{font-size:13px;color:var(--text-secondary)}
+#tab-extras .ex-sm{display:block;color:var(--text-secondary);font-size:12.5px;font-weight:400;line-height:1.45;margin:0}
+#tab-extras .tg-sw small.ex-sm{margin-top:3px}
+#tab-extras .ex-panel .btn{align-self:flex-start}
+#tab-extras .ex-panel .field{margin:0}
+
+/* --- плитки --- */
+#tab-extras .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;align-items:stretch}
+#tab-extras .ex-card{--c:var(--accent);padding:0;overflow:hidden;border-radius:var(--ex-r);border:1px solid var(--divider);transition:transform .22s ease,box-shadow .22s ease,border-color .22s;animation:exIn .5s ease both}
+#tab-extras .ex-card[data-fmt="credits"]{--c:#e0a93b}
+#tab-extras .ex-card[data-fmt="gazette"]{--c:#c9a679;animation-delay:.07s}
+#tab-extras .ex-card[data-fmt="onair"]{--c:#e5484d;animation-delay:.14s}
+@keyframes exIn{from{opacity:0;transform:translateY(10px)}}
+#tab-extras .ex-card:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:0 12px 30px rgba(0,0,0,.28),0 0 0 1px var(--c)}
+#tab-extras .ex-card.open{grid-column:1/-1;border-color:var(--c);box-shadow:0 0 0 1px var(--c);transform:none}
+#tab-extras .ex-head{display:flex;flex-direction:column;gap:12px;padding:10px 10px 12px;cursor:pointer;background:none}
+#tab-extras .ex-head:focus-visible{outline:2px solid var(--c);outline-offset:-2px}
+#tab-extras .ex-prev{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#0b0d12;border:1px solid var(--divider);transition:border-color .2s}
+#tab-extras .ex-card:hover .ex-prev,#tab-extras .ex-card.open .ex-prev{border-color:var(--c)}
 #tab-extras .ex-prev iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;background:transparent}
-#tab-extras .ex-main{display:flex;align-items:center;gap:10px;padding:0 4px 2px}
-#tab-extras .ex-card.open .ex-main{flex:1;padding:0}
-#tab-extras .ex-main h3{margin:0;font-size:16px;flex:1}
-#tab-extras .ex-one{margin:8px 0 10px;color:var(--text-secondary);font-size:13px;line-height:1.4}
-#tab-extras .ex-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:2px 9px;border-radius:99px}
-#tab-extras .ex-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
-#tab-extras .ex-tags span{font-size:11.5px;color:var(--text-secondary);border:1px solid var(--divider);background:var(--bg-card2);padding:1px 8px;border-radius:99px}
-#tab-extras .ex-now{font-size:12px;color:var(--ok);font-weight:600;white-space:nowrap}
-#tab-extras .ex-chev{width:9px;height:9px;border-right:2px solid var(--text-secondary);border-bottom:2px solid var(--text-secondary);transform:rotate(45deg);transition:transform .25s;margin-right:4px;flex:none}
-#tab-extras .ex-card.open .ex-chev{transform:rotate(-135deg)}
-#tab-extras .ex-body{display:none;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:26px;padding:16px 20px 20px;border-top:1px solid var(--divider)}
-#tab-extras .ex-card.open .ex-body{display:grid;animation:exOpen .25s ease}
+#tab-extras .ex-now{position:absolute;z-index:2;top:8px;left:8px;font-size:11px;font-weight:700;letter-spacing:.04em;color:#fff;background:#e5484d;padding:2px 9px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#tab-extras .ex-now:empty{display:none}
+#tab-extras .ex-main{position:relative;display:flex;align-items:center;gap:10px;padding:0 4px;margin-top:auto}
+#tab-extras .ex-head{flex:1}
+#tab-extras .ex-main h3{margin:0;font-size:17px;flex:1;line-height:1.2}
+#tab-extras .ex-hint{position:absolute;right:30px;font-size:12px;color:var(--text-secondary);opacity:0;transform:translateX(-4px);transition:.2s;white-space:nowrap}
+#tab-extras .ex-card:hover .ex-hint{opacity:1;transform:none}
+#tab-extras .ex-card.open .ex-hint{display:none}
+#tab-extras .ex-chev{width:9px;height:9px;border-right:2px solid var(--c);border-bottom:2px solid var(--c);transform:rotate(45deg);transition:transform .25s;margin:0 4px 3px 0;flex:none}
+#tab-extras .ex-card.open .ex-chev{transform:rotate(-135deg);margin-bottom:-3px}
+
+/* раскрытая плитка: превью слева, название справа */
+#tab-extras .ex-card.open .ex-head{flex-direction:row;align-items:center;gap:20px;padding:14px 18px 14px 14px;background:linear-gradient(90deg,rgba(255,255,255,.035),transparent)}
+#tab-extras .ex-card.open .ex-prev{width:340px;flex:none}
+#tab-extras .ex-card.open .ex-main{flex:1;padding:0;margin:0}
+#tab-extras .ex-card.open .ex-main h3{font-size:22px}
+@media(max-width:700px){#tab-extras .ex-card.open .ex-head{flex-direction:column;align-items:stretch}#tab-extras .ex-card.open .ex-prev{width:auto}}
+
+/* --- тело --- */
+#tab-extras .ex-body{display:none;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:0;border-top:1px solid var(--divider)}
+#tab-extras .ex-card.open .ex-body{display:grid;animation:exOpen .28s ease}
 @keyframes exOpen{from{opacity:0;transform:translateY(-6px)}}
-@media(max-width:820px){#tab-extras .ex-body{grid-template-columns:minmax(0,1fr)}}
-#tab-extras .ex-col>p{margin:0 0 12px;color:var(--text-secondary);font-size:13.5px;line-height:1.5}
-#tab-extras .ex-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
-#tab-extras .field input[type=number]{max-width:140px}
+#tab-extras .ex-col{display:flex;flex-direction:column;gap:12px;padding:18px 22px;min-width:0}
+#tab-extras .ex-col+.ex-col{border-left:1px solid var(--divider)}
+@media(max-width:900px){#tab-extras .ex-col+.ex-col{border-left:0;border-top:1px solid var(--divider)}}
+#tab-extras .ex-col>p{margin:0;color:var(--text-secondary);font-size:13.5px;line-height:1.55}
+#tab-extras .ex-tag{align-self:flex-start;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--c);border:1px solid var(--c);padding:2px 10px;border-radius:99px}
+#tab-extras .ex-one{margin:0;font-size:15px;font-weight:600;line-height:1.4}
+#tab-extras .ex-tags{display:flex;flex-wrap:wrap;gap:6px}
+#tab-extras .ex-tags span{font-size:12px;color:var(--text-secondary);border:1px solid var(--divider);background:var(--bg-card2);padding:2px 10px;border-radius:99px}
+#tab-extras .ex-actions{display:flex;gap:10px;flex-wrap:wrap}
+#tab-extras .ex-actions .btn{min-width:150px}
+#tab-extras .ex-opts{background:var(--bg-card2)}
+#tab-extras .ex-opts .field{margin:0}
+#tab-extras .ex-opts .field label{font-size:13px;font-weight:600}
+#tab-extras .ex-opts input[type=number]{max-width:140px}
+#tab-extras .ex-opts .tg-sw{margin:0}
+#tab-extras .ex-opts br{display:none}
+
+@media(prefers-reduced-motion:reduce){#tab-extras .ex-card,#tab-extras .ex-card.open .ex-body{animation:none}#tab-extras .ex-card:hover{transform:none}}
+
+/* ссылка для OBS: поле на всю ширину колонки */
+#tab-extras .obs-url-compact{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin:0}
+#tab-extras .obs-url-compact .obs-url-compact-title{grid-column:1/-1}
+#tab-extras .obs-url-compact input{min-width:0;width:100%}
