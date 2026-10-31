@@ -10,7 +10,7 @@
   const fields = $$('[data-m]');
   let st = null, t = 0;
   const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const fmt = (s) => (s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '');
+  const fmt = (s) => { s = Math.floor(s || 0); return s ? Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') : '0:00'; };
 
   const url = $('#muUrl'); url.value = location.origin + '/music.html';
   const prev = $('#muPrev');
@@ -21,19 +21,42 @@
   function say(m, bad) { const e = $('#muMsg'); e.textContent = m || ''; e.className = 'form-message' + (bad ? ' error' : m ? ' success' : ''); }
   function flash(m) { const e = $('#muSaved'); e.textContent = m; setTimeout(() => { e.textContent = ''; }, 1400); }
 
+  let embUid = 0, embPaused = false, posRef = null, lastSt = null;
   function render(s) {
-    st = s;
-    const cur = s.current;
-    $('#muNow').innerHTML = cur ? '<b>' + esc(cur.title) + '</b><span>' + esc(cur.channel) + (cur.by ? ' · заказал ' + esc(cur.by) : '') + (cur.seconds ? ' · ' + fmt(cur.seconds) : '') + (s.paused ? ' · на паузе' : '') + '</span>' : '<b>Тишина</b><span>Очередь пуста — ждём заказы из чата</span>';
+    st = s; lastSt = s;
+    const cur = s.current, on = !!(cur && s.settings.showVideo);
+    $('#muTitle').textContent = cur ? cur.title : 'Очередь пуста';
+    $('#muMeta').textContent = cur ? [cur.channel, cur.by ? 'заказал ' + cur.by : ''].filter(Boolean).join(' · ') + (s.paused ? ' · на паузе' : '') : 'Напиши в чате !муз название — трек сразу заиграет.';
+    $('#muTag').textContent = cur ? (s.paused ? 'На паузе' : 'Сейчас играет') : 'Тишина';
+    const badge = $('#muBadge'); badge.textContent = on ? 'На экране стрима' : 'Не на экране'; badge.classList.toggle('live', on);
     $('#muShow').textContent = s.settings.showVideo ? 'Скрыть с экрана' : 'Показать на экране';
-    $('#muShow').className = 'btn ' + (s.settings.showVideo ? 'btn-secondary' : 'btn-primary');
+    $('#muShow').className = 'btn mu-big ' + (s.settings.showVideo ? 'btn-secondary' : 'btn-primary');
     $('#muPause').textContent = s.paused ? 'Продолжить' : 'Пауза';
-    $('#muPause').disabled = $('#muSkip').disabled = !cur;
-    $('#muCount').textContent = s.queue.length ? '(' + s.queue.length + ')' : '';
-    $('#muQueue').innerHTML = s.queue.length ? s.queue.map((q, i) => '<li><span>' + (i + 1) + '.</span><span class="t">' + esc(q.title) + ' <small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : '<li class="empty">Очередь пуста</li>';
+    $('#muPause').disabled = $('#muSkip').disabled = $('#muShow').disabled = !cur;
+    posRef = s.pos ? { t: s.pos.t, d: s.pos.d || cur.seconds || 0, at: Date.now() } : { t: 0, d: cur ? cur.seconds || 0 : 0, at: Date.now() };
+    // превью клипа для стримера: без звука, не зависит от того, выведен ли клип на сцену
+    const emb = $('#muEmb'), ph = $('#muVph');
+    const want = cur && !s.paused ? cur.uid : 0;
+    if (want !== embUid) {
+      embUid = want;
+      if (want) { emb.src = 'https://www.youtube-nocookie.com/embed/' + cur.id + '?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&playsinline=1&iv_load_policy=3&start=' + Math.floor(posRef.t); emb.hidden = false; }
+      else { emb.removeAttribute('src'); emb.hidden = true; }
+    }
+    ph.hidden = !!want;
+    if (!want) { ph.innerHTML = cur ? '<span>⏸</span><b>Пауза</b><small>' + esc(cur.title) + '</small>' : '<span>♪</span><b>Тишина</b><small>Ждём заказы из чата</small>'; }
+    $('#muCount').textContent = s.queue.length ? s.queue.length : '';
+    $('#muQueue').innerHTML = s.queue.length ? s.queue.map((q, i) => '<li><span class="n">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(q.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(q.title) + '</b><small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : '<li class="empty">Очередь пуста</li>';
     paintView(s.settings);
     fields.forEach((f) => { const v = s.settings[f.dataset.m]; if (f.type === 'checkbox') f.checked = !!v; else if (document.activeElement !== f) f.value = v == null ? '' : v; });
+    tickProg();
   }
+  function tickProg() {
+    if (!lastSt || !lastSt.current || !posRef) { $('#muPg').style.width = '0'; $('#muCur').textContent = '0:00'; $('#muDur').textContent = '0:00'; return; }
+    const t = posRef.t + (lastSt.paused ? 0 : (Date.now() - posRef.at) / 1000), d = posRef.d;
+    $('#muCur').textContent = fmt(Math.min(t, d || t)); $('#muDur').textContent = fmt(d);
+    $('#muPg').style.width = d ? Math.min(100, t / d * 100) + '%' : '0';
+  }
+  setInterval(tickProg, 500);
   const refresh = () => api('/api/music/state').then((s) => { if (s && s.success) render(s); }).catch(() => {});
   const act = (p, b) => post(p, b).then((s) => { if (s && s.success) render(s); else say((s && s.error) || 'Ошибка', true); return s; });
 
@@ -79,7 +102,7 @@
   }
 
   let started = false;
-  function start() { if (started) return; started = true; prev.src = '/music.html?preview=1'; fitPrev(); refresh(); setInterval(() => { if (sec.classList.contains('active') || sec.offsetParent) refresh(); }, 2000); }
+  function start() { if (started) return; started = true; prev.src = '/music.html?preview=1'; fitPrev(); refresh(); setInterval(() => { if (sec.offsetParent) refresh(); }, 2000); }
   document.querySelectorAll('.nav-item[data-tab="music"]').forEach((n) => n.addEventListener('click', () => { start(); setTimeout(() => { fitPrev(); fitSkins(); }, 50); }));
   if (sec.offsetParent) start();
 })();

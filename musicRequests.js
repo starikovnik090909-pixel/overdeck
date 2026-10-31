@@ -33,6 +33,7 @@ let seq = 0;
 let useFile = true;
 let current = null;          // { uid, id, title, channel, seconds, by, login }
 let paused = false;
+let pos = { uid: 0, t: 0, d: 0, at: 0 }; // позиция воспроизведения, её присылает страница плеера
 let queue = [];
 let history = [];
 const lastAt = new Map();    // login → время последнего заказа
@@ -125,11 +126,12 @@ function ended(uid) { if (current && (uid == null || Number(uid) === current.uid
 function skip() { if (current) startNext(); else onChange(); }
 function remove(uid) { const n = queue.length; queue = queue.filter((q) => q.uid !== Number(uid)); if (queue.length !== n) onChange(); }
 function clear() { queue = []; onChange(); }
+function setPos(uid, t, d) { if (current && Number(uid) === current.uid) pos = { uid: current.uid, t: Math.max(0, Number(t) || 0), d: Math.max(0, Number(d) || 0), at: Date.now() }; }
 function setPaused(p) { paused = !!p; onChange(); }
 function setShow(v) { cfg.showVideo = !!v; persist(); onChange(); return cfg.showVideo; }
 function stop() { queue = []; if (current) history.unshift(current), history = history.slice(0, 10); current = null; paused = false; onChange(); }
 function state() {
-  return { settings: getSettings(), paused, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
+  return { settings: getSettings(), paused, pos: current && pos.uid === current.uid ? pos : null, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
 }
 const fmt = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '');
 
@@ -191,4 +193,4 @@ async function onChat(m) {
   return true;
 }
 
-module.exports = { DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, ended, skip, remove, clear, setPaused, setShow, stop, parseResults, videoIdFrom, parseSeconds };
+module.exports = { DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, ended, setPos, skip, remove, clear, setPaused, setShow, stop, parseResults, videoIdFrom, parseSeconds };

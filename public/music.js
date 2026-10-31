@@ -5,7 +5,7 @@
   var preview = /[?&]preview=1/.test(location.search);
   var $ = function (i) { return document.getElementById(i); };
   var wrap = $('wrap'), pl = $('pl');
-  var skinNo = 0, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
+  var posTick = 0, skinNo = 0, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
   var lines = [$('lnTop'), $('lnBot')];
   var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0;
   if (preview) document.body.classList.add('pv');
@@ -65,6 +65,7 @@
     if (preview) { fake = (fake + 0.5) % 130; t = fake; d = 130; info.dur = 130; }
     else if (ready) { try { t = player.getCurrentTime(); d = player.getDuration() || d; } catch (e) {} }
     curT = t; if (d > 0) info.dur = d;
+    if (!preview && last && last.current && ++posTick % 4 === 0) post('/api/music/progress', { uid: last.current.uid, t: t, d: d });
     if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur });
   }, 500);
 

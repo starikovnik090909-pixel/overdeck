@@ -10,6 +10,7 @@ function main(ctx) {
   });
   app.post('/api/music/skip', (req, res) => { music.skip(); ok(res); });
   app.post('/api/music/ended', (req, res) => { music.ended((req.body || {}).uid); ok(res); });
+  app.post('/api/music/progress', (req, res) => { const b = req.body || {}; music.setPos(b.uid, b.t, b.d); res.json({ success: true }); });
   app.post('/api/music/pause', (req, res) => { music.setPaused(!!(req.body || {}).paused); ok(res); });
   app.post('/api/music/show', (req, res) => { music.setShow(!!(req.body || {}).show); ok(res); });
   app.post('/api/music/remove', (req, res) => { music.remove((req.body || {}).uid); ok(res); });

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=59">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=4">
+<link rel="stylesheet" href="music.css?v=6">
 <link rel="stylesheet" href="../music-skins.css?v=4">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3119,50 +3119,69 @@
     </section>
 
     <section class="tab-section" id="tab-music">
-      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) выводишь на экран кнопкой — источник уже стоит в сцене там, где ты его расположил.</p></div>
+      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) ты выводишь на экран кнопкой.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="muSaved"></span></div></div>
-      <div class="mu-grid">
-        <section class="card ui3-card mu-card">
-          <h4 class="ex-h">Сейчас играет</h4>
-          <div class="mu-now" id="muNow"><b>Тишина</b><span>Очередь пуста — ждём заказы из чата</span></div>
+
+      <div class="mu-hero card ui3-card">
+        <div class="mu-video" id="muVideo">
+          <div class="mu-vph" id="muVph"><span>♪</span><b>Тишина</b><small>Ждём заказы из чата</small></div>
+          <iframe id="muEmb" title="Клип" allow="autoplay; encrypted-media" tabindex="-1" hidden></iframe>
+          <span class="mu-badge" id="muBadge">Не на экране</span>
+        </div>
+        <div class="mu-info">
+          <span class="mu-tag" id="muTag">Сейчас играет</span>
+          <h2 id="muTitle">—</h2>
+          <div class="mu-meta" id="muMeta"></div>
+          <div class="mu-prog"><i id="muPg"></i></div>
+          <div class="mu-time"><span id="muCur">0:00</span><span id="muDur">0:00</span></div>
           <div class="mu-btns">
-            <button class="btn btn-primary" type="button" id="muShow">Показать на экране</button>
+            <button class="btn btn-primary mu-big" type="button" id="muShow">Показать на экране</button>
             <button class="btn btn-secondary" type="button" id="muPause">Пауза</button>
             <button class="btn btn-secondary" type="button" id="muSkip">Пропустить</button>
           </div>
-          <h4 class="ex-h">Очередь <span class="ex-sm" id="muCount"></span></h4>
-          <ol class="mu-queue" id="muQueue"></ol>
-          <div class="mu-add"><input type="text" id="muQuery" maxlength="200" placeholder="Название песни или ссылка на YouTube"><button class="btn btn-secondary" type="button" id="muAdd">Добавить</button></div>
-          <div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить очередь</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div>
-          <div class="form-message" id="muMsg"></div>
-        </section>
+          <p class="mu-note">Превью здесь без звука и нужно только тебе. В стрим идёт то, что выведено кнопкой «Показать на экране». Если превью пишет «Video unavailable», у клипа запрещено встраивание: в OBS бот сам перейдёт к следующему.</p>
+        </div>
+      </div>
+
+      <div class="mu-grid">
         <section class="card ui3-card mu-card">
-          <h4 class="ex-h">Предпросмотр экрана</h4>
+          <div class="mu-h"><h4 class="ex-h">Очередь <span class="mu-cnt" id="muCount"></span></h4><div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div></div>
+          <div class="mu-add"><input type="text" id="muQuery" maxlength="200" placeholder="Добавить: название песни или ссылка на YouTube"><button class="btn btn-secondary" type="button" id="muAdd">Добавить</button></div>
+          <div class="form-message" id="muMsg"></div>
+          <ol class="mu-queue" id="muQueue"></ol>
+          <div class="mu-cmds"><span>В чате</span><code>!муз название</code><code>!скип</code><small>скип — только стример и модераторы</small></div>
+        </section>
+
+        <section class="card ui3-card mu-card">
+          <h4 class="ex-h">Что видят зрители</h4>
           <div class="mu-prev"><iframe id="muPrev" title="Предпросмотр: заказ музыки" tabindex="-1"></iframe></div>
           <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
-          <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Звук идёт всегда, а картинка появляется по кнопке «Показать на экране».</p>
-          <h4 class="ex-h">Что показывать на экране</h4>
+          <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
           <div class="chr-seg" id="muView"><button type="button" data-v="clip">Клип</button><button type="button" data-v="player">Только плеер</button></div>
           <div id="muLineBox"><div class="ex-sm">Строка с названием у клипа</div><div class="chr-seg" id="muLine"><button type="button" data-v="top">Сверху</button><button type="button" data-v="bottom">Снизу</button><button type="button" data-v="off">Без строки</button></div></div>
           <div id="muSkinBox"><div class="ex-sm">Вид плеера</div><div class="mu-skins" id="muSkins"></div></div>
           <label class="tg-sw"><input type="checkbox" data-m="showUser"><i></i><span>Показывать ник заказчика</span></label>
-          <p class="ex-sm">Размер и место на экране ты задаёшь сам в OBS — страница заполняет весь источник.</p>
-          <h4 class="ex-h">Правила</h4>
-          <label class="tg-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки включён</span></label>
-          <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
-          <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Показывать клип сразу при старте трека</span></label>
-          <div class="mu-form">
-            <label>Кто может заказывать<select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
-            <label>Громкость, %<input type="number" data-m="volume" min="0" max="100"></label>
-            <label>Заказов от одного зрителя<input type="number" data-m="perUser" min="1" max="20"></label>
-            <label>Пауза между заказами, с<input type="number" data-m="cooldown" min="0" max="600"></label>
-            <label>Макс. очередь<input type="number" data-m="maxQueue" min="1" max="100"></label>
-            <label>Макс. длина клипа, мин<input type="number" data-m="maxMinutes" min="1" max="60"></label>
-            <label>Команды заказа<input type="text" data-m="commands" maxlength="80"></label>
-            <label>Команды «пропустить» (модеры)<input type="text" data-m="skipCommands" maxlength="80"></label>
-          </div>
         </section>
       </div>
+
+      <section class="card ui3-card mu-card mu-rules">
+        <h4 class="ex-h">Правила заказа</h4>
+        <div class="mu-sw">
+          <label class="tg-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки включён</span></label>
+          <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
+          <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Выводить на экран сразу при старте трека</span></label>
+        </div>
+        <div class="mu-form">
+          <label>Кто может заказывать<select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
+          <label>Громкость, %<input type="number" data-m="volume" min="0" max="100"></label>
+          <label>Заказов от одного зрителя<input type="number" data-m="perUser" min="1" max="20"></label>
+          <label>Пауза между заказами, с<input type="number" data-m="cooldown" min="0" max="600"></label>
+          <label>Макс. очередь<input type="number" data-m="maxQueue" min="1" max="100"></label>
+          <label>Макс. длина клипа, мин<input type="number" data-m="maxMinutes" min="1" max="60"></label>
+          <label>Команды заказа<input type="text" data-m="commands" maxlength="80"></label>
+          <label>Команды «пропустить»<input type="text" data-m="skipCommands" maxlength="80"></label>
+        </div>
+      </section>
     </section>
 
     <section class="tab-section" id="tab-extras">
@@ -3702,7 +3721,7 @@
 <script src="extras.js?v=4"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=3"></script>
+<script src="music.js?v=5"></script>
 <script src="whatsnew.js?v=31"></script>
 </body>
 </html>
