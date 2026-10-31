@@ -15,7 +15,7 @@ const DEBOUNCE_MS = 90 * 1000;
 const UA = 'Overdeck-Chronicles';
 
 let chronicles = null;
-let state = { token: '', login: '', repo: '', url: '', auto: true, clientId: '', lastAt: 0, lastError: '', pending: false };
+let state = { token: '', login: '', name: '', repo: '', url: '', auto: true, clientId: '', lastAt: 0, lastError: '', pending: false };
 let device = null; // { userCode, uri, expiresAt, interval, code, timer, error }
 let busy = false;
 let timer = null;
@@ -90,7 +90,7 @@ function buildFiles() {
     poster: it.poster ? 'posters/' + it.poster : '',
   }));
   const files = new Map();
-  files.set('data.json', Buffer.from(JSON.stringify({ owner: state.login, items: pub })));
+  files.set('data.json', Buffer.from(JSON.stringify({ owner: state.name || state.login, items: pub })));
   files.set('index.html', fs.readFileSync(SITE_FILE));
   files.set('.nojekyll', Buffer.from(''));
   for (const it of items) {
@@ -161,13 +161,15 @@ function schedule() {
 
 function status() {
   return {
-    connected: !!state.token, login: state.login, url: state.url, auto: !!state.auto, lastAt: state.lastAt, lastError: state.lastError,
+    connected: !!state.token, login: state.login, name: state.name || '', url: state.url, auto: !!state.auto, lastAt: state.lastAt, lastError: state.lastError,
     busy, queued: !!timer && !busy, needClientId: !clientId() && !state.token,
     device: device ? { userCode: device.userCode, uri: device.uri, error: device.error } : null,
   };
 }
 
 function disconnect() { clearTimeout(timer); timer = null; if (device && device.timer) clearInterval(device.timer); device = null; state.token = ''; state.auto = true; saveState(); }
+/** Имя в заголовке публичной страницы («Хроники Starikov»). Пусто: берётся логин GitHub. */
+function setName(v) { state.name = String(v || '').replace(/[<>]/g, '').trim().slice(0, 40); saveState(); }
 function setAuto(v) { state.auto = !!v; saveState(); if (!state.auto) { clearTimeout(timer); timer = null; } }
 
 function init(chr) {
@@ -175,4 +177,4 @@ function init(chr) {
   chr.events.on('change', () => { if (state.token) schedule(); });
 }
 
-module.exports = { init, status, startLogin, publish, disconnect, setAuto };
+module.exports = { init, status, startLogin, publish, disconnect, setAuto, setName };

@@ -501,6 +501,7 @@
       el.innerHTML = '<p class="chr-imp-hint">Страница журнала: <a href="' + esc(pub.url) + '" target="_blank" rel="noopener noreferrer">' + esc(pub.url) + '</a> <button type="button" class="btn-tiny" id="chrPubCopy">Копировать</button></p>' +
         '<p class="chr-imp-hint">' + (pub.busy ? 'Обновляю…' : pub.queued ? 'Изменения будут опубликованы через пару минут.' : pub.lastAt ? 'Опубликовано ' + esc(ago(pub.lastAt)) + '.' : 'Первая публикация идёт, страница появится через 1–2 минуты.') + '</p>' +
         (pub.lastError ? '<p class="chr-imp-hint" style="color:var(--danger,#e5484d)">' + esc(pub.lastError) + '</p>' : '') +
+        '<div class="field"><label for="chrPubName">Имя в заголовке страницы</label><div class="chr-imp-line"><input type="text" id="chrPubName" maxlength="40" value="' + esc(pub.name || '') + '" placeholder="' + esc(pub.login || 'Starikov') + '"><button type="button" class="btn btn-secondary btn-sm" id="chrPubNameSave">Сохранить</button></div></div>' +
         '<label class="chr-chatopt"><input type="checkbox" id="chrPubAuto"' + (pub.auto ? ' checked' : '') + '> Обновлять страницу автоматически</label>' +
         '<p class="chr-imp-hint">В публичную страницу попадают название, год, жанры, оценки, рецензия и обложки. Ники заказавших и ссылки не публикуются. Репозиторий публичный.</p>' +
         '<div class="chr-imp-line"><button type="button" class="btn btn-primary btn-sm" id="chrPubNow">Обновить сейчас</button><button type="button" class="btn btn-ghost btn-sm" id="chrPubOff">Отключить GitHub</button></div>';
@@ -515,7 +516,7 @@
   }
   async function pubOpen() {
     $('chrPubModal').hidden = false; await pubLoad(); pubDraw();
-    clearInterval(pubTimer); pubTimer = setInterval(async () => { if ($('chrPubModal').hidden) { clearInterval(pubTimer); return; } if (document.activeElement && document.activeElement.id === 'chrPubCid') return; await pubLoad(); pubDraw(); }, 3000);
+    clearInterval(pubTimer); pubTimer = setInterval(async () => { if ($('chrPubModal').hidden) { clearInterval(pubTimer); return; } if (document.activeElement && (document.activeElement.id === 'chrPubCid' || document.activeElement.id === 'chrPubName')) return; await pubLoad(); pubDraw(); }, 3000);
   }
   $('chrPub').addEventListener('click', pubOpen);
   $('chrPubTipGo').addEventListener('click', pubOpen);
@@ -528,6 +529,7 @@
       if (id === 'chrPubGo') { const c = $('chrPubCid'); pub = await post('/api/chronicles/publish/login', { clientId: c ? c.value : '' }); }
       else if (id === 'chrPubNow') { e.target.disabled = true; pub = await post('/api/chronicles/publish/now'); }
       else if (id === 'chrPubOff') { if (!confirm('Отключить GitHub? Страница останется, но обновляться перестанет.')) return; pub = await api('/api/chronicles/publish', { method: 'DELETE' }); }
+      else if (id === 'chrPubNameSave') { const n = $('chrPubName'); pub = await post('/api/chronicles/publish/name', { name: n ? n.value : '' }); }
       else if (id === 'chrPubCopy') { navigator.clipboard.writeText(pub.url).catch(() => {}); e.target.textContent = 'Скопировано'; return; }
       else return;
       pubButton(); pubDraw();

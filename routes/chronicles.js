@@ -13,6 +13,7 @@ app.post('/api/chronicles/publish/now', async (req, res) => {
   catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 app.post('/api/chronicles/publish/auto', (req, res) => { chrPublish.setAuto(!!(req.body && req.body.auto)); res.json({ success: true, ...chrPublish.status() }); });
+app.post('/api/chronicles/publish/name', (req, res) => { chrPublish.setName(req.body && req.body.name); chrPublish.publish(true).catch(() => {}); res.json({ success: true, ...chrPublish.status() }); });
 app.delete('/api/chronicles/publish', (req, res) => { chrPublish.disconnect(); res.json({ success: true, ...chrPublish.status() }); });
 app.get('/api/chronicles', (req, res) => res.json({ items: chronicles.list(), sources: chronicles.sourcesInfo() }));
 app.post('/api/chronicles', (req, res) => {
