@@ -17,12 +17,12 @@ const DEFAULTS = {
   autoShow: false,                  // показывать клип сразу при старте каждого трека
   view: 'clip',                     // что на экране: clip — клип, player — только плеер (без видео)
   line: 'bottom',                   // бегущая строка с названием у клипа: top | bottom | off
-  skin: 1,                          // вид плеера 1…13
+  skin: 1,                          // вид плеера 1…5
   showUser: true,                   // писать, кто заказал
   accent: '#e5484d',
 };
 const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser'];
-const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13] };
+const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 5] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
 let cfg = Object.assign({}, DEFAULTS);
