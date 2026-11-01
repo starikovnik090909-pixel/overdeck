@@ -35,7 +35,7 @@ const KNOWN_BOTS = new Set(['nightbot', 'streamelements', 'streamlabs', 'moobot'
 function isKnownBot(login) { return KNOWN_BOTS.has(String(login || '').toLowerCase()); }
 
 /** Убирает из текста ссылки (http(s)://…, www.…, сайт.ру/путь), чтобы они не попадали в топ слов. */
-const URL_RE = /(?:https?:\/\/|www\.)\S+|(?:[\p{L}\p{N}-]+\.)+(?:com|ru|su|net|org|io|gg|tv|ly|me|co|ua|by|kz|ch|de|fm|app|dev|xyz|info|link|cc|to|be|рф)(?:[\/:?#]\S*)?(?![\p{L}\p{N}])/giu;
+const URL_RE = /(?:[a-zA-Z][a-zA-Z0-9+.-]*:\/\/|www\.)\S+|(?:^|(?<=[\s(\[«"']))[\p{L}\p{N}_-]+(?:\.[\p{L}\p{N}_-]+)*\.\p{L}{2,24}(?![\p{L}\p{N}])(?:[\/:?#]\S*)?/giu;
 function stripLinks(text) { return String(text || '').replace(URL_RE, ' '); }
 
 function recordMessage(username, userId, message, tagsEmotes) {
@@ -70,7 +70,8 @@ function recordMessage(username, userId, message, tagsEmotes) {
     clean = chars.join('');
   }
 
-  const words = stripLinks(clean).toLowerCase()
+  // команды (!муз, !скип, !дискорд …) в топ слов не идут; ссылки вырезаются целиком
+  const words = /^\s*!/.test(message) ? [] : stripLinks(clean).toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 3 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
