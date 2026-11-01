@@ -47,7 +47,7 @@
     donationColor: '#4FAE5A', activityLifetimeMin: 5, activityFloatSpread: 36,
     showCategoryBackground: true, categoryBgOpacity: 55,
     showClockPlate: true, clockPlateOpacity: 60,
-    view: 'classic',
+    view: 'bars',
   };
 
   function rgbArrayToHex([r, g, b]) {
@@ -680,7 +680,7 @@
     sizeK = computeSizeK(H, dpr);
     const smoothed = smoothValues(linePoints, 3);
     const maxValue = Math.max(...smoothed.map((p) => p.value), 3);
-    const first = smoothed[0].ts;
+    const first = smoothed.length ? smoothed[0].ts : Date.now();
     const mk = markerStyle();
     const col = (type) => styledColor(type, colorForType(type, s));
     const events = [];
@@ -701,7 +701,7 @@
       c2: col('sub'), c3: col('raid'), c4: col('channelpoints'),
       sharp: !!(mk && /^(square|oct|cyber|para)$/.test(mk.shape)),
       glow: mk && mk.glow === 0 ? 0 : 1,
-      fontFamily, streamStart: streamStartedAt,
+      fontFamily, streamStart: streamStartedAt, summary: (latest && latest.timeline && latest.timeline.summary) || null,
       cats: categoryHistory.filter((c) => c.startedAt).map((c) => ({ startedAt: c.startedAt, name: c.name })),
       catName: categoryHistory[0] && categoryHistory[0].name,
       valAt: (ts) => (ts < first ? 0 : Math.max(0, Math.min(1, valueAtTime(smoothed, ts) / maxValue))),
@@ -743,7 +743,7 @@
     const bottomReserve = s.showTimecodes ? 22 * dpr : 0;
     const baseline = H - bottomReserve; // график "приклеен" к нижнему краю блока (минус место под шкалу времени, если включена)
 
-    if (linePoints.length < 2) {
+    if (linePoints.length < 2 && !(s.view === 'bars' && window.TimelineViews && window.TimelineViews.bars && tl.summary)) {
       ctx.fillStyle = hexToRgba(s.textColor, 0.5);
       ctx.font = `500 ${13 * dpr}px Inter, sans-serif`;
       ctx.textAlign = 'center';

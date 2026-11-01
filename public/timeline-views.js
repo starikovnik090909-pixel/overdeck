@@ -133,6 +133,112 @@
     ctx.fillStyle = hexA(text, 0.6); ctx.font = k.font(600, P(10)); ctx.fillText('СЕЙЧАС', x0, H - P(26)); ctx.fillStyle = text; ctx.font = k.font(800, P(15)); ctx.fillText(env.fit(env.catName || '—', W * 0.5), x0, H - P(8));
   };
 
+
+  // ---------- Столбики (по умолчанию) ----------
+  // Весь стрим целиком: сообщения чата по 5 минут (шкала — по максимуму стрима, поэтому и тихий чат даёт заметные столбики),
+  // пунктир «в среднем», полоса глав (категории), дорожка событий значками и три цифры справа. Данные — env.summary с сервера.
+  const EV_ICON = { follow: '+', sub: '★', giftsub: '♥', raid: '⇢', donation: '₽', channelpoints: '◎' };
+  V.bars = function (env) {
+    const k = prep(env), { ctx, W, H, dpr, text } = k, sm = env.summary;
+    const u = Math.max(0.75, Math.min(1.5, H / dpr / 300)), P = (n) => n * dpr * u;
+    const lab = (w, px) => `${w} ${Math.round(px)}px Inter, ${env.fontFamily}`;
+    const acc = env.accent;
+    if (!sm) return;
+    const nb = sm.buckets.length, now = env.refTime;
+    const sideW = W / dpr > 640 ? P(150) : 0;
+    const x0 = P(6), xR = W - sideW - (sideW ? P(22) : P(6));
+    const yTop = P(48), axisH = P(16), laneH = P(26), chapH = P(18);
+    const yAxis = H - P(4), yLane = yAxis - axisH - laneH, yChap = yLane - P(6) - chapH, yBase = yChap - P(8);
+    const slots = Math.max(nb, 12), slotW = (xR - x0) / slots, gap = Math.min(P(4), slotW * 0.22), bw = slotW - gap;
+    const tFor = (ts) => x0 + (ts - sm.start) / sm.bucketMs * slotW;
+    const done = sm.buckets.slice(0, -1), cur = sm.buckets[nb - 1] || 0;
+    const peak = Math.max(...sm.buckets, 0), ceil = Math.max(10, peak), hMax = yBase - yTop;
+    const pkI = peak > 0 ? sm.buckets.indexOf(peak) : -1;
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else ctx.rect(x, y, w, h); };
+
+    // начало стрима — подсказка вместо пустого поля
+    if (sm.messages === 0 && nb <= 2) {
+      ctx.fillStyle = text; ctx.font = k.font(600, P(17)); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      ctx.fillText('Стрим только начался', x0 + P(70), (yTop + yBase) / 2 - P(10));
+      ctx.fillStyle = hexA(text, 0.55); ctx.font = lab(500, P(12.5));
+      ctx.fillText(env.fit('Столбики появляются каждые 5 минут — по сообщениям в чате', xR - x0 - P(80)), x0 + P(70), (yTop + yBase) / 2 + P(14));
+      [0.3, 0.55, 0.8].forEach((f, i) => { ctx.fillStyle = i === 2 ? acc : hexA(text, 0.26); rr(x0 + i * P(16), (yTop + yBase) / 2 + P(20) - f * P(44), P(12), f * P(44), P(3)); ctx.fill(); });
+    } else {
+      // столбики
+      for (let i = 0; i < nb; i++) {
+        const v = sm.buckets[i], x = x0 + i * slotW + gap / 2;
+        if (!v) { ctx.fillStyle = hexA(text, 0.07); rr(x, yBase - P(3), bw, P(3), P(1.5)); ctx.fill(); continue; }
+        const h = Math.max(P(4), v / ceil * hMax);
+        ctx.fillStyle = i === pkI ? acc : (i === nb - 1 ? hexA(acc, 0.5) : hexA(text, 0.26));
+        rr(x, yBase - h, bw, h, P(4)); ctx.fill();
+      }
+      // в среднем
+      const filled = done.filter((v) => v > 0);
+      if (filled.length >= 3) {
+        const avg = filled.reduce((a, b) => a + b, 0) / filled.length, y = yBase - avg / ceil * hMax;
+        ctx.save(); ctx.setLineDash([P(3), P(4)]); ctx.strokeStyle = hexA(text, 0.24); ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(xR, y); ctx.stroke(); ctx.restore();
+        ctx.fillStyle = hexA(text, 0.4); ctx.font = lab(500, P(10.5)); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText('в среднем ' + Math.round(avg), xR, y - P(3));
+      }
+      // подпись пика
+      if (pkI >= 0 && peak >= 2) {
+        const x = x0 + pkI * slotW + slotW / 2, y = yBase - Math.max(P(4), peak / ceil * hMax) - P(8);
+        const t1 = 'пик', t2 = ' ' + peak + ' сообщ. · ' + env.clock(sm.start + pkI * sm.bucketMs - env.streamStart);
+        ctx.font = lab(600, P(11.5)); const w1 = ctx.measureText(t1).width; ctx.font = lab(500, P(11.5)); const w2 = ctx.measureText(t2).width;
+        const w = w1 + w2 + P(16), hh = P(22), bx = Math.max(x0, Math.min(xR - w, x - w / 2)), by = Math.max(yTop - P(30), y - hh);
+        ctx.fillStyle = 'rgba(28,29,33,.94)'; rr(bx, by, w, hh, P(7)); ctx.fill(); ctx.strokeStyle = hexA(text, 0.14); ctx.lineWidth = Math.max(1, dpr); ctx.stroke();
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'left'; ctx.fillStyle = acc; ctx.font = lab(600, P(11.5)); ctx.fillText(t1, bx + P(8), by + hh / 2);
+        ctx.fillStyle = text; ctx.font = lab(500, P(11.5)); ctx.fillText(t2, bx + P(8) + w1, by + hh / 2);
+      }
+    }
+
+    // главы (категории)
+    const cats = env.cats.slice().sort((a, b) => a.startedAt - b.startedAt);
+    const endX = x0 + nb * slotW;
+    let any = false;
+    cats.forEach((c, i) => {
+      const a = Math.max(tFor(c.startedAt), x0), b = Math.min(i + 1 < cats.length ? tFor(cats[i + 1].startedAt) : endX, endX);
+      if (b - a < P(4)) return; any = true;
+      ctx.fillStyle = hexA(text, 0.06); rr(a + P(1), yChap, b - a - P(3), chapH, P(5)); ctx.fill();
+      if (b - a > P(50)) { ctx.fillStyle = hexA(text, 0.55); ctx.font = lab(500, P(10.5)); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(env.fit(c.name || '', b - a - P(16)), a + P(8), yChap + chapH / 2); }
+    });
+    if (!any) { ctx.fillStyle = hexA(text, 0.04); rr(x0, yChap, Math.max(P(20), endX - x0), chapH, P(5)); ctx.fill(); }
+    if (endX < xR - P(6)) { ctx.save(); ctx.setLineDash([P(3), P(3)]); ctx.strokeStyle = hexA(text, 0.12); rr(endX + P(2), yChap, xR - endX - P(2), chapH, P(5)); ctx.stroke(); ctx.restore(); }
+
+    // дорожка событий: одна иконка на корзину (самое «крупное» событие)
+    const rank = { donation: 6, raid: 5, giftsub: 4, sub: 3, follow: 2, channelpoints: 1 }, per = {};
+    (sm.keys || []).forEach((e) => { const b = Math.floor((e.ts - sm.start) / sm.bucketMs); if (b < 0) return; if (!per[b] || rank[e.type] > rank[per[b].type]) per[b] = e; });
+    const s2 = Math.min(P(22), slotW * 0.95);
+    Object.keys(per).forEach((b) => {
+      const e = per[b], x = x0 + (+b + 0.5) * slotW, col = env.colorOf(e.type === 'follow' ? 'sub' : e.type);
+      ctx.fillStyle = hexA(acc, 0.16); rr(x - s2 / 2, yLane + (laneH - s2) / 2, s2, s2, P(6)); ctx.fill();
+      ctx.fillStyle = acc; ctx.font = lab(700, s2 * 0.55); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(EV_ICON[e.type] || '•', x, yLane + laneH / 2 + P(0.5));
+      void col;
+    });
+
+    // ось времени
+    ctx.fillStyle = hexA(text, 0.4); ctx.font = lab(500, P(10.5)); ctx.textBaseline = 'alphabetic';
+    const totalMs = slots * sm.bucketMs, stepMs = [15, 30, 60, 120][[15, 30, 60, 120].findIndex((m) => totalMs / (m * 60000) <= 8)] * 60000 || 240 * 60000;
+    for (let t = 0; t <= totalMs + 1; t += stepMs) {
+      const x = x0 + t / sm.bucketMs * slotW; ctx.textAlign = t === 0 ? 'left' : (x > xR - P(30) ? 'right' : 'center');
+      ctx.fillText(env.clock(sm.start + t - env.streamStart), Math.min(x, xR), yAxis);
+    }
+
+    // цифры справа
+    if (sideW) {
+      const sx = W - sideW;
+      ctx.fillStyle = hexA(text, 0.08); ctx.fillRect(sx - P(12), yTop, Math.max(1, dpr), yAxis - yTop);
+      const items = [[sm.messages, 'сообщений'], [sm.chatters, 'чатеров'], [sm.events || '—', 'событий']];
+      const step = (yAxis - yTop) / 3;
+      items.forEach(([v, l], i) => {
+        const y = yTop + step * i + step / 2;
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = text; ctx.font = k.font(700, P(22));
+        ctx.fillText(typeof v === 'number' ? v.toLocaleString('ru-RU') : v, sx + P(6), y);
+        ctx.fillStyle = hexA(text, 0.55); ctx.font = lab(500, P(11.5)); ctx.fillText(l, sx + P(6), y + P(17));
+      });
+    }
+    void now;
+  };
+
   // ---------- Эквалайзер ----------
   V.equalizer = function (env) {
     const k = prep(env), { ctx, W, H, P, xFor, xN, x0, text } = k, base = H - P(34), top = P(44), steps = 60, stepMs = env.winMs / steps;

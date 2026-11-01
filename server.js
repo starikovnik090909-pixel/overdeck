@@ -216,8 +216,14 @@ function applyOneTimeTimelineMigration(settings) {
   const file = path.join(__dirname, 'migrations_done.json');
   let done = {};
   try { done = JSON.parse(fs.readFileSync(file, 'utf8')) || {}; } catch (e) { done = {}; }
-  if (done.timeline2026_10) return;
   const tl = settings && settings.timeline;
+  // 2026-11: новый вид «Столбики» — по умолчанию; переключаем только тех, у кого стоял прежний вид по умолчанию (классика)
+  if (!done.timelineBars2026_11) {
+    if (tl && tl.view === 'classic') tl.view = 'bars';
+    done.timelineBars2026_11 = true;
+    try { fs.writeFileSync(file, JSON.stringify(done, null, 2)); } catch (e) { /* не критично */ }
+  }
+  if (done.timeline2026_10) return;
   if (tl) {
     if (tl.activityLifetimeMin === 10) tl.activityLifetimeMin = 5;
     if (typeof tl.donationColor === 'string' && tl.donationColor.toUpperCase() === '#3FBF6B') tl.donationColor = '#4FAE5A';
@@ -393,7 +399,9 @@ function handleEventAlertRaw(type, e) {
     case 'channel.raid':
       fireEventAlert('raid', { username: e.from_broadcaster_user_name, login: e.from_broadcaster_user_login, id: e.from_broadcaster_user_id, viewers: e.viewers }); break;
     case 'channel.follow':
-      fireEventAlert('follow', { username: e.user_name, login: e.user_login, at: e.followed_at }); break;
+      fireEventAlert('follow', { username: e.user_name, login: e.user_login, at: e.followed_at });
+      timeline.addEvent({ type: 'follow', username: e.user_name, weight: 0 }); // только для дорожки событий вида «Столбики», на линию не влияет
+      break;
     case 'channel.hype_train.begin':
       hypeLevel = Number(e.level) || 1;
       fireEventAlert('hype', { phase: 'begin', level: hypeLevel, total: e.total }); break;

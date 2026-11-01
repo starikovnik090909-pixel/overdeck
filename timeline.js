@@ -119,8 +119,34 @@ function createTimeline() {
     return {
       startedAt,
       recentEvents: getBubbleEventsInRange(now - lifetimeMs, now),
+      summary: getSummary(now),
       linePoints: thinPoints(linePoints, SNAPSHOT_LINE_POINTS), // раньше slice(-3000) — только последние ~100 минут; теперь весь стрим, прореженный
     };
+  }
+
+
+  /**
+   * Сводка для вида «Столбики»: сообщения чата по 5-минутным корзинам от начала стрима, ключевые события (без сообщений)
+   * и итоги. Считается по всей истории — на 20 000 событий это доли миллисекунды.
+   */
+  const BUCKET_MS = 5 * 60 * 1000;
+  const KEY_TYPES = new Set(['channelpoints', 'sub', 'giftsub', 'raid', 'donation', 'follow']);
+  function getSummary(now) {
+    const t = now || Date.now();
+    const n = Math.max(1, Math.floor((t - startedAt) / BUCKET_MS) + 1);
+    const buckets = new Array(Math.min(n, 300)).fill(0);
+    const off = n - buckets.length;
+    const users = new Set(), keys = [];
+    let messages = 0;
+    for (let i = 0; i < events.length; i++) {
+      const e = events[i];
+      if (e.ts < startedAt) continue;
+      if (e.type === 'message') {
+        messages++; if (e.username) users.add(String(e.username).toLowerCase());
+        const b = Math.floor((e.ts - startedAt) / BUCKET_MS) - off; if (b >= 0 && b < buckets.length) buckets[b]++;
+      } else if (KEY_TYPES.has(e.type)) keys.push({ ts: e.ts, type: e.type, username: e.username || '' });
+    }
+    return { bucketMs: BUCKET_MS, start: startedAt + off * BUCKET_MS, buckets, keys: keys.slice(-200), messages, chatters: users.size, events: keys.length };
   }
 
   function getPersistData() {
