@@ -169,6 +169,9 @@ function buildIssue(opts) {
     S = journal.getSession();
     roster = journal.getRoster(S);
     art = journal.gameArt();
+    try { // что играло: время, название, кто заказал — для историй «чат отреагировал на трек»
+      S.plays = (require('./musicRequests').stats(S.startTs).recent || []).filter((p) => p.at >= S.startTs && p.at <= (S.endTs || Date.now())).reverse().map((p) => ({ ts: p.at, title: p.title, user: p.by || p.login || '' }));
+    } catch (e) { S.plays = []; }
   }
   const name = studio();
   S.streamer = name;

@@ -195,6 +195,25 @@
         (s.cause ? s.cause.type + ' от ' + s.cause.user : s.word ? 'слово «' + s.word.w + '»' : s.emote ? 'эмоут ' + s.emote.w : 'не найдена'));
     });
     A.spikes = sp;
+    // трек, под который случился всплеск (трек начался за ≤3 минуты до всплеска или в его ходе)
+    const plays = (S.plays || []).filter(p => p && p.title);
+    const cleanTrack = t => String(t).replace(/[\(\[][^\)\]]*[\)\]]/g, ' ').replace(/\b(official|video|audio|lyrics?|клип|hd|hq|4k)\b/ig, ' ').replace(/\s+/g, ' ').replace(/^[\s\-–—]+|[\s\-–—]+$/g, '').slice(0, 60);
+    sp.forEach(s => { const pl = plays.filter(p => p.ts >= s.ts - 180000 && p.ts <= s.te).sort((a, b) => b.ts - a.ts)[0]; s.play = pl ? { track: cleanTrack(pl.title), user: pl.user } : null; });
+    A.plays = plays;
+    const trAgain = {}; plays.forEach(p => { const k = cleanTrack(p.title); if (k) trAgain[k] = (trAgain[k] || 0) + 1; });
+    const ta = Object.entries(trAgain).filter(e => e[1] >= 3).sort((a, b) => b[1] - a[1])[0];
+    A.trackAgain = ta ? { track: ta[0], n: ta[1] } : null;
+    // тематические волны: смех, «+», капс, наплыв новичков
+    const win = (pred, w, minN, minU) => { let best = null; for (let i = 0; i < chat.length; i++) { if (!pred(chat[i])) continue; let n = 0; const us = new Set(); for (let j = i; j < chat.length && chat[j].ts - chat[i].ts <= w; j++) if (pred(chat[j])) { n++; us.add(chat[j].user); } if (n >= minN && us.size >= minU && (!best || n > best.n)) best = { ts: chat[i].ts, n, users: us.size }; } return best; };
+    const isCaps = m => { const l = m.text.replace(/[^A-Za-zА-Яа-яЁё]/g, ''); return l.length >= 6 && l === l.toUpperCase() && !/^[A-Z0-9]+$/.test(l); };
+    A.waves = {
+      laugh: win(m => LAUGH.test(m.text), 60000, 7, 5),
+      plus: win(m => /^\s*\+{1,3}\s*1?\s*$/.test(m.text), 90000, 7, 5),
+      caps: win(isCaps, 60000, 6, 4)
+    };
+    const newbies = chat.filter(m => firstSeen[m.user] === m.ts && m.ts - t0 > 8 * 60000);
+    A.newcomers = null;
+    for (let i = 0; i < newbies.length; i++) { let n = 0; for (let j = i; j < newbies.length && newbies[j].ts - newbies[i].ts <= 10 * 60000; j++) n++; if (n >= 6 && (!A.newcomers || n > A.newcomers.n)) A.newcomers = { ts: newbies[i].ts, n }; }
 
     // «F» — отпевание стримера
     const deaths = chat.filter(m => /^\s*(f|ф|rip|рип)\s*[!.]*\s*$/i.test(m.text));
@@ -350,6 +369,12 @@
     A.events.filter(e => e.type === 'sub').slice(0, 4).forEach(e => stories.push({ kind: 'sub', score: 16, ts: e.ts, v: { u: e.user }, why: 'подписка' }));
     A.spikes.forEach(s => {
       if (A.win && s === A.win) return;
+      if (s.play && !(s.cause && (s.cause.type === 'raid' || s.cause.type === 'donation'))) {
+        const bm = 30 + Math.min(30, s.mult * 2), pv = { track: s.play.track, u: s.play.user || 'зритель', time: clock(s.ts), rate: s.peak };
+        if (s.emote) { stories.push({ kind: 'musicEmote', score: bm + 16, ts: s.ts, v: Object.assign({ emote: s.emote.w, n: s.emote.n }, pv), why: 'эмоут-стена ' + s.emote.w + ' под трек «' + s.play.track + '»' }); return; }
+        if (s.word) { stories.push({ kind: 'musicWord', score: bm + 12, ts: s.ts, v: Object.assign({ word: s.word.w }, pv), why: 'слово «' + s.word.w + '» под трек «' + s.play.track + '»' }); return; }
+        stories.push({ kind: 'musicWave', score: bm + 8, ts: s.ts, v: pv, why: 'всплеск чата под трек «' + s.play.track + '»' }); return;
+      }
       if (s.cause && (s.cause.type === 'raid' || s.cause.type === 'donation')) return; // уже есть своя история
       const base = 25 + Math.min(30, s.mult * 2);
       if (s.word) stories.push({ kind: 'stormWord', score: base + 8, ts: s.ts, v: { rate: s.peak, word: s.word.w }, why: 'всплеск ×' + s.mult + ' про «' + s.word.w + '»' });
@@ -365,6 +390,11 @@
     if (A.games.length >= 3) stories.push({ kind: 'gameTour', score: 32, ts: A.games[0].from, v: { games: A.games.map(x => '«' + x.name + '»').join(', ').replace(/, ([^,]*)$/, ' и $1') }, why: A.games.length + ' игры за вечер' });
     if (A.mins >= 240) stories.push({ kind: 'marathon', score: 21, ts: A.t0, v: { dur: Math.floor(A.mins / 60) + NB + plural(Math.floor(A.mins / 60), ['час', 'часа', 'часов']) }, why: 'марафон ' + A.mins + ' мин' });
     if (A.duel) stories.push({ kind: A.duel.word ? 'duelWord' : 'duel', score: 34 + Math.min(14, A.duel.n / 3), ts: A.duel.ts, v: { a: A.duel.a, b: A.duel.b, n: A.duel.n, reps: plural(A.duel.n, ['реплика', 'реплики', 'реплик']), word: A.duel.word || '', time: clock(A.duel.ts) }, why: 'диалог двух зрителей, ' + A.duel.n + ' реплик' });
+    if (A.waves.laugh) stories.push({ kind: 'laughWave', score: 27 + Math.min(14, A.waves.laugh.n), ts: A.waves.laugh.ts, v: { n: A.waves.laugh.n, users: cnt(A.waves.laugh.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.laugh.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.laugh.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.laugh.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.laugh.ts) }, why: 'смех: ' + A.waves.laugh.n + ' сообщ. от ' + A.waves.laugh.users });
+    if (A.waves.plus) stories.push({ kind: 'plusWall', score: 26 + Math.min(14, A.waves.plus.n), ts: A.waves.plus.ts, v: { n: A.waves.plus.n, users: cnt(A.waves.plus.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.plus.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.plus.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.plus.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.plus.ts) }, why: 'стена «+»: ' + A.waves.plus.n });
+    if (A.waves.caps) stories.push({ kind: 'capsWave', score: 25 + Math.min(12, A.waves.caps.n), ts: A.waves.caps.ts, v: { n: A.waves.caps.n, users: cnt(A.waves.caps.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.caps.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.caps.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.caps.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.caps.ts) }, why: 'капс: ' + A.waves.caps.n });
+    if (A.newcomers) stories.push({ kind: 'newcomers', score: 26 + Math.min(14, A.newcomers.n * 2), ts: A.newcomers.ts, v: { n: A.newcomers.n, nn: cnt(A.newcomers.n, ['новичок', 'новичка', 'новичков']), time: clock(A.newcomers.ts) }, why: A.newcomers.n + ' новичков за 10 минут' });
+    if (A.trackAgain) stories.push({ kind: 'trackAgain', score: 24 + A.trackAgain.n * 2, ts: A.t0, v: { track: A.trackAgain.track, n: A.trackAgain.n, nw: cnt(A.trackAgain.n, ['раз', 'раза', 'раз']) }, why: 'трек «' + A.trackAgain.track + '» ' + A.trackAgain.n + ' раз' });
     if (A.shift) stories.push({ kind: 'topicShift', score: 27, ts: A.t0 + A.mins * 30000, v: { a: A.shift.a, b: A.shift.b }, why: 'тема сменилась с «' + A.shift.a + '» на «' + A.shift.b + '»' });
     if (A.silence) stories.push({ kind: 'silence', score: 17, ts: A.silence.ts, v: { min: cnt(Math.round(A.silence.g / 60000), ['минуту', 'минуты', 'минут']), time: clock(A.silence.ts) }, why: 'пауза в чате ' + Math.round(A.silence.g / 60000) + ' мин' });
     const regs = Object.keys(A.byUser || {}).filter(u => (nicks[u.toLowerCase()] || {}).s >= 3).sort((a, b) => A.byUser[b] - A.byUser[a]).slice(0, 3);
@@ -403,7 +433,7 @@
     trace.push('Главная тема: ' + lead.kind + ' (вес ' + Math.round(lead.score) + ') — ' + lead.why);
 
     // подзаголовок
-    const dkey = DECK[lead.kind] ? lead.kind : /^topic_/.test(lead.kind) ? 'topic' : /^duel/.test(lead.kind) ? 'duel' : /^req/.test(lead.kind) ? 'reqRepeat' : 'default';
+    const dkey = DECK[lead.kind] ? lead.kind : /^topic_/.test(lead.kind) ? 'topic' : /^duel/.test(lead.kind) ? 'duel' : /^req/.test(lead.kind) ? 'reqRepeat' : /^music|^trackAgain/.test(lead.kind) ? 'music' : /^(laughWave|plusWall|capsWave)$/.test(lead.kind) ? 'wave' : lead.kind === 'newcomers' ? 'newcomers' : 'default';
     let deck = fill(pickTpl(DECK[dkey], 'deck_' + dkey, rand, memory, picks), { text: lead.v.text || '', time: lead.v.time || '', u: lead.v.u || '' });
     if (lead.kind === 'donation' || lead.kind === 'donationBig' || lead.kind === 'donationTop') deck = lead.text ? '«' + lead.text + '»' : 'Сообщение к донату не приложено.';
 

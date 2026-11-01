@@ -115,5 +115,29 @@ t('обложки категорий: короткие скрыты, главн�
   assert.ok(issue.covers.every((c) => c.ms >= 5 * 60000), 'категории короче 5 минут не показываются');
 });
 
+// 8. Новые ситуации: реакция чата на трек, смех, стена «+», капс, новички; все подстановки заполняются
+t('новые ситуации выпуска', () => {
+  const t0 = 1e12, M = 60000, chat = [];
+  for (let m = 0; m < 60; m++) for (let k = 0; k < 2; k++) chat.push({ ts: t0 + m * M + k * 20000, user: 'u' + (k + m % 3), text: 'обычное сообщение номер ' + m + ' про игру' });
+  for (let k = 0; k < 40; k++) chat.push({ ts: t0 + 30 * M + 60 + k * 1000, user: 'v' + (k % 12), text: 'KEKW KEKW Pog' });
+  for (let k = 0; k < 10; k++) chat.push({ ts: t0 + 45 * M + k * 4000, user: 'p' + k, text: '+' });
+  for (let k = 0; k < 9; k++) chat.push({ ts: t0 + 50 * M + k * 4000, user: 'c' + (k % 6), text: 'ЭТО ПРОСТО ОГОНЬ ВСЕМ' });
+  for (let k = 0; k < 8; k++) chat.push({ ts: t0 + 20 * M + k * 30000, user: 'new' + k, text: 'всем здравствуйте дорогие друзья' });
+  chat.sort((a, b) => a.ts - b.ts);
+  const S = { startTs: t0, endTs: t0 + 70 * M, chat, events: [], games: [{ name: 'Игра', from: t0 }], viewers: [], plays: [{ ts: t0 + 29 * M + 30000, title: 'Фараон - Трек (Official Video)', user: 'Dj' }, { ts: t0 + 10 * M, title: 'Трек А', user: 'x' }, { ts: t0 + 12 * M, title: 'Трек А', user: 'x' }, { ts: t0 + 14 * M, title: 'Трек А', user: 'x' }] };
+  const g = Gazette.build(S, { seed: 3 });
+  const kinds = g.stories.map((x) => x.kind);
+  assert(g.stories.every((x) => !/%\w/.test(x.title)), 'неподставленные %: ' + g.stories.map((x) => x.title).join(' | '));
+  assert(!/%\w/.test(g.headline + g.deck), 'заголовок: ' + g.headline);
+  const A = Gazette.analyze(S, {});
+  assert(A.waves.plus && A.waves.caps && A.waves.laugh, 'волны найдены');
+  assert(A.newcomers && A.newcomers.n >= 6, 'новички найдены');
+  const mu = A.spikes.find((s) => s.play);
+  assert(mu && /Фараон/.test(mu.play.track) && !/Official/.test(mu.play.track), 'всплеск привязан к треку');
+  // каждая новая ситуация даёт чистый заголовок, какой бы вариант ни выпал
+  const Lex = require('../gazetteLexicon');
+  ['musicEmote', 'musicWord', 'musicWave', 'trackAgain', 'laughWave', 'plusWall', 'capsWave', 'newcomers'].forEach((k) => assert(Lex.T[k].length >= 7, k));
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);
