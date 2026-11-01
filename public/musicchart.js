@@ -10,6 +10,7 @@
   const D = { switchIntervalSec: 20, coverSize: 44, showCount: true, scrollSpeed: 30, top1Color: '#FFD700', top2Color: '#C0C0C0', top3Color: '#CD7F32', topGlow: true };
   const S = () => ({ ...D, ...((window.widgetSettings && window.widgetSettings.musicchart) || {}) });
   const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const rgba = (hex, a) => { const m = /^#?([0-9a-f]{6})$/i.exec(hex || ''); if (!m) return 'transparent'; const n = parseInt(m[1], 16); return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`; };
   const tops = () => (latest && latest.musicTops) || { session: [], allTime: [] };
 
   function effScope() {
@@ -74,7 +75,7 @@
     innerEl.innerHTML = list.map((t, i) => {
       const top = i < 3;
       const cover = t.id ? `background-image:url(https://i.ytimg.com/vi/${encodeURIComponent(t.id)}/mqdefault.jpg);` : '';
-      return `<div class="mc-row${top ? ' mc-top' + (s.topGlow ? ' mc-glow' : '') : ''}"${top ? ` style="--mc-c:${cols[i]}"` : ''}>
+      return `<div class="mc-row${top ? ' mc-top' + (s.topGlow ? ' mc-glow' : '') : ''}"${top ? ` style="--mc-c:${cols[i]};--mc-c60:${rgba(cols[i], .6)};--mc-c30:${rgba(cols[i], .3)};--mc-c16:${rgba(cols[i], .16)};--mc-c12:${rgba(cols[i], .12)}"` : ''}>
         <div class="mc-rank" style="font-size:${Math.round(sz * 0.36)}px">${i + 1}</div>
         <div class="mc-cover" style="width:${Math.round(sz * 1.2)}px;height:${sz}px;${cover}">${t.id ? '' : '♪'}</div>
         <div class="mc-name" style="font-size:${Math.max(12, Math.round(sz * 0.32))}px">${esc(t.title)}</div>

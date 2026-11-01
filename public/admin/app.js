@@ -1861,7 +1861,7 @@
       b.type = 'button';
       b.className = 'ostyle-item' + (ostyleState.style === st.id ? ' active' : '');
       b.dataset.id = st.id;
-      b.innerHTML = `<span class="ostyle-num">${st.num}</span><span class="ostyle-text"><b>${st.label}</b><small>${st.hint}</small></span>`;
+      b.innerHTML = `<span class="ostyle-num">${st.num}</span><span class="ostyle-text"><b>${st.label}${st.isNew ? ' <em class="ostyle-new">NEW</em>' : ''}</b><small>${st.hint}</small></span>`;
       b.addEventListener('click', () => saveOverlayStyle({ style: st.id }));
       ostyleList.appendChild(b);
     });

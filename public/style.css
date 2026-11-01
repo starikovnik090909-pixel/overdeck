@@ -385,7 +385,7 @@ body.da-preview { background: transparent; }
 }
 .mc-name { flex: 1; min-width: 0; font-family: var(--font-text); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
 .mc-count { font-family: var(--font-main); font-weight: 700; flex-shrink: 0; }
-.mc-row.mc-top { border-color: color-mix(in srgb, var(--mc-c) 60%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--mc-c) 16%, transparent), transparent 75%); }
-.mc-row.mc-top.mc-glow { box-shadow: 0 0 14px color-mix(in srgb, var(--mc-c) 30%, transparent), inset 0 0 12px color-mix(in srgb, var(--mc-c) 12%, transparent); }
+.mc-row.mc-top { border-color: var(--mc-c60); background: linear-gradient(90deg, var(--mc-c16), transparent 75%); }
+.mc-row.mc-top.mc-glow { box-shadow: 0 0 14px var(--mc-c30), inset 0 0 12px var(--mc-c12); }
 .mc-row.mc-top .mc-rank, .mc-row.mc-top .mc-count { color: var(--mc-c); }
 .mc-row.mc-top .mc-cover { border-color: var(--mc-c); }

@@ -359,6 +359,49 @@ body[data-ostyle="p"] .panel[data-widget]::before {
   -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent);
 }
 
+
+/* ================= 17 · GRAPHITE (новый): графитовые карточки без размытия, тонкие линии, один акцент из темы. Шрифт — как в классическом (Unbounded + Inter).
+   Цвета мест (золото/серебро/бронза) — только на цифре места, имена и числа — нейтральные. ================= */
+body[data-ostyle="q"] {
+  --o-scale: 1.04; --o-r: 18px; --o-blur: 0px; --o-sat: 100%;
+  --o-bg: rgba(16,17,20,.84); --o-solid: #111215; --o-border: rgba(255,255,255,.07); --o-hi: rgba(255,255,255,.04);
+  --o-shadow: 0 20px 40px -20px rgba(0,0,0,.6);
+  --o-track: -.005em; --o-case: none; --o-title: #ECEDEF; --o-title-k: .82; --o-title-w: 600; --o-line: rgba(255,255,255,.07); --o-track-bg: rgba(255,255,255,.06);
+  --o-chip-r: 8px; --o-chip-bg: rgba(255,255,255,.06); --o-chip-fg: #8A8F98; --o-name: #ECEDEF; --o-bar-r: 2px; --o-bar-k: .26; --o-av-r: 50%; --o-dc-r: 50%;
+  --o-av-shadow: none; --q-mu: #8A8F98; --q-mu2: #5D626B; --q-g: #E8C26A; --q-s: #C9CDD3; --q-b: #C98B5B;
+}
+body[data-ostyle="q"] .panel-icon { width: calc(var(--o-n) * 1.8); height: calc(var(--o-n) * 1.8); padding: calc(var(--o-n) * .42); }
+body[data-ostyle="q"] .donor-top-label { color: var(--q-mu); opacity: 1; font-family: var(--font-text); }
+/* активность */
+body[data-ostyle="q"] .chatter-avatar { border: 1px solid rgba(255,255,255,.12); }
+body[data-ostyle="q"] .chatter-row.rank-0 .chatter-avatar { box-shadow: 0 0 0 2px var(--accent); }
+body[data-ostyle="q"] .chatter-bar-fill { background: rgba(236,237,239,.55) !important; box-shadow: none !important; }
+body[data-ostyle="q"] .chatter-row.rank-0 .chatter-bar-fill { background: var(--accent) !important; }
+body[data-ostyle="q"] .chatter-name, body[data-ostyle="q"] .chatter-row .chatter-count { color: #ECEDEF !important; text-shadow: none; }
+body[data-ostyle="q"] .chatter-count { font-weight: 600; }
+/* топы донатов и баллов: без цветных кружков — только цифра места цветом */
+body[data-ostyle="q"] .donor-circle { background: transparent !important; box-shadow: none !important; width: calc(var(--o-n) * 1.5) !important; height: calc(var(--o-n) * 1.5) !important; }
+body[data-ostyle="q"] .donor-circle-glow::after { display: none !important; }
+body[data-ostyle="q"] .donor-circle-inner { background: transparent !important; color: var(--q-mu2) !important; font-size: calc(var(--o-n) * .95) !important; font-weight: 600 !important; width: auto !important; height: auto !important; }
+body[data-ostyle="q"] .donor-row:nth-child(1) .donor-circle-inner { color: var(--q-g) !important; }
+body[data-ostyle="q"] .donor-row:nth-child(2) .donor-circle-inner { color: var(--q-s) !important; }
+body[data-ostyle="q"] .donor-row:nth-child(3) .donor-circle-inner { color: var(--q-b) !important; }
+body[data-ostyle="q"] .donor-name, body[data-ostyle="q"] .donor-amount { color: #ECEDEF !important; text-shadow: none; }
+body[data-ostyle="q"] .donor-amount { font-weight: 600; }
+body[data-ostyle="q"] .donor-top-list.donor-dividers .donor-row:not(:last-child) { border-bottom-color: var(--o-line); }
+/* муз чарт */
+body[data-ostyle="q"] .mc-row { border-color: transparent; border-bottom-color: var(--o-line); padding-left: 0; padding-right: 0; }
+body[data-ostyle="q"] .mc-row.mc-top { background: none; border-color: transparent; border-bottom-color: var(--o-line); box-shadow: none; }
+body[data-ostyle="q"] .mc-row .mc-count { color: #ECEDEF; font-weight: 600; }
+body[data-ostyle="q"] .mc-row .mc-rank { color: var(--q-mu2); }
+body[data-ostyle="q"] .mc-row.mc-top .mc-rank { color: var(--mc-c); }
+body[data-ostyle="q"] .mc-cover { border-radius: 8px; border-color: rgba(255,255,255,.1); }
+body[data-ostyle="q"] .mc-row.mc-top .mc-cover { border-color: rgba(255,255,255,.1); }
+body[data-ostyle="q"] .mc-row.mc-top.mc-glow:first-child .mc-cover { box-shadow: 0 0 0 1.5px var(--mc-c); }
+/* слово дня */
+body[data-ostyle="q"] .wc-poster { --wc-acc: var(--accent); --wc-line: rgba(255,255,255,.07); }
+body[data-ostyle="q"] .wc-kicker { color: var(--q-mu2); letter-spacing: .08em; }
+
 /* ================= Облако слов («Слово дня»): подстройка под стили. Базовые цвета берутся из переменных стиля (--o-name, --o-line, --o-bar-r…) ================= */
 body[data-ostyle] .wc-poster { --wc-bar-h: max(4px, calc(var(--o-bar-h, 7px) * 0.6)); }
 body[data-ostyle] .wc-kicker { font-weight: var(--o-title-w, 700); }
