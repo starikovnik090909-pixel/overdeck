@@ -592,7 +592,7 @@
   try {
     if (typeof require === 'function') {
       const More = require('./gazetteLexiconMore');
-      Object.keys(More.T).forEach((k) => { T[k] = (T[k] || []).concat(More.T[k]); });
+      Object.keys(More.T).forEach((k) => { T[k] = (More.REPLACE || []).indexOf(k) >= 0 ? More.T[k] : (T[k] || []).concat(More.T[k]); });
       Object.keys(More.TOPIC_T).forEach((k) => { TOPIC_T[k] = (TOPIC_T[k] || []).concat(More.TOPIC_T[k]); });
       Object.keys(More.DECK).forEach((k) => { DECK[k] = (DECK[k] || []).concat(More.DECK[k]); });
     }
