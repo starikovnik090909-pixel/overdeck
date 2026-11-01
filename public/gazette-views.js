@@ -111,6 +111,9 @@
     const p = palette(issue.leadKind);
     let stage = null, timers = [], stops = [], raf = 0, done = false;
     const T = (fn, ms) => { timers.push(setTimeout(fn, ms)); };
+    // звук: только на настоящей сцене (в предпросмотре админки тихо)
+    const snd = !opts.preview && window.CreditsSound && (settings.creditsAmbient !== 'off' || settings.creditsSfx) ? window.CreditsSound.create() : null;
+    const fx = (name, a) => { if (snd && settings.creditsSfx) { try { snd.fx[name](a); } catch (e) { /* звук не должен ломать сцену */ } } };
 
     function rollHtml() {
       const R = issue.roster || {}, F = issue.facts || {}, parts = [];
@@ -138,6 +141,11 @@
     }
 
     function start() {
+      if (snd) {
+        const lv = (settings.creditsVolume == null ? 40 : settings.creditsVolume) / 100;
+        snd.fx.on(settings.creditsSfx); snd.setLevel(lv);
+        if (settings.creditsAmbient !== 'off') snd.startAmbient(settings.creditsAmbient, { volume: lv, fadeIn: settings.creditsFadeIn == null ? 6 : settings.creditsFadeIn });
+      }
       stage = makeStage('gz-credits'); applyPalette(stage, issue.leadKind);
       stage.appendChild(el('div', 'gz-bg'));
       stops.push(startFx(stage, p, true));
@@ -171,18 +179,21 @@
 
       // 1. подпись печатается
       const tagText = 'КАНАЛ ' + String(issue.studio).toUpperCase() + ' ПРЕДСТАВЛЯЕТ';
-      let ci = 0; T(function typeIt() { ci++; tag.textContent = tagText.slice(0, ci); if (ci < tagText.length) T(typeIt, 38); else tag.classList.add('done'); }, 600);
+      let ci = 0; T(function typeIt() { ci++; tag.textContent = tagText.slice(0, ci); if (ci % 2 === 0) fx('type'); if (ci < tagText.length) T(typeIt, 38); else tag.classList.add('done'); }, 600);
       // 2. заголовок → подзаголовок → стыковка слева
+      words.forEach((w, i) => T(() => fx('thud', i), 1700 + i * 220));
       const titleEnd = 1700 + words.length * 220 + 1100;
       T(() => stage.classList.add('on-deck'), titleEnd);
       const dockAt = titleEnd + 3800;
-      T(() => lock.classList.add('dock'), dockAt);
-      T(() => { poster.classList.add('in'); left.querySelector('.gz-cap').style.opacity = 1; stats.style.opacity = 1; pulse.style.opacity = 1; pulse.classList.add('go'); countUp(stats); }, dockAt + 900);
+      T(() => { lock.classList.add('dock'); fx('whoosh'); }, dockAt);
+      T(() => { fx('swish'); poster.classList.add('in'); left.querySelector('.gz-cap').style.opacity = 1; stats.style.opacity = 1; pulse.style.opacity = 1; pulse.classList.add('go'); countUp(stats); }, dockAt + 900);
       T(() => { roll.classList.add('in'); scroll(rin); }, dockAt + 1700);
     }
 
     function countUp(stats) {
       const t0 = performance.now();
+      for (let i = 0; i < 14; i++) T(() => fx('tick'), i * 200);
+      T(() => fx('chime'), 3000);
       const tick = (ts) => { const k = Math.min(1, (ts - t0) / 3000), e = 1 - Math.pow(1 - k, 3); stats.querySelectorAll('b').forEach((b) => { b.textContent = Math.round(+b.dataset.to * e).toLocaleString('ru-RU'); }); if (k < 1 && !done) requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     }
@@ -203,12 +214,14 @@
     }
 
     function finish() {
+      fx('finale');
       if (opts.loop) { T(() => { stop(true); start(); }, 7000); return; }
       if (settings.creditsHoldSec > 0 && opts.onDone) T(opts.onDone, settings.creditsHoldSec * 1000);
     }
 
     function stop(fast) {
       done = true; timers.forEach(clearTimeout); timers = []; stops.forEach((f) => f()); stops = []; cancelAnimationFrame(raf);
+      if (snd) snd.stopAmbient(fast ? 0.6 : 3);
       if (stage) { dropStage(stage, fast); stage = null; }
       done = false;
     }

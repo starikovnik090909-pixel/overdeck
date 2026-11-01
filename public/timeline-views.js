@@ -154,7 +154,7 @@
     const done = sm.buckets.slice(0, -1), cur = sm.buckets[nb - 1] || 0;
     const peak = Math.max(...sm.buckets, 0), ceil = Math.max(10, peak), hMax = yBase - yTop;
     const pkI = peak > 0 ? sm.buckets.indexOf(peak) : -1;
-    const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.min(r, w / 2, h / 2)); else ctx.rect(x, y, w, h); };
+    const rr = (x, y, w, h, r) => { ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, Math.max(0, Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2))); else ctx.rect(x, y, w, h); };
 
     // начало стрима — подсказка вместо пустого поля
     if (sm.messages === 0 && nb <= 2) {

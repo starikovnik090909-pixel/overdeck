@@ -2344,3 +2344,26 @@ html, body {
 .ext-tag { display: inline-flex; vertical-align: middle; margin-left: 6px; }
 
 #tab-widgets .ostyle-new { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 6px; margin-left: 6px; background: var(--accent); color: #fff; vertical-align: 1px; }
+
+/* Доп. функционал: звук афиши */
+.ex-snd { display: grid; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); }
+.ex-snd h5 { margin: 0; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-secondary); }
+.ex-amb-btn { justify-self: start; }
+.ex-amb-btn b { color: var(--accent-light, #e0605c); font-weight: 600; }
+.ex-vol { display: flex; gap: 10px; align-items: center; }
+.ex-vol input { flex: 1; accent-color: var(--accent, #B14846); }
+.ex-vol b { min-width: 28px; text-align: right; font-weight: 600; }
+.ex-amb-ov { position: fixed; inset: 0; z-index: 10050; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 20px; }
+.ex-amb-ov[hidden] { display: none; }
+.ex-amb { width: min(560px, 100%); max-height: 86vh; overflow: auto; background: var(--bg-card, #17181d); border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 16px; padding: 18px 18px 14px; box-shadow: 0 24px 60px rgba(0,0,0,.6); }
+.ex-amb-h { display: flex; justify-content: space-between; align-items: center; }
+.ex-amb-h h3 { margin: 0; font-size: 17px; }
+.ex-amb-x { background: none; border: 0; color: var(--text-secondary); font-size: 26px; line-height: 1; cursor: pointer; padding: 0 6px; }
+.ex-amb-list { display: grid; gap: 8px; margin-top: 10px; }
+.ex-amb-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--border, rgba(255,255,255,.08)); border-radius: 12px; }
+.ex-amb-row.sel { border-color: var(--accent, #B14846); background: rgba(177,72,70,.12); }
+.ex-amb-play, .ex-amb-sp { flex: none; width: 36px; height: 36px; border-radius: 50%; }
+.ex-amb-play { border: 0; background: rgba(255,255,255,.1); color: inherit; cursor: pointer; font-size: 13px; }
+.ex-amb-play.on { background: var(--accent, #B14846); color: #fff; }
+.ex-amb-t { flex: 1; min-width: 0; display: grid; }
+.ex-amb-t small { color: var(--text-secondary); font-size: 12px; }

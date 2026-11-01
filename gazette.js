@@ -138,16 +138,27 @@
 
     // цитата вечера: сообщение, на которое чат «отозвался» (эхо) + смех
     const LAUGH = /(ха){2,}|ахах|хах|kekw|lul|lol|лол|ору|умер(ла|ли)? со смеху|😂|🤣/i;
+    // приветствия («привет всем», «здарова», o/) в цитату не попадают: на них отвечает весь чат, но смысла в них нет
+    const GREET = /^\s*(?:[!.,:;)\s]*)(?:всем\s+)?(?:прив(?:ет|етик|ед)?|здаро(?:ва|вa)?|здравствуй(?:те)?|дарова?|хай|хей|ку|куку|салам|добр(?:ый|ое|ой|ого)\s+(?:вечер|день|утро|ночи|вечерочек)|доброго\s+(?:времени|вечера|дня|утра)|hello|hi|hey|qq|o\/|\\o|ку-ку|всем\s+(?:хай|ку|привет|здарова|добр\S*)|с\s+началом|добро\s+пожаловать|welcome|ку\s+всем)(?![а-яёa-z0-9])/i;
+    const hasGreet = t => GREET.test(t) || /^\s*(?:[\w\u0400-\u04ff]{2,25}[,:]?\s+)?(?:прив(?:ет|етик)?|здаро(?:ва)?|хай|ку)(?![а-яёa-z0-9])/i.test(t) || /(?:^|\s)(?:o\/|\\o|👋)(?:\s|$)/.test(t);
+    const firstSeen = {}; chat.forEach(m => { if (!(m.user in firstSeen)) firstSeen[m.user] = m.ts; });
+    const earlyEnd = t0 + 5 * 60000;
+    const raidTs = A.events.filter(e => e.type === 'raid').map(e => e.ts);
     let bestQ = null;
     for (let i = 0; i < chat.length; i++) {
       const m = chat[i];
       if (m.text.length < 14 || m.text.length > 95) continue;
+      if (hasGreet(m.text)) continue;
+      if (m.ts < earlyEnd || raidTs.some(r => m.ts >= r && m.ts - r < 3 * 60000)) continue;
+      const wn = tokens(m.text).filter(w => /^[а-яёa-z]{3,}$/i.test(w) && !isEmote(w)).length;
+      if (wn < 4 || (firstSeen[m.user] === m.ts && wn < 5)) continue; // первое сообщение зрителя чаще всего приветствие
       if (/^[A-Za-z0-9\s]+$/.test(m.text) && tokens(m.text).every(isEmote)) continue;
       if (/(http|www\.|\.ru|\.com)/i.test(m.text)) continue;
       const mine = new Set(tokens(m.text).filter(isWord).map(stem));
       let echo = 0, laugh = 0;
       for (let j = i + 1; j < chat.length && chat[j].ts - m.ts <= 25000; j++) {
         if (chat[j].user === m.user) continue;
+        if (hasGreet(chat[j].text)) continue;
         if (LAUGH.test(chat[j].text)) laugh++;
         if (tokens(chat[j].text).some(w => isWord(w) && mine.has(stem(w)))) echo++;
       }

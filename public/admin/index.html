@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=136">
+<link rel="stylesheet" href="style.css?v=137">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
@@ -3293,7 +3293,7 @@
               </div><div class="ex-col ex-show"><h4 class="ex-h">Показ на стриме</h4><div class="ex-actions"><button class="btn btn-primary" type="button" data-act="show">Показать на стриме</button><button class="btn btn-secondary" type="button" data-act="hide">Скрыть</button></div>
               <div class="obs-url-compact"><span class="obs-url-compact-title">Источник OBS</span><input type="text" readonly data-url="credits.html" title="Источник «Браузер» 1920×1080"><button class="btn-tiny" type="button" data-copy>Копировать</button></div>
             </div>
-            <div class="ex-col ex-opts"><h4 class="ex-h">Настройки</h4><div class="field"><label>Скорость титров</label><div class="chr-seg" id="exSpeed"><button type="button" data-v="slow">Медленно</button><button type="button" data-v="normal">Обычно</button><button type="button" data-v="fast">Быстро</button></div></div><div class="field"><label>Убрать экран после титров через, сек <span class="ex-sm">0 — не убирать, пока не нажмёшь «Скрыть»</span></label><input type="number" id="exHold" min="0" max="600" step="5"></div><label class="tg-sw"><input type="checkbox" id="exGhost"><i></i><span>Реплики чата плывут по фону</span></label><br><br><label class="tg-sw"><input type="checkbox" id="exWall"><i></i><span>В конце титров — все, кто писал</span></label></div>
+            <div class="ex-col ex-opts"><h4 class="ex-h">Настройки</h4><div class="field"><label>Скорость титров</label><div class="chr-seg" id="exSpeed"><button type="button" data-v="slow">Медленно</button><button type="button" data-v="normal">Обычно</button><button type="button" data-v="fast">Быстро</button></div></div><div class="field"><label>Убрать экран после титров через, сек <span class="ex-sm">0 — не убирать, пока не нажмёшь «Скрыть»</span></label><input type="number" id="exHold" min="0" max="600" step="5"></div><label class="tg-sw"><input type="checkbox" id="exGhost"><i></i><span>Реплики чата плывут по фону</span></label><br><br><label class="tg-sw"><input type="checkbox" id="exWall"><i></i><span>В конце титров — все, кто писал</span></label><div class="ex-snd"><h5>Звук афиши</h5><button class="btn btn-secondary ex-amb-btn" type="button" id="exAmbBtn">Фоновый эмбиент: <b id="exAmbName">выкл</b></button><div class="field"><label>Громкость, % <span class="ex-sm">потолок: звук нарастает до него</span></label><div class="ex-vol"><input type="range" id="exVol" min="0" max="100" step="5"><b id="exVolV">40</b></div></div><div class="field"><label>Нарастание, сек <span class="ex-sm">после «Показать на стриме»</span></label><input type="number" id="exFade" min="0" max="30" step="1"></div><label class="tg-sw"><input type="checkbox" id="exSfx"><i></i><span>Звуки сцены: печать, удары заголовка, свуш, тики счётчиков</span></label></div></div>
           </div>
         </div>
         <div class="card ui3-card ex-card" data-fmt="gazette">
@@ -3787,7 +3787,14 @@
 <script src="themepick.js?v=2"></script>
 <script src="chronicles.js?v=17"></script>
 <script src="telegram.js?v=5"></script>
-<script src="extras.js?v=5"></script>
+
+<div class="ex-amb-ov" id="exAmbOv" hidden><div class="ex-amb" role="dialog" aria-modal="true" aria-label="Фоновый эмбиент">
+  <div class="ex-amb-h"><h3>Фоновый эмбиент</h3><button type="button" class="ex-amb-x" id="exAmbX" aria-label="Закрыть">×</button></div>
+  <p class="ex-sm">Нажми ▶, чтобы послушать. Выбрать, чтобы поставить на афишу. Играет после «Показать на стриме», нарастая до выбранной громкости.</p>
+  <div class="ex-amb-list" id="exAmbList"></div>
+</div></div>
+<script src="/credits-sound.js?v=1"></script>
+<script src="extras.js?v=6"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
 <script src="music.js?v=11"></script>

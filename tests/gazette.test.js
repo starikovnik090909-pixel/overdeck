@@ -80,5 +80,19 @@ t('журнал выключен', () => {
   try { require('fs').unlinkSync(journal.FILE); } catch (e) { /* ок */ }
 });
 
+// 6. Цитата вечера: приветствия не попадают, мат не фильтруется, лучшая выбирается сама
+t('цитата: без приветствий', () => {
+  const t0 = Date.parse('2026-11-01T15:00:00Z'), chat = [], add = (m, u, x) => chat.push({ ts: t0 + m * 60000, user: u, text: x });
+  add(20, 'x', 'привет всем я пришел поболтать с вами про игру'); [1, 2, 3, 4].forEach((d) => add(20 + d / 10, 'u' + d, 'привет x добро пожаловать'));
+  add(40, 'delusion_p', 'Я это сделал, а оно взяло и сработало, сам в шоке'); [1, 2, 3, 4, 5].forEach((d) => add(40 + d / 10, 'v' + d, 'ахахах сам в шоке сработало'));
+  const q = Gazette.analyze({ streamer: 's', startTs: t0, endTs: t0 + 3600000, chat, events: [], games: [] }).quote;
+  assert.ok(q && q.user === 'delusion_p', 'ожидалась цитата delusion_p, получено: ' + JSON.stringify(q));
+});
+t('цитата: только приветствия — цитаты нет', () => {
+  const t0 = Date.parse('2026-11-01T15:00:00Z'), chat = [];
+  for (let i = 0; i < 6; i++) chat.push({ ts: t0 + (20 + i * 0.1) * 60000, user: 'u' + i, text: 'всем привет я пришел на стрим сегодня' });
+  assert.strictEqual(Gazette.analyze({ streamer: 's', startTs: t0, endTs: t0 + 3600000, chat, events: [], games: [] }).quote, null);
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);

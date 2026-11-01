@@ -16,9 +16,14 @@ const DEFAULTS = {
   creditsHoldSec: 0,       // через сколько секунд после титров убрать экран; 0 — не убирать, пока не нажмёшь «Скрыть»
   ghostChat: true,         // сообщения чата плывут по фону
   wallNames: true,         // «в эпизодах» — все, кто писал
+  creditsAmbient: 'off',   // фоновый эмбиент афиши: off или ключ звука (credits, keys, box, dawn, neon, grid, data, nc)
+  creditsVolume: 40,       // потолок громкости звука афиши, %
+  creditsFadeIn: 6,        // за сколько секунд звук нарастает после «Показать на стриме»
+  creditsSfx: false,       // мягкие звуки сцены: печать, удары заголовка, свуш, тики счётчиков
   onair: { bug: false, ticker: true, plate: true, intervalMin: 15, plateSec: 20 },
 };
 
+const AMBIENTS = ['off', 'credits', 'keys', 'box', 'dawn', 'neon', 'grid', 'data', 'nc'];
 let cfg = JSON.parse(JSON.stringify(DEFAULTS));
 let screen = { format: null, rev: 0, demo: null };
 let pulse = { rev: 0, demo: null };
@@ -76,6 +81,10 @@ function normalize(raw) {
     creditsHoldSec: clamp(raw.creditsHoldSec, 0, 600, d.creditsHoldSec),
     ghostChat: typeof raw.ghostChat === 'boolean' ? raw.ghostChat : d.ghostChat,
     wallNames: typeof raw.wallNames === 'boolean' ? raw.wallNames : d.wallNames,
+    creditsAmbient: AMBIENTS.includes(raw.creditsAmbient) ? raw.creditsAmbient : d.creditsAmbient,
+    creditsVolume: clamp(raw.creditsVolume, 0, 100, d.creditsVolume),
+    creditsFadeIn: clamp(raw.creditsFadeIn, 0, 30, d.creditsFadeIn),
+    creditsSfx: typeof raw.creditsSfx === 'boolean' ? raw.creditsSfx : d.creditsSfx,
     onair: {
       bug: typeof o.bug === 'boolean' ? o.bug : d.onair.bug,
       ticker: typeof o.ticker === 'boolean' ? o.ticker : d.onair.ticker,
