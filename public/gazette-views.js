@@ -122,6 +122,7 @@
       const top = (R.chatters || []).slice(0, 8);
       if (top.length) parts.push('<h6>В главных ролях</h6>' + top.map((c, i) => `<div class="nm">${esc(c.user)}<small>${roles[i] || (i < 6 ? 'Постоянный актёр' : 'Актёр')} · ${c.n} ${plural(c.n, ['реплика', 'реплики', 'реплик'])}</small></div>`).join(''));
       if ((R.donors || []).length) parts.push('<h6>Щедрое сердце</h6>' + R.donors.slice(0, 6).map((d, i) => `<div class="nm">${esc(d.user)}<small>${i === 0 ? 'Меценат вечера · ' : ''}${money(d.sum)}</small></div>`).join(''));
+      if ((issue.titles || []).length) parts.push('<h6>Отличились</h6>' + issue.titles.map((t) => `<div class="nm">${esc(t.user)}<small>${esc(t.title)}${t.note ? ' · ' + esc(t.note) : ''}</small></div>`).join(''));
       const raiders = (R.raiders || []).filter((r) => r.user);
       if (raiders.length) parts.push('<h6>Гости из рейда</h6>' + raiders.map((r) => `<div class="nm">${esc(r.user)}<small>привёл ${r.viewers} ${plural(r.viewers, ['зрителя', 'зрителей', 'зрителей'])}</small></div>`).join(''));
       const fresh = [];
@@ -165,7 +166,8 @@
       const poster = el('div', 'gz-poster', `<div class="card">${posterInner(issue, p)}</div>`);
       const img = poster.querySelector('img'); if (img) img.onerror = () => { poster.querySelector('.card').innerHTML = artSvg(issue.leadKind, p); };
       left.appendChild(poster);
-      left.appendChild(el('div', 'gz-cap', issue.game ? 'Сюжет · ' + esc(issue.game) : ''));
+      const cap = el('div', 'gz-cap', issue.game ? 'Сюжет · ' + esc(issue.game) : ''); left.appendChild(cap);
+      setupCovers(poster, cap);
       const F = issue.facts || {};
       const items = [['реплик', F.chat], ['пик зрителей', F.peak], ['донатов, ₽', F.donations]].filter((x) => x[1] > 0);
       if (items.length < 2) items.push(['минут в эфире', F.mins || 0]);
@@ -186,8 +188,53 @@
       T(() => stage.classList.add('on-deck'), titleEnd);
       const dockAt = titleEnd + 3800;
       T(() => { lock.classList.add('dock'); fx('whoosh'); }, dockAt);
-      T(() => { fx('swish'); poster.classList.add('in'); left.querySelector('.gz-cap').style.opacity = 1; stats.style.opacity = 1; pulse.style.opacity = 1; pulse.classList.add('go'); countUp(stats); }, dockAt + 900);
+      T(() => { if (coversGo) coversGo(); fx('swish'); poster.classList.add('in'); left.querySelector('.gz-cap').style.opacity = 1; stats.style.opacity = 1; pulse.style.opacity = 1; pulse.classList.add('go'); countUp(stats); }, dockAt + 900);
       T(() => { roll.classList.add('in'); scroll(rin); }, dockAt + 1700);
+    }
+
+    // обложки всех категорий вечера: колода (веер позади главной) или листание (переворот). Режим «static» — как раньше, одна обложка.
+    let coversGo = null;
+    function setupCovers(poster, cap) {
+      const mode = settings.creditsCovers || 'deck', list = (issue.covers || []).slice(0, 6);
+      if (mode === 'static' || list.length < 2) return;
+      const main = list.findIndex((c) => c.name === issue.game), mi = main < 0 ? 0 : main;
+      const mainCard = poster.querySelector('.card'); poster.removeChild(mainCard);
+      const hueOf = (s) => { let h = 11; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return h; };
+      const wr = list.map((c, i) => {
+        const w = el('div', 'gz-cv'); let card;
+        if (i === mi) card = mainCard;
+        else {
+          card = el('div', 'card');
+          card.innerHTML = c.art ? `<img alt="" src="${esc(c.art)}">` : `<div class="gz-fb" style="background:linear-gradient(160deg,hsl(${hueOf(c.name)},45%,34%),hsl(${(hueOf(c.name) + 40) % 360},55%,12%))"><b>${esc(c.name)}</b></div>`;
+          const im = card.querySelector('img'); if (im) im.onerror = () => { card.innerHTML = `<div class="gz-fb" style="background:linear-gradient(160deg,hsl(${hueOf(c.name)},45%,34%),hsl(${(hueOf(c.name) + 40) % 360},55%,12%))"><b>${esc(c.name)}</b></div>`; };
+        }
+        w.appendChild(card); poster.appendChild(w); return w;
+      });
+      let ord = list.map((_, i) => (i + mi) % list.length); // главная — спереди
+      const label = (i) => (i === mi ? 'Сюжет' : 'Ещё') + ' · ' + esc(list[i].name) + ' · ' + dur(Math.max(1, Math.round(list[i].ms / 60000)));
+      const dots = (cur) => '<span class="gz-dots">' + list.map((_, i) => `<i${i === cur ? ' class="on"' : ''}></i>`).join('') + '</span>';
+      const setCap = (i) => { cap.innerHTML = label(i) + (mode === 'flip' ? dots(i) : ''); };
+      const place = () => ord.forEach((idx, k) => {
+        const w = wr[idx], s = w.style;
+        if (mode === 'flip') { s.transform = k === 0 ? 'none' : 'rotateY(90deg)'; s.opacity = k === 0 ? 1 : 0; s.zIndex = k === 0 ? 5 : 1; }
+        else { s.zIndex = 10 - k; s.transform = k === 0 ? 'none' : `translateX(${k * 64}px) translateY(${-k * 6}px) rotate(${k * 2.6}deg) scale(${1 - k * 0.05})`; s.filter = k === 0 ? 'none' : `brightness(${1 - k * 0.2})`; }
+      });
+      wr.forEach((w) => { w.style.transition = 'none'; }); place(); setCap(ord[0]);
+      void poster.offsetWidth; wr.forEach((w) => { w.style.transition = mode === 'flip' ? 'transform .5s ease, opacity .5s' : 'transform .7s cubic-bezier(.3,.7,.2,1), filter .7s'; });
+      const HOLD = 6500;
+      const step = () => {
+        fx('swish');
+        const f = ord[0];
+        if (mode === 'flip') {
+          wr[f].style.transform = 'rotateY(-90deg)'; wr[f].style.opacity = 0;
+          T(() => { ord.push(ord.shift()); const n = wr[ord[0]]; n.style.transition = 'none'; n.style.transform = 'rotateY(90deg)'; void n.offsetWidth; n.style.transition = 'transform .5s ease, opacity .5s'; place(); setCap(ord[0]); }, 520);
+        } else {
+          wr[f].style.zIndex = 30; wr[f].style.transform = 'translateX(440px) rotate(9deg)';
+          T(() => { ord.push(ord.shift()); place(); setCap(ord[0]); }, 650);
+        }
+        T(step, HOLD);
+      };
+      coversGo = () => T(step, 7000);
     }
 
     function countUp(stats) {

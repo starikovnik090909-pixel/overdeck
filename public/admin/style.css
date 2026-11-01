@@ -2367,3 +2367,4 @@ html, body {
 .ex-amb-play.on { background: var(--accent, #B14846); color: #fff; }
 .ex-amb-t { flex: 1; min-width: 0; display: grid; }
 .ex-amb-t small { color: var(--text-secondary); font-size: 12px; }
+.ex-snd select { width: 100%; background: var(--bg-input, #20222a); color: inherit; border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 8px; padding: 8px 10px; font: inherit; }

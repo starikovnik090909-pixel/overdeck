@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Gazette = require('./gazette');
 const demo = require('./gazetteDemo');
+const viewerTitles = require('./viewerTitles');
 const journal = require('./streamJournal');
 
 const FILE = path.join(__dirname, 'gazette_settings.json');
@@ -16,13 +17,14 @@ const DEFAULTS = {
   creditsHoldSec: 0,       // через сколько секунд после титров убрать экран; 0 — не убирать, пока не нажмёшь «Скрыть»
   ghostChat: true,         // сообщения чата плывут по фону
   wallNames: true,         // «в эпизодах» — все, кто писал
-  creditsAmbient: 'off',   // фоновый эмбиент афиши: off или ключ звука (credits, keys, box, dawn, neon, grid, data, nc)
-  creditsVolume: 40,       // потолок громкости звука афиши, %
+  creditsAmbient: 'credits', // фоновый эмбиент афиши: off или ключ звука (credits, keys, box, dawn, neon, grid, data, nc)
+  creditsVolume: 20,       // потолок громкости звука афиши, %
   creditsFadeIn: 6,        // за сколько секунд звук нарастает после «Показать на стриме»
   creditsSfxVolume: 10,    // громкость звуков сцены (печать, заголовок…), %
+  creditsCovers: 'deck',   // обложки категорий на афише: static (одна) | deck (колода) | flip (листание)
   creditsTypeSound: 'k1',  // звук печати: k1–k6 (механическая клавиатура)
   creditsTitleSound: 'chord', // звук заголовка: chord | soft | echo
-  creditsSfx: false,       // мягкие звуки сцены: печать, удары заголовка, свуш, тики счётчиков
+  creditsSfx: true,       // мягкие звуки сцены: печать, удары заголовка, свуш, тики счётчиков
   onair: { bug: false, ticker: true, plate: true, intervalMin: 15, plateSec: 20 },
 };
 
@@ -90,6 +92,7 @@ function normalize(raw) {
     creditsSfxVolume: clamp(raw.creditsSfxVolume, 0, 100, d.creditsSfxVolume),
     creditsTypeSound: ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'].includes(raw.creditsTypeSound) ? raw.creditsTypeSound : d.creditsTypeSound,
     creditsTitleSound: ['chord', 'soft', 'echo'].includes(raw.creditsTitleSound) ? raw.creditsTitleSound : d.creditsTitleSound,
+    creditsCovers: ['static', 'deck', 'flip'].includes(raw.creditsCovers) ? raw.creditsCovers : d.creditsCovers,
     creditsSfx: typeof raw.creditsSfx === 'boolean' ? raw.creditsSfx : d.creditsSfx,
     onair: {
       bug: typeof o.bug === 'boolean' ? o.bug : d.onair.bug,
@@ -183,6 +186,8 @@ function buildIssue(opts) {
     stories: g.stories.map((s) => ({ kind: s.kind, title: s.title })),
     timeline: g.timeline, word: g.word, emote: g.emote, quote: g.quote, heroes: g.heroes, weather: g.weather,
     confidence: g.confidence, facts: g.facts, buckets: thin(g.buckets, 90),
+    covers: makeCovers(S, demoId ? null : journal.gameCovers(S.endTs)),
+    titles: safeTitles(S, g, name, !!demoId),
     game: mg || mainGame || '', art: art && (!mg || art.name === mg) ? art.art : '',
     roster,
     ghost: pickGhost(S),
@@ -192,6 +197,26 @@ function buildIssue(opts) {
   return issue;
 }
 
+/** Обложки категорий вечера для афиши: главная первой, остальные по порядку; категории короче 5 минут не показываем. */
+function makeCovers(S, live) {
+  let list = live;
+  if (!list) {
+    const gs = (S.games || []).slice().sort((a, b) => a.from - b.from), agg = new Map();
+    gs.forEach((g, i) => { const e = agg.get(g.name) || { name: g.name, art: '', ms: 0 }; e.ms += Math.max(0, (gs[i + 1] ? gs[i + 1].from : S.endTs) - g.from); agg.set(g.name, e); });
+    list = [...agg.values()];
+  }
+  list = list.filter((c) => c.ms >= 5 * 60000);
+  const main = (S.games || []).length ? longestGame(S) : '';
+  list.sort((a, b) => (b.name === main) - (a.name === main));
+  return list.slice(0, 6).map((c) => ({ name: c.name, art: c.art || '', ms: Math.round(c.ms) }));
+}
+function safeTitles(S, g, streamer, isDemo) {
+  try {
+    let music = [];
+    try { if (!isDemo) music = require('./musicRequests').stats(S.startTs).users || []; } catch (e) { /* музыки может не быть */ }
+    return viewerTitles.compute(S, { music, quote: g && g.quote, streamer, max: 8 });
+  } catch (e) { return []; }
+}
 function longestGame(S) {
   const gs = (S.games || []).slice().sort((a, b) => a.from - b.from);
   let best = '', bd = -1;

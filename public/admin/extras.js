@@ -78,7 +78,7 @@
   // --- настройки ---
   const F = {
     studio: $('#exStudio'), hold: $('#exHold'), ghost: $('#exGhost'), wall: $('#exWall'), jr: $('#exJournalOn'),
-    vol: $('#exVol'), fade: $('#exFade'), sfx: $('#exSfx'), ticker: $('#exOaTicker'), plate: $('#exOaPlate'), bug: $('#exOaBug'), int: $('#exOaInt'), sec: $('#exOaSec'),
+    vol: $('#exVol'), sfxVol: $('#exSfxVol'), type: $('#exType'), title: $('#exTitle'), covers: $('#exCovers'), fade: $('#exFade'), sfx: $('#exSfx'), ticker: $('#exOaTicker'), plate: $('#exOaPlate'), bug: $('#exOaBug'), int: $('#exOaInt'), sec: $('#exOaSec'),
   };
   let amb = 'off';
   const SND = window.CreditsSound;
@@ -89,13 +89,13 @@
     F.studio.value = s.studioName; F.hold.value = s.creditsHoldSec; F.ghost.checked = s.ghostChat; F.wall.checked = s.wallNames; F.jr.checked = s.journalEnabled;
     F.ticker.checked = s.onair.ticker; F.plate.checked = s.onair.plate; F.bug.checked = s.onair.bug; F.int.value = s.onair.intervalMin; F.sec.value = s.onair.plateSec;
     $$('#exSpeed button', sec).forEach((b) => b.classList.toggle('on', b.dataset.v === s.creditsSpeed));
-    amb = s.creditsAmbient || 'off'; F.vol.value = s.creditsVolume; $('#exVolV').textContent = s.creditsVolume; F.fade.value = s.creditsFadeIn; F.sfx.checked = !!s.creditsSfx; ambLabel();
+    amb = s.creditsAmbient || 'off'; F.vol.value = s.creditsVolume; $('#exVolV').textContent = s.creditsVolume; F.fade.value = s.creditsFadeIn; F.sfx.checked = !!s.creditsSfx; F.sfxVol.value = s.creditsSfxVolume; $('#exSfxVolV').textContent = s.creditsSfxVolume; F.type.value = s.creditsTypeSound; F.title.value = s.creditsTitleSound; F.covers.value = s.creditsCovers; ambLabel();
   }
   function collect() {
     return {
       studioName: F.studio.value, journalEnabled: F.jr.checked, creditsSpeed: ($('#exSpeed button.on', sec) || {}).dataset ? $('#exSpeed button.on', sec).dataset.v : 'normal',
       creditsHoldSec: +F.hold.value || 0, ghostChat: F.ghost.checked, wallNames: F.wall.checked,
-      creditsAmbient: amb, creditsVolume: +F.vol.value, creditsFadeIn: +F.fade.value || 0, creditsSfx: F.sfx.checked,
+      creditsAmbient: amb, creditsVolume: +F.vol.value, creditsFadeIn: +F.fade.value || 0, creditsSfx: F.sfx.checked, creditsSfxVolume: +F.sfxVol.value, creditsTypeSound: F.type.value, creditsTitleSound: F.title.value, creditsCovers: F.covers.value,
       onair: { ticker: F.ticker.checked, plate: F.plate.checked, bug: F.bug.checked, intervalMin: +F.int.value || 15, plateSec: +F.sec.value || 20 },
     };
   }
@@ -109,6 +109,7 @@
     }, 450);
   }
   Object.values(F).forEach((i) => i.addEventListener(i.type === 'checkbox' ? 'change' : 'input', save));
+  F.sfxVol.addEventListener('input', () => { $('#exSfxVolV').textContent = F.sfxVol.value; });
   F.vol.addEventListener('input', () => { $('#exVolV').textContent = F.vol.value; if (eng) eng.setLevel(F.vol.value / 100); });
 
   // --- выбор фонового эмбиента с прослушиванием ---

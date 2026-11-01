@@ -418,6 +418,7 @@ function handleEventAlertRaw(type, e) {
       streamCounters.points += Math.max(0, Number(e.reward && e.reward.cost) || 0);
       pointsLeaderboard.addPoints({ username: e.user_name, amount: e.reward && e.reward.cost });
       fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
+      try { gazetteService.journal.noteRedeem(e.user_name, e.reward && e.reward.title, e.reward && e.reward.cost); } catch (er) { /* журнал необязателен */ }
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).catch((er) => console.warn('[Музыка]', er.message));
       break;
     default: break;

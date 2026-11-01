@@ -94,5 +94,26 @@ t('цитата: только приветствия — цитаты нет', (
   assert.strictEqual(Gazette.analyze({ streamer: 's', startTs: t0, endTs: t0 + 3600000, chat, events: [], games: [] }).quote, null);
 });
 
+// 7. Звания зрителей
+t('звания: музыка, донаты, баллы, лимиты', () => {
+  const V = require('../viewerTitles'), t0 = 1e12, M = 60000, chat = [], events = [];
+  for (let i = 0; i < 20; i++) chat.push({ ts: t0 + i * M, user: 'talker', text: 'просто пишу сообщение ' + i });
+  for (let i = 0; i < 7; i++) events.push({ ts: t0 + (10 + i) * M, type: 'redeem', user: 'sp', reward: i % 2 ? 'А' : 'Б', cost: 500 });
+  events.push({ ts: t0 + 20 * M, type: 'donation', user: 'rich', amount: 1500 });
+  const r = V.compute({ startTs: t0, endTs: t0 + 3600000, chat, events }, { music: [{ name: 'Dj', count: 16 }, { name: 'Dj3', count: 2 }], streamer: 'starlkov', max: 12 });
+  const by = (u) => r.filter((x) => x.user === u);
+  assert.ok(by('Dj').length === 1 && V.MUSIC_TIERS[0].titles.includes(by('Dj')[0].title), 'диджей с 16 заказами');
+  assert.ok(!r.some((x) => x.user === 'Dj3'), 'меньше 3 заказов звания не даёт');
+  assert.ok(by('rich').some((x) => x.title === 'Меценат вечера'), 'меценат');
+  assert.ok(by('sp').some((x) => x.title === 'Главный транжира'), 'транжира');
+  assert.ok(Object.values(r.reduce((a, x) => { a[x.user] = (a[x.user] || 0) + 1; return a; }, {})).every((n) => n <= 2), 'не больше двух званий на человека');
+  assert.ok(!r.some((x) => x.user === 'starlkov'), 'стример званий не получает');
+});
+t('обложки категорий: короткие скрыты, главная первой', () => {
+  const issue = require('../gazetteService').buildIssue({ demo: 'A' });
+  assert.ok(Array.isArray(issue.covers) && Array.isArray(issue.titles), 'covers и titles есть в выпуске');
+  assert.ok(issue.covers.every((c) => c.ms >= 5 * 60000), 'категории короче 5 минут не показываются');
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);

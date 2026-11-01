@@ -85,6 +85,24 @@ function noteEvent(evt) {
   dirty = true;
 }
 
+/** Трата баллов на награду канала: нужна для званий («Главный транжира», «Король наград»). */
+function noteRedeem(user, reward, cost) {
+  if (!user) return;
+  data.events.push({ ts: Date.now(), type: 'redeem', user: String(user).slice(0, 40), reward: String(reward || '').slice(0, 60), cost: Math.max(0, Math.round(Number(cost) || 0)) });
+  if (data.events.length > MAX_EVENTS) data.events.splice(0, data.events.length - MAX_EVENTS);
+  dirty = true;
+}
+
+/** Обложки всех категорий стрима: [{ name, art, ms }], в порядке появления, время по каждой суммируется. */
+function gameCovers(endTs) {
+  const gs = data.games.slice().sort((a, b) => a.from - b.from), agg = new Map(), end = endTs || Date.now();
+  gs.forEach((g, i) => {
+    const e = agg.get(g.name) || { name: g.name, art: '', ms: 0 };
+    e.ms += Math.max(0, (gs[i + 1] ? gs[i + 1].from : end) - g.from); if (!e.art && g.art) e.art = g.art; agg.set(g.name, e);
+  });
+  return [...agg.values()];
+}
+
 function noteViewers(n) {
   n = parseInt(n, 10);
   if (!Number.isFinite(n) || n < 0) return;
@@ -135,4 +153,4 @@ function gameArt() {
   return g ? { name: g.name, art: g.art } : null;
 }
 
-module.exports = { FILE, init, setEnabled, noteChat, noteEvent, noteViewers, noteGame, reset, clearChat, counts, getSession, getRoster, gameArt, save };
+module.exports = { FILE, init, setEnabled, noteChat, noteEvent, noteViewers, noteGame, noteRedeem, gameCovers, reset, clearChat, counts, getSession, getRoster, gameArt, save };
