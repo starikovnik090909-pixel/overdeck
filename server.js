@@ -946,7 +946,7 @@ function onChatMessage(tags, message) {
     const botUsername = chatBot.getPublic().botUsername;
     const botPub = chatBot.getPublic();
     // «Свой аккаунт»: бот и стример — один человек, его обычные сообщения в статистике нужны
-    const isBotMessage = !!botUsername && !botPub.ownAccount && tags.username && tags.username.toLowerCase() === botUsername.toLowerCase();
+    const isBotMessage = !!tags.username && (stats.isKnownBot(tags.username) || chatBot.wasSentByBot(message) || (!!botUsername && !botPub.ownAccount && tags.username.toLowerCase() === botUsername.toLowerCase()));
 
     let clean;
     if (isBotMessage) {

@@ -30,6 +30,14 @@ function init(saved) {
  * Возвращает { emoteEvents: [{id, name}] } — по одному элементу на каждое
  * фактическое использование эмодзи в этом сообщении (для таймлайна/коробки).
  */
+/** Популярные чат-боты Twitch: их сообщения не считаются в статистике (активность, топ слов, эмодзи). */
+const KNOWN_BOTS = new Set(['nightbot', 'streamelements', 'streamlabs', 'moobot', 'fossabot', 'wizebot', 'soundalerts', 'commanderroot', 'streamholics', 'supibot', 'pretzelrocks', 'restreambot', 'lumiabot', 'coebot', 'vivbot', 'ankhbot', 'deepbot', 'phantombot', 'scorpbot', 'sery_bot', 'botrixoficial', 'tangerinebot', 'mikuia', 'kofistreambot', 'streamcaptainbot', 'cloudbot', 'donatepay', 'donationalerts', 'anotherttvviewer', 'own3d', 'lolrankbot', 'stay_hydrated_bot', 'frostytools', 'streamelementsbot']);
+function isKnownBot(login) { return KNOWN_BOTS.has(String(login || '').toLowerCase()); }
+
+/** Убирает из текста ссылки (http(s)://…, www.…, сайт.ру/путь), чтобы они не попадали в топ слов. */
+const URL_RE = /(?:https?:\/\/|www\.)\S+|(?:[\p{L}\p{N}-]+\.)+(?:com|ru|su|net|org|io|gg|tv|ly|me|co|ua|by|kz|ch|de|fm|app|dev|xyz|info|link|cc|to|be|рф)(?:[\/:?#]\S*)?(?![\p{L}\p{N}])/giu;
+function stripLinks(text) { return String(text || '').replace(URL_RE, ' '); }
+
 function recordMessage(username, userId, message, tagsEmotes) {
   totalMessages += 1;
 
@@ -62,7 +70,7 @@ function recordMessage(username, userId, message, tagsEmotes) {
     clean = chars.join('');
   }
 
-  const words = clean.toLowerCase()
+  const words = stripLinks(clean).toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 3 && !STOPWORDS.has(w) && !/^\d+$/.test(w));
@@ -149,6 +157,6 @@ function reset() {
 }
 
 module.exports = { getTotalEmotes,
-  init, recordMessage, stripEmotesForDisplay, getTopChatters, getWordCloud, getTopEmotes,
+  init, recordMessage, isKnownBot, stripLinks, stripEmotesForDisplay, getTopChatters, getWordCloud, getTopEmotes,
   getAllUsernames, getTotalMessages, getPersistData, reset,
 };

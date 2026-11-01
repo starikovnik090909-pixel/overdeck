@@ -416,8 +416,16 @@ async function subscribeToChat(sessionId) {
  * (is_sent=false — например, слишком частая отправка или режим уникальных сообщений) — это тоже считаем ошибкой.
  */
 const sentRecent = []; // [{ text, at }] — что бот отправил сам (для режима «свой аккаунт»)
+/** Что бот отправил в последние секунды: нужно, чтобы при «своём аккаунте» его ответы не попадали в статистику чата. */
+const sentForStats = new Map();
+const normSent = (t) => String(t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+function wasSentByBot(text) {
+  const now = Date.now(); sentForStats.forEach((at, k) => { if (now - at > 60000) sentForStats.delete(k); });
+  return sentForStats.has(normSent(text));
+}
 async function sendChatMessage(text) {
   if (!session) throw new Error('Бот не подключён.');
+  sentForStats.set(normSent(text), Date.now());
   if (!session.scopes.includes(SEND_SCOPE)) {
     throw new Error(`У токена бота нет права ${SEND_SCOPE} — ответить в чат нельзя. Получи токен заново с этим правом (см. «Где взять токен») и подключись ещё раз.`);
   }
@@ -889,4 +897,4 @@ function disconnect(silent) {
   }
 }
 
-module.exports = { say, init, getPublic, getStatus, setOnStatusChange, setAppCredentialsProvider, setLiveProvider, syncTimers, tickTimers, save, useOwn, connect, disconnect, FILE_PATH };
+module.exports = { wasSentByBot, say, init, getPublic, getStatus, setOnStatusChange, setAppCredentialsProvider, setLiveProvider, syncTimers, tickTimers, save, useOwn, connect, disconnect, FILE_PATH };
