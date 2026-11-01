@@ -143,7 +143,7 @@
     function start() {
       if (snd) {
         const lv = (settings.creditsVolume == null ? 40 : settings.creditsVolume) / 100;
-        snd.fx.on(settings.creditsSfx); snd.setLevel(lv);
+        snd.fx.on(settings.creditsSfx); snd.setLevel(lv); snd.setSfxLevel((settings.creditsSfxVolume == null ? 10 : settings.creditsSfxVolume) / 100); snd.fx.style({ typing: settings.creditsTypeSound, title: settings.creditsTitleSound });
         if (settings.creditsAmbient !== 'off') snd.startAmbient(settings.creditsAmbient, { volume: lv, fadeIn: settings.creditsFadeIn == null ? 6 : settings.creditsFadeIn });
       }
       stage = makeStage('gz-credits'); applyPalette(stage, issue.leadKind);
@@ -179,7 +179,7 @@
 
       // 1. подпись печатается
       const tagText = 'КАНАЛ ' + String(issue.studio).toUpperCase() + ' ПРЕДСТАВЛЯЕТ';
-      let ci = 0; T(function typeIt() { ci++; tag.textContent = tagText.slice(0, ci); if (ci % 2 === 0) fx('type'); if (ci < tagText.length) T(typeIt, 38); else tag.classList.add('done'); }, 600);
+      let ci = 0; T(function typeIt() { ci++; tag.textContent = tagText.slice(0, ci); fx('type'); if (ci < tagText.length) T(typeIt, 38); else tag.classList.add('done'); }, 600);
       // 2. заголовок → подзаголовок → стыковка слева
       words.forEach((w, i) => T(() => fx('thud', i), 1700 + i * 220));
       const titleEnd = 1700 + words.length * 220 + 1100;

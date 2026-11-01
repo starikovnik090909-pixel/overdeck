@@ -16,11 +16,12 @@
   const BPM = { neon: 100, grid: 110, data: 120, nc: 92 };
 
   function create() {
-    let ctx = null, cur = null, level = 0.4, sfxBus = null, sfxOn = true;
+    let ctx = null, cur = null, level = 0.4, sfxBus = null, sfxOn = true, sfxLevel = 0.1, revNode = null;
+    const style = { typing: 'k1', title: 'chord' };
     const AC = window.AudioContext || window.webkitAudioContext;
     function ensure() {
       if (!AC) return false;
-      if (!ctx) { ctx = new AC(); sfxBus = ctx.createGain(); sfxBus.gain.value = level * 0.6; sfxBus.connect(ctx.destination); }
+      if (!ctx) { ctx = new AC(); sfxBus = ctx.createGain(); sfxBus.gain.value = sfxLevel * 0.6; sfxBus.connect(ctx.destination); }
       if (ctx.state === 'suspended') { try { ctx.resume(); } catch (e) { /* без жеста не включится — не страшно */ } }
       return true;
     }
@@ -103,7 +104,6 @@
         out.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(dg); dg.connect(master);
       }
       cur = { key, master, out, iv: songs[key](out), target };
-      if (sfxBus) sfxBus.gain.setTargetAtTime(level * 0.6, now, 0.2);
       return true;
     }
     function stopAmbient(fadeOut) {
@@ -117,8 +117,8 @@
     function setLevel(v) {
       level = v; if (!ctx) return; const t = ctx.currentTime;
       if (cur) cur.master.gain.setTargetAtTime(cur.target(), t, 0.15);
-      if (sfxBus) sfxBus.gain.setTargetAtTime(level * 0.6, t, 0.15);
     }
+    function setSfxLevel(v) { sfxLevel = v; if (ctx && sfxBus) sfxBus.gain.setTargetAtTime(v * 0.6, ctx.currentTime, 0.1); }
     const playing = () => (cur ? cur.key : null);
 
     // --- мягкие звуки сцены (идут на отдельную шину, выключаются сразу) ---
@@ -134,18 +134,64 @@
       e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + 0.006); e.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(e); e.connect(sfxBus); o.start(t); o.stop(t + dur + 0.05);
     }
+    // механическая клавиатура: пластик свитча (шум) + корпус (низкий тон) + тихий щелчок отпускания
+    const KEYS = {
+      k1: { g: 0.55, nd: 0.035, ng: 0.35, nf: 1800, nq: 0.7, bf: 170, bd: 0.09, bg: 0.9, up: 1, ud: 0.085, ug: 0.12 },
+      k2: { g: 0.5, nd: 0.03, ng: 0.5, nf: 2400, nq: 0.9, bf: 200, bd: 0.07, bg: 0.7, top: 900, up: 1, ud: 0.07, ug: 0.2 },
+      k3: { g: 0.6, nd: 0.04, ng: 0.25, nf: 1400, nq: 0.6, bf: 130, bd: 0.12, bg: 1, up: 1, ud: 0.09, ug: 0.1 },
+      k4: { g: 0.5, nd: 0.03, ng: 0.4, nf: 2800, nq: 0.8, bf: 240, bd: 0.06, bg: 0.6, up: 1, ud: 0.06, ug: 0.14 },
+      k5: { g: 0.5, nd: 0.025, ng: 0.7, nf: 3200, nq: 1.1, bf: 190, bd: 0.07, bg: 0.6, top: 1400, up: 1, ud: 0.055, ug: 0.3 },
+      k6: { g: 0.38, nd: 0.04, ng: 0.2, nf: 1500, nq: 0.5, bf: 150, bd: 0.1, bg: 0.85, up: 0 },
+    };
+    function hit(t, d, g, f0, f1, q) {
+      const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), e = ctx.createGain();
+      s.buffer = noiseBuf(d + 0.05); f.type = 'bandpass'; f.Q.value = q || 1; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + d);
+      e.gain.setValueAtTime(g, t); e.gain.exponentialRampToValueAtTime(0.0001, t + d); s.connect(f); f.connect(e); e.connect(sfxBus); s.start(t);
+    }
+    function tone2(f, t, d, g, type, f1, out) {
+      const o = ctx.createOscillator(), e = ctx.createGain(); o.type = type || 'sine'; o.frequency.setValueAtTime(f, t); if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + d);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(g, t + 0.004); e.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(e); e.connect(out || sfxBus); o.start(t); o.stop(t + d + 0.05);
+    }
+    function keyDown(t, o) {
+      const j = 1 + (Math.random() - 0.5) * 0.14, g = o.g * (0.85 + Math.random() * 0.3);
+      hit(t, o.nd, g * o.ng, o.nf * j, o.nf * 0.55 * j, o.nq);
+      tone2(o.bf * j, t, o.bd, g * o.bg, 'sine', o.bf * 0.5 * j);
+      if (o.top) tone2(o.top * j, t, 0.03, g * 0.12, 'triangle', o.top * 0.6);
+      if (o.up) hit(t + o.ud, 0.02, g * o.ug, o.nf * 0.9, o.nf * 0.6, o.nq);
+    }
+    function reverb() {
+      if (revNode) return revNode;
+      const len = Math.floor(ctx.sampleRate * 1.8), bf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let c = 0; c < 2; c++) { const d = bf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.4); }
+      revNode = ctx.createConvolver(); revNode.buffer = bf; const g = ctx.createGain(); g.gain.value = 0.7; revNode.connect(g); g.connect(sfxBus); return revNode;
+    }
+    // удар на слово заголовка: мягкий аккорд, каждое слово выше предыдущего
+    function titleHit(i) {
+      const t = ctx.currentTime;
+      if (style.title === 'soft') {
+        const r = 165 * Math.pow(2, (i || 0) * 2 / 12);
+        [0, 7, 12, 16].forEach((st, k) => tone2(r * Math.pow(2, st / 12), t + k * 0.015, 0.9, 0.08, k % 2 ? 'triangle' : 'sine'));
+      } else {
+        const r = 220 * Math.pow(2, (i || 0) * 2 / 12), c = style.title === 'echo' ? reverb() : null;
+        [0, 7, 12].forEach((st, k) => {
+          const o = ctx.createOscillator(), e = ctx.createGain(); o.type = 'sawtooth'; o.frequency.value = r * Math.pow(2, st / 12);
+          e.gain.setValueAtTime(0, t + k * 0.012); e.gain.linearRampToValueAtTime(c ? 0.06 : 0.07, t + k * 0.012 + 0.01); e.gain.exponentialRampToValueAtTime(0.0001, t + k * 0.012 + (c ? 0.8 : 0.7));
+          o.connect(e); e.connect(sfxBus); if (c) e.connect(c); o.start(t + k * 0.012); o.stop(t + k * 0.012 + 0.95);
+        });
+      }
+    }
     const fx = {
       on(v) { sfxOn = !!v; },
-      type() { if (!sfxOn || !ensure()) return; const t = ctx.currentTime; ping(1500 + Math.random() * 500, t, 0.04, 0.05, 'square'); sweep(t, 0.03, 4000, 6000, 0.05, 2); },
-      thud(i) { if (!sfxOn || !ensure()) return; const t = ctx.currentTime, o = ctx.createOscillator(), e = ctx.createGain(); o.frequency.setValueAtTime(95 + (i || 0) * 4, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.35);
-        e.gain.setValueAtTime(0.5, t); e.gain.exponentialRampToValueAtTime(0.0001, t + 0.5); o.connect(e); e.connect(sfxBus); o.start(t); o.stop(t + 0.55); sweep(t, 0.4, 2500, 700, 0.03, 0.7); },
+      style(o) { if (o && KEYS[o.typing]) style.typing = o.typing; if (o && ['chord', 'soft', 'echo'].includes(o.title)) style.title = o.title; },
+      type() { if (!sfxOn || !ensure()) return; keyDown(ctx.currentTime, KEYS[style.typing] || KEYS.k1); },
+      thud(i) { if (!sfxOn || !ensure()) return; titleHit(i); },
       whoosh() { if (!sfxOn || !ensure()) return; sweep(ctx.currentTime, 1.0, 300, 3200, 0.09, 0.8); },
       swish() { if (!sfxOn || !ensure()) return; sweep(ctx.currentTime, 0.45, 2800, 600, 0.07, 1.1); },
       tick() { if (!sfxOn || !ensure()) return; ping(2300, ctx.currentTime, 0.03, 0.04, 'triangle'); },
       chime() { if (!sfxOn || !ensure()) return; const t = ctx.currentTime; ping(880, t, 2, 0.12); ping(1320, t + 0.02, 1.8, 0.07); ping(1760, t + 0.05, 1.4, 0.04); },
       finale() { if (!sfxOn || !ensure()) return; const t = ctx.currentTime; [220, 277, 330, 440].forEach((f, i) => ping(f, t + i * 0.08, 3.5, 0.07)); },
     };
-    return { startAmbient, stopAmbient, setLevel, playing, fx, ensure };
+    return { startAmbient, stopAmbient, setLevel, setSfxLevel, playing, fx, ensure };
   }
   window.CreditsSound = { LIST, create };
 })();

@@ -19,6 +19,9 @@ const DEFAULTS = {
   creditsAmbient: 'off',   // фоновый эмбиент афиши: off или ключ звука (credits, keys, box, dawn, neon, grid, data, nc)
   creditsVolume: 40,       // потолок громкости звука афиши, %
   creditsFadeIn: 6,        // за сколько секунд звук нарастает после «Показать на стриме»
+  creditsSfxVolume: 10,    // громкость звуков сцены (печать, заголовок…), %
+  creditsTypeSound: 'k1',  // звук печати: k1–k6 (механическая клавиатура)
+  creditsTitleSound: 'chord', // звук заголовка: chord | soft | echo
   creditsSfx: false,       // мягкие звуки сцены: печать, удары заголовка, свуш, тики счётчиков
   onair: { bug: false, ticker: true, plate: true, intervalMin: 15, plateSec: 20 },
 };
@@ -84,6 +87,9 @@ function normalize(raw) {
     creditsAmbient: AMBIENTS.includes(raw.creditsAmbient) ? raw.creditsAmbient : d.creditsAmbient,
     creditsVolume: clamp(raw.creditsVolume, 0, 100, d.creditsVolume),
     creditsFadeIn: clamp(raw.creditsFadeIn, 0, 30, d.creditsFadeIn),
+    creditsSfxVolume: clamp(raw.creditsSfxVolume, 0, 100, d.creditsSfxVolume),
+    creditsTypeSound: ['k1', 'k2', 'k3', 'k4', 'k5', 'k6'].includes(raw.creditsTypeSound) ? raw.creditsTypeSound : d.creditsTypeSound,
+    creditsTitleSound: ['chord', 'soft', 'echo'].includes(raw.creditsTitleSound) ? raw.creditsTitleSound : d.creditsTitleSound,
     creditsSfx: typeof raw.creditsSfx === 'boolean' ? raw.creditsSfx : d.creditsSfx,
     onair: {
       bug: typeof o.bug === 'boolean' ? o.bug : d.onair.bug,
