@@ -15,8 +15,9 @@
   $$('[data-url]', sec).forEach((i) => { i.value = origin + '/' + i.dataset.url; });
   $$('[data-copy]', sec).forEach((b) => b.addEventListener('click', () => {
     const inp = b.parentElement.querySelector('input'); inp.select();
-    const done = () => { const t = b.textContent; b.textContent = 'Скопировано'; setTimeout(() => { b.textContent = t; }, 1400); };
-    (navigator.clipboard ? navigator.clipboard.writeText(inp.value) : Promise.reject()).then(done).catch(() => { try { document.execCommand('copy'); done(); } catch (e) { /* выделено — можно скопировать вручную */ } });
+    const t = b.dataset.t || b.textContent; b.dataset.t = t;
+    const say = (m) => { b.textContent = m; clearTimeout(b._t); b._t = setTimeout(() => { b.textContent = t; }, 1800); };
+    navigator.clipboard.writeText(inp.value).then(() => say('Скопировано'), () => { inp.select(); say('Ctrl+C — выделено'); });
   }));
 
   // --- источник данных (текущий стрим / тест-вечер) ---
