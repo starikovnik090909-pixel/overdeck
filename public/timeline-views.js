@@ -147,7 +147,7 @@
     const nb = sm.buckets.length, now = env.refTime;
     const sideW = W / dpr > 640 ? P(150) : 0;
     const x0 = P(6), xR = W - sideW - (sideW ? P(22) : P(6));
-    const yTop = P(48), axisH = P(16), laneH = P(26), chapH = P(18);
+    const yTop = P(48), axisH = P(16), laneH = P(26), chapH = P(22);
     const yAxis = H - P(4), yLane = yAxis - axisH - laneH, yChap = yLane - P(6) - chapH, yBase = yChap - P(8);
     const slots = Math.max(nb, 12), slotW = (xR - x0) / slots, gap = Math.min(P(4), slotW * 0.22), bw = slotW - gap;
     const tFor = (ts) => x0 + (ts - sm.start) / sm.bucketMs * slotW;
@@ -191,15 +191,31 @@
       }
     }
 
-    // главы (категории)
+    // главы (категории): тонкая полоса — обложка, «название · N мин», сверху линия цвета категории; в момент смены — пунктир через столбики
     const cats = env.cats.slice().sort((a, b) => a.startedAt - b.startedAt);
     const endX = x0 + nb * slotW;
     let any = false;
     cats.forEach((c, i) => {
-      const a = Math.max(tFor(c.startedAt), x0), b = Math.min(i + 1 < cats.length ? tFor(cats[i + 1].startedAt) : endX, endX);
+      const a = Math.max(tFor(c.startedAt), x0), endTs = i + 1 < cats.length ? cats[i + 1].startedAt : now;
+      const b = Math.min(i + 1 < cats.length ? tFor(cats[i + 1].startedAt) : endX, endX);
       if (b - a < P(4)) return; any = true;
-      ctx.fillStyle = hexA(text, 0.06); rr(a + P(1), yChap, b - a - P(3), chapH, P(5)); ctx.fill();
-      if (b - a > P(50)) { ctx.fillStyle = hexA(text, 0.55); ctx.font = lab(500, P(10.5)); ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(env.fit(c.name || '', b - a - P(16)), a + P(8), yChap + chapH / 2); }
+      const col = [env.accent, env.c2, env.c4, '#A970FF'][i % 4], w = b - a - P(3);
+      if (i > 0 && a > x0 + P(2)) { ctx.save(); ctx.setLineDash([P(2), P(4)]); ctx.strokeStyle = hexA(text, 0.22); ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); ctx.moveTo(a, yTop); ctx.lineTo(a, yChap); ctx.stroke(); ctx.restore(); }
+      ctx.save(); rr(a + P(1), yChap, w, chapH, P(5)); ctx.clip();
+      ctx.fillStyle = hexA(text, 0.06); ctx.fillRect(a, yChap, w + P(2), chapH);
+      ctx.fillStyle = col; ctx.fillRect(a, yChap, w + P(2), Math.max(1.5 * dpr, P(1.5)));
+      let tx = a + P(8);
+      const img = c.art && env.img ? env.img(c.art) : null;
+      if (img && img.complete && img.naturalWidth && w > P(40)) { const ih = chapH - P(6), iw = ih * 0.75; ctx.drawImage(img, a + P(4), yChap + P(3.5), iw, ih); tx = a + P(4) + iw + P(6); }
+      ctx.restore();
+      const room = a + w - tx - P(6);
+      if (room > P(24)) {
+        const mins = Math.max(1, Math.round((endTs - c.startedAt) / 60000)), dur = ' · ' + (mins >= 60 ? Math.floor(mins / 60) + ' ч ' + (mins % 60 ? (mins % 60) + ' мин' : '') : mins + ' мин').trim();
+        ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; const ty = yChap + chapH / 2 + P(0.5);
+        ctx.font = lab(600, P(11)); const nm = env.fit(c.name || '', room - P(4)); ctx.fillStyle = text; ctx.fillText(nm, tx, ty);
+        const nw = ctx.measureText(nm).width; ctx.font = lab(500, P(11));
+        if (nm === (c.name || '') && ctx.measureText(dur).width < room - nw) { ctx.fillStyle = hexA(text, 0.5); ctx.fillText(dur, tx + nw, ty); }
+      }
     });
     if (!any) { ctx.fillStyle = hexA(text, 0.04); rr(x0, yChap, Math.max(P(20), endX - x0), chapH, P(5)); ctx.fill(); }
     if (endX < xR - P(6)) { ctx.save(); ctx.setLineDash([P(3), P(3)]); ctx.strokeStyle = hexA(text, 0.12); rr(endX + P(2), yChap, xR - endX - P(2), chapH, P(5)); ctx.stroke(); ctx.restore(); }
