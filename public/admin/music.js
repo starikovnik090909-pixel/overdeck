@@ -7,6 +7,15 @@
   const $$ = (s) => [...sec.querySelectorAll(s)];
   const api = (p, o) => fetch(p, o).then((r) => r.json());
   const post = (p, b) => api(p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b || {}) });
+  const IC = (d) => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  const IB = {
+    eye: IC('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+    eyeoff: IC('<path d="M3 3l18 18M10.6 5.1A9.6 9.6 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.5 6.6A16.6 16.6 0 0 0 2 12s3.6 7 10 7a9.7 9.7 0 0 0 4.4-1"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>'),
+    pause: IC('<path d="M8 5v14M16 5v14"/>'),
+    play: IC('<path d="M7 4.5v15l12-7.5z"/>'),
+    skip: IC('<path d="M5 5l10 7-10 7zM19 5v14"/>'),
+    ban: IC('<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>'),
+  };
   const fields = $$('[data-m]');
   var dragUid = 0;
   let st = null, t = 0;
@@ -27,9 +36,9 @@
     $('#muMeta').textContent = cur ? [cur.channel, cur.by ? 'заказал ' + cur.by : ''].filter(Boolean).join(' · ') + (s.paused ? ' · на паузе' : '') : 'Напиши в чате !муз название — трек сразу заиграет.';
     $('#muTag').textContent = cur ? (s.paused ? 'На паузе' : 'Сейчас играет') : 'Тишина';
     const badge = $('#muBadge'); badge.textContent = on ? 'На экране стрима' : 'Не на экране'; badge.classList.toggle('live', on);
-    $('#muShow').textContent = s.settings.showVideo ? 'Скрыть с экрана' : 'Показать на экране';
-    $('#muShow').className = 'btn mu-big ' + (s.settings.showVideo ? 'btn-secondary' : 'btn-primary');
-    $('#muPause').textContent = s.paused ? 'Продолжить' : 'Пауза';
+    setIb($('#muShow'), s.settings.showVideo ? 'eyeoff' : 'eye', s.settings.showVideo ? 'Скрыть с экрана' : 'Показать на экране');
+    $('#muShow').classList.toggle('mu-ib-main', !s.settings.showVideo);
+    setIb($('#muPause'), s.paused ? 'play' : 'pause', s.paused ? 'Продолжить' : 'Пауза');
     $('#muPause').disabled = $('#muSkip').disabled = $('#muShow').disabled = !cur;
     posRef = s.pos ? { t: s.pos.t, d: s.pos.d || cur.seconds || 0, at: Date.now() } : { t: 0, d: cur ? cur.seconds || 0 : 0, at: Date.now() };
     // превью клипа для стримера: без звука, не зависит от того, выведен ли клип на сцену
@@ -125,6 +134,9 @@
     const patch = {}; fields.forEach((f) => { patch[f.dataset.m] = f.type === 'checkbox' ? f.checked : (f.type === 'number' ? Number(f.value) : f.value); });
     post('/api/music/settings', patch).then(() => post('/api/music/check', {})).then((r) => { m.textContent = r && r.ok ? 'Работает (' + r.ms + ' мс)' : 'Не получилось: ' + ((r && r.error) || 'нет ответа'); });
   });
+
+  function setIb(el, name, title) { el.innerHTML = IB[name]; el.title = title; el.setAttribute('aria-label', title); }
+  setIb($('#muSkip'), 'skip', 'Пропустить'); setIb($('#muBan'), 'ban', 'Убрать трек и больше не ставить (в чёрный список)');
 
   function save() {
     clearTimeout(t);

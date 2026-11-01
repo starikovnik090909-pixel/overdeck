@@ -155,3 +155,30 @@
 #tab-music .mu-hist .acts button{border:1px solid var(--divider);background:none;color:inherit;border-radius:8px;padding:3px 8px;cursor:pointer;font-size:12px}
 #tab-music .mu-hist .acts button:hover{border-color:var(--accent)}
 #tab-music .mu-empty{opacity:.55;text-align:center;padding:18px;border:1px dashed var(--divider);border-radius:12px;font-size:13px}
+
+/* ===== компактная вкладка: всё в один экран ===== */
+#tab-music .mu-ib{width:38px;height:38px;border-radius:10px;border:1px solid var(--divider);background:var(--bg-card2);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:border-color .15s,background .15s}
+#tab-music .mu-ib:hover:not(:disabled){border-color:var(--accent)}
+#tab-music .mu-ib:disabled{opacity:.4;cursor:default}
+#tab-music .mu-ib-main{background:var(--accent);border-color:var(--accent);color:#fff}
+#tab-music .mu-ib-ban{margin-left:auto;opacity:.75}
+#tab-music .mu-info .mu-btns{margin-top:4px;gap:8px}
+#tab-music #muLive .mu-grid{height:calc(100vh - 230px);min-height:520px;align-items:stretch;margin-bottom:0;gap:14px}
+#tab-music #muLive .mu-left{min-height:0;gap:14px}
+#tab-music #muLive .mu-left>.mu-card:first-child{flex:1 1 auto;min-height:0;padding:14px;gap:10px}
+#tab-music #muLive .mu-queue{max-height:none;flex:1 1 auto;min-height:60px;overflow:auto}
+#tab-music #muLive .mu-quick{flex:none;padding:14px;gap:10px}
+#tab-music #muLive .mu-qrow{gap:8px 22px;align-items:center}
+#tab-music #muLive .mu-q{flex-direction:row;align-items:center;gap:12px}
+#tab-music #muLive .mu-seg{display:inline-grid;grid-template-columns:auto auto;padding:3px}
+#tab-music #muLive .mu-seg button{padding:6px 16px}
+#tab-music #muLive .mu-pvw{display:grid;grid-template-columns:200px minmax(0,1fr);gap:8px 14px;align-items:start}
+#tab-music #muLive .mu-pvw .mu-prev{grid-row:1/3}
+#tab-music #muLive .mu-quick .mu-skins{grid-template-columns:repeat(5,1fr);gap:6px}
+#tab-music #muLive .mu-pvw>div[id]{gap:5px}
+#tab-music #muLive .mu-rules{padding-top:8px}
+#tab-music #muLive .mu-now{min-height:0;padding:14px;gap:12px;overflow:auto}
+#tab-music #muLive .mu-video{height:min(280px,36vh);width:auto;aspect-ratio:16/9;max-width:100%;margin:0 auto;flex:none}
+#tab-music #muLive .mu-info{justify-content:flex-start;gap:6px}
+#tab-music #muLive .mu-info h2{font-size:20px}
+@media(max-width:1100px){#tab-music #muLive .mu-grid{height:auto}#tab-music #muLive .mu-pvw{grid-template-columns:1fr}#tab-music #muLive .mu-pvw .mu-prev{grid-row:auto}}

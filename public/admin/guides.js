@@ -88,9 +88,14 @@
   ov.addEventListener('click', (e) => { if (e.target === ov) closeGuide(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { if (ov.classList.contains('open')) closeGuide(); else if (lockOv.classList.contains('open')) closeLock(); } });
 
-  const activeTab = () => { const a = $('.nav-item.active'); if (a) return a.dataset.tab; const s = $('.tab-section.active'); return s ? s.id.replace('tab-', '') : 'auth'; };
+  const activeTab = () => { const s = $('.tab-section.active'); if (s) return s.id.replace('tab-', ''); const a = $('.nav-item.active'); return a ? a.dataset.tab : 'auth'; };
   const fab = document.getElementById('helpFab');
-  if (fab) fab.addEventListener('click', () => openGuide(activeTab(), false));
+  if (fab) fab.addEventListener('click', () => {
+    const t = activeTab();
+    if (GUIDES[t]) return openGuide(t, false);
+    if (window.OvTips && window.OvTips.has(t)) return window.OvTips.open(t); // у вкладки только анимированные подсказки
+    openGuide('home', false);
+  });
 
   /* ---------- замок ---------- */
   let unlocked = false;
