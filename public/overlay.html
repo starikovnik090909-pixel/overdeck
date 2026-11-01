@@ -80,6 +80,16 @@
     <iframe id="chatWidgetFrame" title="Чат" data-src="chat-widget.html" allowtransparency="true"></iframe>
   </div>
 
+  <div class="panel" data-widget="pointstop">
+    <div class="panel-title-row">
+      <div class="panel-title">Топ по баллам <span class="donor-top-label" id="pointsTopLabel"></span></div>
+      <span class="panel-icon" title="Топ по баллам">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.5"/><path d="M12 7.5v9M7.5 12h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </span>
+    </div>
+    <div class="donor-top-list" id="pointsTopList"></div>
+  </div>
+
   <div class="panel" data-widget="eventfeed">
     <div class="panel-title-row">
       <div class="panel-title">События</div>
@@ -143,6 +153,7 @@
 <script src="wordcloud.js?v=2"></script>
 <script src="emotebox.js?v=6"></script>
 <script src="donortop.js"></script>
+<script src="pointstop.js"></script>
 <script src="eventfeed.js"></script>
 <script src="donation-looks.js?v=3"></script>
 <script src="donationalert.js?v=19"></script>

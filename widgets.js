@@ -10,6 +10,7 @@ const WIDGET_DEFS = [
   { id: 'emotebox', label: 'Топ эмодзи' },
   { id: 'wordcloud', label: 'Слова эфира' },
   { id: 'donortop', label: 'Топ донатеров' },
+  { id: 'pointstop', label: 'Топ по баллам' },
   { id: 'eventfeed', label: 'События' },
   { id: 'chat', label: 'Чат' },
 ];
@@ -24,6 +25,7 @@ const DEFAULT_LAYOUT = {
   // Выезжает по таймеру поверх остальных, поэтому перекрытие с другими блоками допустимо; пока карточек нет, на сцене ничего не показывается.
   // По умолчанию выключен: стоит на месте слов эфира; включается и двигается в админке.
   eventfeed:  { x: 1520, y: 558, w: 360,  h: 482,  enabled: false },
+  pointstop:  { x: 1520, y: 558, w: 360,  h: 494,  enabled: false },
   // Чат на сцене: тот же чат, что и отдельный источник chat-widget.html; настройки — только во вкладке «Чат». По умолчанию выключен.
   chat:       { x: 1520, y: 40,  w: 360,  h: 1000, enabled: false },
 };
@@ -158,6 +160,26 @@ const WIDGET_SETTINGS_SCHEMA = {
     top3Color: { type: 'color', group: 'Цвета мест', label: 'Топ-3 (бронза)', default: '#CD7F32' },
     defaultCircleColor: { type: 'color', group: 'Цвета мест', label: 'Обычный кружок (места 4+)', default: '#B14846' },
   },
+  pointstop: {
+    // Без group — всегда видимо, наверху.
+    switchIntervalSec: { type: 'range', label: 'Период переключения (за стрим / за всё время)', unit: ' с', min: 3, max: 60, step: 1, default: 10 },
+    // --- Внешний вид (сворачиваемая группа) ---
+    circleSize: { type: 'range', group: 'Внешний вид', label: 'Размер кружков', unit: 'px', min: 24, max: 72, step: 2, default: 40 },
+    // Цифра теперь лежит на ТЁМНОМ внутреннем кружке, поэтому прежний тёмный numberColor (#141419) стал бы нечитаемым. Ключ
+    // переименован нарочно: у кого уже сохранён старый тёмный цвет, он просто игнорируется и цифра сразу становится светлой.
+    rankNumberColor: { type: 'color', group: 'Внешний вид', label: 'Цвет цифры внутри кружка', default: '#FFFFFF' },
+    innerCircleDarken: { type: 'range', group: 'Внешний вид', label: 'Затемнение внутреннего кружка (по сравнению с внешним)', unit: '%', min: 10, max: 80, step: 5, default: 45 },
+    showDividers: { type: 'toggle', group: 'Внешний вид', label: 'Тонкие линии между местами (цвет основной темы)', default: true },
+    // --- Мерцание топ-1: медленное золотое свечение, как у победителя в турнирной сетке (плавно разгорается и плавно гаснет) ---
+    top1Glow: { type: 'toggle', group: 'Свечение топ-1', label: 'Медленно мерцающее свечение у первого места', default: true },
+    top1GlowSpeedMs: { type: 'range', group: 'Свечение топ-1', label: 'Период мерцания (один цикл разгорания и затухания)', unit: ' мс', min: 1000, max: 6000, step: 100, default: 2800 },
+    otherTextColor: { type: 'color', group: 'Внешний вид', label: 'Цвет ника/суммы (места 4+)', default: '#E0E0E0' },
+    // --- Цвета мест (сворачиваемая группа) ---
+    top1Color: { type: 'color', group: 'Цвета мест', label: 'Топ-1 (золото)', default: '#FFD700' },
+    top2Color: { type: 'color', group: 'Цвета мест', label: 'Топ-2 (серебро)', default: '#C0C0C0' },
+    top3Color: { type: 'color', group: 'Цвета мест', label: 'Топ-3 (бронза)', default: '#CD7F32' },
+    defaultCircleColor: { type: 'color', group: 'Цвета мест', label: 'Обычный кружок (места 4+)', default: '#B14846' },
+  },
   // События: карточка последнего события + вертикальная линия с предыдущими. Размеры и оформление подстраиваются под блок и стиль оверлея.
   eventfeed: {
     maxRows: { type: 'range', label: 'Сколько событий всего (с главной карточкой; при малой высоте блока — меньше)', min: 2, max: 10, step: 1, default: 5 },
@@ -171,7 +193,7 @@ const WIDGET_SETTINGS_SCHEMA = {
     minDonation: { type: 'range', group: 'Какие события показывать', label: 'Донаты от (₽)', unit: ' ₽', min: 0, max: 5000, step: 50, default: 0 },
     showTime: { type: 'toggle', group: 'Внешний вид', label: 'Показывать «N мин назад»', default: true },
     showSummary: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Показывать итоги стрима', default: true },
-    sumMusic: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Заказы музыки', default: true },
+    sumMusic: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Заказы музыки (×N)', default: true },
     sumPoints: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Потрачено баллов канала', default: true },
   },
   // Другие виджеты (emotebox, wordcloud) пока без собственных настроек —

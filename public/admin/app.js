@@ -1933,6 +1933,7 @@
     timeline: '<path d="M3 20h18"/><path d="M4 15l4-5 4 3 5-7 3 4"/>',
     emotebox: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.5 2.2 2.2 3.5 2.2s2.5-.7 3.5-2.2"/><path d="M9 9.5h.01M15 9.5h.01" stroke-width="2.6"/>',
     wordcloud: '<path d="M4 5h16v11H9.5L5 19.5V16H4z"/><path d="M8 9h8M8 12.3h5"/>',
+    pointstop: '<circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/>',
     eventfeed: '<circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><path d="M6 8v8M11 6h9M11 18h9M11 12h6"/>',
     chat: '<path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>',
     donortop: '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3"/>',
@@ -2387,6 +2388,67 @@
     if (selectedWidgetId === 'donortop') {
       widgetContentFields.appendChild(buildDonorTopExtraSection());
     }
+    if (selectedWidgetId === 'pointstop') {
+      widgetContentFields.appendChild(buildPointsTopExtraSection());
+    }
+  }
+
+  /** Доп. блок для «Топ по баллам»: сброс топа за стрим, очистка «за всё время», удаление отдельных зрителей. */
+  function buildPointsTopExtraSection() {
+    const wrap = document.createElement('div');
+    wrap.className = 'settings-group-block expanded';
+    wrap.innerHTML = `
+      <div class="settings-group-header" style="cursor:default;">
+        <span class="chevron">▾</span><span class="group-title-text">Топ по баллам: данные</span>
+      </div>
+      <div class="settings-group-content">
+        <p class="card-hint">Считаются баллы, потраченные на награды канала. Нужен вход через Twitch. Топ «за всё время» хранится в файле <code>points_alltime.json</code> и переживает перезапуск.</p>
+        <div class="field">
+          <button class="btn btn-danger" type="button" id="btnPointsTopResetSession">Сбросить топ за стрим</button>
+        </div>
+        <div class="form-message" id="pointsTopExtraMessage"></div>
+        <div class="field"><label>Топ за стрим</label><div class="donor-manage-list" id="pointsManageSession"><p class="card-hint">Загружаем…</p></div></div>
+        <div class="field"><label>Топ за всё время</label><div class="donor-manage-list" id="pointsManageAllTime"><p class="card-hint">Загружаем…</p></div>
+          <button class="btn btn-danger" type="button" id="btnPointsClearAllTime">Очистить историю за всё время</button>
+          <p class="card-hint after-button">Необратимо.</p></div>
+      </div>`;
+    const message = wrap.querySelector('#pointsTopExtraMessage');
+    const say = (t, k) => { message.textContent = t; message.className = 'form-message' + (k ? ' ' + k : ''); };
+    const esc = (v) => String(v).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    function renderList(box, rows, scope) {
+      box.innerHTML = '';
+      if (!rows || !rows.length) { box.innerHTML = '<p class="card-hint">Пока пусто.</p>'; return; }
+      rows.forEach((u) => {
+        const row = document.createElement('div');
+        row.className = 'donor-manage-row';
+        row.innerHTML = `<span class="donor-manage-name">${esc(u.username)}</span><span class="donor-manage-amount">${Math.round(u.amount).toLocaleString('ru-RU')}</span><button class="btn-tiny" type="button">Удалить</button>`;
+        row.querySelector('button').addEventListener('click', async () => {
+          if (!await ui3Confirm(`Удалить «${u.username}» из топа ${scope === 'session' ? 'за стрим' : 'за всё время'}?`)) return;
+          const { ok } = await postJSON('/api/pointstop/delete', { scope, username: u.username });
+          say(ok ? 'Удалено.' : 'Не удалось удалить.', ok ? 'success' : 'error'); load();
+        });
+        box.appendChild(row);
+      });
+    }
+    async function load() {
+      try {
+        const d = await (await fetch('/api/pointstop/list')).json();
+        renderList(wrap.querySelector('#pointsManageSession'), d.session, 'session');
+        renderList(wrap.querySelector('#pointsManageAllTime'), d.allTime, 'allTime');
+      } catch (e) { say('Не удалось загрузить списки.', 'error'); }
+    }
+    load();
+    wrap.querySelector('#btnPointsTopResetSession').addEventListener('click', async () => {
+      if (!await ui3Confirm('Сбросить топ по баллам за стрим? «За всё время» не тронется.')) return;
+      const { ok } = await postJSON('/api/pointstop/reset-session', {});
+      say(ok ? 'Топ за стрим сброшен.' : 'Не удалось сбросить.', ok ? 'success' : 'error'); load();
+    });
+    wrap.querySelector('#btnPointsClearAllTime').addEventListener('click', async () => {
+      if (!await ui3Confirm('Полностью стереть топ по баллам за всё время? Это необратимо.')) return;
+      const { ok } = await postJSON('/api/pointstop/clear-alltime', {});
+      say(ok ? 'Топ за всё время очищен.' : 'Не удалось очистить.', ok ? 'success' : 'error'); load();
+    });
+    return wrap;
   }
 
   /** Доп. блок для "Топ донатеров": сброс топа за стрим + форма ручного добавления. */

@@ -13,6 +13,7 @@ stats.json
 donations.json
 sub_registry.json
 donations_alltime.json
+points_alltime.json
 widgets_layout.json
 widgets_settings.json
 help_texts.json

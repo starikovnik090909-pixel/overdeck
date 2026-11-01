@@ -71,6 +71,7 @@ const { createAvatarCommands } = require('./avatarCommands');
 const botTimers = require('./botTimers');
 const autoMod = require('./autoMod');
 const donorLeaderboard = require('./donorLeaderboard');
+const pointsLeaderboard = require('./pointsLeaderboard');
 const donateX = require('./donatex');
 const donatePay = require('./donatepay');
 const externalChat = require('./externalChat');
@@ -402,6 +403,7 @@ function handleEventAlertRaw(type, e) {
       fireEventAlert('hype', { phase: 'end', level: e.level, total: e.total }); hypeLevel = 0; break;
     case 'channel.channel_points_custom_reward_redemption.add':
       streamCounters.points += Math.max(0, Number(e.reward && e.reward.cost) || 0);
+      pointsLeaderboard.addPoints({ username: e.user_name, amount: e.reward && e.reward.cost });
       fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).catch((er) => console.warn('[Музыка]', er.message));
       break;
@@ -700,6 +702,7 @@ chatBot.init();
 
 donations.init();
 donorLeaderboard.init();
+pointsLeaderboard.init();
 
 // ---------- Бейджи чата (подписки/VIP/модератор/кастомные) ----------
 
@@ -1038,6 +1041,10 @@ function buildSnapshot() {
     channel: config.channel,
     theme: config.theme,
     customFonts: customFonts.listFonts(),
+    pointsTops: {
+      session: pointsLeaderboard.getTop('session', 10),
+      allTime: pointsLeaderboard.getTop('allTime', 10),
+    },
     donorTops: {
       session: donorLeaderboard.getTop('session', 10),
       allTime: donorLeaderboard.getTop('allTime', 10),
@@ -1131,7 +1138,7 @@ app.use(express.json());
 // Тестовый вход для автотестов (только при OVERLAY_TEST=1; в обычной работе маршрута нет): подставляет сообщение так, как будто оно пришло из чата Twitch.
 if (process.env.OVERLAY_TEST === '1') {
   app.post('/__test/streak', (req, res) => { const b = req.body || {}; handleWatchStreak({ id: b.id ? String(b.id) : '', username: String(b.username || 'MrFrost'), login: String(b.username || 'mrfrost').toLowerCase(), streak: Number(b.streak) || 7, points: Number(b.points) || 450 }); res.json({ success: true }); });
-  app.post('/__test/redeem', (req, res) => { const b = req.body || {}; handleTimelineWeightedEvent({ type: 'channelpoints', id: b.id ? String(b.id) : undefined, username: String(b.name || b.login), login: String(b.login || ''), meta: { reward: String(b.reward || '') } }); res.json({ success: true }); });
+  app.post('/__test/redeem', (req, res) => { const b = req.body || {}; if (b.cost) { streamCounters.points += Number(b.cost) || 0; pointsLeaderboard.addPoints({ username: String(b.name || b.login), amount: b.cost }); } handleTimelineWeightedEvent({ type: 'channelpoints', id: b.id ? String(b.id) : undefined, username: String(b.name || b.login), login: String(b.login || ''), meta: { reward: String(b.reward || '') } }); res.json({ success: true }); });
   app.post('/__test/chat', (req, res) => {
     const b = req.body || {};
     onChatMessage({ username: String(b.login || 'tester'), 'display-name': String(b.name || b.login || 'Tester'), 'user-id': String(b.userId || b.login || '1'), color: b.color || null, badges: b.badges || {}, mod: b.mod ? '1' : '0' }, String(b.message || ''));
@@ -1899,7 +1906,7 @@ app.get('/api/home', (req, res) => {
   try { tmrs = botTimers.list().length; } catch (e) {}
   const obs = {
     overlay: [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view !== 'preview' && c.view !== 'alerts' && !c.w).length,
-    ...Object.fromEntries(['activity', 'timeline', 'emotebox', 'wordcloud', 'donortop', 'eventfeed', 'chat'].map((k) => ['w_' + k, [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.w === k).length])),
+    ...Object.fromEntries(['activity', 'timeline', 'emotebox', 'wordcloud', 'donortop', 'pointstop', 'eventfeed', 'chat'].map((k) => ['w_' + k, [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.w === k).length])),
     ...Object.fromEntries(['donation', 'sub', 'raid', 'follow', 'hype', 'points', 'streak', 'nowplaying'].map((k) => ['k_' + k, [...overlayClients].filter((c) => c.readyState === 1 && c.isObs && c.view === 'alerts' && c.kind === k).length])),
     chat: [...chatClients].filter((c) => c.readyState === 1 && c.isObs && !c.view).length, goal: live(goalClients), fundbox: live(fundBoxClients), fundalert: live(fundAlertClients),
     fund: live(fundClients), timer: live(timerClients), fact: live(factClients), background: live(backgroundClients),
@@ -1934,6 +1941,15 @@ require('./routes/donations').part5({ donations, app });
 // ---------- Топ донатеров: сброс только топа за стрим + ручное добавление ----------
 
 require('./routes/donations').part4({ donorLeaderboard, app, broadcast });
+// Топ по баллам: управление данными из админки (как у топа донатеров)
+app.post('/api/pointstop/reset-session', (req, res) => { pointsLeaderboard.resetSession(); broadcast(); res.json({ success: true }); });
+app.get('/api/pointstop/list', (req, res) => res.json({ session: pointsLeaderboard.getTop('session', 50), allTime: pointsLeaderboard.getTop('allTime', 50) }));
+app.post('/api/pointstop/delete', (req, res) => {
+  const { scope, username } = req.body || {};
+  if (!username || (scope !== 'session' && scope !== 'allTime')) return res.status(400).json({ success: false, error: 'Нужны username и scope ("session" или "allTime")' });
+  pointsLeaderboard.deleteUser(scope, username); broadcast(); res.json({ success: true });
+});
+app.post('/api/pointstop/clear-alltime', (req, res) => { pointsLeaderboard.clearAllTime(); broadcast(); res.json({ success: true }); });
 
 require('./routes/donations').part3({ donations, donationCredentials, authCredentials, currency, donateX, donatePay, handleDonatePayAuthError, app, broadcastAdminStatus, handleDonation });
 
@@ -2259,6 +2275,7 @@ function resetStreamSession(reason) {
   eventFeed.reset();
   streamCounters.music = 0; streamCounters.points = 0;
   categories.reset();
+  pointsLeaderboard.resetSession();
   donorLeaderboard.resetSession(); // топ за всё время (donations_alltime.json) не трогаем
   chatHistory = [];
   chatRoles.reset();

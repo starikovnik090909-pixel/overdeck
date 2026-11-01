@@ -253,6 +253,7 @@ ws.onmessage = (event) => {
   if (window.WordcloudModule) window.WordcloudModule.render(data.wordCloud || []);
   if (window.EmoteBoxModule) window.EmoteBoxModule.render(data);
   if (window.DonorTopModule) window.DonorTopModule.render(data);
+  if (window.PointsTopModule) window.PointsTopModule.render(data);
   if (window.EventFeedModule) window.EventFeedModule.render(data);
 };
 

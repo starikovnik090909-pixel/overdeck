@@ -78,8 +78,8 @@
     box = { w: W, h: H0 };
     if (!H0 || !W) return;
     const chips = [];
-    if (s.showSummary && s.sumMusic) chips.push(['♪', 'заказов музыки', '×' + fmt(counters.music)]);
-    if (s.showSummary && s.sumPoints) chips.push(['◎', 'баллов потрачено', fmt(counters.points)]);
+    if (s.showSummary && s.sumMusic) chips.push(['♪', 'заказов', '×' + fmt(counters.music)]);
+    if (s.showSummary && s.sumPoints) chips.push(['◎', 'баллов', fmt(counters.points)]);
     sumEl.style.display = chips.length ? '' : 'none';
     sumEl.innerHTML = chips.map((c) => '<div class="ef-chip"><i>' + c[0] + '</i><span>' + c[1] + '</span><b>' + c[2] + '</b></div>').join('');
     const sumH = chips.length ? Math.round(Math.min(46, Math.max(30, H0 * 0.1)) * Math.max(0.55, Math.min(1.7, Math.min(W / 340, H0 / 400)))) : 0;
