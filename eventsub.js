@@ -12,7 +12,7 @@
 
 const WebSocket = require('ws');
 
-const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws';
+const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws?keepalive_timeout_seconds=30';
 
 const SUB_TYPES = [
   { type: 'channel.channel_points_custom_reward_redemption.add', version: '1' },
@@ -34,6 +34,11 @@ const SUB_TYPES = [
 let ws = null;
 let stopped = true;
 let warnedNoAuth = false;
+let getToken = null;      // (force) => Promise<string|null> — свежий токен стримера (server.js обновляет его сам)
+let retryAttempt = 0;     // подряд неудачных сессий — пауза растёт, чтобы не долбить Twitch
+let retryTimer = null;
+let watchdog = null;
+let authWarnedAt = 0;
 const seenMessages = new Set();   // id уже обработанных уведомлений
 
 async function createSubscription(config, subType, sessionId, broadcasterId, token) {
@@ -58,15 +63,16 @@ async function createSubscription(config, subType, sessionId, broadcasterId, tok
         transport: { method: 'websocket', session_id: sessionId },
       }),
     });
-    const data = await res.json();
+    let data = {};
+    try { data = await res.json(); } catch (e) { /* пустое тело */ }
     if (!res.ok) {
-      console.warn(`[EventSub] Не удалось подписаться на ${subType.type}: ${data.message || res.status} (нужен scope? см. README)`);
-      return false;
+      if (res.status !== 401) console.warn(`[EventSub] Не удалось подписаться на ${subType.type}: ${data.message || res.status} (нужен scope? см. README)`);
+      return res.status;
     }
-    return true;
+    return 200;
   } catch (e) {
     console.warn(`[EventSub] Ошибка подписки на ${subType.type}:`, e.message);
-    return false;
+    return 0;
   }
 }
 
@@ -97,28 +103,72 @@ function mapEvent(subscriptionType, payload) {
   }
 }
 
-function openSocket(config, broadcasterId, token, url, onEvent, onRaw) {
+function armWatchdog(socket, seconds) {
+  clearTimeout(watchdog);
+  watchdog = setTimeout(() => {
+    if (stopped || ws !== socket) return;
+    console.warn('[EventSub] Twitch молчит дольше положенного — переподключение…');
+    try { socket.terminate(); } catch (e) { /* уже закрыт */ }
+  }, seconds * 1000);
+}
+
+/** Следующая попытка — с паузой 5 → 10 → 20 → 40 с … до 10 минут (когда токен не принимается, Twitch иначе закрывал сокет каждые 10 с, и мы переподключались бесконечно). */
+function scheduleRetry(config, broadcasterId, onEvent, onRaw, longDelay) {
+  if (stopped) return;
+  clearTimeout(retryTimer);
+  const delay = longDelay ? 10 * 60 * 1000 : Math.min(10 * 60 * 1000, 5000 * Math.pow(2, Math.min(retryAttempt, 7)));
+  retryAttempt += 1;
+  console.warn(`[EventSub] Переподключение через ${Math.round(delay / 1000)} с…`);
+  retryTimer = setTimeout(() => openSocket(config, broadcasterId, EVENTSUB_WS_URL, onEvent, onRaw), delay);
+}
+
+async function currentToken(config, force) {
+  if (getToken) { try { const t = await getToken(force); if (t) return t; } catch (e) { /* ниже — запасной вариант */ } }
+  return config.twitchAuth && config.twitchAuth.accessToken;
+}
+
+function openSocket(config, broadcasterId, url, onEvent, onRaw, isReconnect) {
   if (stopped) return;
 
   const socket = new WebSocket(url);
   ws = socket;
+  let authFailed = false;
+  armWatchdog(socket, 25);
 
   socket.on('message', async (raw) => {
     let msg;
     try { msg = JSON.parse(raw.toString()); } catch (e) { return; }
+    if (ws !== socket) return;
     const messageType = msg.metadata && msg.metadata.message_type;
+    armWatchdog(socket, 40);
 
     if (messageType === 'session_welcome') {
+      if (isReconnect) return; // при session_reconnect подписки переносятся сами
       const sessionId = msg.payload.session.id;
       console.log('[EventSub] Подключено, подписываемся на события (баллы/сабы/рейды/фоллоу/Hype Train)…');
+      let token = await currentToken(config, false);
+      let ok = 0, unauthorized = 0;
       for (const subType of SUB_TYPES) {
+        if (ws !== socket || stopped) return;
         // eslint-disable-next-line no-await-in-loop
-        await createSubscription(config, subType, sessionId, broadcasterId, token);
+        let st = await createSubscription(config, subType, sessionId, broadcasterId, token);
+        if (st === 401 && !unauthorized) { // токен устарел — один раз берём свежий и повторяем
+          // eslint-disable-next-line no-await-in-loop
+          token = await currentToken(config, true);
+          // eslint-disable-next-line no-await-in-loop
+          st = await createSubscription(config, subType, sessionId, broadcasterId, token);
+        }
+        if (st === 200) ok++; else if (st === 401) unauthorized++;
+      }
+      if (ok) { retryAttempt = 0; return; }
+      if (unauthorized) {
+        authFailed = true;
+        if (Date.now() - authWarnedAt > 30 * 60 * 1000) { authWarnedAt = Date.now(); console.warn('[EventSub] Twitch не принимает токен входа (Invalid OAuth token) — баллы, сабы, рейды и фоллоу не придут. Войди через Twitch ещё раз на вкладке «Авторизация». Повторю попытку через 10 минут.'); }
       }
     } else if (messageType === 'session_reconnect') {
       const reconnectUrl = msg.payload.session.reconnect_url;
       const oldSocket = socket;
-      openSocket(config, broadcasterId, token, reconnectUrl, onEvent, onRaw);
+      openSocket(config, broadcasterId, reconnectUrl, onEvent, onRaw, true);
       setTimeout(() => { try { oldSocket.close(); } catch (e) { /* уже закрыт */ } }, 5000);
     } else if (messageType === 'notification') {
       const mid = msg.metadata && msg.metadata.message_id;   // при переподключении Twitch может прислать одно уведомление дважды
@@ -135,8 +185,9 @@ function openSocket(config, broadcasterId, token, url, onEvent, onRaw) {
 
   socket.on('close', () => {
     if (!stopped && ws === socket) {
-      console.warn('[EventSub] Соединение закрыто, переподключение через 5с…');
-      setTimeout(() => openSocket(config, broadcasterId, token, EVENTSUB_WS_URL, onEvent, onRaw), 5000);
+      clearTimeout(watchdog);
+      console.warn('[EventSub] Соединение закрыто.');
+      scheduleRetry(config, broadcasterId, onEvent, onRaw, authFailed);
     }
   });
 
@@ -146,7 +197,8 @@ function openSocket(config, broadcasterId, token, url, onEvent, onRaw) {
 }
 
 /** Запускает EventSub, если есть OAuth-вход и известен broadcasterId. Безопасно вызывать повторно. */
-function connect(config, broadcasterId, onEvent, onRaw) {
+function connect(config, broadcasterId, onEvent, onRaw, tokenProvider) {
+  if (tokenProvider) getToken = tokenProvider;
   const token = config.twitchAuth && config.twitchAuth.accessToken;
   if (!token || !broadcasterId) {
     if (!warnedNoAuth) {
@@ -158,11 +210,13 @@ function connect(config, broadcasterId, onEvent, onRaw) {
   if (!stopped && ws) return; // уже подключены/подключаемся
 
   stopped = false;
-  openSocket(config, broadcasterId, token, EVENTSUB_WS_URL, onEvent, onRaw);
+  retryAttempt = 0;
+  openSocket(config, broadcasterId, EVENTSUB_WS_URL, onEvent, onRaw);
 }
 
 function stop() {
   stopped = true;
+  clearTimeout(retryTimer); clearTimeout(watchdog);
   if (ws) {
     try { ws.close(); } catch (e) { /* уже закрыт */ }
     ws = null;

@@ -9,7 +9,7 @@ const tmi = require('tmi.js');
  * сообщение (кроме своих же, self всегда false для анонимного клиента).
  */
 function connectChat(channel, onMessage, onConnected, onMilestone) {
-  const client = new tmi.Client({ channels: [channel] });
+  const client = new tmi.Client({ channels: [channel], connection: { reconnect: true, maxReconnectInterval: 30000, secure: true } });
 
   // Серия просмотров зрителя (watch streak): Twitch присылает её в чат как USERNOTICE msg-id=viewermilestone, категория watch-streak.
   if (onMilestone) {
@@ -34,9 +34,39 @@ function connectChat(channel, onMessage, onConnected, onMilestone) {
     onMessage(tags, message);
   });
 
+  // Сторож соединения. tmi сам переподключается после обрыва, но если сокет «завис» (VPN/Wi-Fi пропали, а TCP не закрылся),
+  // его обычный ping-таймаут делает ws.close(), который на мёртвом соединении может ждать минутами — и чат молча стоит,
+  // а вместе с ним озвучка, заказ музыки и статистика. Здесь: живой ли сокет, проверяем по последнему ответу Twitch (любое
+  // входящее сообщение или PONG); тишина дольше 3 минут или «не подключён» дольше 90 с — рвём сокет жёстко и подключаемся заново.
+  let lastSeen = Date.now(), notOpenSince = 0, wasConnected = false;
+  client.on('raw_message', () => { lastSeen = Date.now(); });
+  client.on('pong', () => { lastSeen = Date.now(); });
   client.on('connected', () => {
+    lastSeen = Date.now(); notOpenSince = 0;
+    if (wasConnected) console.log(`[Чат] Снова подключено к чату канала "${channel}".`);
+    wasConnected = true;
     if (onConnected) onConnected();
   });
+  client.on('disconnected', (reason) => { console.warn('[Чат] Соединение с чатом Twitch потеряно:', reason || '', '— переподключаюсь…'); });
+  const hardReconnect = (why) => {
+    console.warn(`[Чат] ${why} — переподключаю чат.`);
+    lastSeen = Date.now(); notOpenSince = 0;
+    try { if (client.ws && typeof client.ws.terminate === 'function') { client.ws.terminate(); return; } } catch (e) { /* ниже — запасной путь */ }
+    client.disconnect().catch(() => {}).finally(() => setTimeout(() => client.connect().catch(() => {}), 2000));
+  };
+  const timer = setInterval(() => {
+    const state = typeof client.readyState === 'function' ? client.readyState() : 'OPEN';
+    const now = Date.now();
+    if (state === 'OPEN') {
+      notOpenSince = 0;
+      if (now - lastSeen > 180000) hardReconnect('Twitch не отвечает больше 3 минут');
+      else if (now - lastSeen > 70000) client.ping().catch(() => {});
+    } else {
+      if (!notOpenSince) notOpenSince = now;
+      else if (now - notOpenSince > 90000 && !client.reconnecting) { notOpenSince = now; client.connect().catch(() => {}); }
+    }
+  }, 30000);
+  if (timer.unref) timer.unref();
 
   client.connect().catch((err) => {
     console.error('Не удалось подключиться к чату Twitch:', err.message || err);

@@ -9,6 +9,11 @@ require('dotenv').config();
 require('./banner').print();
 
 const fs = require('fs');
+// В лог не пишем токены: сторонние библиотеки (DonateX/SignalR) печатают адрес с access_token=… целиком.
+['log', 'info', 'warn', 'error'].forEach((k) => {
+  const orig = console[k].bind(console);
+  console[k] = (...args) => orig(...args.map((a) => (typeof a === 'string' ? a.replace(/(access_token|token)=[^&\s"']+/gi, '$1=***') : a)));
+});
 const path = require('path');
 const crypto = require('crypto');
 const express = require('express');
@@ -836,7 +841,7 @@ reconnectDonationAlertsAtStartup();
 
 /** Подписывается на EventSub (баллы/сабы/рейды), если есть OAuth-вход и известен канал. Безопасно вызывать повторно. */
 function attemptEventSubConnect() {
-  eventsub.connect(config, resolvedBroadcasterId, handleTimelineWeightedEvent, handleEventAlertRaw);
+  eventsub.connect(config, resolvedBroadcasterId, handleTimelineWeightedEvent, handleEventAlertRaw, (force) => ensureUserToken(force));
 }
 
 // ---------- Чат Twitch ----------

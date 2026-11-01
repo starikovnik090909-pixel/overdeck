@@ -247,8 +247,12 @@ function openSocket() {
     }
   });
 
+  let subscribed = false; // centrifuge сам переподписывается после переподключения; повторный subscribe() на каждом connect
+  // добавлял ещё один обработчик к той же подписке — после 10 обрывов донат обрабатывался бы 10 раз (MaxListenersExceededWarning в логе)
   centrifuge.on('connect', (ctx) => {
     console.log('[DonationAlerts] Подключено к Centrifugo, client_id:', ctx && ctx.client);
+    if (subscribed) return;
+    subscribed = true;
     const sub = centrifuge.subscribe(channel, (message) => {
       try {
         onDonation(mapDonation(message.data !== undefined ? message.data : message));

@@ -25,7 +25,7 @@ const autoMod = require('./autoMod');
 const crypto = require('crypto');
 
 const FILE_PATH = path.join(__dirname, 'chat_bot.json');
-const EVENTSUB_WS_URL = process.env.TWITCH_EVENTSUB_WS_URL || 'wss://eventsub.wss.twitch.tv/ws'; // переменная — только для локальных тестов с mock-сервером
+const EVENTSUB_WS_URL = process.env.TWITCH_EVENTSUB_WS_URL || 'wss://eventsub.wss.twitch.tv/ws?keepalive_timeout_seconds=30'; // keepalive 30 с: на нестабильной сети (VPN, Wi-Fi) 10 с давали ложные «обрывы» // переменная — только для локальных тестов с mock-сервером
 const REQUIRED_SCOPE = 'user:read:chat'; // без него подписка на чат невозможна
 const RECOMMENDED_SCOPES = ['user:write:chat', 'user:bot']; // нужны боту дальше (ответы/статус бота) — их отсутствие только предупреждение
 const MAX_RECENT = 30;
@@ -57,6 +57,7 @@ let stopped = true;
 let generation = 0; // защита от «залётных» событий старых сокетов после отключения/переподключения
 let keepaliveTimer = null;
 let reconnectTimer = null;
+let retryAttempt = 0; // подряд неудачных переподключений — для нарастающей паузы (5 → 10 → 20 → 40 → 60 с)
 const recentMessages = [];
 let lastCommand = null; // { command, user, ok, error?, at } — что бот ответил на последнюю команду (для админки)
 const commandCooldowns = new Map(); // id команды -> время последней отправки
@@ -406,7 +407,10 @@ async function subscribeToChat(sessionId) {
   if (!res.ok) {
     let detail = '';
     try { detail = (await res.json()).message || ''; } catch (e) { /* тела нет */ }
-    throw new Error(`Twitch отклонил подписку на чат (${res.status}${detail ? `: ${detail}` : ''}).`);
+    const err = new Error(`Twitch отклонил подписку на чат (${res.status}${detail ? `: ${detail}` : ''}).`);
+    // 401 (токен не принят даже после обновления) и 403 (нет прав) — постоянные; 400 «session does not exist», 409, 429, 5xx — временные
+    err.permanent = res.status === 401 || res.status === 403;
+    throw err;
   }
 }
 
@@ -727,14 +731,33 @@ function armKeepalive(gen, seconds) {
   keepaliveTimer = setTimeout(() => {
     if (gen !== generation || stopped) return;
     console.warn('[Чат бот] Нет keepalive от Twitch — переподключение…');
-    if (socket) { try { socket.terminate(); } catch (e) { /* уже закрыт */ } }
-  }, (seconds + 5) * 1000);
+    scheduleReconnect(gen, 'Twitch перестал отвечать, переподключаюсь…');
+  }, (seconds + 10) * 1000);
+}
+
+/** Одно переподключение за раз, с нарастающей паузой; старый сокет закрывается, чтобы два соединения не боролись друг с другом. */
+function scheduleReconnect(gen, message) {
+  if (gen !== generation || stopped) return;
+  setStatus('connecting', message);
+  const delay = Math.min(60000, 5000 * Math.pow(2, Math.min(retryAttempt, 4)));
+  retryAttempt += 1;
+  clearTimeout(keepaliveTimer);
+  clearTimeout(reconnectTimer);
+  const old = socket; socket = null;
+  if (old) { try { old.terminate(); } catch (e) { /* уже закрыт */ } }
+  reconnectTimer = setTimeout(() => {
+    if (gen !== generation || stopped) return;
+    openSocket(EVENTSUB_WS_URL, gen, false);
+  }, delay);
 }
 
 function openSocket(url, gen, isReconnect) {
   const s = new WebSocket(url);
   socket = s;
-  let keepaliveSeconds = 10;
+  let keepaliveSeconds = 30;
+  // приветствие (session_welcome) должно прийти вскоре после открытия; если сокет «завис» при подключении — сторож его перезапустит
+  armKeepalive(gen, 20);
+  s.on('open', () => { if (gen === generation && !stopped) armKeepalive(gen, 20); });
 
   s.on('message', async (raw) => {
     if (gen !== generation || stopped) return;
@@ -754,13 +777,19 @@ function openSocket(url, gen, isReconnect) {
         console.log(`[Чат бот] Подключён: бот ${session.botLogin} → канал ${session.channelId}`);
         startTimers();
         probeAutoMod().catch(() => {});
+        retryAttempt = 0;
       } catch (e) {
         if (gen !== generation) return;
-        stopped = true;
-        clearTimers();
-        closeSocket();
-        setStatus('error', e.message);
         console.warn('[Чат бот]', e.message);
+        if (e.permanent) { // неверный токен / нет прав — повторять бессмысленно, нужен новый вход
+          stopped = true;
+          clearTimers();
+          closeSocket();
+          setStatus('error', e.message);
+          return;
+        }
+        // сессия умерла посреди подписки, сеть, 5xx, 429 — это временно: открываем новое соединение с паузой
+        scheduleReconnect(gen, 'Подписка на чат не прошла, переподключаюсь…');
       }
     } else if (type === 'session_reconnect') {
       const old = s;
@@ -788,12 +817,7 @@ function openSocket(url, gen, isReconnect) {
 
   s.on('close', () => {
     if (gen !== generation || stopped || socket !== s) return;
-    setStatus('connecting', 'Соединение потеряно, переподключаюсь…');
-    clearTimeout(reconnectTimer);
-    reconnectTimer = setTimeout(() => {
-      if (gen !== generation || stopped) return;
-      openSocket(EVENTSUB_WS_URL, gen, false);
-    }, 5000);
+    scheduleReconnect(gen, 'Соединение потеряно, переподключаюсь…');
   });
 
   s.on('error', (err) => {
@@ -865,6 +889,7 @@ async function connect() {
     session = { clientId: info.client_id, botUserId: info.user_id, botLogin: info.login, scopes, channelId, channelDisplay };
     const missing = RECOMMENDED_SCOPES.filter((sc) => !scopes.includes(sc));
     stopped = false;
+    retryAttempt = 0;
     scheduleRefresh();
     setStatus('connecting', missing.length
       ? `Токен принят, подключаюсь… (нет scope: ${missing.join(', ')} — для чтения не нужны, но понадобятся боту позже)`
