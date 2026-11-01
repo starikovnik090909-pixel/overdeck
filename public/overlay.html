@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=16">
+<link rel="stylesheet" href="style.css?v=18">
 <link rel="stylesheet" href="ticket.css?v=1">
   <link rel="stylesheet" href="wall.css?v=1">
   <link rel="stylesheet" href="badge.css?v=1">
@@ -78,6 +78,16 @@
   <!-- Чат на сцене: без заголовка и фона панели, внутри тот же chat-widget.html (его настройки — во вкладке «Чат»). Адрес iframe подставляется, когда блок включён (public/app.js). -->
   <div class="panel chat-panel" data-widget="chat">
     <iframe id="chatWidgetFrame" title="Чат" data-src="chat-widget.html" allowtransparency="true"></iframe>
+  </div>
+
+  <div class="panel" data-widget="musicchart">
+    <div class="panel-title-row">
+      <div class="panel-title">Муз чарт <span class="donor-top-label" id="musicChartLabel"></span></div>
+      <span class="panel-icon" title="Муз чарт">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 18V6l10-2v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="18" r="2.2" stroke="currentColor" stroke-width="1.5"/><circle cx="17" cy="16" r="2.2" stroke="currentColor" stroke-width="1.5"/></svg>
+      </span>
+    </div>
+    <div class="mc-list" id="musicChartList"><div class="mc-inner" id="musicChartInner"></div></div>
   </div>
 
   <div class="panel" data-widget="pointstop">
@@ -154,6 +164,7 @@
 <script src="emotebox.js?v=6"></script>
 <script src="donortop.js"></script>
 <script src="pointstop.js"></script>
+<script src="musicchart.js"></script>
 <script src="eventfeed.js"></script>
 <script src="donation-looks.js?v=3"></script>
 <script src="donationalert.js?v=19"></script>

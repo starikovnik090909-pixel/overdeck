@@ -547,6 +547,7 @@ function timelineLifetimeMs() {
 const eventFeed = require('./eventFeed').createFeed();
 /** Итоги текущего стрима для виджета «События»: заказы музыки и потраченные баллы канала (сбрасываются вместе со стримом). */
 const streamCounters = { music: 0, points: 0 };
+let streamSince = Date.now(); // начало текущего стрима для «Муз чарта за стрим»
 function handleTimelineWeightedEvent(evt) {
   if (evt && evt.type === 'participation') { // участие в голосовании (ставка закончилась): опыт участникам, на таймлайн это не влияет
     let changed = false;
@@ -1045,6 +1046,7 @@ function buildSnapshot() {
       session: pointsLeaderboard.getTop('session', 10),
       allTime: pointsLeaderboard.getTop('allTime', 10),
     },
+    musicTops: { session: music.chart(streamSince, 30), allTime: music.chart(0, 30) },
     donorTops: {
       session: donorLeaderboard.getTop('session', 10),
       allTime: donorLeaderboard.getTop('allTime', 10),
@@ -2273,7 +2275,7 @@ function resetStreamSession(reason) {
   stats.reset();
   timeline.reset();
   eventFeed.reset();
-  streamCounters.music = 0; streamCounters.points = 0;
+  streamCounters.music = 0; streamCounters.points = 0; streamSince = Date.now();
   categories.reset();
   pointsLeaderboard.resetSession();
   donorLeaderboard.resetSession(); // топ за всё время (donations_alltime.json) не трогаем

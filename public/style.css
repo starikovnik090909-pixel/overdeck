@@ -370,3 +370,22 @@ body.da-preview { background: transparent; }
 .da-layer[data-frame="rainbow"] .da-frame { animation-duration: 5s; background: conic-gradient(from var(--da-ang), #ff4d4d, #ffd24d, #7dff4d, #4dffe0, #4d7dff, #c14dff, #ff4d9a, #ff4d4d); }
 .da-layer[data-frame="gold"] .da-frame { animation-duration: 5.5s; background: conic-gradient(from var(--da-ang), #b8860b, #ffe9a0, #ffd54a, #8a5a00, #ffd54a, #fff6cc, #b8860b); filter: drop-shadow(0 0 8px rgba(255,200,60,.7)); }
 .da-layer[data-frame="dashes"] .da-frame { animation-duration: 6s; background: repeating-conic-gradient(from var(--da-ang), var(--da-c0) 0deg 7deg, transparent 7deg 15deg); filter: drop-shadow(0 0 6px var(--da-c0)); }
+
+/* ============ ВИДЖЕТ: Муз чарт (обложки, топ-3 цветом и свечением; «за стрим» прокручивается) ============ */
+.mc-list { flex: 1; min-height: 0; overflow: hidden; position: relative; padding: 6px 8px 0; margin: -6px -8px 0; }
+.mc-inner { display: flex; flex-direction: column; will-change: transform; }
+.mc-row {
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0; box-sizing: border-box;
+  padding: 5px 8px; margin-bottom: 5px; border: 1px solid transparent; border-bottom-color: var(--accent-40, rgba(177, 72, 70, 0.4));
+}
+.mc-rank { width: 22px; text-align: center; font-family: var(--font-main); font-weight: 700; color: var(--text-muted); flex-shrink: 0; }
+.mc-cover {
+  flex-shrink: 0; background: #1a1a22 center / cover no-repeat; border: 1px solid rgba(255, 255, 255, 0.14);
+  display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.4);
+}
+.mc-name { flex: 1; min-width: 0; font-family: var(--font-text); line-height: 1.2; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+.mc-count { font-family: var(--font-main); font-weight: 700; flex-shrink: 0; }
+.mc-row.mc-top { border-color: color-mix(in srgb, var(--mc-c) 60%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--mc-c) 16%, transparent), transparent 75%); }
+.mc-row.mc-top.mc-glow { box-shadow: 0 0 14px color-mix(in srgb, var(--mc-c) 30%, transparent), inset 0 0 12px color-mix(in srgb, var(--mc-c) 12%, transparent); }
+.mc-row.mc-top .mc-rank, .mc-row.mc-top .mc-count { color: var(--mc-c); }
+.mc-row.mc-top .mc-cover { border-color: var(--mc-c); }

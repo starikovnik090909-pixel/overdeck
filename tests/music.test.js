@@ -88,6 +88,12 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   const st = m.stats(0); ok(st.total === 2 && st.tracks.length === 2 && st.recent.length === 2, 'история воспроизведений сохраняется');
   m.reset(); m.init({ dir, say: async () => true }); ok(m.stats(0).total === 2, 'история после перезапуска');
   ok(m.stats(Date.now() + 1000).total === 0, 'фильтр по периоду');
+  // чарт для виджета: похожие названия склеиваются
+  const nt = m.normTitle;
+  ok(m.sameSong(nt('Кино - Группа крови (Official Video)'), nt('Группа крови')), 'чарт: «Артист - Песня (Official Video)» = «Песня»');
+  ok(m.sameSong(nt('Queen - Bohemian Rhapsody'), nt('Bohemian Rhapsody - Queen')), 'чарт: порядок «артист/песня» не важен');
+  ok(m.sameSong(nt('Believer'), nt('Beliver')), 'чарт: опечатка — та же песня');
+  ok(!m.sameSong(nt('Капли вниз'), nt('Вечеринка')), 'чарт: разные песни не склеиваются');
   fs.rmSync(dir, { recursive: true, force: true });
 
   console.log('music.test: ' + n + ' проверок ок');

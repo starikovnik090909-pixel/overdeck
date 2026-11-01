@@ -351,6 +351,61 @@ function stats(since) {
     recent: plays.slice(-100).reverse(),
   };
 }
+
+/* ---------- Чарт для виджета: похожие названия — одна песня ---------- */
+
+const NOISE = /\b(official|officially|video|music|lyrics?|lyric|audio|hd|hq|4k|1080p|remaster(ed)?|live|clip|mv|m\/v|visuali[sz]er|full|version|перезалив|клип|текст|песня|премьера|официальный|официально|видео|аудио)\b/gi;
+function normTitle(t) {
+  return String(t || '').toLowerCase().replace(/ё/g, 'е')
+    .replace(/[\(\[\{][^\)\]\}]*[\)\]\}]/g, ' ')
+    .replace(NOISE, ' ').replace(/[^a-z0-9а-я]+/g, ' ').trim().replace(/\s+/g, ' ');
+}
+function lev(a, b) {
+  if (a === b) return 0;
+  const m = a.length, n = b.length; if (!m) return n; if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[n];
+}
+/** Одна ли это песня: названия совпадают, одно входит в другое (напр. «Артист - Песня» и «Песня») или отличаются парой опечаток. */
+function sameSong(a, b) {
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const srt = (x) => x.split(' ').sort().join(' ');
+  if (srt(a) === srt(b)) return true; // «Артист - Песня» и «Песня - Артист»
+  const sh = a.length < b.length ? a : b, lg = sh === a ? b : a;
+  if (sh.length >= 5 && (' ' + lg + ' ').includes(' ' + sh + ' ')) return true;
+  const mx = Math.max(a.length, b.length);
+  return mx >= 5 && 1 - lev(a, b) / mx >= 0.85;
+}
+function cleanTitle(t) {
+  const c = String(t || '').replace(/[\(\[][^\)\]]*[\)\]]/g, ' ').replace(NOISE, ' ').replace(/\s+/g, ' ').replace(/[\s\-–—|]+$/g, '').trim();
+  return c || String(t || '');
+}
+/** since — момент (мс); 0 — за всё время. Возвращает [{ id (для обложки), title, count }] по убыванию. */
+function chart(since, limit) {
+  const s = Number(since) || 0;
+  const byId = new Map();
+  plays.forEach((p) => {
+    if (p.at < s) return;
+    const e = byId.get(p.id) || { id: p.id, title: p.title, count: 0 };
+    e.count++; e.title = p.title; byId.set(p.id, e);
+  });
+  const items = [...byId.values()].sort((a, b) => b.count - a.count);
+  const groups = [];
+  items.forEach((it) => {
+    const key = normTitle(it.title);
+    const g = groups.find((x) => sameSong(x.key, key));
+    if (g) { g.count += it.count; return; }
+    groups.push({ key, id: it.id, title: cleanTitle(it.title), count: it.count });
+  });
+  groups.sort((a, b) => b.count - a.count);
+  return groups.slice(0, limit || 30).map((g) => ({ id: g.id, title: g.title, count: g.count }));
+}
 async function sayChart(since) {
   const st = stats(since).tracks.slice(0, 5);
   if (!st.length) return false;
@@ -363,4 +418,4 @@ async function checkYoutube() {
   catch (e) { return { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) }; }
 }
 
-module.exports = { checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
+module.exports = { checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };

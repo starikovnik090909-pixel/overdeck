@@ -11,6 +11,7 @@ const WIDGET_DEFS = [
   { id: 'wordcloud', label: 'Слова эфира' },
   { id: 'donortop', label: 'Топ донатеров' },
   { id: 'pointstop', label: 'Топ по баллам' },
+  { id: 'musicchart', label: 'Муз чарт' },
   { id: 'eventfeed', label: 'События' },
   { id: 'chat', label: 'Чат' },
 ];
@@ -26,6 +27,7 @@ const DEFAULT_LAYOUT = {
   // По умолчанию выключен: стоит на месте слов эфира; включается и двигается в админке.
   eventfeed:  { x: 1520, y: 558, w: 360,  h: 482,  enabled: false },
   pointstop:  { x: 1520, y: 558, w: 360,  h: 494,  enabled: false },
+  musicchart: { x: 1520, y: 558, w: 360,  h: 494,  enabled: false },
   // Чат на сцене: тот же чат, что и отдельный источник chat-widget.html; настройки — только во вкладке «Чат». По умолчанию выключен.
   chat:       { x: 1520, y: 40,  w: 360,  h: 1000, enabled: false },
 };
@@ -179,6 +181,17 @@ const WIDGET_SETTINGS_SCHEMA = {
     top2Color: { type: 'color', group: 'Цвета мест', label: 'Топ-2 (серебро)', default: '#C0C0C0' },
     top3Color: { type: 'color', group: 'Цвета мест', label: 'Топ-3 (бронза)', default: '#CD7F32' },
     defaultCircleColor: { type: 'color', group: 'Цвета мест', label: 'Обычный кружок (места 4+)', default: '#B14846' },
+  },
+  // Муз чарт: песни с обложками, похожие названия склеены. «За стрим» прокручивается, «за всё время» статичен (показывает, что влезает).
+  musicchart: {
+    switchIntervalSec: { type: 'range', label: 'Период переключения (за стрим / за всё время)', unit: ' с', min: 5, max: 90, step: 1, default: 20 },
+    coverSize: { type: 'range', group: 'Внешний вид', label: 'Размер обложек', unit: 'px', min: 28, max: 80, step: 2, default: 44 },
+    showCount: { type: 'toggle', group: 'Внешний вид', label: 'Показывать число заказов (×N)', default: true },
+    scrollSpeed: { type: 'range', group: 'Прокрутка («за стрим»)', label: 'Скорость прокрутки', unit: ' px/с', min: 10, max: 120, step: 5, default: 30 },
+    top1Color: { type: 'color', group: 'Цвета мест', label: 'Топ-1 (золото)', default: '#FFD700' },
+    top2Color: { type: 'color', group: 'Цвета мест', label: 'Топ-2 (серебро)', default: '#C0C0C0' },
+    top3Color: { type: 'color', group: 'Цвета мест', label: 'Топ-3 (бронза)', default: '#CD7F32' },
+    topGlow: { type: 'toggle', group: 'Цвета мест', label: 'Свечение у топ-3', default: true },
   },
   // События: карточка последнего события + вертикальная линия с предыдущими. Размеры и оформление подстраиваются под блок и стиль оверлея.
   eventfeed: {
