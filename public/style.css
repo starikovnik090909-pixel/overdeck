@@ -272,6 +272,12 @@ body.show-header-icons .panel-icon { display: inline-flex; }
 .ef-amt { color: var(--ef-hi); font-weight: 800; font-variant-numeric: tabular-nums; }
 .ef-rt { margin-left: auto; margin-right: 6px; text-align: right; font-family: var(--font-text); font-weight: 600; font-size: calc(11px * var(--ef-u)); color: var(--ef-dim); white-space: nowrap; }
 .ef-host.ef-notime .ef-ago { display: none; }
+.ef-sum { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: calc(8px * var(--ef-u)); }
+.ef-chip { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(7px * var(--ef-u)); padding: 0 calc(10px * var(--ef-u)); box-sizing: border-box; border-radius: var(--o-bar-r, 12px);
+  background: color-mix(in srgb, var(--ef-pts) 9%, transparent); border: 1px solid color-mix(in srgb, var(--ef-pts) 28%, transparent); font-family: var(--font-text); font-weight: 600; font-size: calc(11px * var(--ef-u)); color: var(--ef-dim); white-space: nowrap; }
+.ef-chip i { font-style: normal; flex: none; color: var(--ef-pts); font-size: calc(15px * var(--ef-u)); }
+.ef-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.ef-chip b { margin-left: auto; flex: none; font-family: var(--font-main); font-weight: 800; font-size: calc(16px * var(--ef-u)); color: var(--ef-text); font-variant-numeric: tabular-nums; }
 .ef-hero { border-radius: var(--o-bar-r, 14px); background: linear-gradient(135deg, color-mix(in srgb, var(--ef-c) 28%, transparent), color-mix(in srgb, var(--ef-c) 5%, transparent) 80%);
   border: 1px solid color-mix(in srgb, var(--ef-c) 55%, transparent); box-shadow: 0 10px 30px rgba(0,0,0,.28), 0 0 28px color-mix(in srgb, var(--ef-c) 18%, transparent); padding-right: 8px; }
 .ef-hero .ef-ic { width: calc(54px * var(--ef-u)); height: calc(54px * var(--ef-u)); box-shadow: none; font-size: calc(24px * var(--ef-u)); }

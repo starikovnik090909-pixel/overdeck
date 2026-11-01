@@ -36,6 +36,7 @@ let cfg = Object.assign({}, DEFAULTS);
 let searcher = defaultSearch;
 let say = async () => false;
 let onChange = () => {};
+let onOrder = () => {};
 let seq = 0;
 let useFile = true;
 let current = null;          // { uid, id, title, channel, seconds, by, login }
@@ -92,6 +93,7 @@ function init(opts) {
   if (o.search) searcher = o.search;
   if (o.say) say = o.say;
   if (o.onChange) onChange = o.onChange;
+  if (o.onOrder) onOrder = o.onOrder;
   if (o.dir) DIR = o.dir;
   useFile = !o.noFile;
   if (useFile) load();
@@ -211,7 +213,7 @@ function insert(item) {
   queue.forEach((q, i) => { if ((q.prio || 0) >= item.prio) at = i + 1; });
   queue.splice(at, 0, item);
 }
-function enqueue(item) { if (!current) { queue.push(item); startNext(); } else { insert(item); changed(); } return item; }
+function enqueue(item) { try { onOrder(item); } catch (e) { /* счётчик не должен ломать очередь */ } if (!current) { queue.push(item); startNext(); } else { insert(item); changed(); } return item; }
 function ended(uid) { if (current && (uid == null || Number(uid) === current.uid)) startNext(); }
 function skip() { if (current) startNext(); else changed(); }
 function remove(uid) { const n = queue.length; queue = queue.filter((q) => q.uid !== Number(uid)); if (queue.length !== n) changed(); }

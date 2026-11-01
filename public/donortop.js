@@ -37,12 +37,24 @@
     return { ...DEFAULT_SETTINGS, ...((window.widgetSettings && window.widgetSettings.donortop) || {}) };
   }
 
+  /** Если за стрим донатов нет, показываем топ за всё время. */
+  function effScope() {
+    const t = (latest && latest.donorTops) || {};
+    const hasS = !!(t.session && t.session.length), hasA = !!(t.allTime && t.allTime.length);
+    if (!hasS && hasA) return 'allTime';
+    if (!hasA && hasS) return 'session';
+    return scope;
+  }
+
   function ensureSwitchTimer() {
     const s = getSettings();
     if (currentIntervalSec === s.switchIntervalSec && switchTimer) return;
     currentIntervalSec = s.switchIntervalSec;
     clearInterval(switchTimer);
     switchTimer = setInterval(() => {
+      // без донатов на стриме остаёмся на «за всё время»; переключаемся, только когда есть что показать в обоих топах
+      const t = (latest && latest.donorTops) || {};
+      if (!(t.session && t.session.length) || !(t.allTime && t.allTime.length)) { if (scope !== effScope()) { scope = effScope(); rowElements = new Map(); listEl.innerHTML = ''; draw(); } return; }
       scope = scope === 'session' ? 'allTime' : 'session';
       rowElements = new Map(); // другой топ — начинаем с чистого листа, старые позиции ни при чём
       listEl.innerHTML = '';
@@ -105,6 +117,8 @@
     if (!latest) return;
     const s = getSettings();
     const tops = latest.donorTops || { session: [], allTime: [] };
+    const want = effScope();
+    if (want !== scope) { scope = want; rowElements = new Map(); listEl.innerHTML = ''; }
     const list = (scope === 'session' ? tops.session : tops.allTime) || [];
 
     labelEl.textContent = scope === 'session' ? '(за стрим)' : '(за всё время)';

@@ -401,6 +401,7 @@ function handleEventAlertRaw(type, e) {
     case 'channel.hype_train.end':
       fireEventAlert('hype', { phase: 'end', level: e.level, total: e.total }); hypeLevel = 0; break;
     case 'channel.channel_points_custom_reward_redemption.add':
+      streamCounters.points += Math.max(0, Number(e.reward && e.reward.cost) || 0);
       fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).catch((er) => console.warn('[Музыка]', er.message));
       break;
@@ -542,6 +543,8 @@ function timelineLifetimeMs() {
 }
 
 const eventFeed = require('./eventFeed').createFeed();
+/** Итоги текущего стрима для виджета «События»: заказы музыки и потраченные баллы канала (сбрасываются вместе со стримом). */
+const streamCounters = { music: 0, points: 0 };
 function handleTimelineWeightedEvent(evt) {
   if (evt && evt.type === 'participation') { // участие в голосовании (ставка закончилась): опыт участникам, на таймлайн это не влияет
     let changed = false;
@@ -1051,6 +1054,7 @@ function buildSnapshot() {
     newEmoteDrops: pendingEmoteDrops,
     emoteTotal: stats.getTotalEmotes(),
     eventFeed: eventFeed.getList(15),
+    streamCounters: { ...streamCounters },
     emoteBoxConfig: {
       maxCount: config.emoteBoxMaxCount || 60,
       gravity: config.emoteBoxGravity || 0.5,
@@ -1360,7 +1364,7 @@ soonData.init(async () => {
   return { title: info.title || '', game: info.game_name || '', login: config.channel || '', art };
 });
 require('./routes/soon').main({ soonData, app });
-music.init({ say: (t) => chatBot.say(t) });
+music.init({ say: (t) => chatBot.say(t), onOrder: () => { streamCounters.music += 1; } });
 require('./routes/music').main({ music, app });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
@@ -2253,6 +2257,7 @@ function resetStreamSession(reason) {
   stats.reset();
   timeline.reset();
   eventFeed.reset();
+  streamCounters.music = 0; streamCounters.points = 0;
   categories.reset();
   donorLeaderboard.resetSession(); // топ за всё время (donations_alltime.json) не трогаем
   chatHistory = [];

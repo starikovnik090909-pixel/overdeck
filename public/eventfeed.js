@@ -17,9 +17,11 @@
     watchstreak: '<svg viewBox="0 0 24 24"><path class="f" d="M12 3c.5 3-1.6 4.6-3.2 6.6C7.4 11.3 7 12.6 7 14a5 5 0 0 0 10 0c0-1.8-.8-3.1-1.7-4.2-.3 1-.9 1.6-1.6 1.9.6-3-.2-6.2-1.7-8.7z"/></svg>',
   };
   const CSS_TYPE = { follow: 'follow', sub: 'sub', giftsub: 'gift', donation: 'don', raid: 'raid', channelpoints: 'pts', watchstreak: 'streak' };
-  const DEFAULTS = { maxRows: 5, showFollow: true, showSub: true, showGift: true, showRaid: true, showDonation: true, showPoints: false, showStreak: true, minDonation: 0, showTime: true };
+  const DEFAULTS = { maxRows: 5, showFollow: true, showSub: true, showGift: true, showRaid: true, showDonation: true, showPoints: false, showStreak: true, minDonation: 0, showTime: true, showSummary: true, sumMusic: true, sumPoints: true };
 
   host.innerHTML = '<div class="ef-spine"></div><div class="ef-empty">Пока событий нет</div>';
+  const sumEl = document.createElement('div'); sumEl.className = 'ef-sum'; host.appendChild(sumEl);
+  let counters = { music: 0, points: 0 };
   const spine = host.querySelector('.ef-spine');
   const emptyEl = host.querySelector('.ef-empty');
   const els = new Map(); // key -> element
@@ -72,9 +74,17 @@
 
   function layout() {
     const s = settings();
-    const H = host.clientHeight, W = host.clientWidth;
-    box = { w: W, h: H };
-    if (!H || !W) return;
+    const H0 = host.clientHeight, W = host.clientWidth;
+    box = { w: W, h: H0 };
+    if (!H0 || !W) return;
+    const chips = [];
+    if (s.showSummary && s.sumMusic) chips.push(['♪', 'заказов музыки', '×' + fmt(counters.music)]);
+    if (s.showSummary && s.sumPoints) chips.push(['◎', 'баллов потрачено', fmt(counters.points)]);
+    sumEl.style.display = chips.length ? '' : 'none';
+    sumEl.innerHTML = chips.map((c) => '<div class="ef-chip"><i>' + c[0] + '</i><span>' + c[1] + '</span><b>' + c[2] + '</b></div>').join('');
+    const sumH = chips.length ? Math.round(Math.min(46, Math.max(30, H0 * 0.1)) * Math.max(0.55, Math.min(1.7, Math.min(W / 340, H0 / 400)))) : 0;
+    sumEl.style.height = sumH + 'px';
+    const H = Math.max(0, H0 - (sumH ? sumH + 8 : 0));
     const u = Math.max(0.55, Math.min(1.7, Math.min(W / 340, H / 400)));
     host.style.setProperty('--ef-u', u.toFixed(3));
     const heroH = Math.round(Math.min(112 * u, H * 0.4));
@@ -88,6 +98,7 @@
     host.classList.toggle('ef-notime', !s.showTime);
     spine.style.left = Math.round(34 * u) + 'px';
     spine.style.top = (heroH + gap / 2) + 'px';
+    spine.style.bottom = (sumH ? sumH + 8 : 0) + 'px';
 
     const seen = new Set();
     const shown = events.slice(0, total);
@@ -122,6 +133,7 @@
     spine.style.display = shown.length > 1 ? '' : 'none';
     if (heroEl) spine.style.setProperty('--ef-c0', getComputedStyle(heroEl).getPropertyValue('--ef-c') || '#888');
     emptyEl.style.display = shown.length ? 'none' : '';
+    emptyEl.style.bottom = (sumH ? sumH + 8 : 0) + 'px';
     updateTimes();
   }
 
@@ -132,8 +144,9 @@
   function render(data) {
     if (!data || !Array.isArray(data.eventFeed)) return;
     const s = settings();
+    if (data.streamCounters) counters = data.streamCounters;
     events = data.eventFeed.filter((e) => allowed(e, s));
-    const sig = events.map(keyOf).join(',') + '|' + JSON.stringify(s);
+    const sig = events.map(keyOf).join(',') + '|' + JSON.stringify(s) + '|' + counters.music + '|' + counters.points;
     if (sig === lastKey) return;
     lastKey = sig;
     layout();

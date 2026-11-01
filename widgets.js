@@ -170,6 +170,9 @@ const WIDGET_SETTINGS_SCHEMA = {
     showStreak: { type: 'toggle', group: 'Какие события показывать', label: 'Серии просмотров зрителей', default: true },
     minDonation: { type: 'range', group: 'Какие события показывать', label: 'Донаты от (₽)', unit: ' ₽', min: 0, max: 5000, step: 50, default: 0 },
     showTime: { type: 'toggle', group: 'Внешний вид', label: 'Показывать «N мин назад»', default: true },
+    showSummary: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Показывать итоги стрима', default: true },
+    sumMusic: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Заказы музыки', default: true },
+    sumPoints: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Потрачено баллов канала', default: true },
   },
   // Другие виджеты (emotebox, wordcloud) пока без собственных настроек —
   // добавляются сюда точно так же, когда понадобятся.
