@@ -22,8 +22,8 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   await m.onChat(msg('!муз опять')); ok(/подожди/.test(said[said.length - 1]) && m.state().queue.length === 1, 'пауза между заказами');
   ok(await m.onChat(msg('!муз')) && /напиши/.test(said[said.length - 1]), 'пустой заказ');
 
-  fresh(async () => [hits[1]]); await m.onChat(msg('!муз длинный')); ok(!m.state().current && /ничего не нашлось/.test(said[0]), 'слишком длинный клип отклоняется');
-  fresh(async () => { throw new Error('net'); }); await m.onChat(msg('!муз x')); ok(/не получилось/.test(said[0]), 'ошибка сети');
+  fresh(async () => [hits[1]]); await m.onChat(msg('!муз длинный')); ok(!m.state().current && /не принят: найденные ролики длиннее/.test(said[0]), 'слишком длинный клип отклоняется');
+  fresh(async () => { throw new Error('net'); }); await m.onChat(msg('!муз x')); ok(/не принят: не получилось найти/.test(said[0]), 'ошибка сети');
 
   fresh(); m.update({ who: 'sub' }); await m.onChat(msg('!муз x')); ok(!m.state().current && /не всем/.test(said[0]), 'только подписчики');
   await m.onChat(msg('!муз x', { roles: { sub: true } })); ok(!!m.state().current, 'подписчик может');
@@ -46,7 +46,7 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   fresh(async () => [{ id: 'CCCCCCCCCCC', title: 'Видео про КАЗИНО', channel: 'x', seconds: 100 }, hits[0]]); m.update({ blWords: 'казино' });
   await m.onChat(msg('!муз песня')); ok(m.state().current.id === 'AAAAAAAAAAA', 'трек с запрещённым словом в названии пропускается, берётся следующий');
   fresh(); await m.onChat(msg('!муз a')); m.banTrack('AAAAAAAAAAA', 'Дорадура'); ok(!m.state().current && m.getSettings().blTracks.length === 1, 'бан играющего трека пропускает его');
-  await m.onChat(msg('!муз b', { login: 'z', name: 'Z' })); ok(!m.state().current && /ничего не нашлось/.test(said[said.length - 1]), 'забаненный трек не ставится');
+  await m.onChat(msg('!муз b', { login: 'z', name: 'Z' })); ok(!m.state().current && /не принят/.test(said[said.length - 1]), 'забаненный трек не ставится');
   m.unbanTrack('AAAAAAAAAAA'); ok(m.getSettings().blTracks.length === 0, 'разбан');
 
   // --- приоритеты и перестановка ---

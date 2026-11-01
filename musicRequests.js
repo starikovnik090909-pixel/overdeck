@@ -251,6 +251,15 @@ function okHits(hits) {
   return (hits || []).filter((h) => h && h.id && !isBanned(h.id) && !badWord(h.title, h.channel) && (!h.seconds || h.seconds <= cfg.maxMinutes * 60));
 }
 function pickHit(hits) { return okHits(hits)[0] || null; }
+/** Почему из выдачи ничего не подошло — для честного ответа в чат. */
+function whyNone(hits) {
+  const l = (hits || []).filter((h) => h && h.id);
+  if (!l.length) return 'на YouTube ничего не нашлось по такому названию';
+  if (l.every((h) => isBanned(h.id))) return 'этот трек в чёрном списке стримера';
+  if (l.every((h) => badWord(h.title, h.channel))) return 'в названии ролика или имени канала запрещённое слово';
+  if (l.every((h) => h.seconds && h.seconds > cfg.maxMinutes * 60)) return 'найденные ролики длиннее ' + cfg.maxMinutes + ' мин';
+  return 'подходящих роликов нет (чёрный список, запрещённые слова или длина больше ' + cfg.maxMinutes + ' мин)';
+}
 /** Ручной заказ из админки: текст, ссылка или название. */
 async function addByQuery(query, by) {
   const q = String(query || '').trim().slice(0, 200);
@@ -267,7 +276,7 @@ async function place(o) {
   const q = String(o.query || '').trim().slice(0, 200);
   if (!q) { await reply(`@${name}, напиши название песни после команды.`); return false; }
   const w = badWord(q);
-  if (w) { await reply(`@${name}, такой запрос запрещён в заказе музыки.`); return false; }
+  if (w) { await reply(`@${name}, заказ не принят: в запросе запрещённое слово.`); return false; }
   if (!o.free) {
     const wait = Math.ceil(((lastAt.get(login) || 0) + cfg.cooldown * 1000 - Date.now()) / 1000);
     if (wait > 0) { await reply(`@${name}, подожди ещё ${wait} с перед новым заказом.`); return false; }
@@ -276,9 +285,9 @@ async function place(o) {
   }
   lastAt.set(login, Date.now());
   let hits;
-  try { hits = await searcher(q); } catch (e) { await reply(`@${name}, не получилось найти трек (YouTube не отвечает — стримеру нужен VPN или прокси).`); return false; }
+  try { hits = await searcher(q); } catch (e) { await reply(`@${name}, заказ не принят: не получилось найти трек, YouTube не отвечает (стримеру нужен VPN или прокси).`); return false; }
   const hit = pickHit(hits);
-  if (!hit) { await reply(`@${name}, ничего не нашлось по запросу «${q.slice(0, 60)}» (нет такого клипа, он длиннее ${cfg.maxMinutes} мин или в чёрном списке).`); return false; }
+  if (!hit) { await reply(`@${name}, заказ «${q.slice(0, 60)}» не принят: ${whyNone(hits)}.`); return false; }
   const playingNow = !current;
   const item = enqueue(mkItem(hit, name, login, o.prio || 0, okHits(hits).filter((h) => h.id !== hit.id)));
   const place_ = queue.findIndex((x) => x.uid === item.uid) + 1;
