@@ -9,7 +9,7 @@ function main(ctx) {
     try { await music.addByQuery((req.body || {}).query, 'Стример'); ok(res); } catch (e) { fail(res, e); }
   });
   app.post('/api/music/skip', (req, res) => { music.skip(); ok(res); });
-  app.post('/api/music/ended', (req, res) => { music.ended((req.body || {}).uid); ok(res); });
+  app.post('/api/music/ended', (req, res) => { const b = req.body || {}; if (b.error) music.playFailed(b.uid, b.error).catch(() => {}); else music.ended(b.uid); ok(res); });
   app.post('/api/music/progress', (req, res) => { const b = req.body || {}; music.setPos(b.uid, b.t, b.d); res.json({ success: true }); });
   app.post('/api/music/move', (req, res) => { const b = req.body || {}; music.move(b.uid, b.to); ok(res); });
   app.post('/api/music/ban', (req, res) => { const b = req.body || {}; try { music.banTrack(b.id, b.title); ok(res); } catch (e) { fail(res, e); } });

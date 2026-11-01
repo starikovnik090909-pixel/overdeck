@@ -193,7 +193,7 @@ function unbanTrack(id) { cfg.blTracks = cfg.blTracks.filter((t) => t.id !== id)
 
 /* ---------- Очередь ---------- */
 
-function mkItem(hit, by, login, prio) { return { uid: ++seq, id: hit.id, title: hit.title, channel: hit.channel || '', seconds: hit.seconds || 0, by: by || '', login: login || '', prio: prio || 0 }; }
+function mkItem(hit, by, login, prio, alts) { return { alts: (alts || []).slice(0, 3).map((a) => ({ id: a.id, title: a.title, channel: a.channel || '', seconds: a.seconds || 0 })), uid: ++seq, id: hit.id, title: hit.title, channel: hit.channel || '', seconds: hit.seconds || 0, by: by || '', login: login || '', prio: prio || 0 }; }
 function recordPlay(t) {
   plays.push({ id: t.id, title: t.title, channel: t.channel || '', by: t.by || '', login: t.login || '', at: Date.now() });
   if (plays.length > PLAYS_MAX) plays = plays.slice(-PLAYS_MAX);
@@ -214,6 +214,20 @@ function insert(item) {
   queue.splice(at, 0, item);
 }
 function enqueue(item) { try { onOrder(item); } catch (e) { /* счётчик не должен ломать очередь */ } if (!current) { queue.push(item); startNext(); } else { insert(item); changed(); } return item; }
+/** YouTube не дал проиграть ролик (возрастное ограничение, запрет встраивания, удалён): пробуем следующую версию из поиска, иначе говорим об этом в чат. */
+async function playFailed(uid, code) {
+  if (!current || (uid != null && Number(uid) !== current.uid)) return;
+  const c = current, name = c.by || c.login || '';
+  const alt = (c.alts || []).shift();
+  if (alt) {
+    const bad = c.title;
+    Object.assign(c, { id: alt.id, title: alt.title, channel: alt.channel, seconds: alt.seconds }); recordPlay(c); changed();
+    if (cfg.reply && name) await say(`@${name}, «${bad.slice(0, 50)}» YouTube не даёт проиграть на сцене (возрастное ограничение или запрет встраивания), включаю другую версию: ${alt.title.slice(0, 60)}`);
+    return;
+  }
+  if (cfg.reply && name) await say(`@${name}, «${c.title.slice(0, 50)}» не получилось проиграть: YouTube запрещает встраивание или ролик с ограничением по возрасту. Попробуй другую версию.`);
+  startNext();
+}
 function ended(uid) { if (current && (uid == null || Number(uid) === current.uid)) startNext(); }
 function skip() { if (current) startNext(); else changed(); }
 function remove(uid) { const n = queue.length; queue = queue.filter((q) => q.uid !== Number(uid)); if (queue.length !== n) changed(); }
@@ -233,9 +247,10 @@ const fmt = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')
 
 /* ---------- Заказ: общая часть для чата, баллов и доната ---------- */
 
-function pickHit(hits) {
-  return (hits || []).find((h) => h && h.id && !isBanned(h.id) && !badWord(h.title, h.channel) && (!h.seconds || h.seconds <= cfg.maxMinutes * 60)) || null;
+function okHits(hits) {
+  return (hits || []).filter((h) => h && h.id && !isBanned(h.id) && !badWord(h.title, h.channel) && (!h.seconds || h.seconds <= cfg.maxMinutes * 60));
 }
+function pickHit(hits) { return okHits(hits)[0] || null; }
 /** Ручной заказ из админки: текст, ссылка или название. */
 async function addByQuery(query, by) {
   const q = String(query || '').trim().slice(0, 200);
@@ -265,7 +280,7 @@ async function place(o) {
   const hit = pickHit(hits);
   if (!hit) { await reply(`@${name}, ничего не нашлось по запросу «${q.slice(0, 60)}» (нет такого клипа, он длиннее ${cfg.maxMinutes} мин или в чёрном списке).`); return false; }
   const playingNow = !current;
-  const item = enqueue(mkItem(hit, name, login, o.prio || 0));
+  const item = enqueue(mkItem(hit, name, login, o.prio || 0, okHits(hits).filter((h) => h.id !== hit.id)));
   const place_ = queue.findIndex((x) => x.uid === item.uid) + 1;
   const tail = o.source === 'donate' ? ' (за донат)' : o.source === 'points' ? ' (за баллы)' : '';
   await reply(playingNow ? `▶ Играет: ${item.title} (заказ @${name})${tail}` : `➕ @${name}, в очереди №${place_}: ${item.title}${item.seconds ? ' [' + fmt(item.seconds) + ']' : ''}${tail}`);
@@ -418,4 +433,4 @@ async function checkYoutube() {
   catch (e) { return { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) }; }
 }
 
-module.exports = { checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
+module.exports = { playFailed, checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };

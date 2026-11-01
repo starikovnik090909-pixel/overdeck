@@ -96,5 +96,14 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   ok(!m.sameSong(nt('Капли вниз'), nt('Вечеринка')), 'чарт: разные песни не склеиваются');
   fs.rmSync(dir, { recursive: true, force: true });
 
+  // YouTube не дал проиграть (возрастное ограничение): берём другую версию, потом честно пропускаем с объяснением
+  const A1 = { id: 'AAAAAAAAAAA', title: 'Фараон — Порнозвезда', channel: 'x', seconds: 130 }, A2 = { id: 'CCCCCCCCCCC', title: 'Фараон — Порнозвезда (аудио)', channel: 'y', seconds: 131 };
+  fresh(async () => [A1, A2]); await m.onChat(msg('!муз Фараон Порнозвезда'));
+  ok(m.state().current.id === 'AAAAAAAAAAA' && m.state().current.alts.length === 1, 'в заказе сохранена запасная версия, мат в названии не блокирует');
+  await m.playFailed(m.state().current.uid, 150);
+  ok(m.state().current.id === 'CCCCCCCCCCC' && /другую версию/.test(said[said.length - 1]), 'после ошибки плеера включилась запасная версия');
+  await m.playFailed(m.state().current.uid, 150);
+  ok(!m.state().current && /не получилось проиграть/.test(said[said.length - 1]), 'запасных нет — заказ пропущен с объяснением в чате');
+
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -82,7 +82,7 @@
         events: {
           onReady: function () { ready = true; if (last) paint(last); },
           onStateChange: function (e) { if (e.data === 0 && last && last.current) post('/api/music/ended', { uid: last.current.uid }); },
-          onError: function () { if (last && last.current) post('/api/music/ended', { uid: last.current.uid }); },
+          onError: function (e) { if (last && last.current) post('/api/music/ended', { uid: last.current.uid, error: (e && e.data) || 1 }); },
         },
       });
     };
