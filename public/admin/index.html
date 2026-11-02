@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=15">
+<link rel="stylesheet" href="music.css?v=16">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3121,7 +3121,7 @@
 
     <section class="tab-section" id="tab-music">
       <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) ты выводишь на экран кнопкой.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
+        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="mu-pwr" type="button" id="muPwr" title="Включить или выключить заказ музыки"><span class="sw"></span><span><b id="muPwrT">Заказ включён</b><small id="muPwrS"></small></span></button><button class="btn btn-secondary" type="button" id="muObs" title="Скопировать ссылку для источника «Браузер» в OBS">🔗 Ссылка для OBS</button><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
 
       <div id="muLive">
       <div class="mu-grid">
@@ -3135,10 +3135,7 @@
         </section>
 
         <section class="card ui3-card mu-card mu-quick">
-          <div class="mu-qrow">
-            <label class="mu-sw"><input type="checkbox" data-m="enabled"><i></i><span>Заказ музыки</span></label>
-            <label class="mu-sw"><input type="checkbox" data-m="showUser"><i></i><span>Ник заказчика</span></label>
-          </div>
+          
           <div class="mu-q"><span class="mu-ql">Что на экране</span>
             <div class="chr-seg mu-seg" id="muView"><button type="button" data-v="clip">▶ Клип</button><button type="button" data-v="player">♫ Плеер</button></div>
           </div>
@@ -3147,21 +3144,7 @@
             <div id="muLineBox"><span class="mu-ql">Строка с названием</span><div class="chr-seg" id="muLine"><button type="button" data-v="top">Сверху</button><button type="button" data-v="bottom">Снизу</button><button type="button" data-v="off">Без строки</button></div></div>
             <div id="muSkinBox"><span class="mu-ql">Вид плеера</span><div class="mu-skins" id="muSkins"></div></div>
           </div>
-          <details class="mu-rules">
-            <summary><span class="mu-ql">Правила заказа</span><span class="mu-chev" aria-hidden="true"></span></summary>
-            <div class="mu-form">
-              <label><em>Кто заказывает</em><select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
-              <label><em>Громкость, %</em><input type="number" data-m="volume" min="0" max="100"></label>
-              <label><em>Заказов от зрителя</em><input type="number" data-m="perUser" min="1" max="20"></label>
-              <label><em>Пауза между заказами, с</em><input type="number" data-m="cooldown" min="0" max="600"></label>
-              <label><em>Макс. очередь</em><input type="number" data-m="maxQueue" min="1" max="100"></label>
-              <label><em>Макс. длина клипа, мин</em><input type="number" data-m="maxMinutes" min="1" max="60"></label>
-              <label><em>Команды заказа</em><input type="text" data-m="commands" maxlength="80"></label>
-              <label><em>Команды «пропустить»</em><input type="text" data-m="skipCommands" maxlength="80"></label>
-<label><em>Команды «в плейлист»</em><input type="text" data-m="likeCommands" maxlength="80"></label>
-<label><em>Команды «убрать из плейлиста»</em><input type="text" data-m="dislikeCommands" maxlength="80"></label>
-            </div>
-          </details>
+          
         </section>
         </div>
         <section class="card ui3-card mu-card mu-now">
@@ -3232,47 +3215,91 @@
         </div>
       </div>
 
-      <div class="mu-drawer" id="muDrawer" hidden>
+      <div class="mu-modal" id="muDrawer" hidden>
         <div class="mu-dim" data-close></div>
-        <aside class="mu-panel" role="dialog" aria-label="Настройки заказа музыки">
-          <div class="mu-ph"><h3>Настройки</h3><button type="button" class="mu-x" data-close aria-label="Закрыть">×</button></div>
-          <div class="mu-pb">
-            <h4 class="ex-h">Источник для OBS</h4>
-            <div class="obs-url-compact"><span class="obs-url-compact-title">Браузер</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
-            <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
-
-            <h4 class="ex-h">Способы заказа</h4>
-            <p class="ex-sm" id="muPaidNote" hidden>Пока включён заказ за баллы или донат, команда заказа в чате отключена: бот отвечает зрителям, как заказать. Уже заказанные песни остаются в очереди, в том числе после перезапуска.</p>
-            <div class="mu-opt">
-              <label class="tg-sw"><input type="checkbox" data-m="pointsOn"><i></i><span>За баллы канала</span></label>
-              <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
-              <p class="ex-sm">Создай награду в Twitch (Баллы канала → Награды) с включённым полем «Требовать ввод текста от зрителя» и впиши сюда её точное название. Зритель вводит название песни, трек встаёт в очередь выше обычных. Возврат баллов при ошибке Overdeck не делает.</p>
-              <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muRwMake">Создать награду здесь</button><span class="ex-sm" id="muRwMsg"></span></div>
-            </div>
-            <div class="mu-opt">
-              <label class="tg-sw"><input type="checkbox" data-m="donateOn"><i></i><span>За донат</span></label>
+        <div class="mu-mbox mu-set" role="dialog" aria-label="Настройки заказа музыки">
+          <nav class="mu-snav" id="muSnav">
+            <h3>Настройки</h3>
+            <button type="button" data-sp="who" class="on">👥 Кто и как заказывает</button>
+            <button type="button" data-sp="pay">💎 Способы заказа</button>
+            <button type="button" data-sp="scr">🖥 На экране и OBS</button>
+            <button type="button" data-sp="bot">💬 Бот в чате</button>
+            <button type="button" data-sp="bl">🚫 Чёрный список</button>
+            <button type="button" data-sp="yt">▶ YouTube без VPN</button>
+          </nav>
+          <div class="mu-spanes">
+            <section class="mu-sp" data-sp="who">
+              <h4>Кто и как заказывает</h4>
+              <p class="ex-sm">Правила для заказа командой в чате. Стример и модераторы заказывают без лимитов.</p>
               <div class="mu-form">
-                <label><em>Заказ от суммы, ₽</em><input type="number" data-m="donateMinRub" min="1" max="100000"></label>
-                <label><em>Вне очереди от, ₽ (0 — выкл.)</em><input type="number" data-m="donatePrioRub" min="0" max="100000"></label>
+                <label><em>Кто заказывает</em><select data-m="who"><option value="everyone">Все</option><option value="vip">VIP и подписчики</option><option value="sub">Подписчики</option><option value="mod">Только модераторы</option></select></label>
+                <label><em>Заказов от зрителя в очереди</em><input type="number" data-m="perUser" min="1" max="20"></label>
+                <label><em>Пауза между заказами, с</em><input type="number" data-m="cooldown" min="0" max="600"></label>
+                <label><em>Макс. очередь</em><input type="number" data-m="maxQueue" min="1" max="100"></label>
+                <label><em>Макс. длина клипа, мин</em><input type="number" data-m="maxMinutes" min="1" max="60"></label>
               </div>
-              <label class="tg-sw"><input type="checkbox" data-m="donateBypass"><i></i><span>Донат снимает лимиты и паузу</span></label>
-              <p class="ex-sm">Название песни зритель пишет в сообщении к донату (можно с «!муз» в начале). Донат от суммы заказа встаёт выше чатовых заказов, от суммы «вне очереди» — первым в очереди. Работает с DonationAlerts, DonatePay и DonateX.</p>
-            </div>
-
-            <h4 class="ex-h">YouTube без VPN</h4>
-            <label class="mu-fl"><em>Прокси для поиска (адрес HTTP-порта твоего VPN, например 127.0.0.1:10809). Пусто — напрямую</em><input type="text" data-m="proxy" maxlength="200" placeholder="127.0.0.1:10809"></label>
-            <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muCheck">Проверить YouTube</button><span class="ex-sm" id="muCheckMsg"></span></div>
-            <div class="ex-sm">Прокси нужен только боту для поиска. Видео в OBS грузится самим OBS — там нужен VPN на весь компьютер (режим TUN) или обход блокировок.</div>
-
-            <h4 class="ex-h">Чёрный список</h4>
-            <label class="mu-fl"><em>Слова (через запятую или с новой строки). Проверяются в запросе, названии ролика и имени канала</em><textarea data-m="blWords" rows="3" maxlength="3000" placeholder="казино, 18+"></textarea></label>
-            <div class="ex-sm">Запрещённые треки</div>
-            <ul class="mu-bl" id="muBl"></ul>
-
-            <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Выводить на экран сразу при старте трека</span></label>
-            <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
+              <h5>Команды (без «!»)</h5>
+              <div class="mu-form">
+                <label><em>Заказ</em><input type="text" data-m="commands" maxlength="80"></label>
+                <label><em>Пропустить (стример и модераторы)</em><input type="text" data-m="skipCommands" maxlength="80"></label>
+                <label><em>В плейлист (стример и модераторы)</em><input type="text" data-m="likeCommands" maxlength="80"></label>
+                <label><em>Убрать из плейлиста</em><input type="text" data-m="dislikeCommands" maxlength="80"></label>
+              </div>
+            </section>
+            <section class="mu-sp" data-sp="pay" hidden>
+              <h4>Способы заказа</h4>
+              <p class="ex-sm">Команда в чате и баллы канала исключают друг друга, выбери один вариант. Донаты включаются отдельно и работают вместе с любым из них. Уже заказанные треки остаются в очереди.</p>
+              <div class="mu-modes" id="muBase">
+                <button type="button" data-base="chat"><b>💬 Командой в чате</b><span>Бесплатно, по правилам из первого раздела</span></button>
+                <button type="button" data-base="pts"><b>🪙 За баллы канала</b><span>Награда на Twitch, команда отключается</span></button>
+                <button type="button" data-base="none"><b>⛔ Без команды и баллов</b><span>Например, только донатами</span></button>
+              </div>
+              <div class="mu-opt" id="muPtsBox">
+                <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
+                <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muRwMake">Создать награду здесь</button><span class="ex-sm" id="muRwMsg"></span></div>
+                <p class="ex-sm">Награда с полем «Требовать ввод текста от зрителя». Если выключить заказ музыки, награда отключится сама. Нужен вход через Twitch.</p>
+              </div>
+              <div class="mu-opt">
+                <label class="tg-sw"><input type="checkbox" data-m="donateOn"><i></i><span>💸 Заказ за донат</span></label>
+                <div class="mu-form" id="muDonBox">
+                  <label><em>Заказ от суммы, ₽</em><input type="number" data-m="donateMinRub" min="1" max="100000"></label>
+                  <label><em>Вне очереди от, ₽ (0 — выкл.)</em><input type="number" data-m="donatePrioRub" min="0" max="100000"></label>
+                  <label class="tg-sw mu-wide"><input type="checkbox" data-m="donateBypass"><i></i><span>Донат снимает лимиты и паузу</span></label>
+                </div>
+                <p class="ex-sm">Название песни зритель пишет в сообщении к донату (можно с «!муз» в начале).</p>
+              </div>
+              <div class="ex-sm mu-paywarn" id="muPayWarn" hidden>Сейчас зрители музыку заказать не могут. Стример и очередь из админки работают.</div>
+            </section>
+            <section class="mu-sp" data-sp="scr" hidden>
+              <h4>На экране и OBS</h4>
+              <div class="obs-url-compact"><span class="obs-url-compact-title">Браузер</span><input type="text" readonly id="muUrl" title="Источник «Браузер», размер любой"><button class="btn-tiny" type="button" id="muCopy">Копировать</button></div>
+              <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
+              <div class="mu-form">
+                <label><em>Громкость, %</em><input type="number" data-m="volume" min="0" max="100"></label>
+              </div>
+              <label class="tg-sw"><input type="checkbox" data-m="showUser"><i></i><span>Показывать ник заказчика</span></label>
+              <label class="tg-sw"><input type="checkbox" data-m="autoShow"><i></i><span>Выводить на экран сразу при старте трека</span></label>
+            </section>
+            <section class="mu-sp" data-sp="bot" hidden>
+              <h4>Бот в чате</h4>
+              <label class="tg-sw"><input type="checkbox" data-m="reply"><i></i><span>Бот отвечает в чат</span></label>
+              <p class="ex-sm">Номер в очереди, причина отказа, подсказка как заказать.</p>
+            </section>
+            <section class="mu-sp" data-sp="bl" hidden>
+              <h4>Чёрный список</h4>
+              <label class="mu-fl"><em>Слова (через запятую или с новой строки). Проверяются в запросе, названии ролика и имени канала</em><textarea data-m="blWords" rows="4" maxlength="3000"></textarea></label>
+              <div class="ex-sm">Запрещённые треки</div>
+              <ul class="mu-bl" id="muBl"></ul>
+            </section>
+            <section class="mu-sp" data-sp="yt" hidden>
+              <h4>YouTube без VPN</h4>
+              <label class="mu-fl"><em>Прокси для поиска (адрес HTTP-порта твоего VPN, например 127.0.0.1:10809). Пусто — напрямую</em><input type="text" data-m="proxy" maxlength="200" placeholder="127.0.0.1:10809"></label>
+              <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muCheck">Проверить YouTube</button><span class="ex-sm" id="muCheckMsg"></span></div>
+              <div class="ex-sm">Прокси нужен только боту для поиска. Видео в OBS грузится самим OBS, там нужен VPN на весь компьютер (режим TUN) или обход блокировок.</div>
+            </section>
           </div>
-        </aside>
+          <div class="mu-sfoot"><span>✓ Всё сохраняется сразу</span><button type="button" class="btn btn-primary" data-close>Готово</button></div>
+        </div>
       </div>
     </section>
 
@@ -3821,7 +3848,7 @@
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
-<script src="music.js?v=16"></script>
-<script src="whatsnew.js?v=41"></script>
+<script src="music.js?v=17"></script>
+<script src="whatsnew.js?v=42"></script>
 </body>
 </html>

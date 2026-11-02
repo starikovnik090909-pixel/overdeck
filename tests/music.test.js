@@ -112,6 +112,9 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   await m.onChat(msg('!муз x', { roles: { mod: true, broadcaster: true }, login: 'other', name: 'Other' })); ok(!m.state().current, 'модератор тоже не обходит');
   await m.onChat(msg('!муз owner track', { login: 'Starlkov', name: 'Starlkov' })); ok(m.state().current && m.state().current.by === 'Starlkov', 'владелец заказывает всегда');
   m.update({ pointsOn: false, donateOn: true }); await m.onChat(msg('!муз y')); ok(/донатом/.test(said[said.length - 1]), 'то же при заказе за донат');
+  fresh(); m.update({ donateOn: true, cooldown: 0 }); await m.onChat(msg('!муз ok')); ok(!!m.state().current, 'донат включается отдельно: команда в чате продолжает работать');
+  m.update({ pointsOn: true }); ok(m.getSettings().chatOn === false && m.getSettings().donateOn === true, 'баллы выключают команду, донат остаётся');
+  m.update({ chatOn: true }); ok(m.getSettings().pointsOn === false && m.getSettings().donateOn === true, 'команда выключает баллы, донат остаётся');
   m.update({ enabled: false }); await m.onChat(msg('!муз owner two', { login: 'starlkov', name: 'starlkov' })); ok(m.state().queue.length === 1, 'владелец заказывает даже при выключенном заказе');
   // награда при выключенном заказе: баллы не принимаются, песни в очереди остаются
   const qBefore = m.state().queue.length; fresh(); m.update({ pointsOn: true, pointsReward: 'Песня', enabled: false });

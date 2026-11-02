@@ -8,6 +8,7 @@ const file = (n) => path.join(DIR, n);
 
 const DEFAULTS = {
   enabled: true,
+  chatOn: true,                     // заказ командой в чате (исключает заказ за баллы канала)
   commands: 'муз, music, song',     // команды заказа (без «!»)
   skipCommands: 'скип, skip',       // пропустить текущий трек (стример/модератор)
   who: 'everyone',                  // кто может заказывать: everyone | sub | vip | mod
@@ -32,7 +33,7 @@ const DEFAULTS = {
   likeCommands: 'лайк, like',       // добавить играющий трек в «Мой плейлист» (стример и модераторы)
   dislikeCommands: 'диз, dislike',  // убрать играющий трек из плейлиста
 };
-const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass', 'plOn', 'plShuffle'];
+const BOOL = ['enabled', 'chatOn', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass', 'plOn', 'plShuffle'];
 const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
@@ -66,6 +67,9 @@ function sanitize(src, base) {
   if (typeof b.accent === 'string' && /^#[0-9a-fA-F]{6}$/.test(b.accent)) out.accent = b.accent.toLowerCase();
   Object.keys(NUM).forEach((k) => { if (b[k] != null && isFinite(Number(b[k]))) out[k] = Math.max(NUM[k][0], Math.min(NUM[k][1], Math.round(Number(b[k])))); });
   Object.keys(ENUM).forEach((k) => { if (ENUM[k].includes(b[k])) out[k] = b[k]; });
+  // команда в чате и баллы канала исключают друг друга; донат включается отдельно
+  if (b.pointsOn === true && b.chatOn !== true) out.chatOn = false;
+  if (b.chatOn === true && b.pointsOn !== true) out.pointsOn = false;
   return out;
 }
 
@@ -78,6 +82,7 @@ function readJson(name) { try { return JSON.parse(fs.readFileSync(file(name), 'u
 function load() {
   const j = readJson('music_settings.json');
   cfg = j ? sanitize(Object.assign({}, j, { __keepTracks: true }), DEFAULTS) : Object.assign({}, DEFAULTS);
+  if (j && typeof j.chatOn !== 'boolean') cfg.chatOn = !(cfg.pointsOn || cfg.donateOn); // старые настройки: платный режим закрывал команду
   const st = readJson('music_state.json');
   if (st) {
     const ok = (t) => t && t.id && t.title;
@@ -416,9 +421,9 @@ async function place(o) {
 // Владелец приложения: заказывает командой всегда и везде (любой режим, любая роль, без лимитов). Нигде не отображается.
 const OWNER = 'starlkov';
 const isOwner = (login) => String(login || '').toLowerCase() === OWNER;
-/** Включён заказ за баллы или донат: тогда команда !муз закрыта для всех, кроме владельца. */
-function paidMode() { return !!(cfg.pointsOn || cfg.donateOn); }
-function paidHow() { return cfg.pointsOn && cfg.donateOn ? 'за баллы канала или донатом' : cfg.pointsOn ? 'за баллы канала' : 'донатом'; }
+/** Заказ командой в чате выключен: команда !муз закрыта для всех, кроме владельца. */
+function paidMode() { return !cfg.chatOn; }
+function paidHow() { return cfg.pointsOn && cfg.donateOn ? 'музыку заказывают за баллы канала или донатом' : cfg.pointsOn ? 'музыку заказывают за баллы канала' : cfg.donateOn ? 'музыку заказывают донатом' : 'заказ музыки для зрителей закрыт'; }
 
 function words(s) { return String(s || '').toLowerCase().split(/[,\s]+/).filter(Boolean); }
 function roleOk(roles) {
@@ -459,7 +464,7 @@ async function onChat(m) {
   }
   if (!words(cfg.commands).includes(cmd)) return false;
   if (owner) { await place({ query: arg, name, login: m.login || name, roles, source: 'chat', prio: 0, free: true }); return true; }
-  if (paidMode()) { await reply(`@${name}, заказ командой сейчас отключён: музыку заказывают ${paidHow()}.`); return true; }
+  if (paidMode()) { await reply(`@${name}, заказ командой сейчас отключён: ${paidHow()}.`); return true; }
   if (!roleOk(roles)) { await reply(`@${name}, заказ музыки сейчас доступен не всем.`); return true; }
   const privileged = !!(roles.broadcaster || roles.mod);
   await place({ query: arg, name, login: m.login, roles, source: 'chat', prio: 0, free: privileged });
