@@ -286,7 +286,7 @@ async function validateCredentials(clientId, clientSecret) {
 
 // Права чат-бота (вход «своим аккаунтом» вместо отдельного бот-аккаунта)
 const BOT_SCOPES = 'user:read:chat user:write:chat user:bot moderator:manage:chat_messages';
-const SCOPES = 'channel:read:redemptions channel:read:subscriptions channel:manage:predictions channel:read:predictions channel:manage:polls channel:read:hype_train moderator:read:followers';
+const SCOPES = 'channel:read:redemptions channel:manage:redemptions channel:read:subscriptions channel:manage:predictions channel:read:predictions channel:manage:polls channel:read:hype_train moderator:read:followers';
 
 // ---------- Device Code Flow (вход по коду для публичного приложения) ----------
 async function postForm(url, params) {

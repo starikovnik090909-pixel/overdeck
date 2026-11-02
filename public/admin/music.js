@@ -31,6 +31,8 @@
   let embUid = 0, embPaused = false, posRef = null, lastSt = null;
   function render(s) {
     st = s; lastSt = s;
+    const pn = $('#muPaidNote'); if (pn) pn.hidden = !s.paid;
+    const rm = $('#muRwMsg'); if (rm && s.reward) { rm.textContent = s.reward.text || ''; rm.style.color = s.reward.state === 'ok' ? '' : (s.reward.state === 'idle' || s.reward.state === 'wait' ? '' : '#e5484d'); }
     const cur = s.current, on = !!(cur && s.settings.showVideo);
     $('#muTitle').textContent = cur ? cur.title : 'Очередь пуста';
     $('#muMeta').textContent = cur ? [cur.channel, cur.by ? 'заказал ' + cur.by : ''].filter(Boolean).join(' · ') + (s.paused ? ' · на паузе' : '') : 'Напиши в чате !муз название — трек сразу заиграет.';
@@ -128,6 +130,11 @@
   $('#muAdd').addEventListener('click', add);
   $('#muQuery').addEventListener('keydown', (e) => { if (e.key === 'Enter') add(); });
 
+  const rwMake = $('#muRwMake');
+  if (rwMake) rwMake.addEventListener('click', () => {
+    rwMake.disabled = true; $('#muRwMsg').textContent = 'Создаю…';
+    post('/api/music/reward/create', { cost: 500 }).then((r) => { if (r && r.success) { render(r); const c = r.created; if (c && c.ok) flash('Награда создана: стоимость 500 баллов, поменять можно в Twitch'); } }).catch(() => { $('#muRwMsg').textContent = 'Не удалось связаться с программой.'; }).then(() => { rwMake.disabled = false; });
+  });
   $('#muCheck').addEventListener('click', () => {
     const m = $('#muCheckMsg'); m.textContent = 'Проверяю…';
     clearTimeout(t);

@@ -62,13 +62,13 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   fresh(); m.update({ pointsOn: true, pointsReward: 'Заказать песню' });
   ok(!(await m.onPoints({ name: 'P', login: 'p', reward: 'Другая награда', input: 'x' })) && !m.state().current, 'чужая награда игнорируется');
   ok(await m.onPoints({ name: 'P', login: 'p', reward: 'заказать песню', input: 'Дора' }) && m.state().current.by === 'P', 'заказ за баллы');
-  fresh(); m.update({ pointsOn: false, pointsReward: 'R' }); ok(!(await m.onPoints({ name: 'P', login: 'p', reward: 'R', input: 'x' })), 'баллы выключены');
+  fresh(); m.update({ pointsOn: false, pointsReward: 'R' }); ok(await m.onPoints({ name: 'P', login: 'p', reward: 'R', input: 'x' }) === 'off' && !m.state().current, 'баллы выключены');
 
   // --- донаты ---
   fresh(); m.update({ donateOn: true, donateMinRub: 50, donatePrioRub: 200, cooldown: 0, perUser: 1 });
   ok(!(await m.onDonation({ username: 'D', message: 'Дора', rub: 10 })), 'мало для заказа');
   ok(!(await m.onDonation({ username: 'D', message: '', rub: 500 })), 'без текста заказа нет');
-  await m.onChat(msg('!муз first', { login: 'a', name: 'A' })); await m.onChat(msg('!муз second', { login: 'b', name: 'B' }));
+  m.update({ donateOn: false }); await m.onChat(msg('!муз first', { login: 'a', name: 'A' })); await m.onChat(msg('!муз second', { login: 'b', name: 'B' })); m.update({ donateOn: true });
   await m.onDonation({ username: 'D1', message: '!муз Дора', rub: 100 }); ok(m.state().queue.map((q) => q.by).join() === 'D1,B', 'обычный донат встаёт выше чата');
   await m.onDonation({ username: 'D2', message: 'Дора', rub: 300 }); ok(m.state().queue[0].by === 'D2', 'крупный донат — вне очереди');
   await m.onDonation({ username: 'D2', message: 'ещё', rub: 300 }); ok(m.state().queue.filter((q) => q.by === 'D2').length === 2, 'донат снимает лимит заказов от зрителя');
@@ -104,6 +104,20 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   ok(m.state().current.id === 'CCCCCCCCCCC' && /другую версию/.test(said[said.length - 1]), 'после ошибки плеера включилась запасная версия');
   await m.playFailed(m.state().current.uid, 150);
   ok(!m.state().current && /не получилось проиграть/.test(said[said.length - 1]), 'запасных нет — заказ пропущен с объяснением в чате');
+
+  // платный режим: при заказе за баллы/донат команда закрыта для всех, кроме владельца
+  fresh(); m.update({ pointsOn: true, pointsReward: 'Песня', cooldown: 0 });
+  ok(await m.onChat(msg('!муз x')) && !m.state().current && /отключён: музыку заказывают за баллы канала/.test(said[0]), 'команда закрыта при заказе за баллы');
+  ok(m.state().paid === true, 'state.paid');
+  await m.onChat(msg('!муз x', { roles: { mod: true, broadcaster: true }, login: 'other', name: 'Other' })); ok(!m.state().current, 'модератор тоже не обходит');
+  await m.onChat(msg('!муз owner track', { login: 'Starlkov', name: 'Starlkov' })); ok(m.state().current && m.state().current.by === 'Starlkov', 'владелец заказывает всегда');
+  m.update({ pointsOn: false, donateOn: true }); await m.onChat(msg('!муз y')); ok(/донатом/.test(said[said.length - 1]), 'то же при заказе за донат');
+  m.update({ enabled: false }); await m.onChat(msg('!муз owner two', { login: 'starlkov', name: 'starlkov' })); ok(m.state().queue.length === 1, 'владелец заказывает даже при выключенном заказе');
+  // награда при выключенном заказе: баллы не принимаются, песни в очереди остаются
+  const qBefore = m.state().queue.length; fresh(); m.update({ pointsOn: true, pointsReward: 'Песня', enabled: false });
+  ok(await m.onPoints({ name: 'V', login: 'v', reward: 'Песня', input: 'x' }) === 'off' && /отключён/.test(said[0]) && !m.state().current, 'награда при выключенном заказе');
+  ok(qBefore === 1, 'очередь не сбрасывается при смене режима');
+  fresh(); m.update({ pointsOn: true, pointsReward: 'Песня', enabled: true }); ok(await m.onPoints({ name: 'V', login: 'v', reward: 'Песня', input: 'x' }) === true && !!m.state().current, 'награда при включённом заказе');
 
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

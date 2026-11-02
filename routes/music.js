@@ -1,13 +1,17 @@
 // routes/music.js — заказ музыки: очередь, настройки, управление плеером. Зависимости приходят из server.js через ctx.
 function main(ctx) {
-  const { music, app } = ctx;
-  const ok = (res, extra) => res.json(Object.assign({ success: true }, music.state(), extra || {}));
+  const { music, musicReward, app } = ctx;
+  const ok = (res, extra) => res.json(Object.assign({ success: true }, music.state(), { reward: musicReward ? musicReward.getStatus() : null }, extra || {}));
   const fail = (res, e, code) => res.status(code || 400).json({ success: false, error: e.message || String(e) });
   app.get('/api/music/state', (req, res) => ok(res));
   app.post('/api/music/settings', (req, res) => { music.update(req.body); ok(res); });
   app.post('/api/music/add', async (req, res) => {
     try { await music.addByQuery((req.body || {}).query, 'Стример'); ok(res); } catch (e) { fail(res, e); }
   });
+  app.post('/api/music/reward/create', async (req, res) => {
+    try { const r = await musicReward.create(music.getSettings(), (req.body || {}).cost); ok(res, { created: r }); } catch (e) { fail(res, e); }
+  });
+  app.post('/api/music/reward/sync', async (req, res) => { try { await musicReward.sync(music.getSettings()); } catch (e) { /* статус отдаём как есть */ } ok(res); });
   app.post('/api/music/skip', (req, res) => { music.skip(); ok(res); });
   app.post('/api/music/ended', (req, res) => { const b = req.body || {}; if (b.error) music.playFailed(b.uid, b.error).catch(() => {}); else music.ended(b.uid); ok(res); });
   app.post('/api/music/progress', (req, res) => { const b = req.body || {}; music.setPos(b.uid, b.t, b.d); res.json({ success: true }); });

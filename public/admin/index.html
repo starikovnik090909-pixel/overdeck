@@ -3217,10 +3217,12 @@
             <p class="ex-sm">Добавь как «Браузер» нужного размера и держи включённым всё время стрима. Размер и место задаёшь в OBS.</p>
 
             <h4 class="ex-h">Способы заказа</h4>
+            <p class="ex-sm" id="muPaidNote" hidden>Пока включён заказ за баллы или донат, команда заказа в чате отключена: бот отвечает зрителям, как заказать. Уже заказанные песни остаются в очереди, в том числе после перезапуска.</p>
             <div class="mu-opt">
               <label class="tg-sw"><input type="checkbox" data-m="pointsOn"><i></i><span>За баллы канала</span></label>
               <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
               <p class="ex-sm">Создай награду в Twitch (Баллы канала → Награды) с включённым полем «Требовать ввод текста от зрителя» и впиши сюда её точное название. Зритель вводит название песни, трек встаёт в очередь выше обычных. Возврат баллов при ошибке Overdeck не делает.</p>
+              <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muRwMake">Создать награду здесь</button><span class="ex-sm" id="muRwMsg"></span></div>
             </div>
             <div class="mu-opt">
               <label class="tg-sw"><input type="checkbox" data-m="donateOn"><i></i><span>За донат</span></label>
@@ -3797,7 +3799,7 @@
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=11"></script>
+<script src="music.js?v=12"></script>
 <script src="whatsnew.js?v=38"></script>
 </body>
 </html>
