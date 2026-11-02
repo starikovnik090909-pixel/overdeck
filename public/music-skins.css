@@ -65,10 +65,10 @@
 /* 7 Круг (темы: Галактика, Пульсар, Пламя) */
 .sk7{border-radius:28px}
 .sk7.t0{background:radial-gradient(#26194a,#0a0714)}.sk7.t1{background:radial-gradient(#0e2a3a,#050b12)}.sk7.t2{background:radial-gradient(#3a1410,#0f0506)}
-.sk7 canvas{position:absolute;left:0;top:0;width:440px;height:380px}
-.sk7 .cov{position:absolute;left:220px;top:190px;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;overflow:hidden;background:#33333c;box-shadow:0 0 0 3px rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.55);will-change:transform}
+.sk7 canvas{position:absolute;left:0;top:0;width:560px;height:500px}
+.sk7 .cov{position:absolute;left:280px;top:250px;width:260px;height:260px;margin:-130px 0 0 -130px;border-radius:50%;overflow:hidden;background:#33333c;box-shadow:0 0 0 3px rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.55);will-change:transform}
 .sk7 .ii{position:absolute;left:24px;right:24px;bottom:20px;text-align:center}
-.sk7 .mq{font-size:26px}.sk7 .by{font-size:14px;opacity:.75;margin-top:2px}.sk7 .tm{justify-content:center;gap:6px;font-size:13px;opacity:.75;margin-top:2px}.sk7 .tm b:first-child::after{content:" /"}
+.sk7 .mq{font-size:30px}.sk7 .by{font-size:14px;opacity:.75;margin-top:2px}.sk7 .tm{justify-content:center;gap:6px;font-size:13px;opacity:.75;margin-top:2px}.sk7 .tm b:first-child::after{content:" /"}
 /* 8 Светодиоды (темы: Янтарь, Лёд, Розовый неон, Закат) */
 .sk8{background:#0d0d10;border-radius:14px;box-shadow:inset 0 0 0 2px #2b2b33;padding:16px 22px;display:grid;grid-template-rows:auto 1fr;gap:10px;font-family:Consolas,"Courier New",monospace}
 .sk8.t0{--lc:#ffc46b}.sk8.t1{--lc:#8fe9ff}.sk8.t2{--lc:#ff9be9}.sk8.t3{--lc:#ffb27a}

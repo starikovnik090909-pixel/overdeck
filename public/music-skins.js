@@ -10,7 +10,7 @@
     { name: 'Афиша', w: 360, h: 460, h_: '<img data-cv class="bg" alt=""><div class="shade"></div><div class="cap"><div class="mq" data-t data-wrap></div><div class="by" data-u></div><div class="bar"><i></i></div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
     { name: 'Эквалайзер', w: 640, h: 220, h_: '<div class="bars">' + rep(32, '<s></s>') + '</div><div class="top"><div class="mq" data-t></div><div class="by" data-u></div></div><div class="tm"><b data-c></b><b data-d></b></div>' },
     { name: 'Стекло', w: 580, h: 210, h_: '<img class="bgi" data-cv alt=""><div class="cov"><img data-cv alt=""></div><div class="inf"><div class="mq" data-t></div><div class="by" data-u></div><div class="wv">' + rep(44, '<i></i>') + '</div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
-    { name: 'Круг', w: 440, h: 500, themes: ['Галактика', 'Пульсар', 'Пламя'], viz: 7, h_: '<canvas width="880" height="760"></canvas><div class="cov"><img data-cv alt=""></div><div class="ii"><div class="mq" data-t></div><div class="by" data-u></div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
+    { name: 'Круг', w: 560, h: 640, themes: ['Галактика', 'Пульсар', 'Пламя'], viz: 7, h_: '<canvas width="1120" height="1000"></canvas><div class="cov"><img data-cv alt=""></div><div class="ii"><div class="mq" data-t></div><div class="by" data-u></div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
     { name: 'Светодиоды', w: 600, h: 250, themes: ['Янтарь', 'Лёд', 'Розовый неон', 'Закат'], viz: 8, h_: '<div class="hd"><div class="mq" data-t></div><div class="tm"><b data-c></b><b data-d></b></div></div><div class="mx">' + rep(30, '<div class="col">' + rep(12, '<i></i>') + '</div>') + '</div>' },
   ];
   var fmt = function (t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
@@ -84,14 +84,14 @@
   }
   function drawCircle(r, z, L, th, dt) {
     var cv = r.querySelector('canvas'); if (!cv) return;
-    var x = z.x || (z.x = cv.getContext('2d')); if (!z.sc) { x.scale(2, 2); z.sc = 1; z.parts = []; z.waves = []; z.beat0 = -1; }
-    var cx = 220, cy = 190, t = z.t, p = z.p || 0, rc = 100, cov = r.querySelector('.cov');
-    x.clearRect(0, 0, 440, 380); x.lineCap = 'round';
+    var x = z.x || (z.x = cv.getContext('2d')); if (!z.sc) { z.sc = 1; z.parts = []; z.waves = []; z.beat0 = -1; }
+    var cx = 0, cy = 0, t = z.t, p = z.p || 0, rc = 100, cov = r.querySelector('.cov');
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, 1120, 1000); x.setTransform(2.6, 0, 0, 2.6, 560, 500); x.lineCap = 'round';
     var newBeat = z.playing && z.kick > 0.9 && z.beat !== z.beat0; if (newBeat) z.beat0 = z.beat;
     var k = z.kick * z.amp, i, M, a, v, len, x1, y1, x2, y2, g;
     if (th === 0) { // Галактика
       var R = rc + 14 + k * 4;
-      g = x.createRadialGradient(cx, cy, 80, cx, cy, 190); g.addColorStop(0, 'rgba(140,90,255,' + (0.22 + k * 0.28) + ')'); g.addColorStop(1, 'rgba(140,90,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 440, 380);
+      g = x.createRadialGradient(cx, cy, 80, cx, cy, 190); g.addColorStop(0, 'rgba(140,90,255,' + (0.22 + k * 0.28) + ')'); g.addColorStop(1, 'rgba(140,90,255,0)'); x.fillStyle = g; x.fillRect(-220, -200, 440, 400);
       M = 84; for (i = 0; i < M; i++) {
         a = i / M * PI * 2 - PI / 2; v = band(L, i, M); len = 4 + v * 58;
         x1 = cx + Math.cos(a) * R; y1 = cy + Math.sin(a) * R; x2 = cx + Math.cos(a) * (R + len); y2 = cy + Math.sin(a) * (R + len);
