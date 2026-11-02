@@ -7,7 +7,7 @@ ok(sp.state().sounds.length === 16 && sp.state().sounds.every((s) => s.builtin &
 ok(sp.play('zdorovo', 'a').played && sp.poll(0).events.length === 1, 'запуск попадает в события');
 const e = sp.poll(0).events[0]; ok(e.vol === 80 && e.url === 'soundpad/zdorovo.mp3', 'громкость = общая × звука');
 sp.update({ volume: 50 }); sp.updateSound('zdorovo', { volume: 50 }); sp.play('zdorovo'); ok(sp.poll(1).events[0].vol === 25, 'громкость 50% × 50%');
-sp.update({ enabled: false }); ok(sp.play('boom').played === false, 'выключен — не играет'); sp.update({ enabled: true });
+sp.update({ enabled: false }); ok(sp.play('king').played === false, 'выключен — не играет'); sp.update({ enabled: true });
 let err = ''; try { sp.play('нет'); } catch (x) { err = x.message; } ok(/нет/.test(err), 'нет такого звука');
 const u = sp.addUploaded('x.mp3', 'Мой мем.mp3'); ok(u.name === 'Мой мем' && u.url === 'uploads/soundpad/x.mp3' && !u.builtin, 'своя загрузка');
 let bad = ''; try { sp.addUploaded('x.exe', 'q'); } catch (x) { bad = x.message; } ok(/Формат/.test(bad), 'плохой формат отклонён');
@@ -17,6 +17,6 @@ ok(sp.onPoints({ reward: 'чужая награда' }) === null, 'чужая н
 sp.setRewardId(u.id, 'abc-123'); ok(sp.onPoints({ reward: 'другое имя', rewardId: 'abc-123' }).sound.id === u.id, 'награда по id');
 let b2 = ''; try { sp.remove('zdorovo'); } catch (x) { b2 = x.message; } ok(/Встроенный/.test(b2), 'встроенный не удаляется');
 sp.remove(u.id); ok(sp.state().sounds.length === 16, 'свой удаляется');
-ok(sp.updateSound('boom', { name: '  ' }).name === 'Бум', 'пустое имя → прежнее');
+ok(sp.updateSound('king', { name: '  ' }).name === 'Короля не убить', 'пустое имя → прежнее');
 sp.reset(); sp.stopAll(); ok(sp.poll(0).events[0].stop === true, 'стоп-событие');
 console.log('soundpad.test: ' + n + ' проверок ок');
