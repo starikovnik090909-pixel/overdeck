@@ -149,6 +149,12 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   m.like(); ok(m.state().lists.find((l) => l.own).count === 1, '!лайк кладёт трек в свой плейлист, а не в готовый');
   await m.onChat(msg('!диз', mod)); ok(m.state().playlist.total === 1, '!диз в готовом плейлисте убирает трек из ротации');
   m.playlistSelect('own'); ok(m.state().playlist.own, 'переключение на свой плейлист');
+  // новая разметка YouTube (lockupViewModel) и «микс» со страницы просмотра
+  const lk = (id, title, len) => ({ lockupViewModel: { contentId: id, contentType: 'LOCKUP_CONTENT_TYPE_VIDEO', contentImage: { thumbnailViewModel: { overlays: [{ badges: [{ thumbnailBadgeViewModel: { text: len } }] }] } }, metadata: { lockupMetadataViewModel: { title: { content: title }, metadata: { contentMetadataViewModel: { metadataRows: [{ metadataParts: [{ text: { content: 'Канал' } }] }] } } } } } });
+  const pl3 = m.parsePlaylist('<script>var ytInitialData = ' + JSON.stringify({ metadata: { playlistMetadataRenderer: { title: 'Новый вид' } }, x: [lk('N1N1N1N1N1N', 'Один', '3:55'), lk('N2N2N2N2N2N', 'Два', '1:02:03'), lk('N3N3N3N3N3N', 'Без длины', 'ПРЯМОЙ ЭФИР')] }) + ';</script>');
+  ok(pl3.name === 'Новый вид' && pl3.tracks.length === 2 && pl3.tracks[0].seconds === 235 && pl3.tracks[0].channel === 'Канал', 'разбор новой разметки плейлиста');
+  const mix = m.parsePlaylist('<script>var ytInitialData = ' + JSON.stringify({ a: [{ playlistPanelVideoRenderer: { videoId: 'M1M1M1M1M1M', title: { simpleText: 'Микс 1' }, shortBylineText: { runs: [{ text: 'К' }] }, lengthText: { simpleText: '2:00' } } }] }) + ';</script>');
+  ok(mix.tracks.length === 1 && mix.tracks[0].seconds === 120, 'разбор микса YouTube');
 
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

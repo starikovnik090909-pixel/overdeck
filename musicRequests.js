@@ -333,6 +333,19 @@ function parsePlaylist(html) {
   (function walk(n) {
     if (!n || typeof n !== 'object' || tracks.length >= 300) return;
     if (n.playlistMetadataRenderer && !name) name = n.playlistMetadataRenderer.title || '';
+    if (n.lockupViewModel && n.lockupViewModel.contentId && /VIDEO$/.test(n.lockupViewModel.contentType || '')) { // новая разметка YouTube
+      const lv = n.lockupViewModel, md = (lv.metadata && lv.metadata.lockupMetadataViewModel) || {};
+      let len = '', ch = '';
+      (function f(o) { if (!o || typeof o !== 'object' || len) return; if (o.thumbnailBadgeViewModel && /^\d+(:\d{2}){1,2}$/.test(o.thumbnailBadgeViewModel.text || '')) { len = o.thumbnailBadgeViewModel.text; return; } if (Array.isArray(o)) o.forEach(f); else Object.keys(o).forEach((k) => f(o[k])); })(lv.contentImage);
+      try { ch = md.metadata.contentMetadataViewModel.metadataRows[0].metadataParts[0].text.content || ''; } catch (e) { /* канал необязателен */ }
+      if (len && !seen.has(lv.contentId)) { seen.add(lv.contentId); tracks.push({ id: lv.contentId, title: (md.title && md.title.content) || '', channel: ch, seconds: parseSeconds(len) }); }
+      return;
+    }
+    if (n.playlistPanelVideoRenderer && n.playlistPanelVideoRenderer.videoId) { // «микс» и плейлисты со страницы просмотра
+      const v = n.playlistPanelVideoRenderer, len = v.lengthText && v.lengthText.simpleText;
+      if (len && !seen.has(v.videoId)) { seen.add(v.videoId); tracks.push({ id: v.videoId, title: txt(v.title), channel: txt(v.shortBylineText), seconds: parseSeconds(len) }); }
+      return;
+    }
     if (n.playlistVideoRenderer && n.playlistVideoRenderer.videoId) {
       const v = n.playlistVideoRenderer, len = v.lengthText && v.lengthText.simpleText;
       if (len && !seen.has(v.videoId)) { seen.add(v.videoId); tracks.push({ id: v.videoId, title: txt(v.title), channel: txt(v.shortBylineText), seconds: parseSeconds(len) }); }
@@ -352,6 +365,10 @@ async function playlistAdd(url) {
     const res = await getText('https://www.youtube.com/playlist?hl=ru&gl=RU&list=' + encodeURIComponent(ytId), hd, cfg.proxy || '', 15000);
     if (res.status !== 200) throw new Error('YouTube ответил ' + res.status + ' (нужен VPN или прокси).');
     r = parsePlaylist(res.body);
+    if (!r.tracks.length) { // «микс» (RD…) открывается только со страницы просмотра: берём видео из ссылки или из id микса
+      const v = videoIdFrom(url) || (String(url).match(/[?&]v=([A-Za-z0-9_-]{11})/) || [])[1] || (/^RD[A-Za-z0-9_-]{11}$/.test(ytId) ? ytId.slice(2) : '');
+      if (v) { const w = await getText('https://www.youtube.com/watch?hl=ru&gl=RU&v=' + encodeURIComponent(v) + '&list=' + encodeURIComponent(ytId), hd, cfg.proxy || '', 15000); if (w.status === 200) r = parsePlaylist(w.body); }
+    }
   }
   if (!r.tracks.length) throw new Error('В плейлисте не нашлось доступных роликов (он может быть закрытым).');
   pls.lists = pls.lists.filter((l) => l.ytId !== ytId);
