@@ -3,7 +3,7 @@ const assert = require('assert');
 const sp = require('../soundpad');
 let n = 0; const ok = (c, msg) => { assert(c, msg); n++; };
 sp.init({ noFile: true });
-ok(sp.state().sounds.length === 10 && sp.state().sounds.every((s) => s.builtin && /^soundpad\/.+\.mp3$/.test(s.url)), '10 встроенных звуков');
+ok(sp.state().sounds.length === 24 && sp.state().sounds.every((s) => s.builtin && /^soundpad\/.+\.mp3$/.test(s.url)), '24 встроенных звука');
 ok(sp.play('airhorn', 'a').played && sp.poll(0).events.length === 1, 'запуск попадает в события');
 const e = sp.poll(0).events[0]; ok(e.vol === 80 && e.url === 'soundpad/airhorn.mp3', 'громкость = общая × звука');
 sp.update({ volume: 50 }); sp.updateSound('airhorn', { volume: 50 }); sp.play('airhorn'); ok(sp.poll(1).events[0].vol === 25, 'громкость 50% × 50%');
@@ -16,7 +16,7 @@ const hit = sp.onPoints({ reward: 'мемчик', name: 'viewer' }); ok(hit && h
 ok(sp.onPoints({ reward: 'чужая награда' }) === null, 'чужая награда игнорируется');
 sp.setRewardId(u.id, 'abc-123'); ok(sp.onPoints({ reward: 'другое имя', rewardId: 'abc-123' }).sound.id === u.id, 'награда по id');
 let b2 = ''; try { sp.remove('airhorn'); } catch (x) { b2 = x.message; } ok(/Встроенный/.test(b2), 'встроенный не удаляется');
-sp.remove(u.id); ok(sp.state().sounds.length === 10, 'свой удаляется');
+sp.remove(u.id); ok(sp.state().sounds.length === 24, 'свой удаляется');
 ok(sp.updateSound('boom', { name: '  ' }).name === 'Бум', 'пустое имя → прежнее');
 sp.reset(); sp.stopAll(); ok(sp.poll(0).events[0].stop === true, 'стоп-событие');
 console.log('soundpad.test: ' + n + ' проверок ок');

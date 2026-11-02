@@ -19,6 +19,20 @@ const BUILTIN = [
   { id: 'siren', name: 'Сирена', emoji: '🚨', file: 'siren.mp3' },
   { id: 'doorbell', name: 'Звонок в дверь', emoji: '🔔', file: 'doorbell.mp3' },
   { id: 'honk', name: 'Клоунская дудка', emoji: '🤡', file: 'honk.mp3' },
+  { id: 'zdorovo', name: 'Здорово, заебал', emoji: '😒', file: 'zdorovo.mp3' },
+  { id: 'goodmorning', name: 'Гуд монинг', emoji: '☀️', file: 'goodmorning.mp3' },
+  { id: 'datyche', name: 'Да ты чё', emoji: '😮', file: 'datyche.mp3' },
+  { id: 'fbi', name: 'FBI, откройте!', emoji: '🚔', file: 'fbi.mp3' },
+  { id: 'onlything', name: 'Единственное, что мы получим', emoji: '🤌', file: 'onlything.mp3' },
+  { id: 'silence', name: 'Тишина, проснутся', emoji: '🤫', file: 'silence.mp3' },
+  { id: 'mishka', name: 'Давай по новой, Миша', emoji: '🐻', file: 'mishka.mp3' },
+  { id: 'penetration', name: 'Есть пробитие!', emoji: '🎯', file: 'penetration.mp3' },
+  { id: 'batya', name: 'Батя дома', emoji: '🥃', file: 'batya.mp3' },
+  { id: 'klass', name: 'В натуре класс', emoji: '👌', file: 'klass.mp3' },
+  { id: 'devochka', name: 'Доброе утро, моя девочка', emoji: '💐', file: 'devochka.mp3' },
+  { id: 'notunderstand', name: 'Я не понимаю', emoji: '🤷', file: 'notunderstand.mp3' },
+  { id: 'zaika', name: 'Давай, Зайка!', emoji: '🐰', file: 'zaika.mp3' },
+  { id: 'king', name: 'Короля не убить', emoji: '👑', file: 'king.mp3' },
 ];
 const EXT = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.webm'];
 const MAX_SOUNDS = 60;
