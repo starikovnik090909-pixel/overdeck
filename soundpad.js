@@ -9,16 +9,6 @@ let useFile = true;
 const UP_DIR = () => path.join(DIR, 'uploads', 'soundpad');
 
 const BUILTIN = [
-  { id: 'airhorn', name: 'Клаксон', emoji: '📯', file: 'airhorn.mp3' },
-  { id: 'trombone', name: 'Грустный тромбон', emoji: '🎺', file: 'trombone.mp3' },
-  { id: 'rimshot', name: 'Ба-дум-тсс', emoji: '🥁', file: 'rimshot.mp3' },
-  { id: 'boom', name: 'Бум', emoji: '💥', file: 'boom.mp3' },
-  { id: 'scratch', name: 'Скретч', emoji: '💿', file: 'scratch.mp3' },
-  { id: 'error', name: 'Ошибка', emoji: '❌', file: 'error.mp3' },
-  { id: 'fanfare', name: 'Фанфары', emoji: '🏆', file: 'fanfare.mp3' },
-  { id: 'siren', name: 'Сирена', emoji: '🚨', file: 'siren.mp3' },
-  { id: 'doorbell', name: 'Звонок в дверь', emoji: '🔔', file: 'doorbell.mp3' },
-  { id: 'honk', name: 'Клоунская дудка', emoji: '🤡', file: 'honk.mp3' },
   { id: 'zdorovo', name: 'Здорово, заебал', emoji: '😒', file: 'zdorovo.mp3' },
   { id: 'goodmorning', name: 'Гуд монинг', emoji: '☀️', file: 'goodmorning.mp3' },
   { id: 'datyche', name: 'Да ты чё', emoji: '😮', file: 'datyche.mp3' },
@@ -32,8 +22,11 @@ const BUILTIN = [
   { id: 'devochka', name: 'Доброе утро, моя девочка', emoji: '💐', file: 'devochka.mp3' },
   { id: 'notunderstand', name: 'Я не понимаю', emoji: '🤷', file: 'notunderstand.mp3' },
   { id: 'zaika', name: 'Давай, Зайка!', emoji: '🐰', file: 'zaika.mp3' },
+  { id: 'aura', name: 'Аура', emoji: '🌌', file: 'aura.mp3' },
+  { id: 'newproject', name: 'Новый проект', emoji: '🆕', file: 'newproject.mp3' },
   { id: 'king', name: 'Короля не убить', emoji: '👑', file: 'king.mp3' },
 ];
+const RETIRED = ['airhorn', 'trombone', 'rimshot', 'boom', 'scratch', 'error', 'fanfare', 'siren', 'doorbell', 'honk'];
 const EXT = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.webm'];
 const MAX_SOUNDS = 60;
 
@@ -87,6 +80,7 @@ function load() {
     cfg = Object.assign({}, DEFAULTS, { enabled: j.enabled !== false, volume: clamp(j.volume, 0, 100, DEFAULTS.volume), overlap: j.overlap !== false });
     (Array.isArray(j.sounds) ? j.sounds : []).slice(0, MAX_SOUNDS).forEach((x) => {
       if (!x || typeof x.id !== 'string' || !/^[a-z0-9_\-]{1,40}$/i.test(x.id)) return;
+      if (RETIRED.includes(x.id)) return;
       const bi = BUILTIN.find((d) => d.id === x.id);
       if (bi) sounds.push(cleanSound(x, Object.assign({ builtin: true, volume: 100, reward: REWARD_DEFAULT }, bi)));
       else if (typeof x.file === 'string' && /^[A-Za-z0-9_.\-]{1,90}$/.test(x.file) && EXT.includes(path.extname(x.file).toLowerCase())) sounds.push(cleanSound(x, { id: x.id, file: x.file, builtin: false, name: x.name, emoji: '🔊', volume: 100, reward: REWARD_DEFAULT }));
