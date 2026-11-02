@@ -336,23 +336,123 @@
     },
     /* ---------- взлом эфира ---------- */
     hijack: {
-      min: 6, audioAt: 1.7,
-      html: () => `<canvas class="cv nz" width="160" height="90"></canvas><div class="wrp"><div class="ab cap"><i></i>REC · ПЕРЕХВАТ</div>
-        <div class="ab c warn gl" data-t="ПЕРЕХВАТ ЭФИРА">ПЕРЕХВАТ ЭФИРА</div><div class="ab c nk gl" data-f="nick"></div><div class="ab c am gl" data-f="amt"></div>
-        <div class="ab c ms" data-f="msg"></div><div class="ab trk"></div></div>`,
+      min: 10, audioAt: 6.8,
+      html: () => `<canvas class="cv"></canvas>`,
       fill: (st, d) => {
-        const nk = st.querySelector('[data-f=nick]'), am = st.querySelector('[data-f=amt]');
-        nk.textContent = d.nick.toUpperCase(); nk.dataset.t = d.nick.toUpperCase(); am.textContent = money(d); am.dataset.t = money(d);
-        nk.style.left = nk.style.right = am.style.left = am.style.right = '0';
-        fit(nk, 440, 18); fit(am, 440, 30);
-        const m = st.querySelector('[data-f=msg]'); m.textContent = d.msg ? '> ' + trunc(d.msg, 70) : ''; m.style.padding = '0 20px'; fit(m, 440, 9);
+        st.dataset.nick = d.nick.toUpperCase(); st.dataset.amt = money(d); st.dataset.msg = d.msg ? trunc(d.msg, 70) : '';
       },
       start: (st, d, tok) => {
-        const c = st.querySelector('canvas'), x = c.getContext('2d'), img = x.createImageData(160, 90);
+        const x = canvasCtx(st, 4), cv = st.querySelector('canvas'), W = 480, H = 270;
+        const NICK = st.dataset.nick, AMT = st.dataset.amt, MSG = st.dataset.msg;
+        const CH = '01ABCDEF0123456789<>/\\{}#$%&*', MONO = '"IBM Plex Mono", monospace', CY = '25,227,255', GR = '45,255,140', RD = '255,42,77';
+        const sl = (a2, b2, k) => clamp((k - a2) / (b2 - a2), 0, 1);
+        const scr = (fin, p) => { let o = ''; for (let i = 0; i < fin.length; i++) { const c = fin[i]; o += (c === ' ' || i < p * fin.length) ? c : CH[(R() * CH.length) | 0]; } return o; };
+        const hx = (n) => { let o = ''; for (let i = 0; i < n; i++) o += ((R() * 256) | 0).toString(16).padStart(2, '0') + ' '; return o; };
+        /* точки на глобусе: широта, долгота (города-«источники» атаки) */
+        const SRC = [[55, 37], [40, -74], [35, 139], [-23, -46], [51, 0], [-33, 151], [28, 77], [1, 103]], TGT = [56, 38];
+        const proj = (lat, lon, rot, cx, cy, r) => { const la = lat * Math.PI / 180, lo = (lon + rot) * Math.PI / 180, X = Math.cos(la) * Math.sin(lo), Y = Math.sin(la), Z = Math.cos(la) * Math.cos(lo), tl = 0.38, y2 = Y * Math.cos(tl) - Z * Math.sin(tl), z2 = Y * Math.sin(tl) + Z * Math.cos(tl); return [cx + r * X, cy - r * y2, z2]; };
+        const NODES = [[20, 70], [48, 30], [78, 62], [40, 96], [100, 38], [112, 84], [70, 100], [130, 58], [12, 30]], EDG = [[0, 1], [1, 2], [0, 3], [2, 4], [3, 6], [2, 5], [4, 7], [5, 7], [6, 5], [1, 8], [0, 8]];
+        const panel = (px, py, w, h, title, k, col) => {
+          if (k <= 0) return false; x.save(); x.globalAlpha *= k; x.fillStyle = 'rgba(2,16,26,.82)'; x.fillRect(px, py, w, h);
+          x.strokeStyle = 'rgba(' + (col || CY) + ',.5)'; x.lineWidth = 0.6; x.strokeRect(px, py, w, h);
+          x.strokeStyle = 'rgba(' + (col || CY) + ',1)'; x.lineWidth = 1.2; const c = 6; [[px, py, 1, 1], [px + w, py, -1, 1], [px, py + h, 1, -1], [px + w, py + h, -1, -1]].forEach(([ax, ay, sx, sy]) => { x.beginPath(); x.moveTo(ax, ay + sy * c); x.lineTo(ax, ay); x.lineTo(ax + sx * c, ay); x.stroke(); });
+          x.fillStyle = 'rgba(' + (col || CY) + ',.95)'; x.font = '600 6.5px ' + MONO; x.fillText(title, px + 6, py + 9); x.restore(); return true;
+        };
+        const hud = (t, al) => {
+          x.save(); x.globalAlpha = al;
+          /* сетка */
+          x.strokeStyle = 'rgba(' + CY + ',.05)'; x.lineWidth = 0.5; for (let gx = 0; gx < W; gx += 16) { x.beginPath(); x.moveTo(gx, 0); x.lineTo(gx, H); x.stroke(); } for (let gy = 0; gy < H; gy += 16) { x.beginPath(); x.moveTo(0, gy); x.lineTo(W, gy); x.stroke(); }
+          /* верхняя строка */
+          x.fillStyle = 'rgba(' + CY + ',.9)'; x.font = '600 7px ' + MONO; x.fillText('SYS://BREACH  ·  TARGET stream.starikov.tv:1935  ·  T+' + t.toFixed(2) + 's', 8, 14);
+          x.fillStyle = 'rgba(' + RD + ',.95)'; x.fillText(Math.floor(t * 3) % 2 ? '● TRACE' : '○ TRACE', W - 44, 14);
+          /* ГЛОБУС */
+          if (panel(8, 22, 150, 118, 'GLOBAL UPLINK', sl(0.05, 0.4, t))) {
+            const cx = 83, cy = 84, r = 40, rot = t * 22;
+            x.strokeStyle = 'rgba(' + CY + ',.8)'; x.lineWidth = 0.8; x.beginPath(); x.arc(cx, cy, r, 0, 7); x.stroke();
+            for (let la = -60; la <= 60; la += 30) { x.beginPath(); let on = false; for (let lo = -180; lo <= 180; lo += 12) { const p = proj(la, lo, rot, cx, cy, r); x.strokeStyle = 'rgba(' + CY + ',' + (p[2] > 0 ? 0.55 : 0.12) + ')'; if (!on) { x.moveTo(p[0], p[1]); on = true; } else x.lineTo(p[0], p[1]); } x.stroke(); }
+            for (let lo = 0; lo < 360; lo += 30) { x.beginPath(); for (let la = -90; la <= 90; la += 10) { const p = proj(la, lo, rot, cx, cy, r); x.strokeStyle = 'rgba(' + CY + ',' + (p[2] > 0 ? 0.5 : 0.1) + ')'; if (la === -90) x.moveTo(p[0], p[1]); else x.lineTo(p[0], p[1]); } x.stroke(); }
+            const tp = proj(TGT[0], TGT[1], rot, cx, cy, r);
+            SRC.forEach((s, i) => { const p = proj(s[0], s[1], rot, cx, cy, r), pr = (t * 0.45 + i * 0.37) % 1; if (p[2] < -0.1 || tp[2] < -0.1) return; const mx = (p[0] + tp[0]) / 2, my = Math.min(p[1], tp[1]) - 22 - i * 2;
+              x.strokeStyle = 'rgba(' + CY + ',.28)'; x.lineWidth = 0.6; x.beginPath(); x.moveTo(p[0], p[1]); x.quadraticCurveTo(mx, my, tp[0], tp[1]); x.stroke();
+              const q = pr, bx = (1 - q) * (1 - q) * p[0] + 2 * (1 - q) * q * mx + q * q * tp[0], by = (1 - q) * (1 - q) * p[1] + 2 * (1 - q) * q * my + q * q * tp[1];
+              x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.arc(bx, by, 1.4, 0, 7); x.fill(); x.fillStyle = 'rgba(' + CY + ',.9)'; x.beginPath(); x.arc(p[0], p[1], 1.6, 0, 7); x.fill(); });
+            if (tp[2] > -0.1) { const pu = 2 + (t * 6 % 5); x.strokeStyle = 'rgba(' + RD + ',.9)'; x.beginPath(); x.arc(tp[0], tp[1], pu, 0, 7); x.stroke(); x.fillStyle = 'rgb(' + RD + ')'; x.beginPath(); x.arc(tp[0], tp[1], 2, 0, 7); x.fill(); }
+            x.fillStyle = 'rgba(' + CY + ',.8)'; x.font = '500 6px ' + MONO; x.fillText('NODES ' + Math.min(8, 1 + Math.floor(t * 2)) + '/8', 14, 134);
+          }
+          /* ПОТОК ДАННЫХ */
+          if (panel(164, 22, 152, 118, 'DATA STREAM', sl(0.15, 0.5, t))) {
+            x.font = '500 6.4px ' + MONO; const off = (t * 26) % 9;
+            for (let i = 0; i < 12; i++) { const y = 34 + i * 9 - off + 9; if (y < 30 || y > 136) continue; const k = (Math.floor(t * 7) + i) % 5; x.fillStyle = k === 0 ? 'rgba(255,255,255,.9)' : 'rgba(' + CY + ',' + (0.35 + 0.1 * (i % 3)) + ')'; x.fillText('0x' + ((0x7f00 + i * 131 + Math.floor(t * 9) * 17) & 0xffff).toString(16).toUpperCase() + '  ' + hx(5), 170, y); }
+          }
+          /* СЕТЬ */
+          if (panel(322, 22, 150, 118, 'NETWORK MAP', sl(0.25, 0.6, t))) {
+            const ox = 330, oy = 34; EDG.forEach(([i, j], n) => { const A = NODES[i], B = NODES[j]; x.strokeStyle = 'rgba(' + CY + ',.3)'; x.lineWidth = 0.6; x.beginPath(); x.moveTo(ox + A[0], oy + A[1]); x.lineTo(ox + B[0], oy + B[1]); x.stroke(); const q = (t * 0.7 + n * 0.23) % 1; x.fillStyle = 'rgba(255,255,255,.85)'; x.beginPath(); x.arc(ox + A[0] + (B[0] - A[0]) * q, oy + A[1] + (B[1] - A[1]) * q, 1.1, 0, 7); x.fill(); });
+            NODES.forEach((n, i) => { const owned = t > 0.8 + i * 0.38; x.fillStyle = owned ? 'rgb(' + CY + ')' : 'rgb(' + RD + ')'; x.beginPath(); x.arc(ox + n[0], oy + n[1], owned ? 3 : 2.4, 0, 7); x.fill(); if (owned && t < 1.3 + i * 0.38) { x.strokeStyle = 'rgba(' + CY + ',.8)'; x.beginPath(); x.arc(ox + n[0], oy + n[1], 3 + (t - 0.8 - i * 0.38) * 14, 0, 7); x.stroke(); } });
+          }
+          /* ПРОГРЕСС */
+          if (panel(8, 146, 150, 118, 'BREACH PROGRESS', sl(0.3, 0.65, t))) {
+            const B = [['FIREWALL', 0.6, 2.0], ['ENCRYPTION', 1.0, 3.2], ['AUTH TOKEN', 1.6, 3.7], ['UPLINK', 2.2, 4.1]];
+            B.forEach(([nm, s0, e0], i) => { const p = sl(s0, e0, t), y = 168 + i * 22; x.fillStyle = 'rgba(' + CY + ',.9)'; x.font = '500 6.5px ' + MONO; x.fillText(nm, 16, y - 3); x.fillText(Math.round(p * 100) + '%', 130, y - 3); x.strokeStyle = 'rgba(' + CY + ',.5)'; x.lineWidth = 0.6; x.strokeRect(16, y, 134, 6); x.fillStyle = p >= 1 ? 'rgb(' + GR + ')' : 'rgb(' + CY + ')'; x.fillRect(17, y + 1, 132 * p, 4); });
+          }
+          /* ПОДБОР ПАРОЛЯ */
+          if (panel(164, 146, 152, 118, 'BRUTE FORCE · AUTH KEY', sl(0.4, 0.75, t))) {
+            const KEY = '8F3A92C1D04E7B55', p = sl(0.9, 3.8, t), n = Math.floor(p * 16);
+            x.font = '700 15px ' + MONO; x.textAlign = 'center';
+            for (let i = 0; i < 16; i++) { const cx2 = 174 + (i % 8) * 17, cy2 = 176 + Math.floor(i / 8) * 26, ok = i < n; x.fillStyle = ok ? 'rgba(' + GR + ',.14)' : 'rgba(' + CY + ',.08)'; x.fillRect(cx2 - 7, cy2 - 14, 15, 20); x.strokeStyle = ok ? 'rgba(' + GR + ',.9)' : 'rgba(' + CY + ',.35)'; x.lineWidth = 0.6; x.strokeRect(cx2 - 7, cy2 - 14, 15, 20); x.fillStyle = ok ? 'rgb(' + GR + ')' : 'rgba(' + CY + ',.9)'; x.fillText(ok ? KEY[i] : CH[(R() * 16) | 0], cx2 + 0.5, cy2 + 1); }
+            x.textAlign = 'left'; x.font = '500 6.5px ' + MONO; x.fillStyle = 'rgba(' + CY + ',.9)'; x.fillText('попыток: ' + Math.floor(p * 4817233).toLocaleString('ru-RU'), 172, 234); x.fillText('скорость: 1.2 млн/с', 172, 244); x.fillStyle = p >= 1 ? 'rgb(' + GR + ')' : 'rgba(' + CY + ',.9)'; x.fillText(p >= 1 ? 'КЛЮЧ НАЙДЕН' : 'ПОДБОР…', 172, 256);
+          }
+          /* ЖУРНАЛ */
+          if (panel(322, 146, 150, 118, 'ACTIVITY LOG', sl(0.5, 0.85, t))) {
+            const LG = [[0.6, 'scan ports ............ OK'], [1.2, 'bypass firewall ....... OK'], [1.8, 'inject payload ........ OK'], [2.4, 'spoof signature ....... OK'], [3.0, 'escalate privileges ... OK'], [3.6, 'hijack rtmp session ... OK']];
+            x.font = '500 6.4px ' + MONO; LG.forEach(([at, tx], i) => { if (t < at) return; const nn = Math.floor((t - at) * 60); x.fillStyle = 'rgba(' + CY + ',.9)'; x.fillText('> ' + tx.slice(0, nn), 328, 168 + i * 13); });
+          }
+          x.restore();
+        };
+        const popup = (t, at, dur, title, sub, col) => {
+          const k = (t - at) / dur; if (k < 0 || k > 1) return; const jx = (R() - .5) * 3, w = 220, h = 66, px = (W - w) / 2 + jx, py = (H - h) / 2, bl = Math.floor(t * 10) % 2;
+          x.save(); x.fillStyle = 'rgba(' + col + ',.12)'; x.fillRect(0, 0, W, H); x.fillStyle = 'rgba(4,8,12,.96)'; x.fillRect(px, py, w, h); x.strokeStyle = 'rgb(' + col + ')'; x.lineWidth = 1.5; x.shadowColor = 'rgb(' + col + ')'; x.shadowBlur = 14; x.strokeRect(px, py, w, h); x.shadowBlur = 0;
+          x.fillStyle = 'rgb(' + col + ')'; x.fillRect(px, py, w, 12); x.fillStyle = '#04080c'; x.font = '700 7.5px ' + MONO; x.fillText('⚠ ' + sub, px + 6, py + 9); x.fillRect(px + w - 12, py + 3, 6, 6);
+          x.textAlign = 'center'; x.fillStyle = bl ? '#fff' : 'rgb(' + col + ')'; x.shadowColor = 'rgb(' + col + ')'; x.shadowBlur = 10; x.font = '700 24px "Oswald", ' + MONO; x.fillText(title, px + w / 2, py + 46); x.restore();
+        };
+        const NUMV = Number(d.amount) || 0, CUR = curOf(d), cnt = (k) => '+' + Math.round(NUMV * (1 - Math.pow(1 - k, 3))).toLocaleString('ru-RU') + ' ' + CUR;
+        const tx = (s, px, py, font, col, al, maxW, glow) => { x.save(); x.font = font; x.textAlign = al || 'left'; if (maxW) { const w = x.measureText(s).width; if (w > maxW) { const m = font.match(/(\d+(?:\.\d+)?)px/); x.font = font.replace(m[1] + 'px', (m[1] * maxW / w).toFixed(1) + 'px'); } } if (glow) { x.shadowColor = glow; x.shadowBlur = 14; } x.fillStyle = col; x.fillText(s, px, py); x.restore(); };
+        const gx = (s, px, py, font, col, al, maxW, on) => { if (on) { x.save(); x.globalCompositeOperation = 'screen'; tx(s, px - 3 + (R() - .5) * 4, py, font, 'rgba(0,255,255,.8)', al, maxW); tx(s, px + 3 + (R() - .5) * 4, py, font, 'rgba(255,0,255,.8)', al, maxW); x.restore(); } tx(s, px, py, font, col, al, maxW); };
+        const typ = (s, a2, rate, t) => s.slice(0, Math.max(0, Math.floor((t - a2) * rate)));
+        const seeded = (i) => { const v = Math.sin(i * 91.7 + 13.3) * 43758.5; return v - Math.floor(v); };
+        const WINS = [['СИСТЕМА', 'Обнаружен входящий платёж'], ['БАНК', 'Счёт взломан. Операция: перевод'], ['ВНИМАНИЕ', 'Кошелёк стримера пополнен'], ['УВЕДОМЛЕНИЕ', 'Транзакция #' + ((NUMV * 7919) % 99999 | 0)], ['БАНК', 'Лимиты сняты. Подпись подделана'], ['СИСТЕМА', 'Отправитель: ' + NICK], ['ВНИМАНИЕ', 'Средства уже у вас'], ['ПЛАТЁЖ', 'Статус: ЗАЧИСЛЕНО']];
+        const fin = (t) => {
+          const e = t - 4.85, glitch = Math.floor(t * 9) % 11 === 0;
+          {
+            x.fillStyle = 'rgba(2,7,13,.6)'; x.fillRect(0, 0, W, H);
+            const nW = Math.min(WINS.length, Math.floor(e / 0.2) + 1);
+            for (let i = 0; i < nW; i++) {
+              const sp = sl(i * 0.2, i * 0.2 + 0.12, e), w = 190, h = 54, px = 10 + seeded(i) * (W - w - 20), py = 14 + seeded(i + 40) * (H - h - 40), red = i % 3 === 1, col = red ? RD : CY;
+              x.save(); x.globalAlpha = sp; x.fillStyle = 'rgba(4,10,16,.97)'; x.fillRect(px, py, w, h); x.strokeStyle = 'rgb(' + col + ')'; x.lineWidth = 1; x.strokeRect(px, py, w, h); x.fillStyle = 'rgb(' + col + ')'; x.fillRect(px, py, w, 11);
+              tx(WINS[i][0], px + 5, py + 8, '700 7px ' + MONO, '#04080c'); tx('×', px + w - 8, py + 8.5, '700 9px ' + MONO, '#04080c', 'center'); tx(WINS[i][1], px + 8, py + 34, '500 8.5px ' + MONO, '#d8f6ff', 'left', w - 16); x.restore();
+            }
+            const f0 = 1.9; if (e > f0) {
+              const q = sl(f0, f0 + 0.3, e), sc = 0.6 + 0.4 * q, w = 340, h = 170, px = (W - w) / 2, py = (H - h) / 2; x.fillStyle = 'rgba(2,7,13,' + (0.8 * q) + ')'; x.fillRect(0, 0, W, H);
+              x.save(); x.globalAlpha = q; x.translate(W / 2, H / 2); x.scale(sc, sc); x.translate(-W / 2, -H / 2); x.fillStyle = 'rgba(2,10,16,.98)'; x.fillRect(px, py, w, h); x.strokeStyle = 'rgb(' + GR + ')'; x.lineWidth = 1.6; x.shadowColor = 'rgb(' + GR + ')'; x.shadowBlur = 16; x.strokeRect(px, py, w, h); x.shadowBlur = 0;
+              x.fillStyle = 'rgb(' + GR + ')'; x.fillRect(px, py, w, 14); tx('ПЛАТЁЖ ЗАЧИСЛЕН', px + 8, py + 10, '700 8.5px ' + MONO, '#04080c');
+              tx('ХАКЕР', W / 2, py + 34, '700 9px ' + MONO, 'rgb(' + RD + ')', 'center'); gx(NICK, W / 2, py + 64, '700 30px "Oswald", ' + MONO, '#19e3ff', 'center', w - 24, glitch);
+              tx('зачислил на ваш кошелёк', W / 2, py + 84, '500 10px ' + MONO, '#fff', 'center'); const k = sl(f0 + 0.3, f0 + 1.3, e); gx(k >= 1 ? '+' + AMT.replace(/^\+/, '') : cnt(k), W / 2, py + 138, '700 54px "Oswald", ' + MONO, '#ffffff', 'center', w - 24, glitch);
+              if (MSG) tx(typ(MSG, f0 + 1.5, 45, e), W / 2, py + h - 10, '500 9.5px ' + MONO, '#9deeff', 'center', w - 24);
+              x.restore();
+            }
+          }
+        };
         loop(tok, (t) => {
-          const k = t < 1.55 ? 0.55 : (t < 1.7 ? 0.3 : (Math.floor(t * 10) % 22 === 0 ? 0.25 : 0.06));
-          for (let i = 0; i < img.data.length; i += 4) { const v = R() < k ? R() * 255 : 0; img.data[i] = v; img.data[i + 1] = v * (t < 1.55 ? 0.5 : 0.95); img.data[i + 2] = v * (t < 1.55 ? 0.5 : 1); img.data[i + 3] = v ? 255 : 0; }
-          x.putImageData(img, 0, 0);
+          x.setTransform(4, 0, 0, 4, 0, 0); x.globalAlpha = 1; x.fillStyle = '#02070d'; x.fillRect(0, 0, W, H);
+          if (t < 4.85) {
+            hud(t, 1);
+            popup(t, 1.9, 0.6, 'ДОСТУП ЗАПРЕЩЁН', 'ACCESS DENIED', RD); popup(t, 2.95, 0.55, 'ДОСТУП ЗАПРЕЩЁН', 'ACCESS DENIED', RD);
+            popup(t, 3.95, 0.9, 'ДОСТУП РАЗРЕШЁН', 'ACCESS GRANTED', GR);
+          } else hud(t, 0.1 + 0.08 * Math.sin(t * 3));
+          /* разрывы экрана: при смене фаз и редкие */
+          const gt = (t >= 3.95 && t < 5.3) || (t > 1.9 && t < 2.1) || (t > 2.95 && t < 3.1) ? 1 : (Math.floor(t * 10) % 23 === 0 ? 0.5 : 0);
+          if (gt) for (let s = 0; s < 4 * gt + 1; s++) { const sy = R() * H, sh = 4 + R() * 26, dx = (R() - .5) * 60 * gt; try { x.drawImage(cv, 0, sy * 4, W * 4, sh * 4, dx, sy, W, sh); } catch (_) {} }
+          if (t >= 4.85 && t < 5.3) { x.fillStyle = 'rgba(255,255,255,' + (0.5 * (1 - sl(4.85, 5.3, t))) + ')'; x.fillRect(0, 0, W, H); }
+          if (t >= 4.85) fin(t);
         });
       },
     },
