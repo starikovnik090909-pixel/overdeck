@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=16">
+<link rel="stylesheet" href="music.css?v=21">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3120,8 +3120,8 @@
     </section>
 
     <section class="tab-section" id="tab-music">
-      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь. Звук идёт в стрим через источник OBS, а картинку (клип или плеер) ты выводишь на экран кнопкой.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="mu-pwr" type="button" id="muPwr" title="Включить или выключить заказ музыки"><span class="sw"></span><span><b id="muPwrT">Заказ включён</b><small id="muPwrS"></small></span></button><button class="btn btn-secondary" type="button" id="muObs" title="Скопировать ссылку для источника «Браузер» в OBS">🔗 Ссылка для OBS</button><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
+      <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="mu-pwr" type="button" id="muPwr" title="Включить или выключить заказ музыки"><span class="sw"></span><span><b id="muPwrT">Заказ включён</b><small id="muPwrS"></small></span></button><span class="mu-ways" id="muBase"><button class="mu-pwr mu-way" type="button" data-base="chat" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💬 Чат</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="pts" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>🪙 Баллы</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="don" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💸 Донат</b><small></small></span></button></span><button class="btn btn-secondary" type="button" id="muObs" title="Скопировать ссылку для источника «Браузер» в OBS">🔗 OBS</button><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
 
       <div id="muLive">
       <div class="mu-grid">
@@ -3248,12 +3248,7 @@
             </section>
             <section class="mu-sp" data-sp="pay" hidden>
               <h4>Способы заказа</h4>
-              <p class="ex-sm">Нажми на способ, чтобы включить или выключить его. Донаты работают вместе с любым способом; команда в чате и баллы канала друг друга заменяют. Уже заказанные треки остаются в очереди.</p>
-              <div class="mu-modes" id="muBase">
-                <button type="button" data-base="chat"><b>💬 Командой в чате</b><span>Бесплатно, по правилам из первого раздела</span></button>
-                <button type="button" data-base="pts"><b>🪙 За баллы канала</b><span>Награда на Twitch, команда отключается</span></button>
-                <button type="button" data-base="don"><b>💸 За донат</b><span>Название песни в сообщении к донату</span></button>
-              </div>
+              <p class="ex-sm">Способы заказа переключаются кнопками наверху страницы: команда в чате и баллы канала друг друга заменяют, донат работает вместе с любым. Здесь настройки баллов и доната. Уже заказанные треки остаются в очереди.</p>
               <div class="mu-opt" id="muPtsBox">
                 <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
                 <div class="ex-actions"><button class="btn btn-secondary btn-sm" type="button" id="muRwMake">Создать награду здесь</button><span class="ex-sm" id="muRwMsg"></span></div>
@@ -3847,7 +3842,7 @@
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
-<script src="music.js?v=18"></script>
+<script src="music.js?v=20"></script>
 <script src="whatsnew.js?v=44"></script>
 </body>
 </html>

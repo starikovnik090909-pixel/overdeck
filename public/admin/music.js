@@ -44,7 +44,7 @@
     st = s; lastSt = s;
     const cs = s.settings, on0 = !!cs.enabled, how = [cs.chatOn && 'командой !муз', cs.pointsOn && 'за баллы', cs.donateOn && 'донатом'].filter(Boolean);
     $('#muPwr').classList.toggle('on', on0); $('#muPwrT').textContent = on0 ? 'Заказ включён' : 'Заказ выключен';
-    $('#muPwrS').textContent = !on0 ? 'очередь сохраняется, новые заказы не принимаются' : how.length ? 'заказ: ' + how.join(', ') : 'способы заказа выключены';
+    $('#muPwrS').textContent = !on0 ? 'новые заказы не принимаются' : how.length ? '' : 'выбери способ заказа';
     $$('#muBase button').forEach((b) => b.classList.toggle('on', b.dataset.base === 'chat' ? !!cs.chatOn : b.dataset.base === 'pts' ? !!cs.pointsOn : !!cs.donateOn));
     $('#muPtsBox').hidden = !cs.pointsOn; $('#muDonBox').style.display = cs.donateOn ? '' : 'none';
     $('#muPayWarn').hidden = !!how.length;
