@@ -50,12 +50,12 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   m.unbanTrack('AAAAAAAAAAA'); ok(m.getSettings().blTracks.length === 0, 'разбан');
 
   // --- приоритеты и перестановка ---
-  fresh(async (q) => [{ id: 'ID' + q.padEnd(9, 'x').slice(0, 9), title: 'T ' + q, channel: '', seconds: 100 }]); m.update({ cooldown: 0, perUser: 9, prioSub: true });
+  fresh(async (q) => [{ id: 'ID' + q.padEnd(9, 'x').slice(0, 9), title: 'T ' + q, channel: '', seconds: 100 }]); m.update({ cooldown: 0, perUser: 9 });
   await m.onChat(msg('!муз one', { login: 'a', name: 'A' })); await m.onChat(msg('!муз two', { login: 'b', name: 'B' })); await m.onChat(msg('!муз three', { login: 'c', name: 'C' }));
   await m.onChat(msg('!муз vip', { login: 'v', name: 'V', roles: { vip: true } }));
-  ok(m.state().queue.map((q) => q.by).join() === 'V,B,C', 'VIP встаёт перед обычными (текущий — A)');
-  await m.onChat(msg('!муз sub2', { login: 's', name: 'S', roles: { sub: true } })); ok(m.state().queue.map((q) => q.by).join() === 'V,S,B,C', 'подписчик после VIP, до обычных');
-  const last = m.state().queue[3].uid; m.move(last, 0); ok(m.state().queue[0].by === 'C', 'перетаскивание в начало');
+  ok(m.state().queue.map((q) => q.by).join() === 'B,C,V', 'VIP встаёт в общую очередь, без приоритета (текущий — A)');
+  await m.onChat(msg('!муз sub2', { login: 's', name: 'S', roles: { sub: true } })); ok(m.state().queue.map((q) => q.by).join() === 'B,C,V,S', 'подписчик тоже без приоритета');
+  const last = m.state().queue[3].uid; m.move(last, 0); ok(m.state().queue[0].by === 'S', 'перетаскивание в начало');
   await m.onChat(msg('!отмена', { login: 'c', name: 'C' })); ok(m.state().queue.every((q) => q.by !== 'C'), '!отмена убирает свой заказ');
 
   // --- баллы канала ---

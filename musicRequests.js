@@ -21,14 +21,13 @@ const DEFAULTS = {
   skin: 1,                          // вид плеера 1…5
   showUser: true,                   // писать, кто заказал
   accent: '#e5484d',
-  prioSub: false,                   // заказы подписчиков и VIP встают в очереди выше обычных
   pointsOn: false, pointsReward: '', // заказ за баллы канала: название награды (с полем «ввод текста»)
   donateOn: false, donateMinRub: 50, donatePrioRub: 200, donateBypass: true, // заказ донатом: от какой суммы, от какой — вне очереди, снимать ли лимиты
   proxy: '',                        // HTTP-прокси для поиска на YouTube, например http://127.0.0.1:10809
   blWords: '',                      // чёрный список слов (через запятую или с новой строки)
   blTracks: [],                     // чёрный список треков [{id, title}]
 };
-const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'prioSub', 'pointsOn', 'donateOn', 'donateBypass'];
+const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass'];
 const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 5], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
@@ -342,8 +341,7 @@ async function onChat(m) {
   if (paidMode()) { await reply(`@${name}, заказ командой сейчас отключён: музыку заказывают ${paidHow()}.`); return true; }
   if (!roleOk(roles)) { await reply(`@${name}, заказ музыки сейчас доступен не всем.`); return true; }
   const privileged = !!(roles.broadcaster || roles.mod);
-  const prio = cfg.prioSub && (roles.sub || roles.vip) ? 1 : 0;
-  await place({ query: arg, name, login: m.login, roles, source: 'chat', prio, free: privileged });
+  await place({ query: arg, name, login: m.login, roles, source: 'chat', prio: 0, free: privileged });
   return true;
 }
 /** Выдача награды за баллы канала (EventSub). Название награды должно совпадать с настройкой; текст зритель вводит в поле награды. */
