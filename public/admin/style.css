@@ -2368,3 +2368,11 @@ html, body {
 .ex-amb-t { flex: 1; min-width: 0; display: grid; }
 .ex-amb-t small { color: var(--text-secondary); font-size: 12px; }
 .ex-snd select { width: 100%; background: var(--bg-input, #20222a); color: inherit; border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 8px; padding: 8px 10px; font: inherit; }
+
+/* Алерт доната: вид по сумме */
+#daForm .da-rules-row{flex-direction:column;align-items:stretch;gap:8px}
+#daForm .da-rules{display:flex;flex-direction:column;gap:6px}
+#daForm .da-rule{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#daForm .da-rule input{width:96px}#daForm .da-rule select{min-width:200px;max-width:100%}
+#daForm .da-rule-empty{font-size:12px;opacity:.65}
+#daForm .da-rule-add{align-self:flex-start}

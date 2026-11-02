@@ -8794,6 +8794,7 @@
     { k: 'glow', t: 'toggle', l: 'Мягкий свет за карточкой (подсвечивает её от фона)' },
     { k: 'glowPower', t: 'range', l: 'Сила света', suf: '%', min: 0, max: 100, step: 5 },
     { k: 'look', t: 'select', l: 'Вид алерта', opts: [['card', 'Карточка'], ['receipt', 'Кассовый чек'], ['slots', 'Игровой автомат'], ['random', 'Случайный из трёх'], ['arcade', 'Аркадный автомат (весь экран)'], ['terminal', 'Терминал (весь экран)'], ['loot', 'Лут из игры (весь экран)'], ['hijack', 'Взлом эфира (весь экран)'], ['goldrain', 'Золотой дождь (весь экран)'], ['fireworks', 'Салют-цифры (весь экран)'], ['cinema', 'Титры из кино (весь экран)'], ['notif', 'Уведомление из банка (малый)']] },
+    { k: 'lookRules', t: 'rules', l: 'Вид по сумме доната: от какой суммы какой вид (ниже первого порога действует вид выше)' },
     { k: 'lookPos', t: 'select', l: 'Где показывать малый алерт («Уведомление»)', opts: [['top', 'Сверху по центру'], ['top-right', 'Сверху справа'], ['bottom-right', 'Снизу справа'], ['bottom-left', 'Снизу слева'], ['bottom', 'Снизу по центру']] },
     { k: 'receiptTitle', t: 'text', l: 'Шапка чека (для вида «Кассовый чек»)' },
     { k: 'frame', t: 'select', l: 'Анимированная рамка', opts: [['', 'без рамки'], ['tier', 'по уровню доната'], ['flow', 'Бегущий свет'], ['comet', 'Комета по контуру'], ['neon', 'Неон с пульсацией'], ['rainbow', 'Радуга'], ['gold', 'Золото'], ['dashes', 'Бегущие штрихи']] },
@@ -8830,7 +8831,7 @@
     ['show', 'Показ', 'включение, минимальная сумма, длина сообщения', ["enabled", "minAmount", "maxLength"]],
     ['custom', 'Своя картинка и звук', 'гифка или картинка, свой звук, длительность', ["customImage", "customAudio", "customVolume", "customDuration"], 'custom'],
     ['customtext', 'Текст и появление', 'текст алерта, положение, анимация, размер, цвета', ["customText", "customShowMsg", "customPos", "customAnim", "customImgSize", "customFontSize", "customTextColor", "customAccent"], 'custom'],
-    ['ourshow', 'Вид и тайминг', 'какой анимированный вид, размер, время на экране', ["look", "lookPos", "receiptTitle", "scale", "flySec", "holdMinSec", "holdMaxSec"], 'ours'],
+    ['ourshow', 'Вид и тайминг', 'какой анимированный вид, размер, время на экране', ["look", "lookRules", "lookPos", "receiptTitle", "scale", "flySec", "holdMinSec", "holdMaxSec"], 'ours'],
     ['look', 'Оформление карточки', 'тема, цвет, плашка, текстура, рамка, свет', ["themed", "cardColor", "plateOpacity", "showSource", "texture", "texDim", "texOpacity", "frame", "frameW", "glow", "glowPower"], 'ours'],
     ['fx', 'Элементы и эффекты', 'уровни доната, пульсация, печать текста, статистика', ["typeText", "pulse", "tiers", "tier1", "tier2", "tier3", "donorStat", "timeBar"], 'ours'],
     ['voice', 'Озвучка', 'голос, громкость, что читать, «задонатил / задонатила»', ["speak", "voice", "volume", "readNick", "genderVerb", "genderUnknown", "genderList", "readMessage"]],
@@ -8860,13 +8861,29 @@
     else if (f.t === 'voice') ctrl = `<div class="toggle-row-extra"><select id="${id}" style="max-width:230px"></select><button class="btn-tiny" type="button" id="${id}_pv">▶</button></div>`;
     else if (f.t === 'texture') ctrl = `<div class="toggle-row-extra"><img id="${id}_img" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:6px;display:none;border:1px solid var(--border,#444)"><input type="hidden" id="${id}"><button class="btn-tiny" type="button" id="${id}_up">Загрузить</button><button class="btn-tiny" type="button" id="${id}_del">Убрать</button><input type="file" id="${id}_file" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" hidden></div>`;
     else if (f.t === 'media') ctrl = `<div class="toggle-row-extra"><span id="${id}_pv" class="da-media-pv"></span><input type="hidden" id="${id}"><button class="btn-tiny" type="button" id="${id}_up">Загрузить</button><button class="btn-tiny" type="button" id="${id}_del" style="display:none">Убрать</button><input type="file" id="${id}_file" accept="${f.kind === 'image' ? 'image/*' : 'audio/*'}" hidden></div>`;
+    else if (f.t === 'rules') ctrl = `<div class="da-rules" id="${id}"></div>`;
     else if (f.t === 'select') ctrl = `<div class="toggle-row-extra"><select id="${id}">${f.opts.map(([v, n]) => `<option value="${v}">${n}</option>`).join('')}</select></div>`;
     else if (f.t === 'text') ctrl = `<div class="toggle-row-extra"><input type="text" id="${id}" maxlength="${f.max || 30}" style="width:${f.w || 200}px"></div>`;
     else if (f.t === 'textarea') ctrl = `<div class="toggle-row-extra"><textarea id="${id}" rows="3" style="width:230px" placeholder="Maslino44ka = ж&#10;Toki0FF = м"></textarea></div>`;
     else if (f.t === 'color') ctrl = `<div class="toggle-row-extra"><input type="color" id="${id}">${f.plain ? '' : `<button class="btn-tiny" type="button" id="${id}_clr">Из темы</button>`}</div>`;
     row.innerHTML = `<span class="toggle-row-label">${f.l}</span>${ctrl}`;
+    if (f.t === 'rules') row.classList.add('da-rules-row');
     groupBody[groupOf(f.k)].appendChild(row);
     inputs[f.k] = row.querySelector('#' + id);
+    if (f.t === 'rules') {
+      const box = inputs[f.k], LOOKOPTS = FIELDS.find((x) => x.k === 'look').opts;
+      const addRow = (from, look) => {
+        const r = document.createElement('div'); r.className = 'da-rule';
+        r.innerHTML = `<span>от</span><input type="number" min="1" max="100000000" step="1" value="${from}"><span>₽ →</span><select>${LOOKOPTS.map(([v, n]) => `<option value="${v}"${v === look ? ' selected' : ''}>${n}</option>`).join('')}</select><button class="btn-tiny" type="button" title="Убрать">✕</button>`;
+        r.querySelector('button').addEventListener('click', () => { r.remove(); sync(); box.dispatchEvent(new Event('change', { bubbles: true })); });
+        box.insertBefore(r, box.querySelector('.da-rule-add'));
+      };
+      const sync = () => { const add = box.querySelector('.da-rule-add'); if (add) add.hidden = box.querySelectorAll('.da-rule').length >= 8; const em = box.querySelector('.da-rule-empty'); if (em) em.hidden = !!box.querySelector('.da-rule'); };
+      box.innerHTML = '<div class="da-rule-empty">Правил нет: всегда показывается вид выше.</div><button class="btn-tiny da-rule-add" type="button">+ Добавить порог</button>';
+      box.querySelector('.da-rule-add').addEventListener('click', () => { const last = [...box.querySelectorAll('.da-rule input')].map((i) => Number(i.value) || 0); addRow(last.length ? Math.max(...last) + 450 : 50, 'receipt'); sync(); box.dispatchEvent(new Event('change', { bubbles: true })); });
+      box._set = (arr) => { box.querySelectorAll('.da-rule').forEach((n) => n.remove()); (Array.isArray(arr) ? arr : []).forEach((x) => addRow(x.from, x.look)); sync(); };
+      box._get = () => [...box.querySelectorAll('.da-rule')].map((r) => ({ from: Number(r.querySelector('input').value), look: r.querySelector('select').value })).filter((x) => x.from >= 1);
+    }
     if (f.t === 'range') inputs[f.k].addEventListener('input', () => { document.getElementById(id + '_v').textContent = inputs[f.k].value + ' ' + f.suf; });
     if (f.t === 'color' && !f.plain) {
       inputs[f.k].addEventListener('input', () => { inputs[f.k].dataset.empty = ''; });
@@ -8915,7 +8932,8 @@
   function apply(s) {
     FIELDS.forEach((f) => {
       const el = inputs[f.k]; const v = s[f.k];
-      if (f.t === 'toggle') el.checked = !!v;
+      if (f.t === 'rules') el._set(v);
+      else if (f.t === 'toggle') el.checked = !!v;
       else if (f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture' || f.t === 'media') { el.value = v || ''; if (f.t === 'texture') showTex(); if (f.t === 'media') showMedia(f); }
       else if (f.t === 'color') { el.dataset.empty = v || f.plain ? '' : '1'; el.value = v || '#b14846'; }
       else { el.value = v; if (f.t === 'range') document.getElementById('da_' + f.k + '_v').textContent = v + ' ' + f.suf; }
@@ -8929,6 +8947,7 @@
     const o = {};
     FIELDS.forEach((f) => {
       const el = inputs[f.k];
+      if (f.t === 'rules') { o[f.k] = el._get(); return; }
       o[f.k] = f.t === 'toggle' ? el.checked : f.t === 'voice' || f.t === 'sound' || f.t === 'font' || f.t === 'select' || f.t === 'text' || f.t === 'textarea' || f.t === 'texture' || f.t === 'media' ? el.value : f.t === 'color' ? (el.dataset.empty === '1' ? '' : el.value) : Number(el.value);
     });
     return o;

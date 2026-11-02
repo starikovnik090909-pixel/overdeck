@@ -51,9 +51,29 @@ const DEFAULTS = {
   themed: true,          // карточка оформляется в стиле/цвете/шрифте темы оверлея; выключено — нейтральный вид
   lookPos: 'top',       // положение малого алерта (уведомление): top | top-right | bottom-right | bottom-left | bottom
   look: 'card',          // вид алерта доната: card | receipt (чек) | slots (игровой автомат) | random
+  lookRules: [],         // вид по сумме: [{ from: ₽, look }], берётся правило с наибольшим from ≤ суммы; пусто — всегда «look»
   receiptTitle: 'ДОНАТ-КАССА', // заголовок на чеке
   voice: '',             // голос Piper для алертов; пусто — тот же, что в «Озвучке чата»
 };
+
+/** Правила «от какой суммы какой вид»: до 8 штук, по возрастанию суммы, без повторов суммы. */
+function cleanRules(v, fb) {
+  if (!Array.isArray(v)) return fb || [];
+  const seen = new Set(), out = [];
+  for (const it of v.slice(0, 8)) {
+    if (!it || typeof it !== 'object') continue;
+    const from = Number(it.from), look = String(it.look || '');
+    if (!Number.isFinite(from) || from < 1 || from > 100000000 || !LOOKS.includes(look) || seen.has(from)) continue;
+    seen.add(from); out.push({ from: Math.round(from * 100) / 100, look });
+  }
+  return out.sort((a, b2) => a.from - b2.from);
+}
+/** Вид алерта для суммы в рублях: правило по сумме, иначе общий вид. */
+function lookFor(rub, s) {
+  let look = s.look || 'card';
+  for (const r of (s.lookRules || [])) if (rub >= r.from) look = r.look;
+  return look === 'random' ? ['card', 'receipt', 'slots'][Math.floor(Math.random() * 3)] : look;
+}
 
 const clamp = (v, a, b, f) => { const n = Number(v); return Number.isFinite(n) ? Math.max(a, Math.min(b, n)) : f; };
 const bool = (v, f) => (typeof v === 'boolean' ? v : f);
@@ -104,6 +124,7 @@ function sanitize(raw, base) {
     customImgSize: Math.round(clamp(r.customImgSize, 10, 100, b.customImgSize)),
     customFont: typeof r.customFont === 'string' ? r.customFont.slice(0, 60) : b.customFont,
     look: LOOKS.includes(r.look) ? r.look : b.look,
+    lookRules: cleanRules(r.lookRules, b.lookRules),
     lookPos: ['top', 'top-right', 'bottom-right', 'bottom-left', 'bottom'].includes(r.lookPos) ? r.lookPos : b.lookPos,
     receiptTitle: typeof r.receiptTitle === 'string' ? r.receiptTitle.trim().slice(0, 30) : b.receiptTitle,
     frame: ['', 'tier', 'flow', 'comet', 'neon', 'rainbow', 'gold', 'dashes'].includes(r.frame) ? r.frame : b.frame,
@@ -211,7 +232,7 @@ function buildCard(record, s, extra) {
   const amount = Number(record.amount) || 0;
   const ex = extra || {};
   const tier = tierOf(ex.rub == null ? amount : ex.rub, s);
-  const look = s.look === 'random' ? ['card', 'receipt', 'slots'][Math.floor(Math.random() * 3)] : (s.look || 'card');
+  const look = lookFor(ex.rub == null ? amount : ex.rub, s);
   const dlook = s.mode === 'custom' ? 'custom' : (NEW_LOOKS.includes(look) ? look : '');
   const out = {
     username: record.username || 'Аноним',
@@ -237,4 +258,4 @@ function buildCard(record, s, extra) {
   return out;
 }
 
-module.exports = { plural, cleanMessage, TIER_FRAME, TIER_LABELS, tierOf, DEFAULTS, sanitize, buildSpeech, buildCard, amountText, numberWords };
+module.exports = { cleanRules, lookFor, plural, cleanMessage, TIER_FRAME, TIER_LABELS, tierOf, DEFAULTS, sanitize, buildSpeech, buildCard, amountText, numberWords };
