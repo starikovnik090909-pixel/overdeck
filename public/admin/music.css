@@ -245,3 +245,5 @@
 #tab-music>.page-head{flex-wrap:wrap;row-gap:10px}#tab-music>.page-head>.page-actions{flex:1 1 auto;justify-content:flex-end}
 #tab-music .mu-pwr small:empty{display:none}
 #tab-music .page-actions{gap:6px}#tab-music .mu-ways{gap:6px}#tab-music .page-actions .btn{padding-left:10px;padding-right:10px}#tab-music .mu-way{padding:5px 8px 5px 5px}
+#tab-music .page-actions>.mu-pwr,#tab-music .mu-way,#tab-music .page-actions>.btn,#tab-music .page-actions>.chr-seg{box-sizing:border-box;height:38px;min-height:38px}#tab-music .mu-way{width:104px;justify-content:flex-start}#tab-music .page-actions>.chr-seg{display:inline-flex;align-items:center;padding-top:0;padding-bottom:0}#tab-music .page-actions>.chr-seg button{height:30px}#tab-music .page-actions>.btn{display:inline-flex;align-items:center;justify-content:center}
+#tab-music .mu-way b{font-size:13px}
