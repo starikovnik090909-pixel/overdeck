@@ -53,3 +53,27 @@
 .sk5 .top{position:relative;background:rgba(6,8,15,.72);padding:10px 14px;border-radius:10px;display:inline-block;max-width:100%;backdrop-filter:blur(4px)}
 .sk5 .mq{font-size:30px;max-width:560px}.sk5 .by{font-size:15px;opacity:.75}
 .sk5 .tm{position:absolute;right:24px;bottom:18px;gap:10px;font-size:15px;background:rgba(6,8,15,.72);padding:4px 10px;border-radius:8px}.sk5 .tm b:first-child::after{content:" /"}
+/* 6 Стекло: полупрозрачная матовая карточка (размытие делается внутри карточки, сцену OBS она не размывает) */
+.sk6{display:flex;align-items:center;gap:22px;padding:22px;border-radius:30px;background:rgba(18,18,26,.38);border:1px solid rgba(255,255,255,.35);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.sk6 .bgi{position:absolute;inset:-30px;width:calc(100% + 60px);height:calc(100% + 60px);object-fit:cover;filter:blur(28px) saturate(1.4);opacity:.55;z-index:0}
+.sk6 .cov{position:relative;z-index:1;flex:none;width:150px;height:150px;border-radius:26px;overflow:hidden;background:#33333c;box-shadow:0 14px 30px rgba(0,0,0,.45);animation:skfloat 5s ease-in-out infinite alternate}
+.sk6 .inf{position:relative;z-index:1;flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;text-shadow:0 1px 8px rgba(0,0,0,.45)}
+.sk6 .mq{font-size:24px;line-height:1.2}.sk6 .by{font-size:14px;opacity:.9}
+.sk6 .wv{display:flex;align-items:center;gap:2px;height:46px}.sk6 .wv i{flex:1;border-radius:2px;background:rgba(255,255,255,.35)}.sk6 .wv i.on{background:#fff}
+.sk6 .tm{font-size:12px;opacity:.9}
+@keyframes skfloat{from{transform:translateY(-3px) rotate(-1.5deg)}to{transform:translateY(3px) rotate(1.5deg)}}
+/* 7 Круг (темы: Галактика, Пульсар, Пламя) */
+.sk7{border-radius:28px}
+.sk7.t0{background:radial-gradient(#26194a,#0a0714)}.sk7.t1{background:radial-gradient(#0e2a3a,#050b12)}.sk7.t2{background:radial-gradient(#3a1410,#0f0506)}
+.sk7 canvas{position:absolute;left:0;top:0;width:440px;height:380px}
+.sk7 .cov{position:absolute;left:220px;top:190px;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;overflow:hidden;background:#33333c;box-shadow:0 0 0 3px rgba(255,255,255,.2),0 10px 30px rgba(0,0,0,.55);will-change:transform}
+.sk7 .ii{position:absolute;left:24px;right:24px;bottom:20px;text-align:center}
+.sk7 .mq{font-size:26px}.sk7 .by{font-size:14px;opacity:.75;margin-top:2px}.sk7 .tm{justify-content:center;gap:6px;font-size:13px;opacity:.75;margin-top:2px}.sk7 .tm b:first-child::after{content:" /"}
+/* 8 Светодиоды (темы: Янтарь, Лёд, Розовый неон, Закат) */
+.sk8{background:#0d0d10;border-radius:14px;box-shadow:inset 0 0 0 2px #2b2b33;padding:16px 22px;display:grid;grid-template-rows:auto 1fr;gap:10px;font-family:Consolas,"Courier New",monospace}
+.sk8.t0{--lc:#ffc46b}.sk8.t1{--lc:#8fe9ff}.sk8.t2{--lc:#ff9be9}.sk8.t3{--lc:#ffb27a}
+.sk8 .hd{display:flex;justify-content:space-between;gap:14px;color:var(--lc);font-size:19px}.sk8 .hd .mq{flex:1;min-width:0;font-weight:700}
+.sk8 .tm{gap:8px;font-size:17px;flex:none}.sk8 .tm b:first-child::after{content:" /"}
+.sk8 .mx{display:grid;grid-template-columns:repeat(30,1fr);gap:4px;height:100%}
+.sk8 .col{display:grid;grid-template-rows:repeat(12,1fr);gap:4px}
+.sk8 .col i{border-radius:50%;background:#1a1a1f}

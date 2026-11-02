@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=12">
-<link rel="stylesheet" href="../music-skins.css?v=4">
+<link rel="stylesheet" href="../music-skins.css?v=5">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
@@ -3207,6 +3207,11 @@
         <div class="mu-mbox"><button type="button" class="mu-x" data-mclose aria-label="Закрыть">×</button><div class="mu-mprev"><iframe id="muPrevBig" title="Предпросмотр" tabindex="-1"></iframe></div></div>
       </div>
 
+      <div class="mu-modal" id="muThemeOv" hidden>
+        <div class="mu-dim" data-tclose></div>
+        <div class="mu-mbox mu-thbox"><button type="button" class="mu-x" data-tclose aria-label="Закрыть">×</button><h3 id="muThTitle" class="mu-thh">Тема плеера</h3><div class="mu-skins mu-thg" id="muThg"></div></div>
+      </div>
+
       <div class="mu-drawer" id="muDrawer" hidden>
         <div class="mu-dim" data-close></div>
         <aside class="mu-panel" role="dialog" aria-label="Настройки заказа музыки">
@@ -3795,8 +3800,8 @@
 <script src="/credits-sound.js?v=1"></script>
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
-<script src="../music-skins.js?v=2"></script>
-<script src="music.js?v=12"></script>
+<script src="../music-skins.js?v=3"></script>
+<script src="music.js?v=13"></script>
 <script src="whatsnew.js?v=38"></script>
 </body>
 </html>

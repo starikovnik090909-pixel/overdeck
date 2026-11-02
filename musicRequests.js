@@ -18,7 +18,8 @@ const DEFAULTS = {
   autoShow: false,                  // показывать клип сразу при старте каждого трека
   view: 'clip',                     // что на экране: clip — клип, player — только плеер (без видео)
   line: 'bottom',                   // бегущая строка с названием у клипа: top | bottom | off
-  skin: 1,                          // вид плеера 1…5
+  skin: 1,                          // вид плеера 1…8
+  skinTheme: 0,                     // тема вида (у «Круга» 0…2, у «Светодиодов» 0…3)
   showUser: true,                   // писать, кто заказал
   accent: '#e5484d',
   pointsOn: false, pointsReward: '', // заказ за баллы канала: название награды (с полем «ввод текста»)
@@ -28,7 +29,7 @@ const DEFAULTS = {
   blTracks: [],                     // чёрный список треков [{id, title}]
 };
 const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass'];
-const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 5], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
+const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 8], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
 let cfg = Object.assign({}, DEFAULTS);

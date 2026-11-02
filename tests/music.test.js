@@ -37,7 +37,7 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   m.ended(uid); ok(m.state().current === null, 'конец трека, очередь пуста');
 
   fresh(); m.update({ enabled: false }); ok(!(await m.onChat(msg('!муз x'))) && !m.state().current, 'выключено');
-  fresh(); m.update({ skin: 99, view: 'zzz', line: 'top', accent: 'red', volume: 500 }); const s = m.getSettings(); ok(s.skin === 5 && s.view === 'clip' && s.line === 'top' && s.accent === '#e5484d' && s.volume === 100, 'настройки ограничиваются');
+  fresh(); m.update({ skin: 99, skinTheme: 9, view: 'zzz', line: 'top', accent: 'red', volume: 500 }); const s = m.getSettings(); ok(s.skin === 8 && s.skinTheme === 3 && s.view === 'clip' && s.line === 'top' && s.accent === '#e5484d' && s.volume === 100, 'настройки ограничиваются');
   fresh(); await m.addByQuery('x', 'Я'); m.setShow(true); ok(m.state().settings.showVideo, 'показ клипа'); m.stop(); ok(!m.state().current, 'стоп');
 
   // --- чёрный список ---

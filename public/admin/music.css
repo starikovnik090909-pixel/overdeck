@@ -182,3 +182,9 @@
 #tab-music #muLive .mu-info{justify-content:flex-start;gap:6px}
 #tab-music #muLive .mu-info h2{font-size:20px}
 @media(max-width:1100px){#tab-music #muLive .mu-grid{height:auto}#tab-music #muLive .mu-pvw{grid-template-columns:1fr}#tab-music #muLive .mu-pvw .mu-prev{grid-row:auto}}
+
+#tab-music .mu-thbox{width:min(760px,100%)}
+#tab-music .mu-thh{margin:0 0 12px;font-size:16px}
+#tab-music .mu-thg{grid-template-columns:repeat(2,1fr);gap:12px}
+#tab-music .mu-thg .mu-sk{aspect-ratio:16/11}
+#tab-music .mu-thg .mu-sk em{font-size:12px}

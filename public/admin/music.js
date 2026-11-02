@@ -156,18 +156,43 @@
   fields.forEach((f) => f.addEventListener(f.type === 'checkbox' || f.tagName === 'SELECT' ? 'change' : 'input', save));
   // --- вид на экране: клип / плеер, строка, 10 видов плеера ---
   const skinsEl = $('#muSkins');
-  skinsEl.innerHTML = MusicSkins.list.map((d, i) => '<button type="button" class="mu-sk" data-k="' + (i + 1) + '" title="' + d.name + '"><div class="fit">' + MusicSkins.html(i + 1) + '</div><em>' + (i + 1) + '. ' + d.name + '</em></button>').join('');
-  skinsEl.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, { title: 'дора — Дорадура', by: 'Зритель', cover: '', cur: 52, dur: 130 }));
-  function fitSkins() { $$('.mu-sk').forEach((b) => { const d = MusicSkins.list[Number(b.dataset.k) - 1], w = b.clientWidth, h = b.clientHeight; if (w) b.firstChild.style.transform = 'translate(-50%,-50%) scale(' + Math.min((w - 8) / d.w, (h - 8) / d.h) + ')'; }); }
+  const DEMO = { title: 'дора — Дорадура', by: 'Зритель', cover: '', cur: 52, dur: 130, playing: true };
+  const skinCard = (n, th, label, key) => '<button type="button" class="mu-sk" data-k="' + n + '" data-th="' + th + '" title="' + label + '"><div class="fit">' + MusicSkins.html(n, th) + '</div><em>' + (key || n + '. ' + label) + '</em></button>';
+  let skinKey = '';
+  function renderSkins(s) {
+    const k = s.skin + ':' + (s.skinTheme || 0); if (k === skinKey) return; skinKey = k;
+    skinsEl.innerHTML = MusicSkins.list.map((d, i) => { const on = s.skin === i + 1, th = on && d.themes ? (s.skinTheme || 0) : 0; return skinCard(i + 1, th, d.name, (i + 1) + '. ' + d.name + (on && d.themes ? ' · ' + d.themes[Math.min(th, d.themes.length - 1)] : '')); }).join('');
+    skinsEl.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, DEMO));
+    fitSkins();
+  }
+  // окно выбора темы: всплывает поверх страницы, у каждого варианта живое превью
+  const thOv = $('#muThemeOv'), thG = $('#muThg');
+  function openThemes(n) {
+    const d = MusicSkins.list[n - 1]; if (!d || !d.themes) return;
+    const cur = st && st.settings.skin === n ? (st.settings.skinTheme || 0) : -1;
+    $('#muThTitle').textContent = 'Тема плеера «' + d.name + '»';
+    thG.innerHTML = d.themes.map((name, i) => skinCard(n, i, name, name).replace('class="mu-sk"', 'class="mu-sk' + (i === cur ? ' on' : '') + '"')).join('');
+    thG.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, DEMO));
+    thOv.hidden = false; setTimeout(fitSkins, 30);
+  }
+  const closeThemes = () => { thOv.hidden = true; thG.innerHTML = ''; };
+  thOv.addEventListener('click', (e) => { if (e.target.closest('[data-tclose]')) closeThemes(); });
+  thG.addEventListener('click', (e) => { const b = e.target.closest('.mu-sk'); if (!b) return; setS({ skin: Number(b.dataset.k), skinTheme: Number(b.dataset.th) }); closeThemes(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !thOv.hidden) closeThemes(); });
+  function fitSkins() { $$('#tab-music .mu-sk').forEach((b) => { const d = MusicSkins.list[Number(b.dataset.k) - 1], w = b.clientWidth, h = b.clientHeight; if (w) b.firstChild.style.transform = 'translate(-50%,-50%) scale(' + Math.min((w - 8) / d.w, (h - 8) / d.h) + ')'; }); }
   addEventListener('resize', fitSkins);
   const setS = (patch) => post('/api/music/settings', patch).then((r) => { if (r && r.success) { render(r); flash('Сохранено'); } });
   $$('#muView button').forEach((b) => b.addEventListener('click', () => setS({ view: b.dataset.v })));
   $$('#muLine button').forEach((b) => b.addEventListener('click', () => setS({ line: b.dataset.v })));
-  skinsEl.addEventListener('click', (e) => { const b = e.target.closest('[data-k]'); if (b) setS({ skin: Number(b.dataset.k) }); });
+  skinsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-k]'); if (!b) return; const n = Number(b.dataset.k), d = MusicSkins.list[n - 1];
+    if (d && d.themes) { if (!(st && st.settings.skin === n)) setS({ skin: n, skinTheme: 0 }).then(() => openThemes(n)); else openThemes(n); } else setS({ skin: n });
+  });
   function paintView(s) {
     $$('#muView button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.view));
     $$('#muLine button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.line));
-    $$('.mu-sk').forEach((b) => b.classList.toggle('on', Number(b.dataset.k) === s.skin));
+    renderSkins(s);
+    $$('#muSkins .mu-sk').forEach((b) => b.classList.toggle('on', Number(b.dataset.k) === s.skin));
     $('#muLineBox').hidden = s.view !== 'clip'; $('#muSkinBox').hidden = s.view !== 'player';
     fitSkins();
   }

@@ -5,7 +5,7 @@
   var preview = /[?&]preview=1/.test(location.search);
   var $ = function (i) { return document.getElementById(i); };
   var wrap = $('wrap'), pl = $('pl');
-  var posTick = 0, skinNo = 0, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
+  var posTick = 0, skinNo = 0, skinTh = -1, playing = true, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
   var lines = [$('lnTop'), $('lnBot')];
   var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0;
   if (preview) document.body.classList.add('pv');
@@ -28,7 +28,7 @@
     wrap.classList.toggle('on', show); document.body.classList.toggle('off', preview && !show);
     if (preview && !show) wrap.classList.add('on');
     var who = s.showUser && cur && cur.by ? cur.by : '';
-    var key = [cur && cur.uid, cur && cur.title, who, s.line, s.skin, s.view].join('|');
+    var key = [cur && cur.uid, cur && cur.title, who, s.line, s.skin, s.skinTheme, s.view].join('|');
     if (key !== textKey) {
       textKey = key;
       lines[0].className = 'ln' + (!isPl && s.line === 'top' && cur ? ' show' : '');
@@ -47,8 +47,9 @@
         info = { title: cur.title, by: who, cover: cur.id ? 'https://i.ytimg.com/vi/' + cur.id + '/mqdefault.jpg' : '', dur: cur.seconds || 0 };
       }
     }
-    if (skinNo !== s.skin) { skinNo = s.skin; pl.innerHTML = MusicSkins.html(skinNo); card = pl.firstChild; dim = [MusicSkins.list[skinNo - 1].w, MusicSkins.list[skinNo - 1].h]; pl.style.width = dim[0] + 'px'; pl.style.height = dim[1] + 'px'; fit(); card._k = 0; }
-    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur });
+    playing = !!cur && !st.paused; if (preview) playing = true;
+    if (skinNo !== s.skin || skinTh !== (s.skinTheme || 0)) { skinNo = s.skin; skinTh = s.skinTheme || 0; pl.innerHTML = MusicSkins.html(skinNo, skinTh); card = pl.firstChild; dim = [MusicSkins.list[skinNo - 1].w, MusicSkins.list[skinNo - 1].h]; pl.style.width = dim[0] + 'px'; pl.style.height = dim[1] + 'px'; fit(); card._k = 0; }
+    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur, playing: playing });
     if (preview || !ready) return;
     if (!cur) { if (loadedUid) { try { player.stopVideo(); } catch (e) {} loadedUid = 0; } return; }
     if (loadedUid !== cur.uid) { loadedUid = cur.uid; try { player.loadVideoById(cur.id); } catch (e) {} }
@@ -66,7 +67,7 @@
     else if (ready) { try { t = player.getCurrentTime(); d = player.getDuration() || d; } catch (e) {} }
     curT = t; if (d > 0) info.dur = d;
     if (!preview && last && last.current && ++posTick % 4 === 0) post('/api/music/progress', { uid: last.current.uid, t: t, d: d });
-    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur });
+    if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur, playing: playing });
   }, 500);
 
   function poll() {
