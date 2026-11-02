@@ -29,7 +29,7 @@ const DEFAULTS = {
   blTracks: [],                     // чёрный список треков [{id, title}]
 };
 const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass'];
-const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 8], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
+const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
 let cfg = Object.assign({}, DEFAULTS);

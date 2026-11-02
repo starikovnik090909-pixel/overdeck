@@ -12,6 +12,11 @@
     { name: 'Стекло', w: 580, h: 210, h_: '<img class="bgi" data-cv alt=""><div class="cov"><img data-cv alt=""></div><div class="inf"><div class="mq" data-t></div><div class="by" data-u></div><div class="wv">' + rep(44, '<i></i>') + '</div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
     { name: 'Круг', w: 560, h: 640, themes: ['Галактика', 'Пульсар', 'Пламя'], viz: 7, h_: '<canvas width="1120" height="1000"></canvas><div class="cov"><img data-cv alt=""></div><div class="ii"><div class="mq" data-t></div><div class="by" data-u></div><div class="tm"><b data-c></b><b data-d></b></div></div>' },
     { name: 'Светодиоды', w: 600, h: 250, themes: ['Янтарь', 'Лёд', 'Розовый неон', 'Закат'], viz: 8, h_: '<div class="hd"><div class="mq" data-t></div><div class="tm"><b data-c></b><b data-d></b></div></div><div class="mx">' + rep(30, '<div class="col">' + rep(12, '<i></i>') + '</div>') + '</div>' },
+    { name: 'Лента', w: 560, h: 52, h_: '<div class="mq" data-t data-tby></div><div class="tm"><b data-c></b></div><div class="bar"><i></i></div>' },
+    { name: 'Заливка', w: 520, h: 58, h_: '<div class="fl"></div><div class="tx"><div class="mq" data-t></div><div class="by" data-u></div></div><div class="tm"><b data-c></b><b data-d></b></div>' },
+    { name: 'Нотный стан', w: 560, h: 78, viz: 9, h_: '<div class="tx"><div class="mq" data-t></div><div class="by" data-u></div></div><canvas width="600" height="156"></canvas>' },
+    { name: 'Скин-классика', w: 480, h: 222, viz: 10, h_: '<div class="ttl">OVERDECK</div><div class="lt"><b data-c></b></div><canvas width="636" height="128"></canvas><div class="lq"><div class="mq" data-t data-tby></div></div><div class="sb"><i></i></div><div class="tr">⏮ ▶ ⏸ ⏹ ⏭</div>' },
+    { name: 'Кликвил', w: 220, h: 300, h_: '<div class="scr"><div class="cov"><img data-cv alt=""></div><div class="mq" data-t></div><div class="by" data-u></div><div class="tm"><b data-c></b><b data-d></b></div><div class="bar"><i></i></div></div><div class="wh"><u></u><em>MENU</em><small>▶❚❚</small></div>' },
   ];
   var fmt = function (t) { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + ('0' + (t % 60)).slice(-2); };
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
@@ -42,7 +47,7 @@
     root.style.setProperty('--p', p);
     root.style.setProperty('--deg', (p * 360) + 'deg');
     if (root.getAttribute('data-vz')) { var z = root._vz || (root._vz = { t: 0, amp: 0, playing: true }); z.playing = d.playing !== false; z.p = p; vzReg(root); }
-    var t = root.querySelector('[data-t]'); if (t) marquee(t, d.title || '');
+    var t = root.querySelector('[data-t]'); if (t) marquee(t, (d.title || '') + (t.hasAttribute('data-tby') && d.by ? ' · заказал ' + d.by : ''));
     var u = root.querySelector('[data-u]'); if (u) { u.textContent = d.by ? 'заказал ' + d.by : ''; u.style.display = d.by ? '' : 'none'; }
     root.querySelectorAll('[data-c]').forEach(function (e) { e.textContent = fmt(d.cur); });
     root.querySelectorAll('[data-d]').forEach(function (e) { e.textContent = fmt(d.dur); });
@@ -77,7 +82,7 @@
       z.amp += ((z.playing ? 1 : 0.1) - z.amp) * Math.min(1, dt * (z.playing ? 5 : 3));
       if (z.playing) z.t += dt;
       var L = levels(z.t, z), th = Number(r.getAttribute('data-th')) || 0;
-      try { if (r.getAttribute('data-vz') === '7') drawCircle(r, z, L, th, dt); else drawLeds(r, z, L, th); } catch (e) { /* анимация не должна ломать плеер */ }
+      try { var vk = r.getAttribute('data-vz'); if (vk === '7') drawCircle(r, z, L, th, dt); else if (vk === '8') drawLeds(r, z, L, th); else if (vk === '9') drawStaff(r, z, L); else drawClassic(r, z, L); } catch (e) { /* анимация не должна ломать плеер */ }
     });
     VZ.last = VZ.roots.length ? now : 0;
     if (VZ.roots.length) VZ.raf = requestAnimationFrame(vzLoop);
@@ -126,6 +131,30 @@
       z.parts = z.parts.filter(function (q) { q.y -= q.vy * dt; q.x += Math.sin(q.y * 0.05) * 0.3; q.l -= dt * 0.8; if (q.l <= 0) return false; x.fillStyle = 'rgba(255,' + (150 + q.l * 90 | 0) + ',60,' + q.l + ')'; x.beginPath(); x.arc(q.x, q.y, q.s * q.l + 0.4, 0, PI * 2); x.fill(); return true; });
     }
     if (cov) cov.style.transform = 'scale(' + (1 + k * 0.06) + ')' + (th === 1 ? ' rotate(' + (t * 12) + 'deg)' : '');
+  }
+  function drawStaff(r, z, L) {
+    var cv = r.querySelector('canvas'); if (!cv) return; var x = z.x || (z.x = cv.getContext('2d'));
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, 600, 156); x.setTransform(2, 0, 0, 2, 0, 0);
+    var X0 = 8, X1 = 292, i, a;
+    x.strokeStyle = 'rgba(255,255,255,.28)'; x.lineWidth = 1; for (i = 0; i < 5; i++) { x.beginPath(); x.moveTo(X0, 14 + i * 12); x.lineTo(X1, 14 + i * 12); x.stroke(); }
+    for (i = 0; i < 6; i++) {
+      var X = X1 - ((z.t * 60 + i * 48) % 288), Y = 14 + Math.round(L[(i * 7) % N] * 8) * 6;
+      a = Math.max(0, Math.min(1, (X - X0) / 24, (X1 - X) / 10));
+      x.globalAlpha = a * (0.4 + 0.6 * z.amp); x.fillStyle = 'hsl(' + (340 - i * 32) + ',90%,70%)';
+      x.beginPath(); x.ellipse(X, Y, 6.5, 4.8, -0.4, 0, PI * 2); x.fill(); x.fillRect(X + 5, Y - 22, 1.6, 22);
+    }
+    x.globalAlpha = 1;
+  }
+  function drawClassic(r, z, L) {
+    var cv = r.querySelector('canvas'); if (!cv) return; var x = z.x || (z.x = cv.getContext('2d'));
+    x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, 636, 128); x.setTransform(2, 0, 0, 2, 0, 0);
+    var n = 28, w = 318, h = 64, bw = w / n, i, g, bh;
+    if (!z.pk) z.pk = []; 
+    for (i = 0; i < n; i++) {
+      bh = L[i % N] * (h - 8); z.pk[i] = Math.max((z.pk[i] || 0) - 0.6, bh);
+      g = x.createLinearGradient(0, h, 0, 0); g.addColorStop(0, '#2ee62e'); g.addColorStop(0.6, '#ffe82e'); g.addColorStop(1, '#ff3030');
+      x.fillStyle = g; x.fillRect(i * bw + 2, h - bh, bw - 4, bh); x.fillStyle = '#ddd'; x.fillRect(i * bw + 2, h - z.pk[i] - 3, bw - 4, 2);
+    }
   }
   function drawLeds(r, z, L, th) {
     if (!z.cols) { z.cols = [].map.call(r.querySelectorAll('.col'), function (c) { return [].slice.call(c.children); }); z.pk = z.cols.map(function () { return 0; }); z.col = z.cols.map(function () { return []; }); }
