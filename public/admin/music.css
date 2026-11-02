@@ -247,3 +247,18 @@
 #tab-music .page-actions{gap:6px}#tab-music .mu-ways{gap:6px}#tab-music .page-actions .btn{padding-left:10px;padding-right:10px}#tab-music .mu-way{padding:5px 8px 5px 5px}
 #tab-music .page-actions>.mu-pwr,#tab-music .mu-way,#tab-music .page-actions>.btn,#tab-music .page-actions>.chr-seg{box-sizing:border-box;height:38px;min-height:38px}#tab-music .mu-way{width:104px;justify-content:flex-start}#tab-music .page-actions>.chr-seg{display:inline-flex;align-items:center;padding-top:0;padding-bottom:0}#tab-music .page-actions>.chr-seg button{height:30px}#tab-music .page-actions>.btn{display:inline-flex;align-items:center;justify-content:center}
 #tab-music .mu-way b{font-size:13px}
+/* шапка: аккуратные кнопки */
+#tab-music .page-actions{gap:10px;align-items:center}
+#tab-music .mu-pwr{border-radius:12px;padding:0 16px 0 10px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset;transition:.18s}
+#tab-music .mu-pwr.on{box-shadow:0 0 0 3px rgba(62,207,142,.10),0 1px 0 rgba(255,255,255,.06) inset}
+#tab-music .mu-pwr:hover{filter:brightness(1.12)}
+#tab-music .mu-ways{gap:0;padding:3px;border-radius:12px;border:1px solid var(--divider);background:var(--bg-card);height:38px;box-sizing:border-box;align-items:center}
+#tab-music .mu-way{height:30px;min-height:30px;width:auto;min-width:0;padding:0 14px 0 11px;border:0;border-radius:9px;background:transparent;gap:8px;justify-content:center;opacity:.72;transition:.18s}
+#tab-music .mu-way .sw{width:8px;height:8px;border-radius:50%;background:var(--divider);box-shadow:none}
+#tab-music .mu-way .sw::after{display:none}
+#tab-music .mu-way:hover{opacity:1;background:rgba(255,255,255,.05)}
+#tab-music .mu-way.on{opacity:1;background:rgba(62,207,142,.15);border:0;color:#d8f7e8;box-shadow:0 0 0 1px rgba(62,207,142,.35) inset}
+#tab-music .mu-way.on .sw{background:#3ecf8e;box-shadow:0 0 8px #3ecf8e}
+#tab-music .mu-way b{font-size:13px;font-weight:600}
+#tab-music .page-actions>.btn{border-radius:12px}
+#tab-music .page-actions>.chr-seg{border-radius:12px}
