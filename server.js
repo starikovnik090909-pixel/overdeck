@@ -45,6 +45,8 @@ const gazetteService = require('./gazetteService');
 const soonData = require('./soonData');
 const music = require('./musicRequests');
 const musicReward = require('./musicReward');
+const soundpad = require('./soundpad');
+const soundpadReward = require('./soundpadReward');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -421,6 +423,7 @@ function handleEventAlertRaw(type, e) {
       fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
       try { gazetteService.journal.noteRedeem(e.user_name, e.reward && e.reward.title, e.reward && e.reward.cost); } catch (er) { /* журнал необязателен */ }
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).then((r) => { if (r === 'off') return musicReward.refund(e.reward && e.reward.id, e.id); }).catch((er) => console.warn('[Музыка]', er.message));
+      try { const hit = soundpad.onPoints({ name: e.user_name, reward: e.reward && e.reward.title, rewardId: e.reward && e.reward.id }); if (hit && hit.sound.reward.id) soundpadReward.fulfil(hit.sound.reward.id, e.id).catch(() => {}); } catch (er) { /* саундпад необязателен */ }
       break;
     default: break;
   }
@@ -1394,6 +1397,21 @@ music.init({ say: (t) => chatBot.say(t), onOrder: () => { streamCounters.music +
 setTimeout(() => musicReward.sync(music.getSettings()).catch(() => {}), 12000);
 setInterval(() => musicReward.sync(music.getSettings()).catch(() => {}), 5 * 60 * 1000).unref();
 require('./routes/music').main({ music, musicReward, app });
+soundpad.init({ onChange: () => {} });
+const SOUNDPAD_DIR = soundpad.UP_DIR();
+fs.mkdirSync(SOUNDPAD_DIR, { recursive: true });
+app.use('/uploads/soundpad', express.static(SOUNDPAD_DIR));
+const soundpadUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, SOUNDPAD_DIR),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${path.extname(file.originalname).toLowerCase()}`),
+  }),
+  fileFilter: (req, file, cb) => cb(null, soundpad.EXT.includes(path.extname(file.originalname).toLowerCase())),
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, app, upload: soundpadUpload });
+setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
+setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });

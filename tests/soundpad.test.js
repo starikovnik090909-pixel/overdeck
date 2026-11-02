@@ -1,0 +1,22 @@
+// Саундпад: список звуков, запуск, события для OBS, награды.
+const assert = require('assert');
+const sp = require('../soundpad');
+let n = 0; const ok = (c, msg) => { assert(c, msg); n++; };
+sp.init({ noFile: true });
+ok(sp.state().sounds.length === 10 && sp.state().sounds.every((s) => s.builtin && /^soundpad\/.+\.mp3$/.test(s.url)), '10 встроенных звуков');
+ok(sp.play('airhorn', 'a').played && sp.poll(0).events.length === 1, 'запуск попадает в события');
+const e = sp.poll(0).events[0]; ok(e.vol === 80 && e.url === 'soundpad/airhorn.mp3', 'громкость = общая × звука');
+sp.update({ volume: 50 }); sp.updateSound('airhorn', { volume: 50 }); sp.play('airhorn'); ok(sp.poll(1).events[0].vol === 25, 'громкость 50% × 50%');
+sp.update({ enabled: false }); ok(sp.play('boom').played === false, 'выключен — не играет'); sp.update({ enabled: true });
+let err = ''; try { sp.play('нет'); } catch (x) { err = x.message; } ok(/нет/.test(err), 'нет такого звука');
+const u = sp.addUploaded('x.mp3', 'Мой мем.mp3'); ok(u.name === 'Мой мем' && u.url === 'uploads/soundpad/x.mp3' && !u.builtin, 'своя загрузка');
+let bad = ''; try { sp.addUploaded('x.exe', 'q'); } catch (x) { bad = x.message; } ok(/Формат/.test(bad), 'плохой формат отклонён');
+sp.updateSound(u.id, { name: 'Мем', emoji: '😂', reward: { on: true, title: 'Мемчик', cost: 250, cooldown: 30 } });
+const hit = sp.onPoints({ reward: 'мемчик', name: 'viewer' }); ok(hit && hit.sound.id === u.id && hit.played, 'награда по названию играет звук');
+ok(sp.onPoints({ reward: 'чужая награда' }) === null, 'чужая награда игнорируется');
+sp.setRewardId(u.id, 'abc-123'); ok(sp.onPoints({ reward: 'другое имя', rewardId: 'abc-123' }).sound.id === u.id, 'награда по id');
+let b2 = ''; try { sp.remove('airhorn'); } catch (x) { b2 = x.message; } ok(/Встроенный/.test(b2), 'встроенный не удаляется');
+sp.remove(u.id); ok(sp.state().sounds.length === 10, 'свой удаляется');
+ok(sp.updateSound('boom', { name: '  ' }).name === 'Бум', 'пустое имя → прежнее');
+sp.reset(); sp.stopAll(); ok(sp.poll(0).events[0].stop === true, 'стоп-событие');
+console.log('soundpad.test: ' + n + ' проверок ок');

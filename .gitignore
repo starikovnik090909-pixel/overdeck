@@ -107,6 +107,9 @@ follow_registry.json
 node-runtime/
 __pycache__/
 uploads/alert-custom/*
+soundpad_settings.json
+soundpad_settings.json.tmp
+uploads/soundpad/*
 
 # Хроники — личный журнал стримера
 chronicles.json

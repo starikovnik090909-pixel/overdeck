@@ -87,4 +87,4 @@ async function refund(rewardId, redemptionId) {
   try { await call('PATCH', '/channel_points/custom_rewards/redemptions?id=' + encodeURIComponent(redemptionId) + '&reward_id=' + encodeURIComponent(rewardId), { status: 'CANCELED' }); return true; } catch (e) { return false; }
 }
 
-module.exports = { init, sync, create, refund, getStatus };
+module.exports = { init, sync, create, refund, getStatus, call, explain };

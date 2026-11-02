@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><title>Саундпад</title>
+<style>html,body{margin:0;background:transparent;overflow:hidden}#dbg{position:fixed;left:6px;top:6px;font:12px monospace;color:#9f9;background:rgba(0,0,0,.6);padding:4px 6px;display:none}</style>
+</head><body>
+<div id="dbg"></div>
+<script>
+// Страница-источник OBS для саундпада: опрашивает сервер и играет новые звуки. Картинки нет, нужен только звук.
+(function () {
+  var last = null, playing = [], dbg = document.getElementById('dbg'), DEBUG = /[?&]debug=1/.test(location.search);
+  if (DEBUG) dbg.style.display = 'block';
+  function log(t) { if (DEBUG) dbg.textContent = t; }
+  function stopAll() { playing.forEach(function (a) { try { a.pause(); } catch (e) {} }); playing = []; }
+  function playOne(e) {
+    if (!e.overlap) stopAll();
+    var a = new Audio(e.url); a.volume = Math.max(0, Math.min(1, (e.vol || 0) / 100));
+    playing.push(a);
+    a.addEventListener('ended', function () { playing = playing.filter(function (x) { return x !== a; }); });
+    var p = a.play(); if (p && p.catch) p.catch(function (er) { log('не играет: ' + er.message); });
+    log('▶ ' + e.name);
+  }
+  function tick() {
+    fetch('/api/soundpad/poll?after=' + (last == null ? 0 : last), { cache: 'no-store' }).then(function (r) { return r.json(); }).then(function (j) {
+      if (last == null) { last = j.seq; return; }   // при открытии страницы старые запуски не проигрываем
+      (j.events || []).forEach(function (e) { if (e.stop) stopAll(); else playOne(e); });
+      last = j.seq;
+    }).catch(function () {}).then(function () { setTimeout(tick, 350); });
+  }
+  tick();
+})();
+</script></body></html>
