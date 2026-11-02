@@ -188,3 +188,24 @@
 #tab-music .mu-thg{grid-template-columns:repeat(2,1fr);gap:12px}
 #tab-music .mu-thg .mu-sk{aspect-ratio:16/11}
 #tab-music .mu-thg .mu-sk em{font-size:12px}
+
+#tab-music .mu-queue li.plh{display:block;border:0;padding:8px 2px 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.55}
+#tab-music .mu-queue li.pl{opacity:.62;border-style:dashed}
+#tab-music .mu-queue li.pl.now{opacity:1;border-style:solid;border-color:var(--accent)}
+#tab-music .mu-plbox{width:min(560px,100%);display:flex;flex-direction:column;gap:10px}
+#tab-music .mu-plbox .mu-thh{margin:0}
+#tab-music .mu-pll{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+#tab-music .mu-pll li{display:flex;gap:6px;align-items:stretch}
+#tab-music .mu-pll .sel{flex:1;text-align:left;display:flex;flex-direction:column;gap:1px;padding:8px 12px;border-radius:10px;border:2px solid var(--divider);background:transparent;color:inherit;cursor:pointer}
+#tab-music .mu-pll li.on .sel{border-color:var(--accent)}
+#tab-music .mu-pll .sel small{opacity:.6}
+#tab-music .mu-pll .del{border:1px solid var(--divider);border-radius:10px;background:transparent;color:inherit;opacity:.7;cursor:pointer;padding:0 12px}
+
+#tab-music .mu-skbox{width:min(900px,100%)}
+#tab-music .mu-skg{grid-template-columns:repeat(4,1fr);gap:10px}
+#tab-music .mu-skg .mu-sk{aspect-ratio:16/10}
+#tab-music .mu-skg .mu-sk em{font-size:11px}
+#tab-music #muLive .mu-quick #muSkins{display:flex;flex-direction:column;gap:8px;grid-template-columns:none}
+#tab-music #muLive .mu-quick #muSkins .mu-sk{width:100%}
+#tab-music #muLive .mu-quick #muSkins .mu-sk{aspect-ratio:auto;height:84px}
+#tab-music #muLive .mu-quick #muSkins .mu-skall{align-self:flex-start}

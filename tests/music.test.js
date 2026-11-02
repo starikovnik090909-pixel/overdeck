@@ -119,5 +119,33 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   ok(qBefore === 1, 'очередь не сбрасывается при смене режима');
   fresh(); m.update({ pointsOn: true, pointsReward: 'Песня', enabled: true }); ok(await m.onPoints({ name: 'V', login: 'v', reward: 'Песня', input: 'x' }) === true && !!m.state().current, 'награда при включённом заказе');
 
+  // ---- плейлисты ----
+  const pl = (id, t) => ({ id, title: t, channel: 'c', seconds: 100 });
+  const mod = { roles: { mod: true } };
+  fresh(); m.update({ plShuffle: false });
+  await m.onChat(msg('!муз Дора дура'));
+  await m.onChat(msg('!лайк')); ok(!said.some((x) => /♥/.test(x)), '!лайк от зрителя игнорируется');
+  await m.onChat(msg('!лайк', mod)); ok(/♥ В «Мой плейлист»/.test(said[said.length - 1]) && m.state().playlist.total === 1, '!лайк от модератора добавляет играющий трек');
+  await m.onChat(msg('!лайк', mod)); ok(/уже в плейлисте/.test(said[said.length - 1]) && m.state().playlist.total === 1, 'повторный !лайк без дублей');
+  m.skip(); ok(m.state().current && m.state().current.pl === 'own' && m.state().current.id === 'AAAAAAAAAAA', 'без заказов играет плейлист');
+  ok(!m.state().queue.length, 'плейлист не засоряет очередь заказов');
+  await m.onChat(msg('!муз ещё', { login: 'b', name: 'B' }));
+  ok(m.state().queue.length === 1 && m.state().current.pl === 'own', 'заказ при плейлисте ждёт окончания текущего трека');
+  m.ended(); ok(m.state().current.by === 'B' && !m.state().current.pl, 'после текущего играет заказ');
+  ok(m.state().playlist.total === 1, 'заказанный трек не попал в плейлист сам');
+  m.ended(); ok(m.state().current && m.state().current.pl === 'own', 'после заказов снова плейлист');
+  await m.onChat(msg('!диз', mod)); ok(m.state().playlist.total === 0 && /Убрано/.test(said[said.length - 1]), '!диз убирает трек');
+  fresh(); m.update({ plOn: false }); m.like({ id: 'LLLLLLLLLLL', title: 'Т' }); m.skip(); ok(!m.state().current, 'плейлист выключен: тишина');
+  // готовый плейлист YouTube
+  const html2 = '<script>var ytInitialData = ' + JSON.stringify({ metadata: { playlistMetadataRenderer: { title: 'Lo-fi' } }, c: [{ playlistVideoRenderer: { videoId: 'P1P1P1P1P1P', title: { runs: [{ text: 'Один' }] }, shortBylineText: { runs: [{ text: 'К' }] }, lengthText: { simpleText: '3:00' } } }, { playlistVideoRenderer: { videoId: 'P2P2P2P2P2P', title: { runs: [{ text: 'Два' }] }, lengthText: { simpleText: '1:00' } } }, { playlistVideoRenderer: { videoId: 'P3P3P3P3P3P', title: { runs: [{ text: 'Удалён' }] } } }] }) + ';</script>';
+  const pp = m.parsePlaylist(html2); ok(pp.name === 'Lo-fi' && pp.tracks.length === 2 && pp.tracks[0].seconds === 180, 'разбор плейлиста YouTube (недоступные ролики пропускаются)');
+  ok(m.listIdFrom('https://www.youtube.com/playlist?list=PLabcdefghij12') === 'PLabcdefghij12' && m.listIdFrom('мусор') === '', 'id плейлиста из ссылки');
+  fresh(); m.init({ noFile: true, say: async () => true, playlist: async () => pp }); m.update({ plShuffle: false });
+  await m.playlistAdd('https://www.youtube.com/playlist?list=PLabcdefghij12');
+  ok(m.state().playlist.name === 'Lo-fi' && m.state().current.id === 'P1P1P1P1P1P', 'добавленный плейлист выбирается и начинает играть');
+  m.like(); ok(m.state().lists.find((l) => l.own).count === 1, '!лайк кладёт трек в свой плейлист, а не в готовый');
+  await m.onChat(msg('!диз', mod)); ok(m.state().playlist.total === 1, '!диз в готовом плейлисте убирает трек из ротации');
+  m.playlistSelect('own'); ok(m.state().playlist.own, 'переключение на свой плейлист');
+
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

@@ -28,6 +28,17 @@
   function say(m, bad) { const e = $('#muMsg'); e.textContent = m || ''; e.className = 'form-message' + (bad ? ' error' : m ? ' success' : ''); }
   function flash(m) { const e = $('#muSaved'); e.textContent = m; setTimeout(() => { e.textContent = ''; }, 1400); }
 
+  // Плейлист показывается в очереди после заказов: серые строки, у играющего отметка
+  function plRows(s) {
+    const p = s.playlist; if (!p || !p.total || !s.settings.plOn) return '';
+    const curId = s.current && s.current.pl ? s.current.id : '';
+    const rows = p.tracks.slice(0, 60).map((t) => '<li class="pl' + (t.id === curId ? ' now' : '') + '"><span class="n">' + (t.id === curId ? '▶' : '♫') + '</span><img src="https://i.ytimg.com/vi/' + esc(t.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(t.title) + '</b><small>' + esc(t.channel) + (t.seconds ? ' · ' + fmt(t.seconds) : '') + '</small></span><button type="button" data-plrm="' + esc(t.id) + '" title="' + (p.own ? 'Убрать из плейлиста' : 'Пропускать этот трек') + '">×</button></li>').join('');
+    return '<li class="plh">♫ Плейлист «' + esc(p.name) + '» · ' + p.total + '</li>' + rows + (p.total > 60 ? '<li class="plh">…и ещё ' + (p.total - 60) + '</li>' : '');
+  }
+  function plPopup(s) {
+    const ul = $('#muPlList'); if (!ul || $('#muPlOv').hidden) return;
+    ul.innerHTML = (s.lists || []).map((l) => '<li class="' + (s.playlist && s.playlist.id === l.id ? 'on' : '') + '"><button type="button" class="sel" data-plsel="' + esc(l.id) + '"><b>' + (l.own ? '♥ ' : '') + esc(l.name) + '</b><small>' + l.count + ' треков' + (l.own ? ' · пополняется командой !лайк' : ' · YouTube') + '</small></button>' + (l.own ? '' : '<button type="button" class="del" data-pldel="' + esc(l.id) + '" title="Удалить плейлист">×</button>') + '</li>').join('');
+  }
   let embUid = 0, embPaused = false, posRef = null, lastSt = null;
   function render(s) {
     st = s; lastSt = s;
@@ -36,7 +47,7 @@
     const cur = s.current, on = !!(cur && s.settings.showVideo);
     $('#muTitle').textContent = cur ? cur.title : 'Очередь пуста';
     $('#muMeta').textContent = cur ? [cur.channel, cur.by ? 'заказал ' + cur.by : ''].filter(Boolean).join(' · ') + (s.paused ? ' · на паузе' : '') : 'Напиши в чате !муз название — трек сразу заиграет.';
-    $('#muTag').textContent = cur ? (s.paused ? 'На паузе' : 'Сейчас играет') : 'Тишина';
+    $('#muTag').textContent = cur ? (s.paused ? 'На паузе' : cur.pl ? 'Из плейлиста' : 'Сейчас играет') : 'Тишина';
     const badge = $('#muBadge'); badge.textContent = on ? 'На экране стрима' : 'Не на экране'; badge.classList.toggle('live', on);
     setIb($('#muShow'), s.settings.showVideo ? 'eyeoff' : 'eye', s.settings.showVideo ? 'Скрыть с экрана' : 'Показать на экране');
     $('#muShow').classList.toggle('mu-ib-main', !s.settings.showVideo);
@@ -54,12 +65,13 @@
     ph.hidden = !!want;
     if (!want) { ph.innerHTML = cur ? '<span>⏸</span><b>Пауза</b><small>' + esc(cur.title) + '</small>' : '<span>♪</span><b>Тишина</b><small>Ждём заказы из чата</small>'; }
     $('#muCount').textContent = s.queue.length ? s.queue.length : '';
-    $('#muQueue').innerHTML = s.queue.length ? s.queue.map((q, i) => '<li draggable="true" data-uid="' + q.uid + '"><span class="grip" aria-hidden="true">⋮⋮</span><span class="n">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(q.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(q.title) + '</b><small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span>' + (q.prio >= 2 ? '<span class="pr">вне очереди</span>' : q.prio === 1 ? '<span class="pr">приоритет</span>' : '') + '<button type="button" class="ban" data-ban="' + q.uid + '" title="В чёрный список">⛔</button><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : '<li class="empty">Очередь пуста</li>';
+    $('#muQueue').innerHTML = (s.queue.length ? s.queue.map((q, i) => '<li draggable="true" data-uid="' + q.uid + '"><span class="grip" aria-hidden="true">⋮⋮</span><span class="n">' + (i + 1) + '</span><img src="https://i.ytimg.com/vi/' + esc(q.id) + '/default.jpg" alt=""><span class="t"><b>' + esc(q.title) + '</b><small>' + esc(q.by) + (q.seconds ? ' · ' + fmt(q.seconds) : '') + '</small></span>' + (q.prio >= 2 ? '<span class="pr">вне очереди</span>' : q.prio === 1 ? '<span class="pr">приоритет</span>' : '') + '<button type="button" class="ban" data-ban="' + q.uid + '" title="В чёрный список">⛔</button><button type="button" data-rm="' + q.uid + '" title="Убрать">×</button></li>').join('') : (s.playlist && s.playlist.total && s.settings.plOn ? '' : '<li class="empty">Очередь пуста</li>')) + plRows(s);
     $('#muBan').disabled = !cur;
     const bl = s.settings.blTracks || [];
     $('#muBl').innerHTML = bl.length ? bl.map((t) => '<li><span>' + esc(t.title || t.id) + '</span><button type="button" data-unban="' + esc(t.id) + '">убрать</button></li>').join('') : '<li class="none">Пока пусто</li>';
     paintView(s.settings);
     fields.forEach((f) => { const v = s.settings[f.dataset.m]; if (f.type === 'checkbox') f.checked = !!v; else if (document.activeElement !== f) f.value = v == null ? '' : v; });
+    plPopup(s);
     tickProg();
   }
   function tickProg() {
@@ -78,6 +90,25 @@
   $('#muSkip').addEventListener('click', () => act('/api/music/skip'));
   $('#muClear').addEventListener('click', () => act('/api/music/clear'));
   $('#muStop').addEventListener('click', () => act('/api/music/stop'));
+  $('#muQueue').addEventListener('click', (e) => { const b = e.target.closest('[data-plrm]'); if (b && lastSt && lastSt.playlist) act('/api/music/pl/remove', { list: lastSt.playlist.id, id: b.dataset.plrm }); });
+  const plOv = $('#muPlOv');
+  $('#muPlBtn').addEventListener('click', () => { plOv.hidden = false; if (lastSt) plPopup(lastSt); });
+  plOv.addEventListener('click', (e) => {
+    if (e.target.closest('[data-plclose]')) { plOv.hidden = true; return; }
+    const sel = e.target.closest('[data-plsel]'), del = e.target.closest('[data-pldel]');
+    if (sel) act('/api/music/pl/select', { id: sel.dataset.plsel });
+    if (del && confirmDel(del)) act('/api/music/pl/delete', { id: del.dataset.pldel });
+  });
+  // удаление плейлиста: первый клик просит подтвердить, второй удаляет
+  function confirmDel(b) { if (b.dataset.sure) return true; b.dataset.sure = '1'; b.textContent = 'удалить?'; setTimeout(() => { b.dataset.sure = ''; b.textContent = '×'; }, 2500); return false; }
+  function plAdd() {
+    const u = $('#muPlUrl').value.trim(); if (!u) return;
+    const b = $('#muPlAdd'), m = $('#muPlMsg'); b.disabled = true; m.textContent = 'Загружаю плейлист…'; m.className = 'form-message';
+    post('/api/music/pl/add', { url: u }).then((r) => { if (r && r.success) { render(r); $('#muPlUrl').value = ''; m.textContent = 'Плейлист добавлен и выбран'; m.className = 'form-message success'; } else { m.textContent = (r && r.error) || 'Не получилось'; m.className = 'form-message error'; } }).catch(() => { m.textContent = 'Не удалось связаться с программой.'; m.className = 'form-message error'; }).then(() => { b.disabled = false; });
+  }
+  $('#muPlAdd').addEventListener('click', plAdd);
+  $('#muPlUrl').addEventListener('keydown', (e) => { if (e.key === 'Enter') plAdd(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !plOv.hidden) plOv.hidden = true; });
   $('#muQueue').addEventListener('click', (e) => { const b = e.target.closest('[data-rm]'); if (b) act('/api/music/remove', { uid: Number(b.dataset.rm) }); });
   $('#muQueue').addEventListener('click', (e) => { const b = e.target.closest('[data-ban]'); if (!b || !lastSt) return; const q = lastSt.queue.find((x) => x.uid === Number(b.dataset.ban)); if (q) act('/api/music/ban', { id: q.id, title: q.title }); });
   $('#muBan').addEventListener('click', () => { if (lastSt && lastSt.current) act('/api/music/ban', { id: lastSt.current.id, title: lastSt.current.title }); });
@@ -159,12 +190,29 @@
   const DEMO = { title: 'дора — Дорадура', by: 'Зритель', cover: '', cur: 52, dur: 130, playing: true };
   const skinCard = (n, th, label, key) => '<button type="button" class="mu-sk" data-k="' + n + '" data-th="' + th + '" title="' + label + '"><div class="fit">' + MusicSkins.html(n, th) + '</div><em>' + (key || n + '. ' + label) + '</em></button>';
   let skinKey = '';
+  // в карточке остаётся только выбранный вид и кнопка «Все виды»; полный выбор — во всплывающем окне, чтобы страница не росла
   function renderSkins(s) {
     const k = s.skin + ':' + (s.skinTheme || 0); if (k === skinKey) return; skinKey = k;
-    skinsEl.innerHTML = MusicSkins.list.map((d, i) => { const on = s.skin === i + 1, th = on && d.themes ? (s.skinTheme || 0) : 0; return skinCard(i + 1, th, d.name, (i + 1) + '. ' + d.name + (on && d.themes ? ' · ' + d.themes[Math.min(th, d.themes.length - 1)] : '')); }).join('');
+    const d = MusicSkins.list[s.skin - 1] || MusicSkins.list[0], th = d.themes ? Math.min(s.skinTheme || 0, d.themes.length - 1) : 0;
+    skinsEl.innerHTML = skinCard(s.skin, th, d.name, s.skin + '. ' + d.name + (d.themes ? ' · ' + d.themes[th] : '')).replace('class="mu-sk"', 'class="mu-sk on"') + '<button type="button" class="btn btn-ghost btn-sm mu-skall" id="muSkAllBtn">Все виды (' + MusicSkins.list.length + ')</button>';
     skinsEl.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, DEMO));
     fitSkins();
   }
+  const skOv = $('#muSkOv'), skG = $('#muSkAll');
+  function openSkins() {
+    const cur = st ? st.settings.skin : 0;
+    skG.innerHTML = MusicSkins.list.map((d, i) => skinCard(i + 1, 0, d.name, (i + 1) + '. ' + d.name + (d.themes ? ' · темы' : '')).replace('class="mu-sk"', 'class="mu-sk' + (i + 1 === cur ? ' on' : '') + '"')).join('');
+    skG.querySelectorAll('.mp').forEach((m) => MusicSkins.fill(m, DEMO));
+    skOv.hidden = false; setTimeout(fitSkins, 30);
+  }
+  const closeSkins = () => { skOv.hidden = true; skG.innerHTML = ''; };
+  skOv.addEventListener('click', (e) => {
+    if (e.target.closest('[data-skclose]')) { closeSkins(); return; }
+    const b = e.target.closest('.mu-sk'); if (!b) return; const n = Number(b.dataset.k), d = MusicSkins.list[n - 1];
+    closeSkins();
+    if (d && d.themes) setS({ skin: n, skinTheme: st && st.settings.skin === n ? (st.settings.skinTheme || 0) : 0 }).then(() => openThemes(n)); else setS({ skin: n });
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !skOv.hidden) closeSkins(); });
   // окно выбора темы: всплывает поверх страницы, у каждого варианта живое превью
   const thOv = $('#muThemeOv'), thG = $('#muThg');
   function openThemes(n) {
@@ -185,14 +233,15 @@
   $$('#muView button').forEach((b) => b.addEventListener('click', () => setS({ view: b.dataset.v })));
   $$('#muLine button').forEach((b) => b.addEventListener('click', () => setS({ line: b.dataset.v })));
   skinsEl.addEventListener('click', (e) => {
-    const b = e.target.closest('[data-k]'); if (!b) return; const n = Number(b.dataset.k), d = MusicSkins.list[n - 1];
-    if (d && d.themes) { if (!(st && st.settings.skin === n)) setS({ skin: n, skinTheme: 0 }).then(() => openThemes(n)); else openThemes(n); } else setS({ skin: n });
+    if (e.target.closest('#muSkAllBtn')) { openSkins(); return; }
+    const b = e.target.closest('.mu-sk'); if (!b) return; const n = Number(b.dataset.k), d = MusicSkins.list[n - 1];
+    if (d && d.themes) openThemes(n); else openSkins();
   });
   function paintView(s) {
     $$('#muView button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.view));
     $$('#muLine button').forEach((b) => b.classList.toggle('on', b.dataset.v === s.line));
     renderSkins(s);
-    $$('#muSkins .mu-sk').forEach((b) => b.classList.toggle('on', Number(b.dataset.k) === s.skin));
+    
     $('#muLineBox').hidden = s.view !== 'clip'; $('#muSkinBox').hidden = s.view !== 'player';
     fitSkins();
   }

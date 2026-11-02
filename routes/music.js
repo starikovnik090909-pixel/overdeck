@@ -12,6 +12,11 @@ function main(ctx) {
     try { const r = await musicReward.create(music.getSettings(), (req.body || {}).cost); ok(res, { created: r }); } catch (e) { fail(res, e); }
   });
   app.post('/api/music/reward/sync', async (req, res) => { try { await musicReward.sync(music.getSettings()); } catch (e) { /* статус отдаём как есть */ } ok(res); });
+  app.post('/api/music/pl/select', (req, res) => { music.playlistSelect((req.body || {}).id); ok(res); });
+  app.post('/api/music/pl/add', async (req, res) => { try { await music.playlistAdd((req.body || {}).url); ok(res); } catch (e) { fail(res, e); } });
+  app.post('/api/music/pl/delete', (req, res) => { music.playlistDelete((req.body || {}).id); ok(res); });
+  app.post('/api/music/pl/remove', (req, res) => { const b = req.body || {}; music.playlistRemove(b.list, b.id); ok(res); });
+  app.post('/api/music/pl/like', (req, res) => { music.like(); ok(res); });
   app.post('/api/music/skip', (req, res) => { music.skip(); ok(res); });
   app.post('/api/music/ended', (req, res) => { const b = req.body || {}; if (b.error) music.playFailed(b.uid, b.error).catch(() => {}); else music.ended(b.uid); ok(res); });
   app.post('/api/music/progress', (req, res) => { const b = req.body || {}; music.setPos(b.uid, b.t, b.d); res.json({ success: true }); });

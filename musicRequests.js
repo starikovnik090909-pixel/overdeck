@@ -27,8 +27,12 @@ const DEFAULTS = {
   proxy: '',                        // HTTP-прокси для поиска на YouTube, например http://127.0.0.1:10809
   blWords: '',                      // чёрный список слов (через запятую или с новой строки)
   blTracks: [],                     // чёрный список треков [{id, title}]
+  plOn: true,                       // играть плейлист, когда заказов нет
+  plShuffle: true,                  // перемешивать плейлист
+  likeCommands: 'лайк, like',       // добавить играющий трек в «Мой плейлист» (стример и модераторы)
+  dislikeCommands: 'диз, dislike',  // убрать играющий трек из плейлиста
 };
-const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass'];
+const BOOL = ['enabled', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass', 'plOn', 'plShuffle'];
 const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
@@ -45,6 +49,10 @@ let paused = false;
 let pos = { uid: 0, t: 0, d: 0, at: 0 }; // позиция воспроизведения, её присылает страница плеера
 let queue = [];
 let history = [];
+// Плейлисты: «Мой плейлист» (own, пополняется командой !лайк) и готовые плейлисты с YouTube. Играют, когда в очереди нет заказов.
+let pls = { active: 'own', lists: [{ id: 'own', name: 'Мой плейлист', own: true, tracks: [], hidden: [] }] };
+let plLast = '', plRecent = [];
+let playlistFetcher = null;
 const lastAt = new Map();    // login → время последнего заказа
 
 function sanitize(src, base) {
@@ -54,7 +62,7 @@ function sanitize(src, base) {
   if (typeof b.proxy === 'string') { const px = b.proxy.trim().slice(0, 200); out.proxy = !px || /^https?:\/\/[^\s]+$/i.test(px) ? px : (/^[^\s:\/]+:\d{2,5}$/.test(px) ? 'http://' + px : out.proxy); }
   if (typeof b.blWords === 'string') out.blWords = b.blWords.slice(0, 3000);
   if (Array.isArray(b.blTracks) && b.__keepTracks) out.blTracks = b.blTracks;
-  ['commands', 'skipCommands'].forEach((k) => { if (typeof b[k] === 'string') out[k] = b[k].replace(/[!\r\n]/g, '').slice(0, 80); });
+  ['commands', 'skipCommands', 'likeCommands', 'dislikeCommands'].forEach((k) => { if (typeof b[k] === 'string') out[k] = b[k].replace(/[!\r\n]/g, '').slice(0, 80); });
   if (typeof b.accent === 'string' && /^#[0-9a-fA-F]{6}$/.test(b.accent)) out.accent = b.accent.toLowerCase();
   Object.keys(NUM).forEach((k) => { if (b[k] != null && isFinite(Number(b[k]))) out[k] = Math.max(NUM[k][0], Math.min(NUM[k][1], Math.round(Number(b[k])))); });
   Object.keys(ENUM).forEach((k) => { if (ENUM[k].includes(b[k])) out[k] = b[k]; });
@@ -77,6 +85,9 @@ function load() {
     current = ok(st.current) ? st.current : null;
     seq = Math.max(Number(st.seq) || 0, current ? current.uid : 0, ...queue.map((q) => q.uid || 0));
   }
+  const pj = readJson('music_playlists.json');
+  if (pj && Array.isArray(pj.lists)) { pls = { active: String(pj.active || 'own'), lists: pj.lists.filter((l) => l && l.id && Array.isArray(l.tracks)) }; }
+  plEnsure();
   const pl = readJson('music_plays.json');
   plays = pl && Array.isArray(pl.plays) ? pl.plays.slice(-PLAYS_MAX) : [];
 }
@@ -85,9 +96,10 @@ function saveNow() {
   if (!useFile) return;
   try { fs.writeFileSync(file('music_state.json'), JSON.stringify({ seq, current, queue })); } catch (e) { /* не критично */ }
 }
+function savePlsNow() { if (!useFile) return; try { fs.writeFileSync(file('music_playlists.json'), JSON.stringify(pls)); } catch (e) { /* не критично */ } }
 function savePlaysNow() { if (!useFile) return; try { fs.writeFileSync(file('music_plays.json'), JSON.stringify({ plays })); } catch (e) { /* не критично */ } }
 function changed() { if (useFile) { clearTimeout(saveT); saveT = setTimeout(saveNow, 400); } onChange(); }
-function flush() { clearTimeout(saveT); clearTimeout(playsT); saveNow(); savePlaysNow(); }
+function flush() { clearTimeout(saveT); clearTimeout(playsT); saveNow(); savePlaysNow(); savePlsNow(); }
 
 function init(opts) {
   const o = opts || {};
@@ -96,11 +108,12 @@ function init(opts) {
   if (o.onChange) onChange = o.onChange;
   if (o.onOrder) onOrder = o.onOrder;
   if (o.onSettings) onSettings = o.onSettings;
+  if (o.playlist) playlistFetcher = o.playlist;
   if (o.dir) DIR = o.dir;
   useFile = !o.noFile;
   if (useFile) load();
 }
-function reset() { current = null; paused = false; queue = []; history = []; plays = []; lastAt.clear(); cfg = Object.assign({}, DEFAULTS); cfg.blTracks = []; }
+function reset() { pls = { active: 'own', lists: [{ id: 'own', name: 'Мой плейлист', own: true, tracks: [], hidden: [] }] }; plLast = ''; plRecent = []; current = null; paused = false; queue = []; history = []; plays = []; lastAt.clear(); cfg = Object.assign({}, DEFAULTS); cfg.blTracks = []; }
 function getSettings() { return Object.assign({}, cfg, { blTracks: cfg.blTracks.slice() }); }
 function update(patch) { cfg = sanitize(patch, cfg); persist(); onChange(); try { onSettings(getSettings()); } catch (e) { /* не критично */ } return getSettings(); }
 
@@ -205,7 +218,8 @@ function startNext() {
   if (current) history.unshift(current), history = history.slice(0, 10);
   current = queue.shift() || null;
   paused = false;
-  if (current) { recordPlay(current); if (cfg.autoShow) cfg.showVideo = true; }
+  if (!current) { const t = pickPlTrack(); if (t) current = { alts: [], uid: ++seq, id: t.id, title: t.title, channel: t.channel || '', seconds: t.seconds || 0, by: '', login: '', prio: 0, pl: pls.active }; }
+  if (current) { if (!current.pl) recordPlay(current); if (cfg.autoShow) cfg.showVideo = true; }
   changed();
   return current;
 }
@@ -242,8 +256,107 @@ function setPos(uid, t, d) { if (current && Number(uid) === current.uid) pos = {
 function setPaused(p) { paused = !!p; onChange(); }
 function setShow(v) { cfg.showVideo = !!v; persist(); onChange(); return cfg.showVideo; }
 function stop() { queue = []; if (current) history.unshift(current), history = history.slice(0, 10); current = null; paused = false; changed(); }
+
+/* ---------- Плейлисты ---------- */
+
+function plOwn() { return pls.lists.find((l) => l.own); }
+function plEnsure() {
+  if (!plOwn()) pls.lists.unshift({ id: 'own', name: 'Мой плейлист', own: true, tracks: [], hidden: [] });
+  pls.lists.forEach((l) => { if (!Array.isArray(l.hidden)) l.hidden = []; });
+  if (!pls.lists.some((l) => l.id === pls.active)) pls.active = 'own';
+}
+const plActive = () => pls.lists.find((l) => l.id === pls.active) || plOwn();
+const plVisible = (l) => l.tracks.filter((t) => !l.hidden.includes(t.id) && !isBanned(t.id) && !badWord(t.title, t.channel));
+function plView() { const l = plActive(); if (!l) return null; const v = plVisible(l); return { id: l.id, name: l.name, own: !!l.own, total: v.length, tracks: v.slice(0, 300), on: cfg.plOn }; }
+function plSave() { if (useFile) { clearTimeout(plT); plT = setTimeout(savePlsNow, 400); } changed(); }
+let plT = 0;
+/** Следующий трек активного плейлиста: по кругу или вперемешку. */
+function pickPlTrack() {
+  if (!cfg.plOn) return null;
+  const l = plActive(); if (!l) return null;
+  const tr = plVisible(l); if (!tr.length) return null;
+  let t;
+  if (cfg.plShuffle && tr.length > 1) {
+    const pool = tr.filter((x) => !plRecent.includes(x.id));
+    const src = pool.length ? pool : tr;
+    t = src[Math.floor(Math.random() * src.length)];
+  } else { const i = tr.findIndex((x) => x.id === plLast); t = tr[(i + 1) % tr.length]; }
+  plLast = t.id; plRecent.push(t.id); plRecent = plRecent.slice(-Math.min(tr.length - 1, 40));
+  return t;
+}
+/** !лайк: трек в начало «Моего плейлиста». */
+function like(t) {
+  const own = plOwn(), tr = t || current; if (!tr || !tr.id) return null;
+  const i = own.tracks.findIndex((x) => x.id === tr.id); if (i >= 0) own.tracks.splice(i, 1);
+  own.tracks.unshift({ id: tr.id, title: tr.title, channel: tr.channel || '', seconds: tr.seconds || 0 });
+  own.tracks = own.tracks.slice(0, 500); plSave();
+  return { title: tr.title, again: i >= 0 };
+}
+/** !диз: убрать трек из плейлиста; в готовом плейлисте YouTube он просто выпадает из ротации. */
+function dislike(t) {
+  const tr = t || current; if (!tr || !tr.id) return null;
+  const own = plOwn(); let done = false;
+  const i = own.tracks.findIndex((x) => x.id === tr.id); if (i >= 0) { own.tracks.splice(i, 1); done = true; }
+  const l = tr.pl && tr.pl !== 'own' ? pls.lists.find((x) => x.id === tr.pl) : null;
+  if (l && !l.hidden.includes(tr.id)) { l.hidden.push(tr.id); done = true; }
+  if (done) plSave();
+  return { title: tr.title, done };
+}
+function playlistRemove(listId, trackId) {
+  const l = pls.lists.find((x) => x.id === listId); if (!l) return;
+  if (l.own) l.tracks = l.tracks.filter((x) => x.id !== trackId); else if (!l.hidden.includes(trackId)) l.hidden.push(trackId);
+  plSave();
+}
+function playlistSelect(id) {
+  if (!pls.lists.some((l) => l.id === id)) return;
+  pls.active = id; plLast = ''; plRecent = []; plSave();
+  if (!current && cfg.plOn) startNext();
+}
+function playlistDelete(id) {
+  const l = pls.lists.find((x) => x.id === id); if (!l || l.own) return;
+  pls.lists = pls.lists.filter((x) => x.id !== id); if (pls.active === id) { pls.active = 'own'; plLast = ''; plRecent = []; }
+  plSave();
+}
+function listIdFrom(text) { const m = String(text || '').match(/[?&]list=([A-Za-z0-9_-]{10,60})/) || String(text || '').trim().match(/^((?:PL|OL|UU|FL|RD)[A-Za-z0-9_-]{8,60})$/); return m ? m[1] : ''; }
+/** Треки и название плейлиста со страницы YouTube (первая сотня, остальное страница подгружает отдельно). */
+function parsePlaylist(html) {
+  const m = String(html || '').match(/var ytInitialData\s*=\s*(\{.+?\});\s*<\/script>/s);
+  if (!m) return { name: '', tracks: [] };
+  let data; try { data = JSON.parse(m[1]); } catch (e) { return { name: '', tracks: [] }; }
+  const tracks = [], seen = new Set(); let name = '';
+  const txt = (o) => (o && (o.simpleText || ((o.runs || []).map((r) => r.text).join('')))) || '';
+  (function walk(n) {
+    if (!n || typeof n !== 'object' || tracks.length >= 300) return;
+    if (n.playlistMetadataRenderer && !name) name = n.playlistMetadataRenderer.title || '';
+    if (n.playlistVideoRenderer && n.playlistVideoRenderer.videoId) {
+      const v = n.playlistVideoRenderer, len = v.lengthText && v.lengthText.simpleText;
+      if (len && !seen.has(v.videoId)) { seen.add(v.videoId); tracks.push({ id: v.videoId, title: txt(v.title), channel: txt(v.shortBylineText), seconds: parseSeconds(len) }); }
+      return;
+    }
+    if (Array.isArray(n)) n.forEach(walk); else Object.keys(n).forEach((k) => walk(n[k]));
+  })(data);
+  return { name: String(name).slice(0, 80), tracks };
+}
+async function playlistAdd(url) {
+  const ytId = listIdFrom(url); if (!ytId) throw new Error('Вставь ссылку на плейлист YouTube (в ней есть list=…).');
+  if (pls.lists.length >= 20) throw new Error('Плейлистов уже 20, удали ненужные.');
+  let r;
+  if (playlistFetcher) r = await playlistFetcher(ytId);
+  else {
+    const hd = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36', 'Accept-Language': 'ru-RU,ru;q=0.9' };
+    const res = await getText('https://www.youtube.com/playlist?hl=ru&gl=RU&list=' + encodeURIComponent(ytId), hd, cfg.proxy || '', 15000);
+    if (res.status !== 200) throw new Error('YouTube ответил ' + res.status + ' (нужен VPN или прокси).');
+    r = parsePlaylist(res.body);
+  }
+  if (!r.tracks.length) throw new Error('В плейлисте не нашлось доступных роликов (он может быть закрытым).');
+  pls.lists = pls.lists.filter((l) => l.ytId !== ytId);
+  const l = { id: 'yt_' + ytId, ytId, name: r.name || 'Плейлист YouTube', own: false, tracks: r.tracks, hidden: [] };
+  pls.lists.push(l); pls.active = l.id; plLast = ''; plRecent = []; plSave();
+  if (!current && cfg.plOn) startNext();
+  return l;
+}
 function state() {
-  return { settings: getSettings(), paid: paidMode(), paused, pos: current && pos.uid === current.uid ? pos : null, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
+  return { settings: getSettings(), paid: paidMode(), playlist: plView(), lists: pls.lists.map((l) => ({ id: l.id, name: l.name, own: !!l.own, count: l.tracks.length })), paused, pos: current && pos.uid === current.uid ? pos : null, current, queue: queue.slice(), history: history.slice(), ts: Date.now() };
 }
 const fmt = (s) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : '');
 
@@ -330,6 +443,13 @@ async function onChat(m) {
     if (!(roles.broadcaster || roles.mod)) return true;
     if (!current) return true;
     const t = current.title; skip(); await reply(`⏭ Пропущено: ${t}`); return true;
+  }
+  if (words(cfg.likeCommands).includes(cmd) || words(cfg.dislikeCommands).includes(cmd)) {
+    if (!(roles.broadcaster || roles.mod || owner)) return true;
+    if (!current) { await reply('Сейчас ничего не играет.'); return true; }
+    if (words(cfg.likeCommands).includes(cmd)) { const r = like(); await reply(r.again ? `♥ «${r.title.slice(0, 50)}» уже в плейлисте, поднял наверх` : `♥ В «Мой плейлист»: ${r.title.slice(0, 60)}`); }
+    else { const r = dislike(); await reply(r.done ? `🗑 Убрано из плейлиста: ${r.title.slice(0, 60)}` : `«${r.title.slice(0, 50)}» не из плейлиста, убирать нечего.`); }
+    return true;
   }
   if (cmd === 'отмена' || cmd === 'cancel') {
     const login = String(m.login || name).toLowerCase();
@@ -454,4 +574,4 @@ async function checkYoutube() {
   catch (e) { return { ok: false, ms: Date.now() - t0, error: String((e && e.message) || e) }; }
 }
 
-module.exports = { isOwner, paidMode, playFailed, checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };
+module.exports = { like, dislike, playlistAdd, playlistSelect, playlistDelete, playlistRemove, parsePlaylist, listIdFrom, isOwner, paidMode, playFailed, checkYoutube, DEFAULTS, init, reset, getSettings, update, state, addByQuery, onChat, onPoints, onDonation, ended, setPos, skip, remove, clear, move, setPaused, setShow, stop, banTrack, unbanTrack, stats, chart, normTitle, sameSong, sayChart, flush, parseResults, videoIdFrom, parseSeconds };

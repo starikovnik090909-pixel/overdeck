@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
-<link rel="stylesheet" href="music.css?v=12">
+<link rel="stylesheet" href="music.css?v=15">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3127,7 +3127,7 @@
       <div class="mu-grid">
         <div class="mu-left">
         <section class="card ui3-card mu-card">
-          <div class="mu-h"><h4 class="ex-h">Очередь <span class="mu-cnt" id="muCount"></span></h4><div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div></div>
+          <div class="mu-h"><h4 class="ex-h">Очередь <span class="mu-cnt" id="muCount"></span></h4><div class="mu-btns"><button class="btn btn-ghost btn-sm" type="button" id="muPlBtn" title="Плейлисты: музыка, когда нет заказов">♫ Плейлисты</button><button class="btn btn-ghost btn-sm" type="button" id="muClear">Очистить</button><button class="btn btn-ghost btn-sm" type="button" id="muStop">Остановить всё</button></div></div>
           <div class="mu-add"><input type="text" id="muQuery" maxlength="200" placeholder="Добавить: название песни или ссылка на YouTube"><button class="btn btn-secondary" type="button" id="muAdd">Добавить</button></div>
           <div class="form-message" id="muMsg"></div>
           <ol class="mu-queue" id="muQueue"></ol>
@@ -3158,6 +3158,8 @@
               <label><em>Макс. длина клипа, мин</em><input type="number" data-m="maxMinutes" min="1" max="60"></label>
               <label><em>Команды заказа</em><input type="text" data-m="commands" maxlength="80"></label>
               <label><em>Команды «пропустить»</em><input type="text" data-m="skipCommands" maxlength="80"></label>
+<label><em>Команды «в плейлист»</em><input type="text" data-m="likeCommands" maxlength="80"></label>
+<label><em>Команды «убрать из плейлиста»</em><input type="text" data-m="dislikeCommands" maxlength="80"></label>
             </div>
           </details>
         </section>
@@ -3210,6 +3212,24 @@
       <div class="mu-modal" id="muThemeOv" hidden>
         <div class="mu-dim" data-tclose></div>
         <div class="mu-mbox mu-thbox"><h3 id="muThTitle" class="mu-thh">Тема плеера</h3><div class="mu-skins mu-thg" id="muThg"></div></div>
+      </div>
+
+      <div class="mu-modal" id="muSkOv" hidden>
+        <div class="mu-dim" data-skclose></div>
+        <div class="mu-mbox mu-skbox"><button type="button" class="mu-x" data-skclose aria-label="Закрыть">×</button><h3 class="mu-thh">Вид плеера</h3><div class="mu-skins mu-skg" id="muSkAll"></div></div>
+      </div>
+
+      <div class="mu-modal" id="muPlOv" hidden>
+        <div class="mu-dim" data-plclose></div>
+        <div class="mu-mbox mu-plbox"><button type="button" class="mu-x" data-plclose aria-label="Закрыть">×</button>
+          <h3 class="mu-thh">Плейлисты</h3>
+          <p class="ex-sm">Играют, когда в очереди нет заказов. Заказ из чата встаёт следующим после текущего трека и в плейлист не попадает. Выбранный плейлист показывается в очереди.</p>
+          <div class="mu-qrow"><label class="mu-sw"><input type="checkbox" data-m="plOn"><i></i><span>Играть, когда нет заказов</span></label><label class="mu-sw"><input type="checkbox" data-m="plShuffle"><i></i><span>Перемешивать</span></label></div>
+          <ul class="mu-pll" id="muPlList"></ul>
+          <div class="mu-add"><input type="text" id="muPlUrl" maxlength="200" placeholder="Ссылка на плейлист YouTube"><button class="btn btn-secondary" type="button" id="muPlAdd">Добавить</button></div>
+          <div class="form-message" id="muPlMsg"></div>
+          <p class="ex-sm"><b>!лайк</b> кладёт играющий трек в начало «Моего плейлиста», <b>!диз</b> убирает его (из плейлиста YouTube трек просто пропадает из ротации). Команды доступны стримеру и модераторам.</p>
+        </div>
       </div>
 
       <div class="mu-drawer" id="muDrawer" hidden>
@@ -3801,7 +3821,7 @@
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
-<script src="music.js?v=14"></script>
+<script src="music.js?v=16"></script>
 <script src="whatsnew.js?v=40"></script>
 </body>
 </html>
