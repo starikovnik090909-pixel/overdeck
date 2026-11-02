@@ -3248,11 +3248,11 @@
             </section>
             <section class="mu-sp" data-sp="pay" hidden>
               <h4>Способы заказа</h4>
-              <p class="ex-sm">Команда в чате и баллы канала исключают друг друга, выбери один вариант. Донаты включаются отдельно и работают вместе с любым из них. Уже заказанные треки остаются в очереди.</p>
+              <p class="ex-sm">Нажми на способ, чтобы включить или выключить его. Донаты работают вместе с любым способом; команда в чате и баллы канала друг друга заменяют. Уже заказанные треки остаются в очереди.</p>
               <div class="mu-modes" id="muBase">
                 <button type="button" data-base="chat"><b>💬 Командой в чате</b><span>Бесплатно, по правилам из первого раздела</span></button>
                 <button type="button" data-base="pts"><b>🪙 За баллы канала</b><span>Награда на Twitch, команда отключается</span></button>
-                <button type="button" data-base="none"><b>⛔ Без команды и баллов</b><span>Например, только донатами</span></button>
+                <button type="button" data-base="don"><b>💸 За донат</b><span>Название песни в сообщении к донату</span></button>
               </div>
               <div class="mu-opt" id="muPtsBox">
                 <label class="mu-fl"><em>Название награды на Twitch</em><input type="text" data-m="pointsReward" maxlength="100" placeholder="Заказать песню"></label>
@@ -3260,7 +3260,6 @@
                 <p class="ex-sm">Награда с полем «Требовать ввод текста от зрителя». Если выключить заказ музыки, награда отключится сама. Нужен вход через Twitch.</p>
               </div>
               <div class="mu-opt">
-                <label class="tg-sw"><input type="checkbox" data-m="donateOn"><i></i><span>💸 Заказ за донат</span></label>
                 <div class="mu-form" id="muDonBox">
                   <label><em>Заказ от суммы, ₽</em><input type="number" data-m="donateMinRub" min="1" max="100000"></label>
                   <label><em>Вне очереди от, ₽ (0 — выкл.)</em><input type="number" data-m="donatePrioRub" min="0" max="100000"></label>
@@ -3848,7 +3847,7 @@
 <script src="extras.js?v=7"></script>
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
-<script src="music.js?v=17"></script>
+<script src="music.js?v=18"></script>
 <script src="whatsnew.js?v=43"></script>
 </body>
 </html>

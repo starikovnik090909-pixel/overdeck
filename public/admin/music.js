@@ -45,7 +45,7 @@
     const cs = s.settings, on0 = !!cs.enabled, how = [cs.chatOn && 'командой !муз', cs.pointsOn && 'за баллы', cs.donateOn && 'донатом'].filter(Boolean);
     $('#muPwr').classList.toggle('on', on0); $('#muPwrT').textContent = on0 ? 'Заказ включён' : 'Заказ выключен';
     $('#muPwrS').textContent = !on0 ? 'очередь сохраняется, новые заказы не принимаются' : how.length ? 'заказ: ' + how.join(', ') : 'способы заказа выключены';
-    $$('#muBase button').forEach((b) => b.classList.toggle('on', b.dataset.base === (cs.pointsOn ? 'pts' : cs.chatOn ? 'chat' : 'none')));
+    $$('#muBase button').forEach((b) => b.classList.toggle('on', b.dataset.base === 'chat' ? !!cs.chatOn : b.dataset.base === 'pts' ? !!cs.pointsOn : !!cs.donateOn));
     $('#muPtsBox').hidden = !cs.pointsOn; $('#muDonBox').style.display = cs.donateOn ? '' : 'none';
     $('#muPayWarn').hidden = !!how.length;
     const rm = $('#muRwMsg'); if (rm && s.reward) { rm.textContent = s.reward.text || ''; rm.style.color = s.reward.state === 'ok' ? '' : (s.reward.state === 'idle' || s.reward.state === 'wait' ? '' : '#e5484d'); }
@@ -254,7 +254,7 @@
   // --- панель настроек (шестерёнка) ---
   $('#muPwr').addEventListener('click', () => { if (st) setS({ enabled: !st.settings.enabled }); });
   $('#muObs').addEventListener('click', () => { const b = $('#muObs'), v = location.origin + '/music.html'; (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).catch(() => { url.select(); try { document.execCommand('copy'); } catch (e) { /* ссылка есть в настройках */ } }); b.textContent = '✓ Ссылка скопирована'; setTimeout(() => { b.textContent = '🔗 Ссылка для OBS'; }, 1600); });
-  $('#muBase').addEventListener('click', (e) => { const b = e.target.closest('[data-base]'); if (b) setS({ chatOn: b.dataset.base === 'chat', pointsOn: b.dataset.base === 'pts' }); });
+  $('#muBase').addEventListener('click', (e) => { const b = e.target.closest('[data-base]'); if (!b) return; const k = b.dataset.base, c = st.settings; if (k === 'don') setS({ donateOn: !c.donateOn }); else if (k === 'chat') setS(c.chatOn ? { chatOn: false } : { chatOn: true, pointsOn: false }); else setS(c.pointsOn ? { pointsOn: false } : { pointsOn: true, chatOn: false }); });
   $('#muSnav').addEventListener('click', (e) => { const b = e.target.closest('[data-sp]'); if (!b) return; $$('#muSnav button').forEach((x) => x.classList.toggle('on', x === b)); $$('.mu-sp').forEach((x) => { x.hidden = x.dataset.sp !== b.dataset.sp; }); });
   const drawer = $('#muDrawer');
   const openD = (v) => { drawer.hidden = !v; if (v) setTimeout(fitSkins, 30); };
