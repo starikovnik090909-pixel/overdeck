@@ -139,5 +139,30 @@ t('новые ситуации выпуска', () => {
   ['musicEmote', 'musicWord', 'musicWave', 'trackAgain', 'laughWave', 'plusWall', 'capsWave', 'newcomers'].forEach((k) => assert(Lex.T[k].length >= 7, k));
 });
 
+// 8. Переписка двух зрителей не должна забирать заголовок, а главные темы не должны повторяться вечер за вечером
+function quietNight(seed) {
+  let a = seed; const r = () => { a = (a * 1664525 + 1013904223) >>> 0; return a / 4294967296; };
+  const t0 = Date.UTC(2026, 10, 3, 16, 0, 0), chat = [], users = ['kot', 'lena', 'max', 'olya', 'vova', 'dan']; let t = t0;
+  for (let i = 0; i < 260; i++) { t += 20000 + r() * 20000; chat.push({ ts: t, user: users[Math.floor(r() * 6)], text: 'ну вообще интересно как тут всё устроено ' + i }); }
+  for (let i = 0; i < 40; i++) chat.push({ ts: t0 + 50 * 60000 + i * 9000, user: i % 2 ? 'Alpha' : 'Beta', text: 'да ну ты что серьёзно думаешь про это ' + i });
+  chat.sort((x, y) => x.ts - y.ts);
+  const plays = []; for (let i = 0; i < 7; i++) plays.push({ ts: t0 + (20 + i * 15) * 60000, title: 'Track ' + i, user: 'kot' });
+  return { streamer: 'S', startTs: t0, endTs: t, games: [{ name: 'Game', from: t0 }], events: [{ ts: t0 + 30 * 60000, type: 'sub', user: 'sub1', tier: 1 }, { ts: t0 + 80 * 60000, type: 'donation', user: 'don1', amount: 150 }], chat, viewers: [{ ts: t0 + 60000, n: 12 }, { ts: t0 + 3600000, n: 30 }, { ts: t - 60000, n: 25 }], plays };
+}
+t('приоритет: дуэль зрителей не главная тема, темы разнообразны', () => {
+  const mem = { used: {}, nicks: {}, kinds: [] }, fams = [];
+  for (let n = 0; n < 8; n++) {
+    const g = Gazette.build(quietNight(n + 3), { seed: n + 1, memory: mem });
+    assert(!/^duel/.test(g.leadKind), 'дуэль в заголовке: ' + g.headline);
+    fams.push(Gazette.family(g.leadKind)); mem.kinds.push(fams[fams.length - 1]);
+  }
+  assert(new Set(fams).size >= 3, 'мало разнообразия: ' + fams);
+  assert(fams.every((f, i) => i === 0 || f !== fams[i - 1]), 'одна тема подряд: ' + fams);
+});
+t('новые события: у каждого не меньше 8 фраз', () => {
+  const Lex = require('../gazetteLexicon');
+  ['hype', 'gift', 'followWave', 'emoteDay', 'wordDay', 'jukebox', 'growth', 'nightOwl', 'chatterKing'].forEach((k) => assert(Lex.T[k] && Lex.T[k].length >= 8, k));
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);

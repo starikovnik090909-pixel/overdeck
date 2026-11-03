@@ -275,7 +275,7 @@
       const tt = top(cu); if (tt.length < 2) continue;
       const [[ua, na], [ub, nb]] = tt;
       let turns = 0, prevU = null; msgs.forEach(m => { if (m.user !== ua && m.user !== ub) return; if (prevU && prevU !== m.user) turns++; prevU = m.user; });
-      if (na >= 8 && nb >= 8 && (na + nb) / msgs.length >= 0.3 && turns >= 12 && (!A.duel || na + nb > A.duel.n)) {
+      if (na >= 10 && nb >= 10 && (na + nb) / msgs.length >= 0.45 && turns >= 16 && (!A.duel || na + nb > A.duel.n)) {
         const wc2 = {}, f2 = {};
         msgs.filter(m => m.user === ua || m.user === ub).forEach(m => { const seen = new Set(); tokens(m.text).forEach(x => { if (!isWord(x)) return; const st = stem(x); if (seen.has(st)) return; seen.add(st); wc2[st] = (wc2[st] || 0) + 1; f2[st] = f2[st] || x.toLowerCase(); }); });
         const tw2 = top(wc2)[0];
@@ -305,6 +305,25 @@
   const T = Object.assign({}, Lex.T);
   Object.keys(Lex.TOPIC_T).forEach(k => { T['topic_' + k] = Lex.TOPIC_T[k]; });
   const DECK = Lex.DECK;
+
+  // ---------- приоритеты и разнообразие ----------
+  // Семейство истории: одинаковые по сути темы считаются одной, чтобы не ставить их в заголовок вечер за вечером.
+  function family(kind) {
+    if (/^duel/.test(kind)) return 'duel';
+    if (/^topic_|^req/.test(kind)) return 'request';
+    if (/^donation|^donAgain|^donReturn/.test(kind)) return 'donation';
+    if (/^storm/.test(kind)) return 'storm';
+    if (/^music|^trackAgain|^jukebox/.test(kind)) return 'music';
+    if (/^(laughWave|plusWall|capsWave)$/.test(kind)) return 'wave';
+    if (/^(sub|subWave|gift)$/.test(kind)) return 'subs';
+    if (/^(follow|followWave)$/.test(kind)) return 'follows';
+    if (/^game/.test(kind)) return 'game';
+    return kind;
+  }
+  // Болтовня чата — второй эшелон: события канала (рейд, донат, подписки, камбэк, трек…) всегда важнее переписки двух зрителей.
+  const CHAT_TIER = /^(duel|duelWord|topic_.+|reqRepeat|reqAgain|laughWave|plusWall|capsWave|newcomers|regulars|silence|topicShift|chatterKing|wordDay|emoteDay|stormCause)$/;
+  const CHAT_CAP = 32;
+  const RECENT_PENALTY = [16, 10, 6, 3]; // штраф за тему, которая уже была главной в последних выпусках (от самого свежего)
 
   // ---------- сборка ----------
   // Память фраз: memory.used[key] — индексы недавно использованных; берём случайную из свободных.
@@ -389,7 +408,7 @@
     A.games.slice(1).forEach((g, i) => stories.push({ kind: 'game', score: 22, ts: g.from, v: { a: A.games[i].name, b: g.name, time: clock(g.from) }, why: 'смена категории' }));
     if (A.games.length >= 3) stories.push({ kind: 'gameTour', score: 32, ts: A.games[0].from, v: { games: A.games.map(x => '«' + x.name + '»').join(', ').replace(/, ([^,]*)$/, ' и $1') }, why: A.games.length + ' игры за вечер' });
     if (A.mins >= 240) stories.push({ kind: 'marathon', score: 21, ts: A.t0, v: { dur: Math.floor(A.mins / 60) + NB + plural(Math.floor(A.mins / 60), ['час', 'часа', 'часов']) }, why: 'марафон ' + A.mins + ' мин' });
-    if (A.duel) stories.push({ kind: A.duel.word ? 'duelWord' : 'duel', score: 34 + Math.min(14, A.duel.n / 3), ts: A.duel.ts, v: { a: A.duel.a, b: A.duel.b, n: A.duel.n, reps: plural(A.duel.n, ['реплика', 'реплики', 'реплик']), word: A.duel.word || '', time: clock(A.duel.ts) }, why: 'диалог двух зрителей, ' + A.duel.n + ' реплик' });
+    if (A.duel) stories.push({ kind: A.duel.word ? 'duelWord' : 'duel', score: 22 + Math.min(8, A.duel.n / 4), ts: A.duel.ts, v: { a: A.duel.a, b: A.duel.b, n: A.duel.n, reps: plural(A.duel.n, ['реплика', 'реплики', 'реплик']), word: A.duel.word || '', time: clock(A.duel.ts) }, why: 'диалог двух зрителей, ' + A.duel.n + ' реплик' });
     if (A.waves.laugh) stories.push({ kind: 'laughWave', score: 27 + Math.min(14, A.waves.laugh.n), ts: A.waves.laugh.ts, v: { n: A.waves.laugh.n, users: cnt(A.waves.laugh.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.laugh.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.laugh.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.laugh.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.laugh.ts) }, why: 'смех: ' + A.waves.laugh.n + ' сообщ. от ' + A.waves.laugh.users });
     if (A.waves.plus) stories.push({ kind: 'plusWall', score: 26 + Math.min(14, A.waves.plus.n), ts: A.waves.plus.ts, v: { n: A.waves.plus.n, users: cnt(A.waves.plus.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.plus.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.plus.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.plus.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.plus.ts) }, why: 'стена «+»: ' + A.waves.plus.n });
     if (A.waves.caps) stories.push({ kind: 'capsWave', score: 25 + Math.min(12, A.waves.caps.n), ts: A.waves.caps.ts, v: { n: A.waves.caps.n, users: cnt(A.waves.caps.users, ['зритель', 'зрителя', 'зрителей']), msgs: plural(A.waves.caps.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(A.waves.caps.n, ['реплика', 'реплики', 'реплик']), pl: plural(A.waves.caps.n, ['плюс', 'плюса', 'плюсов']), time: clock(A.waves.caps.ts) }, why: 'капс: ' + A.waves.caps.n });
@@ -402,7 +421,7 @@
     let reqN = 0;
     A.topics.forEach(tp => {
       const light = ['hello', 'sleep', 'food', 'pets', 'back', 'support'].indexOf(tp.id) >= 0;
-      stories.push({ kind: 'topic_' + tp.id, score: (light ? 6 : 24) + Math.min(light ? 10 : 22, tp.users * 2.5 + tp.n * 0.8), ts: tp.first, v: { n: tp.n, msgs: plural(tp.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(tp.n, ['реплика', 'реплики', 'реплик']), users: cnt(tp.users, ['зритель', 'зрителя', 'зрителей']), u: tp.top.user }, why: 'тема «' + tp.id + '»: ' + tp.n + ' сообщ., ' + tp.users + ' зрителей' });
+      stories.push({ kind: 'topic_' + tp.id, score: (light ? 6 : 20) + Math.min(light ? 10 : 14, tp.users * 2.5 + tp.n * 0.8), ts: tp.first, v: { n: tp.n, msgs: plural(tp.n, ['сообщение', 'сообщения', 'сообщений']), reps: plural(tp.n, ['реплика', 'реплики', 'реплик']), users: cnt(tp.users, ['зритель', 'зрителя', 'зрителей']), u: tp.top.user }, why: 'тема «' + tp.id + '»: ' + tp.n + ' сообщ., ' + tp.users + ' зрителей' });
       const rep = Object.entries(tp.byU).sort((a, b) => b[1] - a[1])[0];
       if (rep && tp.rep < 99 && reqN < 2) {
         const was = ((nicks[rep[0].toLowerCase()] || {}).t || {})[tp.id] || 0;
@@ -411,8 +430,48 @@
       }
     });
 
-    stories.sort((a, b) => b.score - a.score);
-    stories.forEach(s => { s.title = fill(pickTpl(T[s.kind], s.kind, rand, memory, picks), Object.assign({}, s.v)); });
+
+    // ---------- новые события вечера ----------
+    const hypes = A.events.filter(e => e.type === 'hype');
+    if (hypes.length) stories.push({ kind: 'hype', score: 52, ts: hypes[0].ts, v: { time: clock(hypes[0].ts) }, why: 'хайп-трейн' });
+    const gifts = A.events.filter(e => e.type === 'giftsub');
+    const giftN = gifts.reduce((a, e) => a + (e.count || 1), 0);
+    if (giftN >= 3) stories.push({ kind: 'gift', score: 30 + Math.min(24, giftN * 2), ts: gifts[0].ts, v: { n: giftN, gifts: plural(giftN, ['подарочная подписка', 'подарочные подписки', 'подарочных подписок']), u: gifts.slice().sort((a, b) => (b.count || 1) - (a.count || 1))[0].user || 'зритель' }, why: giftN + ' подарочных подписок' });
+    const fols = A.events.filter(e => e.type === 'follow').sort((a, b) => a.ts - b.ts);
+    for (let i = 0, best = null; i < fols.length; i++) {
+      let j = i; while (j < fols.length && fols[j].ts - fols[i].ts <= 10 * 60000) j++;
+      const n = j - i; if (n >= 5 && (!best || n > best.n)) best = { n, ts: fols[i].ts };
+      if (i === fols.length - 1 && best) stories.push({ kind: 'followWave', score: 27 + Math.min(18, best.n * 2), ts: best.ts, v: { n: best.n, fol: cnt(best.n, ['новый фолловер', 'новых фолловера', 'новых фолловеров']), time: clock(best.ts) }, why: best.n + ' фолловеров за 10 минут' });
+    }
+    if (A.emote && A.emote.n >= 25) stories.push({ kind: 'emoteDay', score: 20 + Math.min(14, A.emote.n / 4), ts: A.t0, v: { emote: A.emote.w, n: A.emote.n }, why: 'эмоут вечера ' + A.emote.w + ' ×' + A.emote.n });
+    if (A.word && A.word.n >= 15) stories.push({ kind: 'wordDay', score: 19 + Math.min(12, A.word.n / 3), ts: A.t0, v: { word: A.word.w, n: A.word.n }, why: 'слово вечера «' + A.word.w + '» ×' + A.word.n });
+    if (A.plays.length >= 5) {
+      const pu = {}; A.plays.forEach(p => { if (p.user) pu[p.user] = (pu[p.user] || 0) + 1; });
+      const tpu = Object.entries(pu).sort((a, b) => b[1] - a[1])[0];
+      stories.push({ kind: 'jukebox', score: 26 + Math.min(16, A.plays.length * 1.5), ts: A.t0, v: { n: A.plays.length, tracks: plural(A.plays.length, ['трек', 'трека', 'треков']), u: tpu ? tpu[0] : 'зритель' }, why: A.plays.length + ' заказанных треков' });
+    }
+    if (A.firstViewers >= 5 && A.lastViewers >= A.firstViewers * 1.6) stories.push({ kind: 'growth', score: 28 + Math.min(14, (A.lastViewers / A.firstViewers) * 3), ts: A.t1, v: { a: A.firstViewers, b: A.lastViewers }, why: 'аудитория ' + A.firstViewers + ' → ' + A.lastViewers });
+    const h0 = Number(clock(A.t0).slice(0, 2));
+    if (h0 >= 0 && h0 < 5 && A.mins >= 60) stories.push({ kind: 'nightOwl', score: 23, ts: A.t0, v: { time: clock(A.t0) }, why: 'ночной эфир, старт в ' + clock(A.t0) });
+    const tk = A.heroes.talker;
+    if (tk && A.chat.length >= 60 && tk.n >= 40 && tk.n / A.chat.length >= 0.2) stories.push({ kind: 'chatterKing', score: 22 + Math.min(10, tk.n / A.chat.length * 20), ts: A.t0, v: { u: tk.user, n: tk.n, msgs: plural(tk.n, ['сообщение', 'сообщения', 'сообщений']) }, why: tk.user + ' написал ' + tk.n + ' из ' + A.chat.length });
+
+    // приоритет: переписка зрителей — второй эшелон, события канала важнее
+    stories.forEach(st => { if (CHAT_TIER.test(st.kind)) st.score = Math.min(st.score, CHAT_CAP); });
+    // разнообразие: тема (её семейство), которая уже была главной в последних выпусках, теряет очки
+    const recent = ((memory && memory.kinds) || []).slice(-RECENT_PENALTY.length).reverse();
+    stories.forEach(st => {
+      const i = recent.indexOf(family(st.kind));
+      st.eff = st.score - (i >= 0 ? RECENT_PENALTY[i] : 0);
+    });
+
+    stories.sort((a, b) => b.eff - a.eff);
+    stories.forEach(s => { s.title = fill(pickTpl(T[s.kind] || T.thin, s.kind, rand, memory, picks), Object.assign({}, s.v)); });
+    // при почти равных кандидатах главную тему выбираем случайно (по зерну выпуска), а не всегда первую
+    if (stories.length > 1) {
+      const cands = stories.filter(x => x.eff >= stories[0].eff - 4 && x.eff >= 35);
+      if (cands.length > 1) { const pick = cands[Math.floor(rand() * cands.length)]; stories.splice(stories.indexOf(pick), 1); stories.unshift(pick); }
+    }
 
     // лид
     let lead = stories[0];
@@ -426,7 +485,7 @@
       };
       base.title = fill(pickTpl(A.mainGame && !q ? T.quiet : T.thin, A.mainGame && !q ? 'quiet' : 'thin', rand, memory, picks), base.v);
       if (A.word && !q && rand() < 0.6) { base.kind = 'quietWord'; base.v.word = A.word.w; base.v.wn = A.word.n; base.title = fill(pickTpl(T.quietWord, 'quietWord', rand, memory, picks), base.v); }
-      if (!lead || lead.score < 30) { stories.unshift(base); lead = base; }
+      if (!lead || lead.score < 26) { stories.unshift(base); lead = base; }
       else confidence = 'mid';
       trace.push('⚠ Сильной темы нет → запасной заголовок, уверенность: ' + confidence);
     }
@@ -438,7 +497,7 @@
     if (lead.kind === 'donation' || lead.kind === 'donationBig' || lead.kind === 'donationTop') deck = lead.text ? '«' + lead.text + '»' : 'Сообщение к донату не приложено.';
 
     // хроника
-    const tl = stories.filter(s => s.score >= 16 && s.kind !== 'stormCause' && s.kind !== 'quietWord' && s.kind !== 'quiet' && s.kind !== 'thin').slice(0, 8).sort((a, b) => a.ts - b.ts)
+    const tl = stories.slice().sort((a, b) => b.score - a.score).filter(s => s.score >= 16 && s.kind !== 'stormCause' && s.kind !== 'quietWord' && s.kind !== 'quiet' && s.kind !== 'thin').slice(0, 8).sort((a, b) => a.ts - b.ts)
       .map(s => ({ time: clock(s.ts), score: Math.round(s.score), kind: s.kind, text: s.title.replace(/ /g, ' ') }));
 
     // лид-абзац
@@ -470,5 +529,5 @@
     };
   }
 
-  return { build, analyze, rng, plural, importance };
+  return { build, analyze, rng, plural, importance, family };
 });

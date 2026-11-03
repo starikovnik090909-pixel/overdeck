@@ -34,11 +34,12 @@ let screen = { format: null, rev: 0, demo: null };
 let pulse = { rev: 0, demo: null };
 let channel = '';
 let cache = { key: '', at: 0, val: null };
-let mem = { used: {}, nicks: {}, streams: 0, committed: 0 };
+let mem = { used: {}, nicks: {}, kinds: [], streams: 0, committed: 0 };
+let lastLead = '';
 let lastPicks = null; // фразы последнего живого выпуска — фиксируются в памяти, когда выпуск показали в OBS
 
 function loadMem() {
-  try { const m = JSON.parse(fs.readFileSync(MEM_FILE, 'utf8')); mem = { used: m.used || {}, nicks: m.nicks || {}, streams: m.streams || 0, committed: m.committed || 0 }; } catch (e) { mem = { used: {}, nicks: {}, streams: 0, committed: 0 }; }
+  try { const m = JSON.parse(fs.readFileSync(MEM_FILE, 'utf8')); mem = { used: m.used || {}, nicks: m.nicks || {}, kinds: Array.isArray(m.kinds) ? m.kinds.slice(-8) : [], streams: m.streams || 0, committed: m.committed || 0 }; } catch (e) { mem = { used: {}, nicks: {}, kinds: [], streams: 0, committed: 0 }; }
 }
 function saveMem() {
   try { const tmp = MEM_FILE + '.tmp'; fs.writeFileSync(tmp, JSON.stringify(mem)); fs.renameSync(tmp, MEM_FILE); } catch (e) { /* память необязательна */ }
@@ -70,6 +71,7 @@ function commitPicks() {
     if (arr.indexOf(idx) < 0) arr.push(idx);
     while (arr.length > 40) arr.shift();
   });
+  if (lastLead) { mem.kinds = (mem.kinds || []).concat(Gazette.family(lastLead)).slice(-8); lastLead = ''; }
   lastPicks = null; saveMem();
 }
 
@@ -177,8 +179,8 @@ function buildIssue(opts) {
   S.streamer = name;
   S.tzOffsetMin = demoId ? 0 : -new Date().getTimezoneOffset(); // время в хронике — по часам этого ПК
   // демо-вечера строим без памяти, живой — с памятью прошлых выпусков и зрителей (копия, чтобы опрос раз в секунду ничего не менял)
-  const g = Gazette.build(S, { seed, masthead: 'ВЕСТНИК ' + name.toUpperCase(), memory: demoId ? null : JSON.parse(JSON.stringify({ used: mem.used, nicks: mem.nicks })) });
-  if (!demoId) lastPicks = g.picks;
+  const g = Gazette.build(S, { seed, masthead: 'ВЕСТНИК ' + name.toUpperCase(), memory: demoId ? null : JSON.parse(JSON.stringify({ used: mem.used, nicks: mem.nicks, kinds: mem.kinds })) });
+  if (!demoId) { lastPicks = g.picks; lastLead = g.leadKind; }
   const gamesByTime = (S.games || []).slice().sort((a, b) => a.from - b.from);
   mainGame = g && gamesByTime.length ? (gamesByTime.slice().sort((a, b) => b.from - a.from)[0].name) : '';
   const mg = (S.games || []).length ? longestGame(S) : '';
