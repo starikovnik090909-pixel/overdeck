@@ -20,9 +20,6 @@
 #tab-soundpad .sp-t.fire{border-color:#3ecf8e;background:rgba(62,207,142,.16);box-shadow:0 0 0 3px rgba(62,207,142,.18)}
 #tab-soundpad .sp-t .em{font-size:30px;line-height:1}
 #tab-soundpad .sp-t .nm{font-size:13px;font-weight:600;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#tab-soundpad .sp-t .rw{position:absolute;left:8px;top:7px;font-size:11px;opacity:.85;background:rgba(255,200,60,.14);border:1px solid rgba(255,200,60,.35);border-radius:99px;padding:0 7px;line-height:17px}
-#tab-soundpad .sp-t .gear{position:absolute;right:6px;top:5px;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:inherit;opacity:0;cursor:pointer;font-size:14px}
-#tab-soundpad .sp-t:hover .gear,#tab-soundpad .sp-t .gear:focus{opacity:.8}#tab-soundpad .sp-t .gear:hover{background:rgba(255,255,255,.1);opacity:1}
 #tab-soundpad .sp-add{border-style:dashed;opacity:.8}
 #tab-soundpad .sp-hint{flex:none;font-size:12px;opacity:.65}#tab-soundpad .sp-hint b{font-weight:600;user-select:all}
 #tab-soundpad .sp-box{width:min(520px,100%)}
@@ -42,3 +39,26 @@
 #tab-soundpad .mu-mbox{position:relative;background:var(--bg-card);border:1px solid var(--divider);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 #tab-soundpad .mu-mbox .mu-x{position:absolute;right:10px;top:8px;z-index:2}
 #tab-soundpad .sp-box{width:min(520px,100%)}
+
+/* кнопки внутри плитки: монета награды, шестерёнка, «на стрим» */
+#tab-soundpad .sp-t .tb{position:absolute;border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;border-radius:8px;padding:0;line-height:1;transition:.15s}
+#tab-soundpad .sp-t .gear{right:5px;top:5px;width:24px;height:24px;font-size:13px;opacity:.45}
+#tab-soundpad .sp-t .gear:hover,#tab-soundpad .sp-t:hover .gear{opacity:.9}#tab-soundpad .sp-t .gear:hover{background:rgba(255,255,255,.12)}
+#tab-soundpad .sp-t .rwb{left:5px;top:5px;min-width:24px;height:24px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:4px;padding:0 4px;opacity:.4;filter:grayscale(1)}
+#tab-soundpad .sp-t:hover .rwb{opacity:.8}#tab-soundpad .sp-t .rwb:hover{background:rgba(255,200,60,.16);opacity:1;filter:none}
+#tab-soundpad .sp-t .rwb i{font-style:normal;font-size:11px;font-weight:700}
+#tab-soundpad .sp-t.marked{border-color:rgba(255,200,60,.55)}
+#tab-soundpad .sp-t.marked .rwb{opacity:1;filter:none;background:rgba(255,200,60,.18);border:1px solid rgba(255,200,60,.5)}
+#tab-soundpad .sp-grid.rw-off .sp-t.marked .rwb{opacity:.6}
+#tab-soundpad .sp-t .live{bottom:5px;left:50%;transform:translateX(-50%);height:20px;padding:0 9px;font-size:10.5px;font-weight:600;background:rgba(255,255,255,.07);opacity:0;white-space:nowrap}
+#tab-soundpad .sp-t:hover .live,#tab-soundpad .sp-t .live:focus{opacity:.95}#tab-soundpad .sp-t .live:hover{background:#e5484d;color:#fff}
+#tab-soundpad .sp-t[role=button]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#tab-soundpad .sp-t .nm{margin-bottom:12px}
+/* панель наград */
+#tab-soundpad .sp-rwbar{flex:none;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#tab-soundpad .sp-rwbar .btn-sm{height:34px;border-radius:10px;font-size:12px}
+#tab-soundpad .sp-mini{display:inline-flex;align-items:center;gap:6px;font-size:12px;opacity:.9}
+#tab-soundpad .sp-mini input{width:74px;height:32px;box-sizing:border-box;text-align:center}
+#tab-soundpad .sp-rwmsg{font-size:12px;opacity:.75;flex:1 1 200px;min-width:0}
+#tab-soundpad .sp-rwpwr.on{border-color:#7a6320;background:rgba(255,200,60,.12);box-shadow:0 0 0 3px rgba(255,200,60,.10)}
+#tab-soundpad .sp-rwpwr.on .sw{background:#f5c542}

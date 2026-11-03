@@ -14,12 +14,23 @@
   $('#spObs').addEventListener('click', () => { (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => flash('Ссылка скопирована'), () => flash('Не удалось скопировать')); });
   function flash(m) { const e = $('#spSaved'); e.textContent = m; clearTimeout(flash.t); flash.t = setTimeout(() => { e.textContent = ''; }, 1600); }
 
+  const nfmt = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   function render(s) {
-    st = s; const c = s.settings;
+    st = s; const c = s.settings, rwOn = !!c.rewardsOn, marked = s.sounds.filter((x) => x.reward.on).length;
     $('#spPwr').classList.toggle('on', !!c.enabled); $('#spPwrT').textContent = c.enabled ? 'Саундпад включён' : 'Саундпад выключен';
     $('#spVol').value = c.volume; $('#spVolV').textContent = c.volume + '%';
-    $('#spGrid').innerHTML = s.sounds.map((x) => '<button type="button" class="sp-t" data-id="' + esc(x.id) + '" title="Играть на стриме">' + (x.reward.on ? '<span class="rw">🪙 ' + x.reward.cost + '</span>' : '') +
-      '<span class="gear" data-gear="' + esc(x.id) + '" title="Настроить">⚙</span><span class="em">' + esc(x.emoji) + '</span><span class="nm">' + esc(x.name) + '</span></button>').join('') +
+    $('#spRwPwr').classList.toggle('on', rwOn); $('#spRwPwrT').textContent = rwOn ? 'Награды за баллы включены' : 'Награды за баллы выключены';
+    if (document.activeElement !== $('#spRwCostAll')) $('#spRwCostAll').value = c.rewardCost;
+    if (document.activeElement !== $('#spRwCdAll')) $('#spRwCdAll').value = c.rewardCooldown;
+    const r = s.reward, bad = r && r.text && !['ok', 'idle', 'wait'].includes(r.state);
+    $('#spRwStat').textContent = (marked ? 'Отмечено звуков: ' + marked : 'Отметь монетой звуки, которые отдаёшь за баллы') + (rwOn && r && r.text ? ' · ' + r.text : '');
+    $('#spRwStat').style.color = bad ? '#e5484d' : '';
+    $('#spGrid').classList.toggle('rw-off', !rwOn);
+    $('#spGrid').innerHTML = s.sounds.map((x) => '<div class="sp-t' + (x.reward.on ? ' marked' : '') + '" role="button" tabindex="0" data-id="' + esc(x.id) + '" title="Нажми, чтобы послушать у себя">' +
+      '<button type="button" class="tb rwb" data-mark="' + esc(x.id) + '" title="' + (x.reward.on ? 'Звук отмечен для наград: ' + nfmt(x.reward.effCost) + ' баллов. Нажми, чтобы снять' : 'Отметить для награды за баллы') + '">🪙' + (x.reward.on ? '<i>' + nfmt(x.reward.effCost) + '</i>' : '') + '</button>' +
+      '<button type="button" class="tb gear" data-gear="' + esc(x.id) + '" title="Настройки звука">⚙</button>' +
+      '<span class="em">' + esc(x.emoji) + '</span><span class="nm">' + esc(x.name) + '</span>' +
+      '<button type="button" class="tb live" data-live="' + esc(x.id) + '" title="Сыграть на стриме">▶ на стрим</button></div>').join('') +
       (s.sounds.length < s.max ? '<button type="button" class="sp-t sp-add" id="spAdd"><span class="em">＋</span><span class="nm">Свой звук</span></button>' : '');
     if (!$('#spOv').hidden) fillBox();
   }
@@ -39,13 +50,33 @@
     if (!j.success) { flash(j.error || 'Не загрузилось'); return; }
     render(j); flash('Звук добавлен'); openBox(j.added.id);
   }
+  // клик по плитке — послушать у себя; ▶ — сыграть на стриме; 🪙 — отметить для награды; ⚙ — настройки
+  function hear(id) {
+    const x = st && st.sounds.find((y) => y.id === id); if (!x) return;
+    if (listen) { listen.pause(); listen = null; }
+    listen = new Audio('/' + x.url); listen.volume = Math.min(1, x.volume / 100 * (st.settings.volume / 100) + 0.0001); listen.play().catch(() => flash('Браузер не дал проиграть звук'));
+  }
+  function fire(id, el) { if (!el) return; el.classList.add('fire'); setTimeout(() => el.classList.remove('fire'), 450); }
   $('#spGrid').addEventListener('click', (e) => {
     if (e.target.closest('#spAdd')) { $('#spFile').click(); return; }
     const g = e.target.closest('[data-gear]'); if (g) { e.stopPropagation(); openBox(g.dataset.gear); return; }
+    const m = e.target.closest('[data-mark]'); if (m) { e.stopPropagation(); const x = st.sounds.find((y) => y.id === m.dataset.mark); post('/api/soundpad/mark', { ids: [m.dataset.mark], on: !(x && x.reward.on) }).then((j) => { render(j); setTimeout(load, 4000); }); return; }
+    const l = e.target.closest('[data-live]'); if (l) { e.stopPropagation(); const t = l.closest('.sp-t'); fire(l.dataset.live, t); post('/api/soundpad/play', { id: l.dataset.live }).then((j) => { if (j && j.success === false) flash(j.error || 'Не сыграло'); else if (j && j.played === false) flash('Саундпад выключен'); else flash('Играет на стриме'); }); return; }
     const t = e.target.closest('.sp-t[data-id]'); if (!t) return;
-    t.classList.add('fire'); setTimeout(() => t.classList.remove('fire'), 450);
-    post('/api/soundpad/play', { id: t.dataset.id }).then((j) => { if (j && j.success === false) flash(j.error || 'Не сыграло'); else if (j && j.played === false) flash('Саундпад выключен'); });
+    fire(t.dataset.id, t); hear(t.dataset.id);
   });
+  $('#spGrid').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('sp-t') && e.target.dataset.id) { e.preventDefault(); fire(e.target.dataset.id, e.target); hear(e.target.dataset.id); } });
+
+  // награды: главный переключатель, цена и пауза по умолчанию, отметить все / снять
+  $('#spRwPwr').addEventListener('click', () => {
+    if (!st) return; const on = !st.settings.rewardsOn;
+    if (on && !st.sounds.some((x) => x.reward.on)) flash('Сначала отметь монетой нужные звуки или нажми «Отметить все»');
+    setS({ rewardsOn: on }); setTimeout(load, 5000);
+  });
+  let rwT = 0;
+  ['#spRwCostAll', '#spRwCdAll'].forEach((q) => $(q).addEventListener('input', () => { clearTimeout(rwT); rwT = setTimeout(() => { setS({ rewardCost: Number($('#spRwCostAll').value) || 100, rewardCooldown: Number($('#spRwCdAll').value) || 0 }); setTimeout(load, 5000); }, 600); }));
+  $('#spMarkAll').addEventListener('click', () => post('/api/soundpad/mark', { all: true, on: true }).then((j) => { render(j); flash('Отмечено: ' + j.sounds.length); setTimeout(load, 5000); }));
+  $('#spMarkNone').addEventListener('click', () => post('/api/soundpad/mark', { all: true, on: false }).then((j) => { render(j); flash('Отметки сняты'); setTimeout(load, 5000); }));
   // перетаскивание файла на вкладку = загрузка
   ['dragover', 'drop'].forEach((ev) => sec.addEventListener(ev, (e) => { if (!e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return; e.preventDefault(); if (ev === 'drop') upload(e.dataTransfer.files[0]); }));
 
@@ -58,15 +89,15 @@
     const act = document.activeElement, inBox = act && $('#spOv').contains(act) && /INPUT/.test(act.tagName) && !force;
     if (!inBox) {
       $('#spBEmoji').textContent = x.emoji; $('#spBName').value = x.name; $('#spBEm').value = x.emoji; $('#spBVol').value = x.volume; $('#spBVolV').textContent = x.volume + '%';
-      $('#spRwOn').checked = !!x.reward.on; $('#spRwTitle').value = x.reward.title || (x.emoji + ' ' + x.name); $('#spRwCost').value = x.reward.cost; $('#spRwCd').value = x.reward.cooldown;
+      $('#spRwOn').checked = !!x.reward.on; $('#spRwTitle').value = x.reward.title; $('#spRwTitle').placeholder = x.emoji + ' ' + x.name; $('#spRwCost').value = x.reward.cost > 0 ? x.reward.cost : ''; $('#spRwCost').placeholder = st.settings.rewardCost; $('#spRwCd').value = x.reward.cooldown >= 0 ? x.reward.cooldown : ''; $('#spRwCd').placeholder = st.settings.rewardCooldown;
     }
     $('#spRwBox').style.display = x.reward.on ? '' : 'none'; $('#spBDel').style.display = x.builtin ? 'none' : '';
-    const r = st.reward; $('#spRwMsg').textContent = r && r.text ? r.text : 'Награду создаёт само приложение. Нужен вход через Twitch.'; $('#spRwMsg').style.color = r && !['ok', 'idle', 'wait'].includes(r.state) ? '#e5484d' : '';
+    const r = st.reward; $('#spRwMsg').textContent = r && r.text ? r.text : 'Награду создаёт само приложение. Нужен вход через Twitch. Работает, когда включены «Награды за баллы» над плитками.'; $('#spRwMsg').style.color = r && !['ok', 'idle', 'wait'].includes(r.state) ? '#e5484d' : '';
   }
   let sv = 0;
   function saveBox() {
     const x = cur(); if (!x) return; clearTimeout(sv);
-    sv = setTimeout(() => post('/api/soundpad/sound', { id: x.id, name: $('#spBName').value, emoji: $('#spBEm').value, volume: Number($('#spBVol').value), reward: { on: $('#spRwOn').checked, title: $('#spRwTitle').value, cost: Number($('#spRwCost').value), cooldown: Number($('#spRwCd').value), id: x.reward.id } }).then((j) => { if (j.success === false) flash(j.error); else { render(j); flash('Сохранено'); setTimeout(load, 4000); } }), 350);
+    sv = setTimeout(() => post('/api/soundpad/sound', { id: x.id, name: $('#spBName').value, emoji: $('#spBEm').value, volume: Number($('#spBVol').value), reward: { on: $('#spRwOn').checked, title: $('#spRwTitle').value, cost: $('#spRwCost').value === '' ? 0 : Number($('#spRwCost').value), cooldown: $('#spRwCd').value === '' ? -1 : Number($('#spRwCd').value), id: x.reward.id } }).then((j) => { if (j.success === false) flash(j.error); else { render(j); flash('Сохранено'); setTimeout(load, 4000); } }), 350);
   }
   ['#spBName', '#spBEm', '#spBVol', '#spRwOn', '#spRwTitle', '#spRwCost', '#spRwCd'].forEach((q) => $(q).addEventListener(q === '#spRwOn' ? 'change' : 'input', () => { $('#spBVolV').textContent = $('#spBVol').value + '%'; if (q === '#spRwOn') $('#spRwBox').style.display = $('#spRwOn').checked ? '' : 'none'; saveBox(); }));
   $('#spBListen').addEventListener('click', () => { const x = cur(); if (!x) return; if (listen) listen.pause(); listen = new Audio('/' + x.url); listen.volume = Number($('#spBVol').value) / 100 * (st.settings.volume / 100); listen.play().catch(() => {}); });

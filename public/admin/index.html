@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
-<link rel="stylesheet" href="soundpad.css?v=2">
+<link rel="stylesheet" href="soundpad.css?v=4">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3127,7 +3127,7 @@
     </section>
 
     <section class="tab-section" id="tab-soundpad">
-      <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, и звук сыграет на стриме. Любой звук можно отдать зрителям за баллы канала.</p></div>
+      <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, чтобы послушать звук у себя. Кнопка «на стрим» играет его на стриме. Монета отмечает звук для наград за баллы, шестерёнка открывает настройки.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="spSaved"></span>
           <button class="sp-pwr" type="button" id="spPwr" title="Включить или выключить саундпад"><span class="sw"></span><span><b id="spPwrT">Саундпад включён</b></span></button>
           <label class="sp-vol" title="Общая громкость звуков на стриме"><span>🔊</span><input type="range" id="spVol" min="0" max="100" step="5"><b id="spVolV">80%</b></label>
@@ -3137,6 +3137,14 @@
           <input type="file" id="spFile" accept=".mp3,.wav,.ogg,.m4a,.aac,audio/*" hidden>
         </div></div>
       <div class="sp-card">
+        <div class="sp-rwbar" id="spRwBar">
+          <button class="sp-pwr sp-rwpwr" type="button" id="spRwPwr" title="Создать на Twitch награды за баллы для всех отмеченных звуков"><span class="sw"></span><span><b id="spRwPwrT">Награды за баллы выключены</b></span></button>
+          <label class="sp-mini" title="Цена наград по умолчанию">Цена <input type="number" id="spRwCostAll" min="1" max="10000000"> баллов</label>
+          <label class="sp-mini" title="Пауза между покупками одной награды">Пауза <input type="number" id="spRwCdAll" min="0" max="86400"> сек</label>
+          <button class="btn btn-secondary btn-sm" type="button" id="spMarkAll" title="Отметить все звуки для наград">🪙 Отметить все</button>
+          <button class="btn btn-secondary btn-sm" type="button" id="spMarkNone" title="Снять отметки со всех звуков">Снять все</button>
+          <span class="sp-rwmsg" id="spRwStat"></span>
+        </div>
         <div class="sp-grid" id="spGrid"></div>
         <div class="sp-hint" id="spHint">Источник «Браузер» в OBS: <b id="spUrl"></b>. Держи его включённым всё время стрима.</div>
       </div>
@@ -3151,11 +3159,11 @@
             <label class="sp-fl sp-wide"><em>Громкость этого звука</em><span class="sp-row"><input type="range" id="spBVol" min="0" max="100" step="5"><b id="spBVolV">100%</b><button class="btn btn-secondary btn-sm" type="button" id="spBListen">▶ Послушать у себя</button></span></label>
           </div>
           <div class="sp-rw">
-            <label class="tg-sw"><input type="checkbox" id="spRwOn"><i></i><span>🪙 Награда за баллы канала</span></label>
+            <label class="tg-sw"><input type="checkbox" id="spRwOn"><i></i><span>🪙 Отдавать этот звук за баллы</span></label>
             <div class="sp-form" id="spRwBox">
-              <label class="sp-fl sp-wide"><em>Название награды на Twitch</em><input type="text" id="spRwTitle" maxlength="45"></label>
-              <label class="sp-fl"><em>Цена, баллов</em><input type="number" id="spRwCost" min="1" max="10000000"></label>
-              <label class="sp-fl"><em>Пауза между покупками, сек (0 — нет)</em><input type="number" id="spRwCd" min="0" max="86400"></label>
+              <label class="sp-fl sp-wide"><em>Название награды на Twitch (пусто — название звука)</em><input type="text" id="spRwTitle" maxlength="45"></label>
+              <label class="sp-fl"><em>Цена, баллов (пусто — как у всех)</em><input type="number" id="spRwCost" min="1" max="10000000"></label>
+              <label class="sp-fl"><em>Пауза, сек (пусто — как у всех)</em><input type="number" id="spRwCd" min="0" max="86400"></label>
               <p class="ex-sm sp-wide" id="spRwMsg">Награду создаёт само приложение. Нужен вход через Twitch.</p>
             </div>
           </div>
@@ -3888,7 +3896,7 @@
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
-<script src="soundpad.js?v=2"></script>
-<script src="whatsnew.js?v=48"></script>
+<script src="soundpad.js?v=4"></script>
+<script src="whatsnew.js?v=49"></script>
 </body>
 </html>

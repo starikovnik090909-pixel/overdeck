@@ -12,11 +12,23 @@ let err = ''; try { sp.play('нет'); } catch (x) { err = x.message; } ok(/не
 const u = sp.addUploaded('x.mp3', 'Мой мем.mp3'); ok(u.name === 'Мой мем' && u.url === 'uploads/soundpad/x.mp3' && !u.builtin, 'своя загрузка');
 let bad = ''; try { sp.addUploaded('x.exe', 'q'); } catch (x) { bad = x.message; } ok(/Формат/.test(bad), 'плохой формат отклонён');
 sp.updateSound(u.id, { name: 'Мем', emoji: '😂', reward: { on: true, title: 'Мемчик', cost: 250, cooldown: 30 } });
+ok(sp.onPoints({ reward: 'мемчик', name: 'viewer' }) === null, 'награды выключены — звук не играет');
+sp.update({ rewardsOn: true, rewardCost: 300, rewardCooldown: 10 });
 const hit = sp.onPoints({ reward: 'мемчик', name: 'viewer' }); ok(hit && hit.sound.id === u.id && hit.played, 'награда по названию играет звук');
 ok(sp.onPoints({ reward: 'чужая награда' }) === null, 'чужая награда игнорируется');
 sp.setRewardId(u.id, 'abc-123'); ok(sp.onPoints({ reward: 'другое имя', rewardId: 'abc-123' }).sound.id === u.id, 'награда по id');
 let b2 = ''; try { sp.remove('zdorovo'); } catch (x) { b2 = x.message; } ok(/Встроенный/.test(b2), 'встроенный не удаляется');
 sp.remove(u.id); ok(sp.state().sounds.length === 16, 'свой удаляется');
 ok(sp.updateSound('king', { name: '  ' }).name === 'Короля не убить', 'пустое имя → прежнее');
+// автоматические награды: название звука, цена и пауза по умолчанию, отметка всех
+sp.reset(); sp.update({ rewardsOn: true, rewardCost: 150, rewardCooldown: 20 });
+ok(sp.mark('all', true) === sp.state().sounds.length, 'отметить все');
+const kv = sp.state().sounds.find((x) => x.id === 'king').reward;
+ok(kv.on && kv.effTitle === '👑 Короля не убить' && kv.effCost === 150 && kv.effCooldown === 20, 'награда: имя звука, цена и пауза по умолчанию');
+sp.updateSound('king', { reward: { cost: 999, cooldown: 0 } });
+const kv2 = sp.state().sounds.find((x) => x.id === 'king').reward; ok(kv2.effCost === 999 && kv2.effCooldown === 0, 'своя цена и пауза у звука');
+sp.updateSound('king', { name: 'Король' }); ok(sp.state().sounds.find((x) => x.id === 'king').reward.effTitle === '👑 Король', 'название награды следует за названием звука');
+ok(sp.onPoints({ reward: '👑 Король', name: 'v' }).sound.id === 'king', 'награда с названием звука играет');
+ok(sp.mark(['king'], false) === 1 && !sp.state().sounds.find((x) => x.id === 'king').reward.on, 'снять отметку');
 sp.reset(); sp.stopAll(); ok(sp.poll(0).events[0].stop === true, 'стоп-событие');
 console.log('soundpad.test: ' + n + ' проверок ок');
