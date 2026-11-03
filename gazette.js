@@ -321,7 +321,7 @@
     return kind;
   }
   // Болтовня чата — второй эшелон: события канала (рейд, донат, подписки, камбэк, трек…) всегда важнее переписки двух зрителей.
-  const CHAT_TIER = /^(duel|duelWord|topic_.+|reqRepeat|reqAgain|laughWave|plusWall|capsWave|newcomers|regulars|silence|topicShift|chatterKing|wordDay|emoteDay|stormCause)$/;
+  const CHAT_TIER = /^(duel|duelWord|topic_.+|reqRepeat|reqAgain|laughWave|plusWall|capsWave|newcomers|regulars|silence|topicShift|chatterKing|wordDay|stormCause)$/;
   const CHAT_CAP = 32;
   const RECENT_PENALTY = [16, 10, 6, 3]; // штраф за тему, которая уже была главной в последних выпусках (от самого свежего)
 
@@ -390,14 +390,12 @@
       if (A.win && s === A.win) return;
       if (s.play && !(s.cause && (s.cause.type === 'raid' || s.cause.type === 'donation'))) {
         const bm = 30 + Math.min(30, s.mult * 2), pv = { track: s.play.track, u: s.play.user || 'зритель', time: clock(s.ts), rate: s.peak };
-        if (s.emote) { stories.push({ kind: 'musicEmote', score: bm + 16, ts: s.ts, v: Object.assign({ emote: s.emote.w, n: s.emote.n }, pv), why: 'эмоут-стена ' + s.emote.w + ' под трек «' + s.play.track + '»' }); return; }
         if (s.word) { stories.push({ kind: 'musicWord', score: bm + 12, ts: s.ts, v: Object.assign({ word: s.word.w }, pv), why: 'слово «' + s.word.w + '» под трек «' + s.play.track + '»' }); return; }
         stories.push({ kind: 'musicWave', score: bm + 8, ts: s.ts, v: pv, why: 'всплеск чата под трек «' + s.play.track + '»' }); return;
       }
       if (s.cause && (s.cause.type === 'raid' || s.cause.type === 'donation')) return; // уже есть своя история
       const base = 25 + Math.min(30, s.mult * 2);
       if (s.word) stories.push({ kind: 'stormWord', score: base + 8, ts: s.ts, v: { rate: s.peak, word: s.word.w }, why: 'всплеск ×' + s.mult + ' про «' + s.word.w + '»' });
-      else if (s.emote) stories.push({ kind: 'stormEmote', score: base + 4, ts: s.ts, v: { n: s.emote.n, emote: s.emote.w }, why: 'эмоут-стена ' + s.emote.w });
       else stories.push({ kind: 'stormCause', score: base - 6, ts: s.ts, v: { rate: s.peak, time: clock(s.ts) }, why: 'всплеск без явной причины' });
     });
     if (A.deaths.msgs >= 12 && !A.win) stories.push({ kind: 'deaths', score: 30 + Math.min(25, A.deaths.msgs / 2), ts: A.t0, v: { n: A.deaths.waves, nw: cnt(A.deaths.waves, ['раз', 'раза', 'раз']) }, why: A.deaths.waves + ' волн «F»' });
@@ -443,7 +441,6 @@
       const n = j - i; if (n >= 5 && (!best || n > best.n)) best = { n, ts: fols[i].ts };
       if (i === fols.length - 1 && best) stories.push({ kind: 'followWave', score: 27 + Math.min(18, best.n * 2), ts: best.ts, v: { n: best.n, fol: cnt(best.n, ['новый фолловер', 'новых фолловера', 'новых фолловеров']), time: clock(best.ts) }, why: best.n + ' фолловеров за 10 минут' });
     }
-    if (A.emote && A.emote.n >= 25) stories.push({ kind: 'emoteDay', score: 20 + Math.min(14, A.emote.n / 4), ts: A.t0, v: { emote: A.emote.w, n: A.emote.n }, why: 'эмоут вечера ' + A.emote.w + ' ×' + A.emote.n });
     if (A.word && A.word.n >= 15) stories.push({ kind: 'wordDay', score: 19 + Math.min(12, A.word.n / 3), ts: A.t0, v: { word: A.word.w, n: A.word.n }, why: 'слово вечера «' + A.word.w + '» ×' + A.word.n });
     if (A.plays.length >= 5) {
       const pu = {}; A.plays.forEach(p => { if (p.user) pu[p.user] = (pu[p.user] || 0) + 1; });

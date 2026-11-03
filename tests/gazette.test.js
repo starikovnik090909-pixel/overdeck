@@ -159,9 +159,10 @@ t('приоритет: дуэль зрителей не главная тема,
   assert(new Set(fams).size >= 3, 'мало разнообразия: ' + fams);
   assert(fams.every((f, i) => i === 0 || f !== fams[i - 1]), 'одна тема подряд: ' + fams);
 });
-t('новые события: у каждого не меньше 8 фраз', () => {
+t('новые события: у каждого не меньше 25 фраз', () => {
   const Lex = require('../gazetteLexicon');
-  ['hype', 'gift', 'followWave', 'emoteDay', 'wordDay', 'jukebox', 'growth', 'nightOwl', 'chatterKing'].forEach((k) => assert(Lex.T[k] && Lex.T[k].length >= 8, k));
+  ['hype', 'gift', 'followWave', 'wordDay', 'jukebox', 'growth', 'nightOwl', 'chatterKing'].forEach((k) => assert(Lex.T[k] && Lex.T[k].length >= 25, k + ': ' + (Lex.T[k] || []).length));
+  assert(!Lex.T.emoteDay, 'смайлы в заголовок не идут');
 });
 
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
