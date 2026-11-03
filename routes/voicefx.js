@@ -1,10 +1,10 @@
 // routes/voicefx.js — голосовые фильтры: настройки, текущий фильтр для страниц, OBS, награда за баллы.
 function main(ctx) {
-  const { vf, vfReward, obs, app, port } = ctx;
+  const { vf, vfReward, obs, app, port, nv } = ctx;
   const ok = (res, extra) => res.json(Object.assign({ success: true }, vf.state(), { obs: obs.getStatus(), reward: vfReward.getStatus() }, extra || {}));
   const fail = (res, e, code) => res.status(code || 400).json({ success: false, error: e.message || String(e) });
   const micUrl = () => 'http://localhost:' + port + '/voicemic.html';
-  app.get('/api/voicefx/state', (req, res) => ok(res, { micUrl: micUrl() }));
+  app.get('/api/voicefx/state', async (req, res) => { let nvVoices = nv ? nv.cachedVoices() : []; try { if (nv && nv.state().status.running) nvVoices = await nv.voices(); } catch (e) { /* движок занят */ } ok(res, { micUrl: micUrl(), nvVoices, nvInstalled: !!(nv && nv.state().installed) }); });
   app.get('/api/voicefx/active', (req, res) => res.json(vf.active()));
   app.post('/api/voicefx/settings', (req, res) => { vf.update(req.body); vfReward.sync(vf).catch(() => {}); ok(res, { micUrl: micUrl() }); });
   app.post('/api/voicefx/trigger', (req, res) => { const b = req.body || {}; const r = vf.trigger(b.filter, b.seconds || 30, 'Стример', 'manual'); if (!r) return fail(res, new Error('Фильтры выключены')); ok(res); });

@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
 <link rel="stylesheet" href="voicefx.css?v=2">
+<link rel="stylesheet" href="nv-admin.css?v=2">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -348,6 +349,12 @@
           <rect x="9" y="3" width="6" height="11" rx="3" stroke-width="1.6"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
         <span>Голосовые фильтры</span>
+      </div>
+      <div class="nav-item" data-tab="nv">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 18V6l9 12V6M15 6l3 12 3-12" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Голос NV</span>
       </div>
       <div class="nav-item nav-sub" data-tab="extras" data-parent="widgets">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3270,6 +3277,34 @@
       </div></div>
     </section>
 
+    <section class="tab-section" id="tab-nv">
+      <div class="page-head"><div><h1 class="tab-title">Голос NV</h1><p class="tab-description">Нейроголос для микрофона на основе VCClient. Движок скачивается один раз, а голосами управляешь отсюда и за баллы и донат.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="nvSaved"></span>
+          <button class="btn btn-secondary" type="button" id="nvStart" hidden>▶ Запустить движок</button>
+          <button class="btn btn-secondary" type="button" id="nvStop" hidden>■ Остановить движок</button>
+        </div></div>
+      <div class="nv-setup" id="nvSetup" hidden>
+        <div class="nv-sc">
+          <h3>Установка движка</h3>
+          <p class="ex-sm">Движок скачивается с Hugging Face автора VCClient. Файл большой (около 3 ГБ), нужно примерно 8 ГБ свободного места. Загрузку можно прервать, она продолжится с того же места.</p>
+          <label class="nv-fl"><em>Твоя видеокарта</em><select id="nvVariant"></select></label>
+          <div class="nv-prog" id="nvProg" hidden><i id="nvBar"></i></div>
+          <p class="ex-sm" id="nvMsg"></p>
+          <div class="nv-row"><button class="btn btn-primary" type="button" id="nvInstall">Скачать и установить</button></div>
+          <p class="ex-sm">Ещё понадобится бесплатный виртуальный аудиокабель VB-Cable (vb-audio.com/Cable): NV отдаёт в него голос, а в OBS ты берёшь его как «Захват входящего звука».</p>
+        </div>
+      </div>
+      <div class="nv-main" id="nvMain" hidden>
+        <iframe id="nvFrame" title="NV" src="about:blank"></iframe>
+        <div class="nv-side">
+          <label class="tg-sw"><input type="checkbox" id="nvAuto"><i></i><span>Запускать вместе с Overdeck</span></label>
+          <label class="nv-fl"><em>Источник в OBS (захват звука из CABLE Output)</em><input type="text" id="nvObsIn" maxlength="120"></label>
+          <p class="ex-sm">Когда голос NV включён за баллы или донат, Overdeck включает этот источник в OBS и выключает обычный микрофон. Связь с OBS настраивается в «Голосовых фильтрах».</p>
+          <p class="ex-sm" id="nvStat"></p>
+        </div>
+      </div>
+    </section>
+
     <section class="tab-section" id="tab-music">
       <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="mu-pwr" type="button" id="muPwr" title="Включить или выключить заказ музыки"><span class="sw"></span><span><b id="muPwrT">Заказ включён</b><small id="muPwrS"></small></span></button><span class="mu-ways" id="muBase"><button class="mu-pwr mu-way" type="button" data-base="chat" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💬 !муз</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="pts" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>🪙 Баллы</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="don" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💸 Донат</b><small></small></span></button></span><button class="btn btn-secondary" type="button" id="muObs" title="Скопировать ссылку для источника «Браузер» в OBS">🔗 OBS</button><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
@@ -3996,7 +4031,8 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="/voicefx.js?v=1"></script>
-<script src="voicefx-admin.js?v=1"></script>
-<script src="whatsnew.js?v=52"></script>
+<script src="voicefx-admin.js?v=2"></script>
+<script src="nv-admin.js?v=1"></script>
+<script src="whatsnew.js?v=53"></script>
 </body>
 </html>

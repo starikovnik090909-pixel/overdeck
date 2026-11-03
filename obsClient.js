@@ -59,9 +59,9 @@ function configure(c, opts) {
   if (!ws || key !== wantKey || !was || !was.on) connect();
 }
 /** Включить обработанный микрофон (on) или вернуть обычный. */
-async function switchMic(on) {
+async function switchMic(on, fxName) {
   if (!cfg || !cfg.on || !ready) return false;
-  const mic = cfg.micInput, fx = cfg.fxInput;
+  const mic = cfg.micInput, fx = fxName || cfg.fxInput;
   if (!mic || !fx) return false;
   const mute = (name, m) => request('SetInputMute', { inputName: name, inputMuted: m });
   if (on) { await mute(fx, false); await mute(mic, true); } else { await mute(mic, false); await mute(fx, true); }
