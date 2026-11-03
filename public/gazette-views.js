@@ -107,6 +107,25 @@
   }
 
   // =============== афиша + титры ===============
+
+  // Роли в титрах: у каждого вечера и у каждого зрителя — своя формулировка (выбор по нику и дате выпуска, без повторов в списке)
+  const ROLES = {
+    lead: ['Голос чата', 'Главная роль', 'Звезда эфира', 'Душа вечера', 'Первая скрипка', 'Главный по разговорам', 'Гвоздь программы', 'Солист чата', 'Центр внимания', 'Режиссёр беседы', 'Лицо вечера', 'Бессменный рассказчик', 'Герой первого плана', 'Ведущий разговора'],
+    second: ['Второй план', 'Правая рука чата', 'Душа компании', 'Верный напарник', 'Опора эфира', 'Серый кардинал', 'Незаменимый собеседник', 'Вторая скрипка', 'Главный поддакивающий', 'Лучший друг героя', 'Голос из зала', 'Мастер реплики', 'Тот, кто всегда рядом', 'Острое слово вечера', 'Правдоруб чата', 'Весёлый спутник'],
+    cast: ['Постоянный актёр', 'Актёр эпизода', 'Гость программы', 'Мастер короткой реплики', 'Зритель в первом ряду', 'Любимец чата', 'Эпизодическая роль', 'Хороший собеседник', 'Тихий наблюдатель', 'Свидетель вечера', 'Человек-реакция', 'Хранитель чата', 'Звено компании', 'Участник массовки', 'Критик из партера', 'Знаток происходящего', 'Бывалый зритель', 'Душа партера', 'Голос с галёрки', 'Подтанцовка чата', 'Гость на огонёк', 'Фон с характером', 'Сосед по чату', 'Командный игрок', 'Свой человек', 'Заводила массовки', 'Улыбка эфира', 'Хроникёр мелочей', 'Говорящий реквизит', 'Участник съёмок'],
+    donor: ['Меценат вечера', 'Главный благотворитель', 'Золотое сердце', 'Щедрая рука эфира', 'Хозяин кошелька вечера', 'Покровитель канала', 'Гроза копилки', 'Продюсер вечера'],
+    donorRest: ['Щедрая душа', 'Друг канала', 'Подпитка эфира', 'Помощник студии', 'Спонсор настроения', 'Добрая рука', 'Золотая монета', 'Опора канала', 'Поддержка вечера', 'Благодарность от студии'],
+  };
+  function hashStr(x) { let h = 2166136261; for (let i = 0; i < x.length; i++) { h ^= x.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function rolePicker(salt) {
+    const used = {};
+    return function (pool, key, user) {
+      const free = pool.filter((r) => !used[r]);
+      const src = free.length ? free : pool;
+      const r = src[hashStr(key + '|' + user + '|' + salt) % src.length];
+      used[r] = 1; return r;
+    };
+  }
   function Credits(issue, settings, opts) {
     const p = palette(issue.leadKind);
     let stage = null, timers = [], stops = [], raf = 0, done = false;
@@ -118,10 +137,10 @@
     function rollHtml() {
       const R = issue.roster || {}, F = issue.facts || {}, parts = [];
       if (issue.timeline && issue.timeline.length) parts.push('<h6>Хроника вечера</h6>' + issue.timeline.map((t) => `<div class="ln"><time>${esc(t.time)}</time>${esc(t.text)}</div>`).join(''));
-      const roles = ['Голос чата', 'Второй план', 'Душа компании'];
+      const pickRole = rolePicker(issue.startTs || issue.seed || 0);
       const top = (R.chatters || []).slice(0, 8);
-      if (top.length) parts.push('<h6>В главных ролях</h6>' + top.map((c, i) => `<div class="nm">${esc(c.user)}<small>${roles[i] || (i < 6 ? 'Постоянный актёр' : 'Актёр')} · ${c.n} ${plural(c.n, ['реплика', 'реплики', 'реплик'])}</small></div>`).join(''));
-      if ((R.donors || []).length) parts.push('<h6>Щедрое сердце</h6>' + R.donors.slice(0, 6).map((d, i) => `<div class="nm">${esc(d.user)}<small>${i === 0 ? 'Меценат вечера · ' : ''}${money(d.sum)}</small></div>`).join(''));
+      if (top.length) parts.push('<h6>В главных ролях</h6>' + top.map((c, i) => `<div class="nm">${esc(c.user)}<small>${pickRole(i === 0 ? ROLES.lead : i < 3 ? ROLES.second : ROLES.cast, 'c' + (i === 0 ? 0 : i < 3 ? 1 : 2), c.user)} · ${c.n} ${plural(c.n, ['реплика', 'реплики', 'реплик'])}</small></div>`).join(''));
+      if ((R.donors || []).length) parts.push('<h6>Щедрое сердце</h6>' + R.donors.slice(0, 6).map((d, i) => `<div class="nm">${esc(d.user)}<small>${pickRole(i === 0 ? ROLES.donor : ROLES.donorRest, 'd' + (i === 0 ? 0 : 1), d.user)} · ${money(d.sum)}</small></div>`).join(''));
       if ((issue.titles || []).length) parts.push('<h6>Отличились</h6>' + issue.titles.map((t) => `<div class="nm">${esc(t.user)}<small>${esc(t.title)}${t.note ? ' · ' + esc(t.note) : ''}</small></div>`).join(''));
       const raiders = (R.raiders || []).filter((r) => r.user);
       if (raiders.length) parts.push('<h6>Гости из рейда</h6>' + raiders.map((r) => `<div class="nm">${esc(r.user)}<small>привёл ${r.viewers} ${plural(r.viewers, ['зрителя', 'зрителей', 'зрителей'])}</small></div>`).join(''));
