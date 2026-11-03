@@ -169,6 +169,18 @@
   $('#ovCopy').addEventListener('click', () => { const t = 'CABLE Output'; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => flash('Скопировано: ' + t), () => flash('Выдели название и скопируй вручную')); });
   $('#ovChecks').addEventListener('click', (e) => { if (e.target.id === 'ovCable') { jsend('POST', P + '/api/nv/cable/install').then(() => { flash('Windows спросит разрешение: нажми «Да»'); load(); }); } });
 
+  // ---- авто-переключение микрофонов в OBS (obs-websocket) ----
+  let obsCfg = null;
+  const obsMsg = (t, bad) => { const e = $('#ovObsMsg'); e.textContent = t || ''; e.style.color = bad ? 'var(--err)' : ''; };
+  const obsFill = (sel, list, cur) => { sel.innerHTML = '<option value="">— выбери —</option>' + list.map((n) => '<option>' + esc(n) + '</option>').join(''); if (cur && list.indexOf(cur) < 0) sel.insertAdjacentHTML('beforeend', '<option>' + esc(cur) + '</option>'); sel.value = cur || ''; };
+  const obsSave = () => jsend('PUT', P + '/api/nv/obs', { enabled: $('#ovObsOn').checked, port: Number($('#ovObsPort').value) || 4455, main: $('#ovObsMain').value, cable: $('#ovObsCable').value, password: $('#ovObsPass').value ? $('#ovObsPass').value : undefined }).then((r) => { if (r && r.obs) obsCfg = r.obs; $('#ovObsPass').value = ''; $('#ovObsPass').placeholder = obsCfg && obsCfg.hasPassword ? '•••••• (сохранён)' : 'если задан в OBS'; $('.ov-auto', sec).classList.toggle('off', !$('#ovObsOn').checked); });
+  const obsInputs = () => { obsMsg('Подключаюсь…'); return obsSave().then(() => jget(P + '/api/nv/obs/inputs')).then((r) => { if (!r || !r.success) { obsMsg((r && r.error) || 'Нет связи с OBS', true); return; } const names = r.inputs.map((i) => i.name); obsFill($('#ovObsMain'), names, obsCfg && obsCfg.main); obsFill($('#ovObsCable'), names, obsCfg && obsCfg.cable); obsMsg('OBS найден, источников: ' + names.length); }); };
+  jget(P + '/api/nv/obs').then((r) => { if (!r || !r.obs) return; obsCfg = r.obs; $('#ovObsOn').checked = obsCfg.enabled; $('#ovObsPort').value = obsCfg.port; $('#ovObsPass').placeholder = obsCfg.hasPassword ? '•••••• (сохранён)' : 'если задан в OBS'; obsFill($('#ovObsMain'), [], obsCfg.main); obsFill($('#ovObsCable'), [], obsCfg.cable); $('.ov-auto', sec).classList.toggle('off', !obsCfg.enabled); }).catch(() => {});
+  $('#ovObsOn').addEventListener('change', () => { obsSave().then(() => { if ($('#ovObsOn').checked) obsInputs(); }); });
+  ['ovObsMain', 'ovObsCable', 'ovObsPort'].forEach((id) => $('#' + id).addEventListener('change', () => { obsSave(); }));
+  $('#ovObsLoad').addEventListener('click', obsInputs);
+  const obsLive = (on) => (obsCfg && obsCfg.enabled ? jsend('POST', P + '/api/nv/obs/live', { on }).then((r) => { if (r && r.success === false) flash('OBS: ' + r.error); }).catch(() => {}) : Promise.resolve());
+
   // режим и эфир
   $('#ovMode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || !info) return; setS('passThrough', b.dataset.m === 'own' ? 1 : 0).then(() => { flash(b.dataset.m === 'own' ? 'Обход: в эфир идёт твой голос' : 'Нейроголос включён'); render(); }); });
   function goLive(on) {
@@ -180,7 +192,7 @@
   $('#ovLive').addEventListener('click', () => {
     if (!info || busy) return; busy = true; $('#ovLive').disabled = true;
     const on = !live(), v = cur();
-    (on && v ? applyVoice(v) : Promise.resolve()).then(() => goLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
+    (on && v ? applyVoice(v) : Promise.resolve()).then(() => goLive(on)).then(() => obsLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
   });
   // «проверить на мне»: звук идёт только в наушники, в кабель (OBS) ничего не уходит
   $('#ovSelf').addEventListener('click', () => {

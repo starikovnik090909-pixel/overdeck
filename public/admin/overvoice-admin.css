@@ -96,3 +96,10 @@
 #tab-overvoice .ov-gbox code{background:var(--bg-app);border:1px solid var(--divider);border-radius:6px;padding:1px 6px;color:var(--text-primary);user-select:all;font-size:12.5px}
 #tab-overvoice .ov-gfix{background:var(--bg-card2);border:1px solid var(--divider);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--text-secondary)}
 #tab-overvoice .ov-gfix ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+#tab-overvoice .ov-autoh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+#tab-overvoice .ov-hint{font-size:12px;color:var(--text-secondary);margin-top:4px}
+#tab-overvoice .ov-autog{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+#tab-overvoice .ov-autog label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-secondary);min-width:0}
+#tab-overvoice .ov-autog input,#tab-overvoice .ov-autog select{background:var(--bg-app);color:var(--text-primary);border:1px solid var(--divider);border-radius:8px;padding:6px 8px;min-width:0;font:inherit}
+#tab-overvoice .ov-autob{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#tab-overvoice .ov-auto.off .ov-autog{opacity:.45;pointer-events:none}

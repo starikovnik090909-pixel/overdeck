@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="overvoice-admin.css?v=3">
+<link rel="stylesheet" href="overvoice-admin.css?v=4">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
@@ -3178,6 +3178,15 @@
             <div class="ov-h2">Готовность к OBS</div>
             <div id="ovChecks"></div>
             <div class="ov-obs"><b>Как добавить в OBS</b><ol><li>Источники → ＋ → «Захват входящего звука»</li><li>Устройство: <code>CABLE Output</code> <button class="btn btn-secondary btn-sm" type="button" id="ovCopy">копировать</button></li><li>Свой микрофон из OBS отключи, чтобы не было двух голосов</li></ol></div>
+            <div class="ov-obs ov-auto"><div class="ov-autoh"><b>Авто-переключение в OBS</b><label class="tg-sw"><input type="checkbox" id="ovObsOn"><span></span></label></div>
+              <div class="ov-hint">«В эфире» сам заглушит обычный микрофон в OBS и включит кабель, «Стоп» вернёт всё обратно. В OBS: Сервис → Настройки WebSocket-сервера → включить.</div>
+              <div class="ov-autog" id="ovObsBox">
+                <label>Порт<input type="number" id="ovObsPort" min="1" max="65535" value="4455"></label>
+                <label>Пароль<input type="password" id="ovObsPass" placeholder="если задан в OBS" autocomplete="off"></label>
+                <label>Обычный микрофон<select id="ovObsMain"></select></label>
+                <label>Источник с кабелем<select id="ovObsCable"></select></label>
+                <div class="ov-autob"><button class="btn btn-secondary btn-sm" type="button" id="ovObsLoad">Подключиться и найти источники</button><span id="ovObsMsg" class="ov-hint"></span></div>
+              </div></div>
           </div>
         </div>
       </div>
@@ -3997,8 +4006,8 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=3"></script>
+<script src="overvoice-admin.js?v=4"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=54"></script>
+<script src="whatsnew.js?v=55"></script>
 </body>
 </html>
