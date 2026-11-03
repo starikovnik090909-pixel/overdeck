@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="overvoice-admin.css?v=1">
+<link rel="stylesheet" href="overvoice-admin.css?v=2">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
@@ -3135,23 +3135,62 @@
     </section>
 
     <section class="tab-section" id="tab-overvoice">
-      <div class="page-head"><div><h1 class="tab-title">Овервойс</h1><p class="tab-description">Нейроголос для микрофона. Это мод: ставится в лаунчере (кнопка «Моды»), а управляется здесь.</p></div>
+      <div class="page-head"><div><h1 class="tab-title">Овервойс</h1><p class="tab-description">Нейроголос для микрофона. Кинь папку с голосом, выбери карточку и нажми «В эфире». В OBS голос берётся с виртуального кабеля.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="ovSaved"></span>
-          <label class="tg-sw" id="ovAutoW" hidden><input type="checkbox" id="ovAuto"><i></i><span>Запускать вместе с Overdeck</span></label>
-          <button class="btn btn-secondary" type="button" id="ovStart" hidden>▶ Запустить</button>
-          <button class="btn btn-secondary" type="button" id="ovStop" hidden>■ Остановить</button>
+          <label class="tg-sw" id="ovAutoW" hidden title="Овервойс сам включается при запуске Overdeck"><input type="checkbox" id="ovAuto"><i></i><span>Запускать вместе с Overdeck</span></label>
+          <button class="btn btn-secondary" type="button" id="ovStart" hidden>▶ Запустить Овервойс</button>
+          <button class="btn btn-secondary" type="button" id="ovStop" hidden title="Выключить программу Овервойс целиком">■ Выключить</button>
+          <div class="ov-seg" id="ovMode" hidden title="«Свой голос»: нейросеть обходится, в эфир идёт твой настоящий голос"><button type="button" data-m="ai">Нейроголос</button><button type="button" data-m="own">Свой голос</button></div>
+          <button class="ov-pwr" type="button" id="ovLive" hidden title="Включить или выключить обработку голоса"><span class="sw"></span><b id="ovLiveT">В эфире: выключено</b></button>
         </div></div>
       <div class="ov-empty" id="ovEmpty" hidden>
-        <div class="ov-card">
+        <div class="ov-box">
           <h3>Овервойс не установлен</h3>
           <p class="ex-sm">Открой лаунчер Overdeck, нажми «Моды» и «Скачать и установить всё». Он поставит программу, виртуальный аудиокабель и движок голоса.</p>
           <p class="ex-sm">После установки Овервойс будет запускаться вместе с Overdeck, а эта вкладка оживёт.</p>
         </div>
       </div>
-      <div class="ov-main" id="ovMain" hidden>
-        <iframe id="ovFrame" title="Овервойс" src="about:blank"></iframe>
-      </div>
       <p class="ex-sm" id="ovMsg" hidden></p>
+      <div class="ov-banner" id="ovBanner" hidden><span id="ovBannerT"></span><div class="ov-prog" id="ovProg" hidden><i id="ovBar"></i></div><button class="btn btn-primary btn-sm" type="button" id="ovBannerBtn"></button></div>
+      <div class="ov-main" id="ovMain" hidden>
+        <div class="ov-card">
+          <div class="ov-h"><b>Голоса</b><em id="ovCnt"></em><span class="ov-sp"></span><button class="btn btn-secondary btn-sm" type="button" id="ovAdd">＋ Добавить</button></div>
+          <div class="ov-grid" id="ovGrid"></div>
+        </div>
+        <div class="ov-card">
+          <div class="ov-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-p="voice">Голос</button><button type="button" role="tab" aria-selected="false" data-p="sound">Звук и OBS</button></div>
+          <div class="ov-pane" id="ovPvoice">
+            <div class="ov-vh" id="ovVh"></div>
+            <div class="ov-chips"><button type="button" data-v="-12">♂ −12</button><button type="button" data-v="12">♀ +12</button><button type="button" data-v="0">Высота 0</button></div>
+            <label class="ov-sl"><span>Высота голоса<small>мужской ↔ женский</small></span><input type="range" id="ovPitch" min="-24" max="24"><b id="ovPitchV"></b></label>
+            <label class="ov-sl"><span>Сходство<small id="ovIdxS">нужен файл .index</small></span><input type="range" id="ovIdx" min="0" max="100"><b id="ovIdxV"></b></label>
+            <label class="ov-sl"><span>Подавление шума<small>тихое не обрабатывать</small></span><input type="range" id="ovGate" min="0" max="100"><b id="ovGateV"></b></label>
+            <label class="ov-sl"><span>Громкость на выходе</span><input type="range" id="ovVol" min="0" max="200"><b id="ovVolV"></b></label>
+            <div class="ov-row"><button class="btn btn-secondary" type="button" id="ovSelf">🎧 Проверить на мне</button><button class="btn btn-secondary" type="button" id="ovReset">Сбросить</button></div>
+            <p class="ex-sm">Настройки запоминаются для каждого голоса отдельно. «Проверить на мне»: говоришь в микрофон, результат слышишь только ты, в OBS ничего не уходит. Для этого выбери наушники во вкладке «Звук и OBS».</p>
+          </div>
+          <div class="ov-pane" id="ovPsound" hidden>
+            <label class="ov-lbl">Микрофон<select class="ov-sel" id="ovIn"></select></label>
+            <div class="ov-meter"><i id="ovLvl"></i></div><p class="ex-sm" id="ovMeterMsg"></p>
+            <label class="ov-lbl">Куда отдавать голос (в OBS)<select class="ov-sel" id="ovOut"></select></label>
+            <label class="ov-lbl">Слышать себя<select class="ov-sel" id="ovMon"></select></label>
+            <div class="ov-h2">Готовность к OBS</div>
+            <div id="ovChecks"></div>
+            <div class="ov-obs"><b>Как добавить в OBS</b><ol><li>Источники → ＋ → «Захват входящего звука»</li><li>Устройство: <code>CABLE Output</code> <button class="btn btn-secondary btn-sm" type="button" id="ovCopy">копировать</button></li><li>Свой микрофон из OBS отключи, чтобы не было двух голосов</li></ol></div>
+          </div>
+        </div>
+      </div>
+      <div class="mu-modal" id="ovOv" hidden>
+        <div class="mu-dim" data-ovclose></div>
+        <div class="mu-mbox ov-box2">
+          <button type="button" class="btn-tiny mu-x" data-ovclose title="Закрыть">✕</button>
+          <h3 class="ov-bh">Добавить голоса</h3>
+          <div class="ov-drop" id="ovDrop" tabindex="0" role="button"><svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 10v5M9.8 12.2 12 10l2.2 2.2"/></svg><b>Кинь сюда папку с голосом</b><span>Можно сразу папку с несколькими голосами. Или нажми и выбери папку.</span></div>
+          <ul class="ov-plist" id="ovPlist"></ul><p class="ex-sm" id="ovPmsg"></p>
+          <div class="ov-foot"><button class="btn btn-secondary btn-sm" type="button" id="ovFiles">Выбрать файлы по одному…</button><button class="btn btn-secondary btn-sm" type="button" data-ovclose id="ovPdone">Закрыть</button></div>
+          <input type="file" id="ovDir" webkitdirectory multiple hidden><input type="file" id="ovFile" accept=".pth,.onnx,.index,.mp3,.wav,.ogg,.m4a,.flac" multiple hidden>
+        </div>
+      </div>
     </section>
 
     <section class="tab-section" id="tab-soundpad">
@@ -3932,8 +3971,9 @@
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
-<script src="overvoice-admin.js?v=1"></script>
+<script src="voicepack.js?v=1"></script>
+<script src="overvoice-admin.js?v=2"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=53"></script>
+<script src="whatsnew.js?v=54"></script>
 </body>
 </html>

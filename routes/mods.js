@@ -6,6 +6,8 @@ function main(ctx) {
   app.post('/api/mods/overvoice/settings', async (req, res) => { const b = req.body || {}; mod.update({ autostart: b.autostart }); send(res); });
   app.post('/api/mods/overvoice/start', async (req, res) => { try { await mod.start(); send(res); } catch (e) { res.status(400).json(Object.assign({ success: false, error: e.message }, await mod.state())); } });
   app.post('/api/mods/overvoice/stop', async (req, res) => { await mod.stop(); send(res); });
+  // страница админки ходит к Овервойсу через Овердек: /api/mods/overvoice/p/api/nv/... -> http://127.0.0.1:<порт Овервойса>/api/nv/...
+  app.all('/api/mods/overvoice/p/*', (rq, rs) => mod.proxy(rq, rs, rq.originalUrl.replace(/^\/api\/mods\/overvoice\/p/, '')));
   return {};
 }
 module.exports = { main };

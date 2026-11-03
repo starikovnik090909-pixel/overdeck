@@ -77,4 +77,18 @@ function stopSync() {
   if (!c || c.exitCode !== null) return;
   try { if (process.platform === 'win32') require('child_process').spawnSync('taskkill', ['/PID', String(c.pid), '/T', '/F'], { windowsHide: true }); else c.kill(); } catch (e) { /* закрываемся */ }
 }
-module.exports = { init, state, start, stop, stopSync, autostart, update, getSettings };
+/** Пропускает запрос админки к Овервойсу (/api/nv/*) на его порт: страница админки говорит с ним с одного адреса, без CORS. */
+function proxy(rq, rs, sub) {
+  if (!/^\/api\/nv\//.test(sub) || /(^|[\/\\])\.\.([\/\\]|$)/.test(sub)) return rs.status(404).json({ success: false, error: 'Нет такого пути' });
+  const headers = Object.assign({}, rq.headers, { host: '127.0.0.1:' + cfg.port }); delete headers.origin; delete headers.referer;
+  let body = null;
+  if (rq._body) {   // тело уже разобрал парсер express: собираем заново
+    body = /json/.test(headers['content-type'] || '') ? JSON.stringify(rq.body) : new URLSearchParams(rq.body).toString();
+    headers['content-length'] = Buffer.byteLength(body); delete headers['transfer-encoding'];
+  }
+  const r = http.request({ host: '127.0.0.1', port: cfg.port, path: sub, method: rq.method, headers }, (res) => { rs.writeHead(res.statusCode, res.headers); res.pipe(rs); });
+  r.on('error', () => { if (!rs.headersSent) rs.status(502).json({ success: false, error: 'Овервойс не запущен' }); else rs.end(); });
+  rs.on('close', () => { if (!rs.writableEnded) r.destroy(); });
+  if (body != null) r.end(body); else rq.pipe(r);
+}
+module.exports = { proxy, init, state, start, stop, stopSync, autostart, update, getSettings };
