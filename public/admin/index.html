@@ -13,7 +13,6 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="voicefx.css?v=2">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -342,12 +341,6 @@
           <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
         <span>Саундпад</span>
-      </div>
-      <div class="nav-item" data-tab="voicefx">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="9" y="3" width="6" height="11" rx="3" stroke-width="1.6"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        <span>Голосовые фильтры</span>
       </div>
       <div class="nav-item nav-sub" data-tab="extras" data-parent="widgets">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3186,90 +3179,6 @@
       </div>
     </section>
 
-    <section class="tab-section" id="tab-voicefx">
-      <div class="page-head"><div><h1 class="tab-title">Голосовые фильтры</h1><p class="tab-description">Эффект на голос: рация, робот, демон и другие. Нажми на плитку, чтобы выбрать фильтр и услышать его. Фильтр можно включать зрителям за баллы или донат.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="vfSaved"></span>
-          <button class="vf-pwr" type="button" id="vfPwr" title="Включить или выключить все голосовые фильтры"><span class="sw"></span><span><b id="vfPwrT">Фильтры выключены</b></span></button>
-          <label class="vf-vol" title="Сила эффекта"><span>🎚</span><input type="range" id="vfStr" min="0" max="100" step="5"><b id="vfStrV">60%</b></label>
-        </div></div>
-      <div class="vf-card">
-        <div class="vf-bar">
-          <span class="vf-lbl">Кому достаётся фильтр</span>
-          <button type="button" class="vf-chip" data-tg="tts" title="Озвучка сообщений чата">💬 Озвучка чата</button>
-          <button type="button" class="vf-chip" data-tg="alert" title="Голос в алертах доната">💸 Алерты доната</button>
-          <button type="button" class="vf-chip" data-tg="mic" title="Твой микрофон (нужен OBS)">🎙 Мой микрофон</button>
-          <span class="vf-now" id="vfNow"></span>
-        </div>
-        <div class="vf-grid" id="vfGrid"></div>
-        <div class="vf-foot">
-          <button class="btn btn-secondary" type="button" id="vfRwBtn">🪙 За баллы <i id="vfRwDot"></i></button>
-          <button class="btn btn-secondary" type="button" id="vfDonBtn">💸 За донат <i id="vfDonDot"></i></button>
-          <button class="btn btn-secondary" type="button" id="vfObsBtn">🎙 Микрофон и OBS <i id="vfObsDot"></i></button>
-          <button class="btn btn-ghost" type="button" id="vfReset" hidden>Сбросить временный фильтр</button>
-          <span class="vf-hint" id="vfNote"></span>
-        </div>
-      </div>
-
-      <div class="mu-modal" id="vfRwOv" hidden><div class="mu-dim" data-vfclose></div><div class="mu-mbox vf-box">
-        <button type="button" class="btn-tiny mu-x" data-vfclose title="Закрыть">✕</button>
-        <h3 class="vf-bh">🪙 Фильтр за баллы канала</h3>
-        <p class="ex-sm">Зритель покупает награду, и на заданное время голос получает эффект. Награду создаёт само приложение (нужен вход через Twitch).</p>
-        <label class="tg-sw"><input type="checkbox" id="vfRwOn"><i></i><span>Награда включена</span></label>
-        <div class="vf-form">
-          <label class="vf-fl vf-wide"><em>Название награды на Twitch</em><input type="text" id="vfRwTitle" maxlength="45"></label>
-          <label class="vf-fl"><em>Цена, баллов</em><input type="number" id="vfRwCost" min="1" max="10000000"></label>
-          <label class="vf-fl"><em>Пауза, сек</em><input type="number" id="vfRwCd" min="0" max="86400"></label>
-          <label class="vf-fl"><em>Сколько длится, сек</em><input type="number" id="vfRwDur" min="5" max="3600"></label>
-          <label class="vf-fl"><em>Какой фильтр</em><select id="vfRwFilter"></select></label>
-        </div>
-        <p class="ex-sm" id="vfRwMsg"></p>
-        <div class="vf-modal-foot"><button class="btn btn-secondary btn-sm" type="button" id="vfRwSync">Обновить награду на Twitch</button><button class="btn btn-primary btn-sm" type="button" data-vfclose>Готово</button></div>
-      </div></div>
-
-      <div class="mu-modal" id="vfDonOv" hidden><div class="mu-dim" data-vfclose></div><div class="mu-mbox vf-box">
-        <button type="button" class="btn-tiny mu-x" data-vfclose title="Закрыть">✕</button>
-        <h3 class="vf-bh">💸 Фильтр за донат</h3>
-        <p class="ex-sm">Донат от заданной суммы (и со словом в сообщении, если указано) включает фильтр на время.</p>
-        <label class="tg-sw"><input type="checkbox" id="vfDonOn"><i></i><span>Фильтр за донат включён</span></label>
-        <div class="vf-form">
-          <label class="vf-fl"><em>От суммы, ₽</em><input type="number" id="vfDonMin" min="1" max="10000000"></label>
-          <label class="vf-fl"><em>Сколько длится, сек</em><input type="number" id="vfDonDur" min="5" max="3600"></label>
-          <label class="vf-fl vf-wide"><em>Слово в сообщении (пусто — любой донат от суммы)</em><input type="text" id="vfDonKey" maxlength="40" placeholder="например: рация"></label>
-          <label class="vf-fl vf-wide"><em>Какой фильтр</em><select id="vfDonFilter"></select></label>
-        </div>
-        <div class="vf-modal-foot"><span></span><button class="btn btn-primary btn-sm" type="button" data-vfclose>Готово</button></div>
-      </div></div>
-
-      <div class="mu-modal" id="vfObsOv" hidden><div class="mu-dim" data-vfclose></div><div class="mu-mbox vf-box vf-wbox">
-        <button type="button" class="btn-tiny mu-x" data-vfclose title="Закрыть">✕</button>
-        <h3 class="vf-bh">🎙 Микрофон и OBS</h3>
-        <ol class="vf-steps">
-          <li>В OBS: <b>Инструменты → Настройки WebSocket-сервера → Включить</b>. Пароль можно оставить как есть, но тогда впиши его ниже.</li>
-          <li>Включи связь здесь и нажми «Создать источник в OBS»: появится источник «Браузер» с твоим микрофоном и фильтром.</li>
-          <li>Выбери свой обычный микрофон из списка. Когда включён фильтр, приложение само выключит обычный микрофон и включит обработанный, потом вернёт обратно.</li>
-          <li>Свой голос из другой программы (RVC, Voicemod и т. п.): добавь в OBS «Захват входящего звука» с её виртуальным микрофоном и впиши имя этого источника в поле «Имя источника с фильтром». Приложение будет переключать тебя на него так же.</li>
-        </ol>
-        <label class="tg-sw"><input type="checkbox" id="vfObsOn"><i></i><span>Связь с OBS включена</span></label>
-        <div class="vf-form vf-form3">
-          <label class="vf-fl"><em>Адрес</em><input type="text" id="vfObsHost" maxlength="80"></label>
-          <label class="vf-fl"><em>Порт</em><input type="number" id="vfObsPort" min="1" max="65535"></label>
-          <label class="vf-fl"><em>Пароль (если задан)</em><input type="password" id="vfObsPass" maxlength="200" autocomplete="off"></label>
-        </div>
-        <p class="ex-sm" id="vfObsStat"></p>
-        <div class="vf-form">
-          <label class="vf-fl"><em>Твой обычный микрофон в OBS</em><span class="vf-row"><select id="vfObsMic"></select><button class="btn btn-secondary btn-sm" type="button" id="vfObsReload" title="Обновить список">↻</button></span></label>
-          <label class="vf-fl"><em>Имя источника с фильтром</em><input type="text" id="vfObsFx" maxlength="120"></label>
-        </div>
-        <div class="vf-row vf-btns">
-          <button class="btn btn-primary btn-sm" type="button" id="vfObsMake">Создать источник в OBS</button>
-          <button class="btn btn-secondary btn-sm" type="button" id="vfObsTestOn">Проверить: включить обработанный</button>
-          <button class="btn btn-secondary btn-sm" type="button" id="vfObsTestOff">Вернуть обычный</button>
-        </div>
-        <label class="vf-fl"><em>Ссылка вручную (источник «Браузер», включи «Управлять звуком через OBS»)</em><span class="vf-row"><input type="text" id="vfObsUrl" readonly><button class="btn btn-secondary btn-sm" type="button" id="vfObsCopy">Копировать</button></span></label>
-        <div class="vf-modal-foot"><span></span><button class="btn btn-primary btn-sm" type="button" data-vfclose>Готово</button></div>
-      </div></div>
-    </section>
-
     <section class="tab-section" id="tab-music">
       <div class="page-head"><div><h1 class="tab-title">Заказ музыки</h1><p class="tab-description">Зритель пишет в чат <b>!муз название песни</b>, бот находит клип на YouTube и ставит в очередь.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="muSaved"></span><button class="mu-pwr" type="button" id="muPwr" title="Включить или выключить заказ музыки"><span class="sw"></span><span><b id="muPwrT">Заказ включён</b><small id="muPwrS"></small></span></button><span class="mu-ways" id="muBase"><button class="mu-pwr mu-way" type="button" data-base="chat" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💬 !муз</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="pts" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>🪙 Баллы</b><small></small></span></button><button class="mu-pwr mu-way" type="button" data-base="don" title="Включить или выключить способ заказа"><span class="sw"></span><span><b>💸 Донат</b><small></small></span></button></span><button class="btn btn-secondary" type="button" id="muObs" title="Скопировать ссылку для источника «Браузер» в OBS">🔗 OBS</button><div class="chr-seg" id="muTabs"><button type="button" data-p="live" class="on">Эфир</button><button type="button" data-p="stats">Чарт и история</button></div><button class="btn btn-secondary" type="button" id="muGear" aria-haspopup="dialog">⚙ Настройки</button></div></div>
@@ -3995,8 +3904,6 @@
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
-<script src="/voicefx.js?v=1"></script>
-<script src="voicefx-admin.js?v=1"></script>
-<script src="whatsnew.js?v=52"></script>
+<script src="whatsnew.js?v=51"></script>
 </body>
 </html>
