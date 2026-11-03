@@ -82,7 +82,7 @@
     if (st.state === 'working') { t.textContent = st.text || 'Подожди…'; btn.hidden = true; return; }
     if (st.state === 'starting') { t.textContent = st.text || 'Запускаю движок…'; btn.hidden = true; pr.hidden = true; return; }
     if (!info) { b.classList.add('warn'); const why = (st.state === 'error' || (st.state === 'ready' && /код|Visual/.test(st.text || ''))) ? st.text : '', tl = (nv.tail || []).slice(-3).join('\n');
-      t.textContent = 'Движок остановлен. Голоса подключатся к нему при запуске.' + (why ? '\nПричина: ' + why : '') + (why && tl ? '\n' + tl : ''); btn.textContent = '▶ Запустить движок'; btn._a = 'start'; b2.hidden = st.fix !== 'vc'; return; }
+      t.textContent = 'Движок остановлен. Голоса подключатся к нему при запуске.' + (why ? '\nПричина: ' + why : '') + (why && tl ? '\n' + tl : ''); btn.textContent = '▶ Запустить движок'; btn._a = 'start'; b2.hidden = !(st.fix === 'vc' || st.fix === 'reinstall'); b2._a = st.fix; b2.textContent = st.fix === 'reinstall' ? 'Переустановить движок' : 'Установить Visual C++'; return; }
     b.hidden = true;
   }
   function renderGrid() {
@@ -207,7 +207,7 @@
     const st = { out: Number(info.serverOutputDeviceId), wasLive: live() }; selfTest = st;
     applyVoice(v).then(() => setS('serverOutputDeviceId', mon)).then(() => setS('serverMonitorDeviceId', -1)).then(() => setS('serverInputDeviceId', $('#ovIn').value)).then(() => setS('enableServerAudio', 1)).then(() => setS('serverAudioStated', 1)).then(() => { flash('Говори: результат слышишь только ты'); return load(); }).catch(() => { selfTest = null; flash('Не удалось запустить проверку'); }).then(() => { busy = false; renderPanel(); });
   });
-  $('#ovBannerBtn2').addEventListener('click', () => { jsend('POST', P + '/api/nv/vc/install').then(load); });
+  $('#ovBannerBtn2').addEventListener('click', () => { const a = $('#ovBannerBtn2')._a; if (a === 'reinstall') jsend('POST', P + '/api/nv/install', { force: true }).then(load); else jsend('POST', P + '/api/nv/vc/install').then(load); });
   $('#ovBannerBtn').addEventListener('click', () => { const a = $('#ovBannerBtn')._a; if (a === 'install') jsend('POST', P + '/api/nv/install').then(load); else if (a === 'start') jsend('POST', P + '/api/nv/start').then(load); });
 
   // программа Овервойс
