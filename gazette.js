@@ -73,28 +73,44 @@
     for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
     return prev[n];
   }
+  // Раскладка: «ещлшща» — это «tokioff», набранное на русской клавиатуре
+  const EN = "qwertyuiop[]asdfghjkl;'zxcvbnm,.`", RU = 'йцукенгшщзхъфывапролджэячсмитьбюё';
+  function swapLayout(w) {
+    if (/^[a-z\[\];',.`]+$/i.test(w)) return w.toLowerCase().replace(/./g, c => { const i = EN.indexOf(c); return i >= 0 ? RU[i] : c; });
+    if (/^[а-яё]+$/i.test(w)) return w.toLowerCase().replace(/./g, c => { const i = RU.indexOf(c); return i >= 0 ? EN[i] : c; });
+    return w;
+  }
+  const DECOR = /^(xx|x|tv|ttv|live|official|ofc|real|the|yt|gaming|gamer|play|plays|game|games|stream|streams|streamer|channel|pro|vip|sir|mr|bro|boy|girl)$/i;
+  // Все «звуковые» формы, под которыми зрители могут назвать стримера: целиком, без цифр и украшений, отдельные части ника.
   function nameAliases(names) {
     const out = new Set();
     (names || []).forEach(n => {
       n = String(n || '').trim(); if (!n || /^(стример|streamer)$/i.test(n)) return;
-      const whole = phon(n); if (whole.length >= 4) out.add(whole);
-      const parts = n.match(/[A-ZА-ЯЁ][a-zа-яё]+|[A-ZА-ЯЁ]+(?![a-zа-яё])|[a-zа-яё]+|\d+/g) || [];
-      if (parts.length > 1 && parts[0].length >= 4) out.add(phon(parts[0]));
+      const parts = (n.replace(/([a-zа-яё])([A-ZА-ЯЁ])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2').split(/[^A-Za-zА-Яа-яЁё]+/)).filter(Boolean);
+      const core = parts.filter(x => !DECOR.test(x));
+      const use = core.length ? core : parts;
+      const add = x => { const f = phon(x); if (f.length >= 3) out.add(f); };
+      add(n.replace(/[^A-Za-zА-Яа-яЁё]/g, ''));            // целиком, без цифр и подчёркиваний
+      add(use.join(''));                                     // без украшений (xX_Wolf_Xx → wolf)
+      if (use.length > 1) { add(use[0] + use[1]); use.forEach(x => { if (phon(x).length >= 4) add(x); }); }
+      else if (use.length === 1) add(use[0]);
     });
     return Array.from(out);
   }
   function mentionTest(names) {
     const al = nameAliases(names);
     if (!al.length) return () => false;
+    const hit = t => al.some(a => {
+      if (t === a) return true;
+      if (a.length < 4 || t.length < 4) return false;                                          // короткие ники — только точное совпадение
+      if (a.startsWith(t) && a.length - t.length <= 3) return true;                            // «токи», «стари»
+      if (t.startsWith(a) && t.length - a.length <= 3) return true;                            // «стариков(у)», «токиофа»
+      const d = lev(t, a); return a.length >= 9 ? d <= 2 : a.length >= 5 ? d <= 1 : false;     // опечатки
+    });
     return function (text) {
       return tokens(text).some(raw => {
-        const t = phon(raw.replace(/^@/, '')); if (t.length < 4) return false;
-        return al.some(a => {
-          if (t === a) return true;
-          if (t.length >= 4 && a.startsWith(t) && a.length - t.length <= 3) return true;     // «токи», «стари»
-          if (t.startsWith(a) && t.length - a.length <= 3) return true;                      // «стариков(у)», «токиофа»
-          const d = lev(t, a); return a.length >= 9 ? d <= 2 : a.length >= 5 ? d <= 1 : false; // опечатки
-        });
+        const w = raw.replace(/^@/, '');
+        return hit(phon(w)) || hit(phon(swapLayout(w)));
       });
     };
   }
