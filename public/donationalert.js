@@ -55,6 +55,7 @@
 
   function readTime(c) { return 2.2 + (c.message ? c.message.length * 0.06 : 0); }
 
+  function fxDur(d) { return window.VoiceFX ? d / VoiceFX.curRate('alert') : d; }   // с фильтром голос звучит быстрее или медленнее
   function audioDuration(src) {
     return new Promise((resolve) => {
       const a = new Audio();
@@ -122,7 +123,7 @@
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
 
     let dur = 0;
-    if (item.audio) dur = await audioDuration(item.audio);
+    if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(c.holdMin, dur ? dur + 0.9 : readTime(c)), c.holdMin, c.holdMax);
     const fly = c.flySec;
     const total = fly + hold + EXIT_SEC;
@@ -153,7 +154,7 @@
             audioStarted = true; landAt = now; layer.classList.add('da-live');
             if (!landSfxDone) { landSfxDone = true; sfx(c.soundLand); }
             wave.classList.remove('go'); void wave.offsetWidth; wave.classList.add('go');
-            if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+            if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
           }
         } else {
           const p = easeIn(clamp((t - fly - hold) / EXIT_SEC, 0, 1));
@@ -270,7 +271,7 @@
     L.style.display = 'block';
 
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = Math.max(3.9, k.hold || 6, dur ? dur + 0.9 : 0);
     skipFlag = false;
     // ждёт секунды; true — нажали «пропустить»
@@ -283,7 +284,7 @@
       L.classList.add('tk-stamp');
       if (lastSlot) { lastSlot.classList.add('on', 'pop'); }
       sfx(sn_.stamp == null ? c.soundLand : sn_.stamp);
-      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
       skipped = await wait(1.4);
       if (!skipped) { L.classList.add('tk-tear'); sfx(sn_.tear); await wait(Math.max(1, hold - 1.4)); }
     }
@@ -322,7 +323,7 @@
     tkEl('fwNm').textContent = w.no ? 'фолловер №' + fmt(w.no) : 'добро пожаловать';
     tkEl('fwNd').textContent = w.date ? 'с ' + w.date : '';
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = Math.max(3.5, w.hold || 7, dur ? dur + 0.9 : 0);
     skipFlag = false;
     const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
@@ -330,7 +331,7 @@
     let skipped = await wait(1.0);
     if (!skipped) {
       L.classList.add('fw-slap'); setTimeout(() => { L.classList.add('fw-shake'); sfx(w.sound); }, 330);
-      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
       skipped = await wait(hold);
     }
     L.classList.add('fw-out'); await sleep(650);
@@ -353,7 +354,7 @@
     tkEl('bdNo').textContent = b.no ? 'ФОЛЛОВЕР №' + fmt(b.no) : 'НОВЫЙ ФОЛЛОВЕР';
     tkEl('bdDt').textContent = b.date ? 'с ' + b.date : '';
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = Math.max(3.5, b.hold || 7, dur ? dur + 0.9 : 0);
     skipFlag = false;
     const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
@@ -361,7 +362,7 @@
     let skipped = await wait(2.45);
     if (!skipped) {
       L.classList.add('bd-stamped'); sfx(b.soundStamp);
-      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
       skipped = await wait(hold);
     }
     L.classList.add('bd-out'); await sleep(800);
@@ -396,7 +397,7 @@
     L.innerHTML = '<div class="ts-box ts-s-' + escH(t.style) + '">' + toastHtml(t) + '</div>';
     L.style.display = 'block';
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(t.hold || 6, dur ? dur + 0.9 : 0), 3, 40);
     skipFlag = false;
     const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
@@ -404,7 +405,7 @@
     let skipped = await wait(0.6);
     if (!skipped) {
       sfx(c.soundLand);
-      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
       skipped = await wait(hold);
     }
     box.classList.remove('ts-in'); box.classList.add('ts-out'); await sleep(550);
@@ -440,7 +441,7 @@
     scrollIfLong(nickRow.querySelector('.v span'), nickRow.querySelector('.v'));
     const H = paper.offsetHeight, feed = clamp(0.9 + H / 300, 2, 4.2);
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(c.holdMin, dur ? dur + 0.9 : readTime(c)), c.holdMin, c.holdMax);
     skipFlag = false;
     const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
@@ -449,7 +450,7 @@
     if (!skipped) {
       sfx(r.soundPrint);
       const an = paper.animate([{ transform: `translateY(${-H - 10}px)` }, { transform: 'translateY(0)' }], { duration: feed * 1000, easing: `steps(${Math.max(8, Math.round(H / 34))}, end)`, fill: 'forwards' });
-      if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+      if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
       skipped = await wait(feed);
       if (skipped) an.finish();
       if (!skipped) { L.classList.add('rc-stamped'); sfx(c.soundLand); skipped = await wait(hold); }
@@ -481,7 +482,7 @@
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((x) => setTimeout(x, 600))]); } catch (_) {}
     scrollIfLong(nickEl, nickEl.parentElement);
     const sfx = (file) => { if (!file) return; try { const a = new Audio('alert-sounds/' + encodeURIComponent(file)); a.volume = clamp((c.soundVolume == null ? 70 : c.soundVolume) / 100, 0, 1); a.play().catch(() => {}); } catch (_) {} };
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(c.holdMin, dur ? dur + 0.9 : readTime(c)), c.holdMin, c.holdMax);
     skipFlag = false;
     const wait = async (sec) => { const end = performance.now() + sec * 1000; while (performance.now() < end) { if (skipFlag) { skipFlag = false; return true; } await sleep(40); } return false; };
@@ -494,7 +495,7 @@
       skipped = await wait(total / 1000);
       if (!skipped) {
         L.classList.add('sl-win'); sfx(c.soundLand);
-        if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+        if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
         skipped = await wait(hold);
       }
     }
@@ -529,7 +530,7 @@
     for (let i = 0; i < N; i++) { const a = rnd() * 360, rr = Math.sqrt(0.04 + rnd() * 0.9) * (R - 26), rev = i % nRev, ang = a * Math.PI / 180, e = document.createElement('div'); e.className = 'rd-dot'; e.style.left = (R + Math.sin(ang) * rr) + 'px'; e.style.top = (R - Math.cos(ang) * rr) + 'px'; dd.appendChild(e); dots.push({ e, lit: T0 + (rev * 360 + a) / SP }); }
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((x) => setTimeout(x, 600))]); } catch (_) {}
     { const nb = stage.querySelector('#rdNb'); scrollIfLong(stage.querySelector('#rdN'), nb); const gb = stage.querySelector('#rdGb'); if (gb) scrollIfLong(stage.querySelector('#rdG'), gb); }
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(r.hold, dur ? dur + 0.9 : 0), r.hold, 40);
     skipFlag = false;
     void L.offsetWidth; L.classList.add('rd-in'); if (r.siren) { L.classList.add('rd-siren'); sx.siren(); }
@@ -543,7 +544,7 @@
       let n = 0; for (const d of dots) { const k = t - d.lit; if (k < 0) continue; n++; const f = clamp(k / 0.6, 0, 1); d.e.style.opacity = 0.55 + 0.45 * (1 - f); d.e.style.transform = f < 1 ? `scale(${1 + 2.2 * (1 - f)})` : ''; }
       const cnt = Math.round(r.viewers * n / N); if (cnt !== shown) { shown = cnt; cEl.textContent = cnt; sx.tick(); }
       if (t >= tEnd && !ended) { ended = true; shown = r.viewers; cEl.textContent = r.viewers; ttl.textContent = '✔ РЕЙД ПРИНЯТ'; sx.ping(); L.classList.remove('rd-siren'); ping.animate([{ width: '0px', height: '0px', opacity: 1 }, { width: '760px', height: '760px', opacity: 0 }], { duration: 1300, easing: 'ease-out', fill: 'forwards' }); }
-      if (ended && !voiced && t >= tEnd + 0.4) { voiced = true; if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); } }
+      if (ended && !voiced && t >= tEnd + 0.4) { voiced = true; if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); } }
       if (ended && t >= tEnd + hold) break;
       await new Promise((x) => requestAnimationFrame(x));
     }
@@ -570,7 +571,7 @@
     let fs = 150; while (cEl.scrollWidth > 240 && fs > 60) { fs -= 6; cEl.style.fontSize = fs + 'px'; }
     try { if (document.fonts && document.fonts.ready) await Promise.race([document.fonts.ready, new Promise((x) => setTimeout(x, 600))]); } catch (_) {}
     scrollIfLong(stage.querySelector('#rjN'), stage.querySelector('#rjNb'));
-    let dur = 0; if (item.audio) dur = await audioDuration(item.audio);
+    let dur = 0; if (item.audio) dur = fxDur(await audioDuration(item.audio));
     const hold = clamp(Math.max(r.hold, dur ? dur + 0.9 : 0), r.hold, 40);
     skipFlag = false;
     void L.offsetWidth; L.classList.add('rj-in'); sx.cardIn();
@@ -588,7 +589,7 @@
       cEl.textContent = r.viewers; icons.forEach((i2) => i2.classList.add('on'));
       if (!skipped) {
         L.classList.add('rj-done'); cEl.classList.add('pop'); sx.cardDone();
-        if (item.audio) { audio = new Audio(item.audio); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
+        if (item.audio) { audio = (window.VoiceFX ? VoiceFX.audio(item.audio, 'alert') : new Audio(item.audio)); audio.volume = clamp((c.volume == null ? 100 : c.volume) / 100, 0, 1); audio.play().catch(() => {}); }
         skipped = await wait(hold);
       }
     }

@@ -47,6 +47,9 @@ const music = require('./musicRequests');
 const musicReward = require('./musicReward');
 const soundpad = require('./soundpad');
 const soundpadReward = require('./soundpadReward');
+const voicefx = require('./voicefx');
+const voicefxReward = require('./voicefxReward');
+const obsClient = require('./obsClient');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -424,6 +427,7 @@ function handleEventAlertRaw(type, e) {
       try { gazetteService.journal.noteRedeem(e.user_name, e.reward && e.reward.title, e.reward && e.reward.cost); } catch (er) { /* журнал необязателен */ }
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).then((r) => { if (r === 'off') return musicReward.refund(e.reward && e.reward.id, e.id); }).catch((er) => console.warn('[Музыка]', er.message));
       try { const hit = soundpad.onPoints({ name: e.user_name, reward: e.reward && e.reward.title, rewardId: e.reward && e.reward.id }); if (hit && hit.sound.reward.id) soundpadReward.fulfil(hit.sound.reward.id, e.id).catch(() => {}); } catch (er) { /* саундпад необязателен */ }
+      try { voicefx.onPoints({ name: e.user_name, reward: e.reward && e.reward.title, rewardId: e.reward && e.reward.id, input: e.user_input }) && voicefxReward.fulfil(e.reward && e.reward.id, e.id).catch(() => {}); } catch (er) { /* фильтры необязательны */ }
       break;
     default: break;
   }
@@ -1415,6 +1419,25 @@ const soundpadUpload = multer({
 require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, spKeys: soundpadKeys, app, upload: soundpadUpload });
 setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
+
+// ---------- Голосовые фильтры ----------
+let vfMicOn = null;   // что мы последним поставили в OBS; пока фильтров не было, микрофон не трогаем
+function vfApplyMic() {
+  const a = voicefx.active(), want = a.filter !== 'off' && a.targets.mic !== false;
+  if (vfMicOn === null && !want) return;
+  if (vfMicOn === want) return;
+  obsClient.switchMic(want).then((done) => { if (done) vfMicOn = want; }).catch((e) => console.warn('[OBS]', e.message));
+}
+function vfChanged(a) {
+  sendToOverlay({ type: 'voicefx', filter: a.filter, strength: a.strength, targets: a.targets });
+  obsClient.configure(voicefx.getSettings().obs, { onReady: vfApplyMic });
+  vfApplyMic();
+}
+voicefx.init({ dir: __dirname, onChange: vfChanged });
+obsClient.configure(voicefx.getSettings().obs, { onReady: vfApplyMic });
+require('./routes/voicefx').main({ vf: voicefx, vfReward: voicefxReward, obs: obsClient, app, port: config.port || 3001 });
+setTimeout(() => voicefxReward.sync(voicefx).catch(() => {}), 16000);
+setInterval(() => voicefxReward.sync(voicefx).catch(() => {}), 5 * 60 * 1000).unref();
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });
@@ -2592,7 +2615,7 @@ function sendToOverlay(payload) {
   overlayClients.forEach((ws) => {
     if (ws.readyState !== ws.OPEN) return;
     if (ws.view === 'preview') return;                                  // предпросмотр в админке получает только снапшоты (тему)
-    if (ws.view === 'alerts' && !isAlert) return;                       // источник «только алерты» не играет озвучку чата и т.п.
+    if (ws.view === 'alerts' && !isAlert && payload.type !== 'voicefx') return;   // источник «только алерты» не играет озвучку чата и т.п.
     if (ws.view === 'alerts' && ws.kind && payload.type === 'donation_alert' && ((payload.card && payload.card.eventKind) || 'donation') !== ws.kind) return;   // отдельный источник одного вида
     if (!ws.view && isAlert) return;                                    // основной оверлей не показывает алерты — у каждого вида свой источник
     ws.send(json);
@@ -2839,6 +2862,7 @@ function handleDonation(donation) {
   try { telegramAnnounce.noteEvent('donation', { rub: currency.toRub(record.amount, record.currency).rub }); } catch (e) { /* счётчик необязателен */ }
   donorLeaderboard.addDonation(record);
   handleTimelineWeightedEvent({ type: 'donation', username: record.username, meta: { amount: record.amount, currency: record.currency, amountRub: currency.toRub(record.amount, record.currency).rub, message: record.message || '' } }); // зелёный прямоугольник с суммой на таймлайне
+  try { voicefx.onDonation({ username: record.username, message: record.message || '', rub: currency.toRub(record.amount, record.currency).rub }); } catch (e) { /* фильтры необязательны */ }
   broadcastDonation(record);
   fireDonationAlert(record);
   fundData.addAmount(record.amount); // плашка "Сбор" растёт от того же события, ничего в приёме донатов не меняем

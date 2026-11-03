@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Микрофон с фильтром — Overdeck</title>
+<style>html,body{margin:0;background:transparent;color:#ccc;font:12px system-ui,sans-serif}#s{padding:6px 8px;opacity:.75}body.dbg{background:#16181d;color:#eceef2;padding:10px}button{font:inherit;padding:8px 14px;border-radius:10px;border:1px solid #444;background:#e5484d;color:#fff;cursor:pointer}</style></head>
+<body>
+<!-- Источник «Браузер» в OBS: ссылка вида http://localhost:3001/voicemic.html. Включи в нём «Управлять звуком через OBS».
+     Страница берёт микрофон, накладывает выбранный в админке фильтр и отдаёт звук в OBS. Параметр ?mic=часть_названия выбирает микрофон, ?debug=1 показывает статус. -->
+<div id="s"></div>
+<script src="voicefx.js?v=1"></script>
+<script>
+(function () {
+  var Q = new URLSearchParams(location.search), out = document.getElementById('s');
+  if (Q.get('debug') === '1') document.body.classList.add('dbg'); else out.style.display = 'none';
+  function say(t) { out.textContent = t; }
+  var ctx, src, fx = null, cur = '', haveWorklet = false, started = false;
+  function wanted() { var s = VoiceFX.state; return s.filter !== 'off' && s.targets.mic !== false ? s.filter : 'off'; }
+  function route() {
+    var id = wanted(), key = id + '|' + VoiceFX.state.strength;
+    if (key === cur) return; cur = key;
+    try { src.disconnect(); } catch (e) {}
+    if (fx) { var old = fx; fx = null; setTimeout(function () { old.stop(); }, 600); }
+    if (id === 'off') { src.connect(ctx.destination); say('Микрофон без фильтра'); return; }
+    fx = VoiceFX.buildLive(ctx, id, VoiceFX.state.strength / 100, haveWorklet);
+    src.connect(fx.input); fx.output.connect(ctx.destination);
+    say('Фильтр: ' + (VoiceFX.FILTERS.find(function (f) { return f.id === id; }) || {}).name);
+  }
+  async function pickStream() {
+    var base = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 };
+    var want = (Q.get('mic') || '').toLowerCase();
+    if (want) {
+      try { var tmp = await navigator.mediaDevices.getUserMedia({ audio: true }); tmp.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      var list = (await navigator.mediaDevices.enumerateDevices()).filter(function (d) { return d.kind === 'audioinput' && d.label.toLowerCase().indexOf(want) >= 0; });
+      if (list[0]) return navigator.mediaDevices.getUserMedia({ audio: Object.assign({ deviceId: { exact: list[0].deviceId } }, base) });
+    }
+    return navigator.mediaDevices.getUserMedia({ audio: base });
+  }
+  async function start() {
+    if (started) return; started = true;
+    try {
+      ctx = VoiceFX.context(); await ctx.resume();
+      haveWorklet = await VoiceFX.initLive(ctx);
+      src = ctx.createMediaStreamSource(await pickStream());
+      await VoiceFX.refresh(); route();
+      setInterval(function () { VoiceFX.refresh().then(route); }, 700);
+    } catch (e) { started = false; say('Нет доступа к микрофону: ' + e.message); out.style.display = 'block'; }
+  }
+  start();
+  document.body.addEventListener('click', start);
+  if (ctx && ctx.state === 'suspended') { say('Нажми на страницу, чтобы включить звук'); }
+})();
+</script></body></html>

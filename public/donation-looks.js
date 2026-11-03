@@ -602,7 +602,7 @@
     const u = c.custom || {};
     if (u.font) { try { ensureFontLoaded(u.font); } catch (_) {} }
     let own = 0, ownAudio = null;
-    if (L.std && u.audio) { ownAudio = new Audio(u.audio); ownAudio.volume = clamp((u.volume == null ? 80 : u.volume) / 100, 0, 1); own = await h.audioDuration(u.audio); }
+    if (L.std && u.audio) { ownAudio = (window.VoiceFX ? VoiceFX.audio(u.audio, 'alert') : new Audio(u.audio)); ownAudio.volume = clamp((u.volume == null ? 80 : u.volume) / 100, 0, 1); own = await h.audioDuration(u.audio); }
     const voiceAt = L.std ? (own ? Math.min(own, 8) + 0.2 : 0.3) : L.audioAt;
     let hold = clamp(Math.max(L.min, c.holdMin || 0, dur ? dur + L.audioAt + 0.9 : 0), L.min, Math.max(c.holdMax || 25, L.min));
     if (L.std) hold = clamp(Math.max(Number(u.duration) || 8, dur ? dur + voiceAt + 0.8 : 0), 2, Math.max(c.holdMax || 25, Number(u.duration) || 8, 60));

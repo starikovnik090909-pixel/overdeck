@@ -178,6 +178,7 @@ let currentTtsSettings = { queueEnabled: true };
 let ttsQueue = [];
 let ttsPlaying = false;
 const ttsAudioEl = new Audio();
+if (window.VoiceFX) { VoiceFX.attach(ttsAudioEl, 'tts'); VoiceFX.refresh(); }   // голосовые фильтры: включаются сами, если выбран фильтр
 
 function playNextTts() {
   if (ttsPlaying || ttsQueue.length === 0) return;
@@ -224,6 +225,7 @@ ws.onmessage = (event) => {
 
   if (data.type === 'tts') { handleTtsAudio(data.audio); return; }
   if (data.type === 'tts_stop') { stopTts(); return; }
+  if (data.type === 'voicefx') { if (window.VoiceFX) VoiceFX.setState(data); return; }
   if (data.type === 'nowplaying') { if (window.NowPlayingModule) window.NowPlayingModule.set(data); return; }
   if (data.type === 'donation_alert') { if (window.DonationAlertModule) window.DonationAlertModule.show(data); return; }
   if (data.type === 'donation_alert_skip') { if (window.DonationAlertModule) window.DonationAlertModule.skip(); return; }
