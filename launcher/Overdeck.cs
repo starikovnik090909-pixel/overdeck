@@ -305,7 +305,8 @@ class Launcher : Form
 
     ConsoleForm console;
     Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
-    FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut;
+    FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut, btnMods;
+    ModsForm modsForm;
     Dot dotUpd, dotServer;
     ProgressLine progUpd;
     NotifyIcon tray;
@@ -455,20 +456,22 @@ class Launcher : Form
         lblAdminUrl = RowValue(79); lblAdminUrl.Text = "localhost:" + port + "/admin"; cSt.Controls.Add(lblAdminUrl);
 
         // --- кнопки ---
-        btnAdmin = MakeButton("Открыть админку", 438, 96, 240, 48, false);
+        btnAdmin = MakeButton("Открыть админку", 438, 96, 240, 42, false);
         btnAdmin.Click += delegate { OpenAdmin(); };
-        btnConsole = MakeButton("Консоль сервера", 438, 154, 240, 48, false);
+        btnConsole = MakeButton("Консоль сервера", 438, 146, 240, 42, false);
         btnConsole.Click += delegate { ShowConsole(); };
-        btnUpdate = MakeButton("Проверить обновления", 438, 212, 240, 48, false);
+        btnUpdate = MakeButton("Проверить обновления", 438, 196, 240, 42, false);
         btnUpdate.Click += delegate
         {
             if (pendingVersion.Length > 0 && downloadUrl.Length > 0 && !updating) InstallUpdate(pendingVersion);
             else CheckUpdates(true);
         };
-        btnToggle = MakeButton("Остановить сервер", 438, 270, 240, 48, false);
+        btnToggle = MakeButton("Остановить сервер", 438, 246, 240, 42, false);
         btnToggle.Click += delegate { ToggleServer(); };
-        btnShortcut = MakeButton("Ярлык на рабочий стол", 438, 328, 240, 48, false);
+        btnShortcut = MakeButton("Ярлык на рабочий стол", 438, 296, 240, 42, false);
         btnShortcut.Click += delegate { CreateDesktopShortcut(); };
+        btnMods = MakeButton("Моды", 438, 346, 240, 42, false);
+        btnMods.Click += delegate { ShowMods(); };
 
         chkAuto = new Toggle();
         chkAuto.Text = "Обновлять автоматически";
@@ -485,7 +488,7 @@ class Launcher : Form
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
         hint.Size = new Size(654, 20);
-        hint.Location = new Point(24, 392);
+        hint.Location = new Point(24, 398);
         Controls.Add(hint);
 
         console = new ConsoleForm();
@@ -569,6 +572,12 @@ class Launcher : Form
         {
             MessageBox.Show("Не удалось создать ярлык: " + ex.Message, "Overdeck", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
+    }
+
+    void ShowMods()
+    {
+        if (modsForm == null || modsForm.IsDisposed) modsForm = new ModsForm(root, port, delegate { return FindNode(); });
+        modsForm.Show(); modsForm.BringToFront(); modsForm.Activate();
     }
 
     FancyButton MakeButton(string text, int x, int y, int w, int h, bool primary)
@@ -1345,5 +1354,294 @@ class Launcher : Form
     {
         base.OnLoad(e);
         lblUpdate.Click += delegate { if (updatePage.Length > 0) try { Process.Start(updatePage); } catch { } };
+    }
+}
+
+
+// ----- окно «Моды»: установка дополнений (сейчас — Овервойс, нейроголос для микрофона) -----
+class ModsForm : Form
+{
+    const string AppUrl = "https://github.com/starikovnik090909-pixel/overvoice/archive/refs/heads/main.zip";
+    const string CableUrl = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip";
+    const int OvPort = 3055;
+    const long NeedBytes = 9L * 1024 * 1024 * 1024;
+
+    string root; int odPort; Func<string> findNode;
+    ComboBox cbDrive, cbGpu; ProgressLine prog; Label lblStatus, lblMsg; FancyButton btnGo;
+    List<string> driveDirs = new List<string>();
+    bool working, cancelled; Process ovProc;
+
+    public ModsForm(string rootDir, int port, Func<string> nodeFinder)
+    {
+        root = rootDir; odPort = port; findNode = nodeFinder;
+        Text = "Overdeck — моды";
+        HandleCreated += delegate { DarkTitle.Apply(this, Ui.Bg1); };
+        ClientSize = new Size(520, 372);
+        FormBorderStyle = FormBorderStyle.FixedSingle; MaximizeBox = false; MinimizeBox = false;
+        StartPosition = FormStartPosition.CenterParent;
+        BackColor = Ui.Bg1; ForeColor = Ui.Txt; Font = new Font("Segoe UI", 9.5f); DoubleBuffered = true;
+        try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+
+        Label title = new Label(); title.Text = "Моды"; title.Font = new Font("Segoe UI Semibold", 17f); title.ForeColor = Color.White;
+        title.BackColor = Color.Transparent; title.AutoSize = true; title.Location = new Point(22, 14); Controls.Add(title);
+
+        Card c = new Card(); c.Location = new Point(22, 58); c.Size = new Size(476, 272); Controls.Add(c);
+        Label nm = new Label(); nm.Text = "Овервойс"; nm.Font = new Font("Segoe UI Semibold", 12f); nm.ForeColor = Color.White; nm.BackColor = Color.Transparent; nm.AutoSize = true; nm.Location = new Point(16, 12); c.Controls.Add(nm);
+        Label ds = new Label(); ds.Text = "Нейроголос для микрофона. Ставит программу, виртуальный аудиокабель VB-Cable и движок голоса (около 3 ГБ)."; ds.ForeColor = Ui.Dim; ds.BackColor = Color.Transparent; ds.AutoSize = false; ds.Size = new Size(444, 36); ds.Location = new Point(16, 38); ds.Font = new Font("Segoe UI", 9f); c.Controls.Add(ds);
+        lblStatus = new Label(); lblStatus.ForeColor = Ui.Warn; lblStatus.BackColor = Color.Transparent; lblStatus.AutoSize = false; lblStatus.Size = new Size(444, 20); lblStatus.Location = new Point(16, 76); lblStatus.Font = new Font("Segoe UI Semibold", 9.5f); c.Controls.Add(lblStatus);
+
+        c.Controls.Add(Cap("Куда ставить", 16, 102));
+        cbDrive = Combo(16, 122, 214); c.Controls.Add(cbDrive);
+        c.Controls.Add(Cap("Видеокарта", 246, 102));
+        cbGpu = Combo(246, 122, 214); cbGpu.Items.Add("NVIDIA (CUDA)"); cbGpu.Items.Add("Другая (DirectML)"); cbGpu.SelectedIndex = 0; c.Controls.Add(cbGpu);
+
+        prog = new ProgressLine(); prog.Location = new Point(16, 166); prog.Size = new Size(444, 6); c.Controls.Add(prog);
+        lblMsg = new Label(); lblMsg.ForeColor = Ui.Dim; lblMsg.BackColor = Color.Transparent; lblMsg.AutoSize = false; lblMsg.Size = new Size(444, 34); lblMsg.Location = new Point(16, 178); lblMsg.Font = new Font("Segoe UI", 9f); c.Controls.Add(lblMsg);
+        btnGo = new FancyButton(); btnGo.Primary = true; btnGo.Text = "Скачать и установить всё"; btnGo.Location = new Point(16, 216); btnGo.Size = new Size(444, 42);
+        btnGo.Click += delegate { StartInstall(); }; c.Controls.Add(btnGo);
+
+        Label hint = new Label(); hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(150, 120, 126);
+        hint.BackColor = Color.Transparent; hint.Font = new Font("Segoe UI", 8.5f); hint.AutoSize = false; hint.Size = new Size(476, 32); hint.Location = new Point(24, 336); Controls.Add(hint);
+
+        FillDrives(); Refresh2();
+        FormClosing += delegate(object s, FormClosingEventArgs e) { if (working) { e.Cancel = true; Hide(); } };
+    }
+
+    static Label Cap(string t, int x, int y) { Label l = new Label(); l.Text = t; l.ForeColor = Ui.Dim; l.BackColor = Color.Transparent; l.AutoSize = true; l.Location = new Point(x, y); l.Font = new Font("Segoe UI", 8.5f); return l; }
+    static ComboBox Combo(int x, int y, int w)
+    {
+        ComboBox b = new ComboBox(); b.DropDownStyle = ComboBoxStyle.DropDownList; b.FlatStyle = FlatStyle.Flat;
+        b.BackColor = Color.FromArgb(40, 38, 42); b.ForeColor = Ui.Txt; b.Location = new Point(x, y); b.Size = new Size(w, 26); return b;
+    }
+
+    string DefaultDir() { return Path.Combine(Path.Combine(root, "mods"), "overvoice"); }
+
+    void FillDrives()
+    {
+        cbDrive.Items.Clear(); driveDirs.Clear();
+        cbDrive.Items.Add("Рядом с Overdeck"); driveDirs.Add(DefaultDir());
+        string cur = null; try { cur = ReadModDir(); } catch { }
+        int sel = 0;
+        try
+        {
+            foreach (DriveInfo d in DriveInfo.GetDrives())
+            {
+                if (d.DriveType != DriveType.Fixed || !d.IsReady) continue;
+                long gb = d.AvailableFreeSpace / (1024L * 1024 * 1024);
+                string dir = d.Name + "Overvoice";
+                cbDrive.Items.Add("Диск " + d.Name.Substring(0, 2) + " · свободно " + gb + " ГБ" + (d.AvailableFreeSpace < NeedBytes ? " (мало места)" : ""));
+                driveDirs.Add(dir);
+                if (cur != null && string.Equals(cur.TrimEnd('\\'), dir, StringComparison.OrdinalIgnoreCase)) sel = cbDrive.Items.Count - 1;
+            }
+        }
+        catch { }
+        cbDrive.SelectedIndex = sel;
+    }
+
+    string ReadModDir()
+    {
+        string f = Path.Combine(root, "mods.json");
+        if (!File.Exists(f)) return null;
+        Match m = Regex.Match(File.ReadAllText(f, Encoding.UTF8), "\"dir\"\\s*:\\s*\"((?:[^\"\\\\]|\\\\.)*)\"");
+        return m.Success && m.Groups[1].Value.Length > 0 ? m.Groups[1].Value.Replace("\\\\", "\\") : null;
+    }
+
+    string TargetDir() { int i = cbDrive.SelectedIndex; return (i >= 0 && i < driveDirs.Count) ? driveDirs[i] : DefaultDir(); }
+
+    void Refresh2()
+    {
+        string dir = null; try { dir = ReadModDir(); } catch { }
+        if (dir == null) dir = DefaultDir();
+        bool inst = File.Exists(Path.Combine(dir, "server.js"));
+        string ver = "";
+        try { Match m = Regex.Match(File.ReadAllText(Path.Combine(dir, "package.json"), Encoding.UTF8), "\"version\"\\s*:\\s*\"([^\"]+)\""); if (m.Success) ver = m.Groups[1].Value; } catch { }
+        lblStatus.Text = inst ? "Установлен · версия " + ver + " · " + dir : "Не установлен";
+        lblStatus.ForeColor = inst ? Ui.Ok : Ui.Warn;
+        btnGo.Text = inst ? "Обновить и докачать всё" : "Скачать и установить всё";
+    }
+
+    void Report(string text, int pct, bool err)
+    {
+        try { BeginInvoke((MethodInvoker)delegate { lblMsg.Text = text; lblMsg.ForeColor = err ? Ui.Err : Ui.Dim; if (pct >= 0) prog.Value = pct; }); } catch { }
+    }
+
+    void StartInstall()
+    {
+        if (working) return;
+        working = true; cancelled = false; btnGo.Enabled = false; cbDrive.Enabled = false; cbGpu.Enabled = false; prog.Value = 0;
+        string target = TargetDir(); string variant = cbGpu.SelectedIndex == 1 ? "dml" : "cuda";
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            string error = null;
+            try { Install(target, variant); }
+            catch (Exception ex) { error = ex.Message; Launcher.WriteLog("Моды: ошибка установки Овервойса: " + ex); }
+            try
+            {
+                BeginInvoke((MethodInvoker)delegate
+                {
+                    working = false; btnGo.Enabled = true; cbDrive.Enabled = true; cbGpu.Enabled = true;
+                    if (error != null) { lblMsg.Text = error; lblMsg.ForeColor = Ui.Err; }
+                    else { prog.Value = 100; lblMsg.Text = "Готово. Овервойс будет запускаться вместе с Overdeck, управление во вкладке «Овервойс» в админке."; lblMsg.ForeColor = Ui.Ok; }
+                    Refresh2();
+                });
+            }
+            catch { }
+        });
+    }
+
+    void Install(string target, string variant)
+    {
+        ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+        string node = findNode();
+        if (node == null) throw new Exception("Не найден Node.js. Запусти сервер Overdeck один раз, он поставит его сам.");
+        Report("Проверяю место на диске…", 2, false);
+        string rootPath = Path.GetPathRoot(Path.GetFullPath(target));
+        if (new DriveInfo(rootPath).AvailableFreeSpace < NeedBytes) throw new Exception("На диске " + rootPath + " меньше 9 ГБ свободного места. Выбери другой диск.");
+        Directory.CreateDirectory(target);
+
+        Report("Скачиваю Овервойс…", 5, false);
+        string zip = Path.Combine(Path.GetTempPath(), "overvoice-app.zip");
+        using (WebClient wc = new WebClient()) { wc.Headers["User-Agent"] = "Overdeck-Launcher"; wc.DownloadFile(AppUrl, zip); }
+        Report("Распаковываю…", 12, false);
+        string tmp = Path.Combine(Path.GetTempPath(), "overvoice-app-x");
+        if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
+        ZipFile.ExtractToDirectory(zip, tmp);
+        string[] dirs = Directory.GetDirectories(tmp);
+        CopyDir(dirs.Length == 1 ? dirs[0] : tmp, target);
+        try { Directory.Delete(tmp, true); File.Delete(zip); } catch { }
+        if (!File.Exists(Path.Combine(target, "server.js"))) throw new Exception("В архиве не нашёлся файл программы");
+        WriteModsJson(target);
+
+        Report("Ставлю зависимости (одна минута)…", 18, false);
+        RunHidden("cmd.exe", "/c npm install --omit=dev", target, node, 300000);
+        string sf = Path.Combine(target, "nv_settings.json");
+        if (!File.Exists(sf)) File.WriteAllText(sf, "{\"variant\":\"" + variant + "\"}", new UTF8Encoding(false));
+        else File.WriteAllText(sf, Regex.Replace(File.ReadAllText(sf, Encoding.UTF8), "\"variant\"\\s*:\\s*\"[a-z]+\"", "\"variant\":\"" + variant + "\""), new UTF8Encoding(false));
+        if (cancelled) return;
+
+        if (!CableInstalled())
+        {
+            Report("Ставлю VB-Cable: подтверди окно Windows и нажми «Установить»…", 28, false);
+            try { InstallCable(); } catch (Exception ex) { Launcher.WriteLog("Моды: VB-Cable не поставился: " + ex.Message); Report("Кабель не поставился (" + ex.Message + "). Продолжаю с движком, кабель можно поставить позже.", 34, true); Thread.Sleep(2500); }
+        }
+        if (cancelled) return;
+
+        string engine = Path.Combine(target, "nv-engine");
+        bool haveEngine = Directory.Exists(engine) && Directory.GetFiles(engine, "MMVCServerSIO*", SearchOption.AllDirectories).Length > 0;
+        if (!haveEngine)
+        {
+            File.WriteAllText(Path.Combine(target, "autoinstall.flag"), "1");
+            Report("Скачиваю движок голоса…", 36, false);
+            DownloadEngineViaOvervoice(target, node);
+        }
+        Report("Запускаю Овервойс…", 98, false);
+        try { PostOverdeck("/api/mods/overvoice/start"); } catch { }
+    }
+
+    void DownloadEngineViaOvervoice(string target, string node)
+    {
+        ProcessStartInfo psi = new ProcessStartInfo(node, "server.js");
+        psi.WorkingDirectory = target; psi.UseShellExecute = false; psi.CreateNoWindow = true;
+        psi.EnvironmentVariables["OVERVOICE_PORT"] = OvPort.ToString(); psi.EnvironmentVariables["OVERVOICE_NO_OPEN"] = "1";
+        psi.EnvironmentVariables["OVERVOICE_OVERDECK_URL"] = "http://localhost:" + odPort;
+        bool ownProc = false;
+        if (!Http(OvPort, "GET", "/api/nv/state").StartsWith("{")) { ovProc = Process.Start(psi); ownProc = true; }
+        try
+        {
+            string last = "";
+            for (int i = 0; i < 60 * 60 * 3; i++)
+            {
+                if (cancelled) return;
+                Thread.Sleep(1000);
+                string j = Http(OvPort, "GET", "/api/nv/state");
+                if (!j.StartsWith("{")) { if (ownProc && ovProc != null && ovProc.HasExited) throw new Exception("Овервойс закрылся во время установки"); continue; }
+                if (j.IndexOf("\"installed\":true") >= 0) return;
+                Match m = Regex.Match(j, "\"status\":\\{\"state\":\"(\\w+)\",\"text\":\"((?:[^\"\\\\]|\\\\.)*)\",\"pct\":(\\d+)");
+                if (!m.Success) continue;
+                string st = m.Groups[1].Value, tx = m.Groups[2].Value; int pct = int.Parse(m.Groups[3].Value);
+                if (st == "error") throw new Exception("Движок не скачался: " + tx);
+                if (st == "none") { Http(OvPort, "POST", "/api/nv/install"); continue; }
+                if (tx != last || st == "downloading") { last = tx; Report(tx.Length > 0 ? tx : "Скачиваю движок голоса…", 36 + pct * 6 / 10, false); }
+            }
+            throw new Exception("Слишком долго. Открой вкладку «Овервойс» в админке и проверь установку движка там.");
+        }
+        finally { if (ownProc) StopOvervoice(); }
+    }
+
+    void StopOvervoice()
+    {
+        try { Http(OvPort, "POST", "/api/shutdown", true); Thread.Sleep(1200); } catch { }
+        try { if (ovProc != null && !ovProc.HasExited) Process.Start(new ProcessStartInfo("taskkill", "/PID " + ovProc.Id + " /T /F") { CreateNoWindow = true, UseShellExecute = false }); } catch { }
+        ovProc = null;
+    }
+
+    string Http(int port, string method, string path) { return Http(port, method, path, false); }
+    string Http(int port, string method, string path, bool shutdownHeader)
+    {
+        try
+        {
+            HttpWebRequest rq = (HttpWebRequest)WebRequest.Create("http://127.0.0.1:" + port + path);
+            rq.Method = method; rq.Timeout = 3000; if (method == "POST") rq.ContentLength = 0;
+            if (shutdownHeader) rq.Headers["X-Overvoice"] = "1";
+            using (HttpWebResponse rs = (HttpWebResponse)rq.GetResponse()) using (StreamReader r = new StreamReader(rs.GetResponseStream(), Encoding.UTF8)) return r.ReadToEnd();
+        }
+        catch { return ""; }
+    }
+    void PostOverdeck(string path) { Http(odPort, "POST", path); }
+
+    void WriteModsJson(string target)
+    {
+        string f = Path.Combine(root, "mods.json"); string auto = "true";
+        try { Match m = Regex.Match(File.ReadAllText(f, Encoding.UTF8), "\"autostart\"\\s*:\\s*(true|false)"); if (m.Success) auto = m.Groups[1].Value; } catch { }
+        string dir = string.Equals(target, DefaultDir(), StringComparison.OrdinalIgnoreCase) ? "" : target.Replace("\\", "\\\\");
+        File.WriteAllText(f, "{\n  \"overvoice\": {\n    \"dir\": \"" + dir + "\",\n    \"autostart\": " + auto + ",\n    \"port\": " + OvPort + "\n  }\n}\n", new UTF8Encoding(false));
+    }
+
+    static void CopyDir(string src, string dst)
+    {
+        Directory.CreateDirectory(dst);
+        foreach (string f in Directory.GetFiles(src)) File.Copy(f, Path.Combine(dst, Path.GetFileName(f)), true);
+        foreach (string d in Directory.GetDirectories(src)) CopyDir(d, Path.Combine(dst, Path.GetFileName(d)));
+    }
+
+    void RunHidden(string file, string args, string cwd, string node, int timeoutMs)
+    {
+        ProcessStartInfo psi = new ProcessStartInfo(file, args);
+        psi.WorkingDirectory = cwd; psi.UseShellExecute = false; psi.CreateNoWindow = true;
+        string nd = Path.GetDirectoryName(node);
+        if (!string.IsNullOrEmpty(nd)) psi.EnvironmentVariables["PATH"] = nd + Path.PathSeparator + (psi.EnvironmentVariables["PATH"] ?? "");
+        using (Process p = Process.Start(psi))
+        {
+            if (!p.WaitForExit(timeoutMs)) { try { p.Kill(); } catch { } throw new Exception("npm install завис"); }
+            if (p.ExitCode != 0) throw new Exception("npm install завершился с ошибкой (" + p.ExitCode + "). Проверь интернет и повтори.");
+        }
+    }
+
+    static bool CableInstalled()
+    {
+        try
+        {
+            ProcessStartInfo psi = new ProcessStartInfo("powershell", "-NoProfile -NonInteractive -Command \"(Get-CimInstance Win32_SoundDevice | Select-Object -ExpandProperty Name) -join ';'\"");
+            psi.UseShellExecute = false; psi.CreateNoWindow = true; psi.RedirectStandardOutput = true;
+            using (Process p = Process.Start(psi)) { string o = p.StandardOutput.ReadToEnd(); p.WaitForExit(20000); return o.IndexOf("CABLE", StringComparison.OrdinalIgnoreCase) >= 0; }
+        }
+        catch { return false; }
+    }
+
+    static void InstallCable()
+    {
+        string dir = Path.Combine(Path.GetTempPath(), "overvoice-vbcable");
+        if (Directory.Exists(dir)) Directory.Delete(dir, true);
+        Directory.CreateDirectory(dir);
+        string zip = Path.Combine(dir, "c.zip");
+        using (WebClient wc = new WebClient()) { wc.Headers["User-Agent"] = "Overdeck-Launcher"; wc.DownloadFile(CableUrl, zip); }
+        ZipFile.ExtractToDirectory(zip, dir);
+        string exe = Path.Combine(dir, Environment.Is64BitOperatingSystem ? "VBCABLE_Setup_x64.exe" : "VBCABLE_Setup.exe");
+        if (!File.Exists(exe)) throw new Exception("в архиве нет установщика");
+        ProcessStartInfo psi = new ProcessStartInfo(exe, "-i -h"); psi.UseShellExecute = true; psi.Verb = "runas"; psi.WorkingDirectory = dir;
+        try { using (Process p = Process.Start(psi)) p.WaitForExit(300000); }
+        catch (System.ComponentModel.Win32Exception) { throw new Exception("разрешение не дано"); }
+        try { Directory.Delete(dir, true); } catch { }
+        if (!CableInstalled()) throw new Exception("драйвер не появился, возможно нужна перезагрузка");
     }
 }
