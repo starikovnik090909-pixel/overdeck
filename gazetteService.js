@@ -177,6 +177,7 @@ function buildIssue(opts) {
   }
   const name = studio();
   S.streamer = name;
+  S.aliases = [channel, cfg.studioName].filter(Boolean); // как зрители могут назвать стримера в чате
   S.tzOffsetMin = demoId ? 0 : -new Date().getTimezoneOffset(); // время в хронике — по часам этого ПК
   // демо-вечера строим без памяти, живой — с памятью прошлых выпусков и зрителей (копия, чтобы опрос раз в секунду ничего не менял)
   const g = Gazette.build(S, { seed, masthead: 'ВЕСТНИК ' + name.toUpperCase(), memory: demoId ? null : JSON.parse(JSON.stringify({ used: mem.used, nicks: mem.nicks, kinds: mem.kinds })) });

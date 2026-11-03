@@ -94,6 +94,19 @@ t('цитата: только приветствия — цитаты нет', (
   assert.strictEqual(Gazette.analyze({ streamer: 's', startTs: t0, endTs: t0 + 3600000, chat, events: [], games: [] }).quote, null);
 });
 
+
+// 6б. Цитата вечера есть всегда, упоминание стримера (с опечатками и транслитом) даёт ей приоритет
+t('цитата: упоминание стримера с опечатками', () => {
+  const t0 = Date.parse('2026-11-01T15:00:00Z');
+  const mk = (names, text) => { const chat = []; for (let i = 0; i < 12; i++) chat.push({ ts: t0 + (20 + i) * 60000, user: 'u' + i, text: 'ну вообще обычное сообщение номер ' + i }); chat.push({ ts: t0 + 40 * 60000, user: 'fan', text }); return Gazette.analyze({ streamer: names[0], aliases: names.slice(1), startTs: t0, endTs: t0 + 3600000, chat, events: [], games: [] }).quote; };
+  [['TokiOFF', 'токиоф ебать ты пижон'], ['TokiOFF', 'токи ты сегодня в ударе вообще'], ['TokiOFF', 'токки красавчик как всегда'], ['Starikov', 'стариков ну ты даёшь сегодня'], ['Starikov', 'старикоф давай побеждай уже'], ['starlkov', 'Starikov молодец что стримишь'], ['Starikov', 'starikof, спасибо за вечер']].forEach(([n, text]) => {
+    const q = mk([n], text); assert.ok(q && q.user === 'fan' && q.mention, n + ' ← «' + text + '»: ' + JSON.stringify(q));
+  });
+  const none = mk(['Starikov'], 'просто сообщение без имени тут');
+  assert.ok(none && !none.mention, 'цитата есть и без упоминания');
+  assert.ok(!mk(['TokiOFF'], 'совсем другое слово токарь станок').mention, 'ложное срабатывание');
+});
+
 // 7. Звания зрителей
 t('звания: музыка, донаты, баллы, лимиты', () => {
   const V = require('../viewerTitles'), B = require('../viewerTitleBank'), t0 = 1e12, M = 60000, chat = [], events = [];

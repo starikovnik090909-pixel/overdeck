@@ -58,6 +58,47 @@
     return w;
   }
 
+
+  // ---------- упоминание стримера (с опечатками, транслитом и кириллицей) ----------
+  const TR = { а:'a', б:'b', в:'v', г:'g', д:'d', е:'e', ё:'e', ж:'zh', з:'z', и:'i', й:'i', к:'k', л:'l', м:'m', н:'n', о:'o', п:'p', р:'r', с:'s', т:'t', у:'u', ф:'f', х:'h', ц:'ts', ч:'ch', ш:'sh', щ:'sh', ъ:'', ы:'i', ь:'', э:'e', ю:'u', я:'a' };
+  // «звуковая» форма слова: Starikov = Стариков = старикоф = starrikov
+  function phon(w) {
+    w = String(w).toLowerCase().replace(/[а-яё]/g, c => TR[c] != null ? TR[c] : '');
+    w = w.replace(/ph/g, 'f').replace(/ck/g, 'k').replace(/[cq]/g, 'k').replace(/x/g, 'ks').replace(/w/g, 'v').replace(/[jy]/g, 'i').replace(/f/g, 'v').replace(/l(?=[kv])/g, 'i').replace(/[^a-z0-9]/g, '');
+    return w.replace(/(.)\1+/g, '$1');
+  }
+  function lev(a, b) {
+    const m = a.length, n = b.length; if (Math.abs(m - n) > 3) return 9;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j);
+    for (let i = 1; i <= m; i++) { const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); prev = cur; }
+    return prev[n];
+  }
+  function nameAliases(names) {
+    const out = new Set();
+    (names || []).forEach(n => {
+      n = String(n || '').trim(); if (!n || /^(стример|streamer)$/i.test(n)) return;
+      const whole = phon(n); if (whole.length >= 4) out.add(whole);
+      const parts = n.match(/[A-ZА-ЯЁ][a-zа-яё]+|[A-ZА-ЯЁ]+(?![a-zа-яё])|[a-zа-яё]+|\d+/g) || [];
+      if (parts.length > 1 && parts[0].length >= 4) out.add(phon(parts[0]));
+    });
+    return Array.from(out);
+  }
+  function mentionTest(names) {
+    const al = nameAliases(names);
+    if (!al.length) return () => false;
+    return function (text) {
+      return tokens(text).some(raw => {
+        const t = phon(raw.replace(/^@/, '')); if (t.length < 4) return false;
+        return al.some(a => {
+          if (t === a) return true;
+          if (t.length >= 4 && a.startsWith(t) && a.length - t.length <= 3) return true;     // «токи», «стари»
+          if (t.startsWith(a) && t.length - a.length <= 3) return true;                      // «стариков(у)», «токиофа»
+          const d = lev(t, a); return a.length >= 9 ? d <= 2 : a.length >= 5 ? d <= 1 : false; // опечатки
+        });
+      });
+    };
+  }
+
   // ---------- важность событий ----------
   function importance(e) {
     switch (e.type) {
@@ -144,16 +185,19 @@
     const firstSeen = {}; chat.forEach(m => { if (!(m.user in firstSeen)) firstSeen[m.user] = m.ts; });
     const earlyEnd = t0 + 5 * 60000;
     const raidTs = A.events.filter(e => e.type === 'raid').map(e => e.ts);
-    let bestQ = null;
+    const isMention = mentionTest([].concat(S.streamer || [], S.aliases || []));
+    // кандидаты: каждая «живая» реплика получает очки за отклик чата (эхо, смех), длину и упоминание стримера
+    const cands = [];
     for (let i = 0; i < chat.length; i++) {
       const m = chat[i];
-      if (m.text.length < 14 || m.text.length > 95) continue;
+      if (m.text.length < 14 || m.text.length > 110) continue;
       if (hasGreet(m.text)) continue;
-      if (m.ts < earlyEnd || raidTs.some(r => m.ts >= r && m.ts - r < 3 * 60000)) continue;
-      const wn = tokens(m.text).filter(w => /^[а-яёa-z]{3,}$/i.test(w) && !isEmote(w)).length;
-      if (wn < 4 || (firstSeen[m.user] === m.ts && wn < 5)) continue; // первое сообщение зрителя чаще всего приветствие
-      if (/^[A-Za-z0-9\s]+$/.test(m.text) && tokens(m.text).every(isEmote)) continue;
       if (/(http|www\.|\.ru|\.com)/i.test(m.text)) continue;
+      if (/^[A-Za-z0-9\s]+$/.test(m.text) && tokens(m.text).every(isEmote)) continue;
+      const wn = tokens(m.text).filter(w => /^[а-яёa-z]{3,}$/i.test(w) && !isEmote(w)).length;
+      const mention = isMention(m.text);
+      if (wn < (mention ? 3 : 4)) continue;
+      const strict = m.ts >= earlyEnd && !raidTs.some(r => m.ts >= r && m.ts - r < 3 * 60000) && !(firstSeen[m.user] === m.ts && wn < 5) && m.text.length <= 95;
       const mine = new Set(tokens(m.text).filter(isWord).map(stem));
       let echo = 0, laugh = 0;
       for (let j = i + 1; j < chat.length && chat[j].ts - m.ts <= 25000; j++) {
@@ -163,10 +207,14 @@
         if (tokens(chat[j].text).some(w => isWord(w) && mine.has(stem(w)))) echo++;
       }
       const score = echo * 1.5 + laugh * 2 + (m.text.length > 30 ? 1 : 0);
-      if (!bestQ || score > bestQ.score) bestQ = { score, user: m.user, text: m.text, ts: m.ts, echo, laugh };
+      cands.push({ score, user: m.user, text: m.text, ts: m.ts, echo, laugh, mention, strict, wn });
     }
-    A.quote = bestQ && bestQ.score >= 6 ? bestQ : null;
-    trace.push('Цитата: ' + (A.quote ? '«' + A.quote.text + '» — эхо ' + A.quote.echo + ', смех ' + A.quote.laugh : 'нет — ни одно сообщение не собрало отклик (порог 6)'));
+    const rank = c => c.score + (c.mention ? 5 : 0);
+    const pickBest = list => list.slice().sort((x, y) => rank(y) - rank(x) || y.wn - x.wn || x.ts - y.ts)[0] || null;
+    // 1) отклик чата или упоминание стримера; 2) любая живая реплика: цитата вечера есть всегда, пока в чате хоть что-то писали по делу
+    let bestQ = pickBest(cands.filter(c => c.strict && rank(c) >= 6)) || pickBest(cands.filter(c => c.mention)) || pickBest(cands.filter(c => c.strict)) || pickBest(cands);
+    A.quote = bestQ ? { score: bestQ.score, user: bestQ.user, text: bestQ.text, ts: bestQ.ts, echo: bestQ.echo, laugh: bestQ.laugh, mention: !!bestQ.mention } : null;
+    trace.push('Цитата: ' + (A.quote ? '«' + A.quote.text + '» — ' + (A.quote.mention ? 'упомянут стример, ' : '') + 'эхо ' + A.quote.echo + ', смех ' + A.quote.laugh : 'нет — не нашлось подходящих реплик'));
 
     // всплески чата
     const thr = Math.max(base * 3, base + 10, 14);
