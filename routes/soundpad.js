@@ -1,13 +1,19 @@
 // routes/soundpad.js — саундпад: звуки, загрузка своих, запуск, награды за баллы. Зависимости приходят из server.js через ctx.
 function main(ctx) {
-  const { sp, spReward, app, upload } = ctx;
-  const ok = (res, extra) => res.json(Object.assign({ success: true }, sp.state(), { reward: spReward.getStatus() }, extra || {}));
+  const { sp, spReward, spKeys, app, upload } = ctx;
+  const ok = (res, extra) => res.json(Object.assign({ success: true }, sp.state(), { reward: spReward.getStatus(), keys: spKeys ? spKeys.getStatus() : null }, extra || {}));
   const fail = (res, e, code) => res.status(code || 400).json({ success: false, error: e.message || String(e) });
   const resync = () => spReward.sync(sp).catch(() => {});
   app.get('/api/soundpad/state', (req, res) => ok(res));
   app.get('/api/soundpad/poll', (req, res) => res.json(sp.poll(req.query.after)));
   app.post('/api/soundpad/settings', (req, res) => { sp.update(req.body); resync(); ok(res); });
   app.post('/api/soundpad/mark', (req, res) => { const b = req.body || {}; const n = sp.mark(b.all ? 'all' : (Array.isArray(b.ids) ? b.ids : []), !!b.on); resync(); ok(res, { marked: n }); });
+  // Ссылка для Stream Deck и подобных программ (действие «Website»/«Открыть сайт» с доступом в фоне). Нужен секретный ключ из ссылки,
+  // чтобы сторонние сайты в браузере не могли запускать звуки на стриме.
+  app.get('/api/soundpad/hit/:id', (req, res) => {
+    if (String(req.query.key || '') !== sp.getSettings().hitKey) return res.status(403).json({ success: false, error: 'Неверный ключ в ссылке' });
+    try { const r = sp.play(req.params.id, 'Stream Deck'); res.json({ success: true, played: r.played }); } catch (e) { fail(res, e, 404); }
+  });
   app.post('/api/soundpad/play', (req, res) => { try { const r = sp.play((req.body || {}).id, 'Стример'); ok(res, { played: r.played }); } catch (e) { fail(res, e); } });
   app.post('/api/soundpad/stop', (req, res) => { sp.stopAll(); ok(res); });
   app.post('/api/soundpad/sound', (req, res) => { try { const b = req.body || {}; sp.updateSound(b.id, b); resync(); ok(res); } catch (e) { fail(res, e); } });

@@ -29,7 +29,7 @@
     $('#spGrid').innerHTML = s.sounds.map((x) => '<div class="sp-t' + (x.reward.on ? ' marked' : '') + '" role="button" tabindex="0" data-id="' + esc(x.id) + '" title="Нажми, чтобы послушать у себя">' +
       '<button type="button" class="tb rwb" data-mark="' + esc(x.id) + '" title="' + (x.reward.on ? 'Звук отмечен для наград: ' + nfmt(x.reward.effCost) + ' баллов. Нажми, чтобы снять' : 'Отметить для награды за баллы') + '">🪙' + (x.reward.on ? '<i>' + nfmt(x.reward.effCost) + '</i>' : '') + '</button>' +
       '<button type="button" class="tb gear" data-gear="' + esc(x.id) + '" title="Настройки звука">⚙</button>' +
-      '<span class="em">' + esc(x.emoji) + '</span><span class="nm">' + esc(x.name) + '</span>' +
+      '<span class="em">' + esc(x.emoji) + '</span><span class="nm">' + esc(x.name) + '</span>' + (x.hotkey ? '<span class="hk" title="Горячая клавиша">⌨ ' + esc(x.hotkey) + '</span>' : '') +
       '<button type="button" class="tb live" data-live="' + esc(x.id) + '" title="Сыграть на стриме">▶ на стрим</button></div>').join('') +
       (s.sounds.length < s.max ? '<button type="button" class="sp-t sp-add" id="spAdd"><span class="em">＋</span><span class="nm">Свой звук</span></button>' : '');
     if (!$('#spOv').hidden) fillBox();
@@ -91,6 +91,10 @@
       $('#spBEmoji').textContent = x.emoji; $('#spBName').value = x.name; $('#spBEm').value = x.emoji; $('#spBVol').value = x.volume; $('#spBVolV').textContent = x.volume + '%';
       $('#spRwOn').checked = !!x.reward.on; $('#spRwTitle').value = x.reward.title; $('#spRwTitle').placeholder = x.emoji + ' ' + x.name; $('#spRwCost').value = x.reward.cost > 0 ? x.reward.cost : ''; $('#spRwCost').placeholder = st.settings.rewardCost; $('#spRwCd').value = x.reward.cooldown >= 0 ? x.reward.cooldown : ''; $('#spRwCd').placeholder = st.settings.rewardCooldown;
     }
+    const k = st.keys || {}; $('#spHk').value = x.hotkey || '';
+    $('#spHkMsg').textContent = !x.hotkey ? '' : (k.supported === false ? 'Горячие клавиши работают только на Windows. Ссылка для Stream Deck ниже работает везде.' : (k.failed || []).includes(x.id) ? 'Это сочетание занято другой программой. Выбери другое.' : k.running ? 'Сочетание активно.' : (k.text || 'Запускаем...'));
+    $('#spHkMsg').style.color = x.hotkey && ((k.failed || []).includes(x.id) || (k.text && !k.running)) ? '#e5484d' : '';
+    $('#spSdUrl').value = location.origin + '/api/soundpad/hit/' + encodeURIComponent(x.id) + '?key=' + st.settings.hitKey;
     $('#spRwBox').style.display = x.reward.on ? '' : 'none'; $('#spBDel').style.display = x.builtin ? 'none' : '';
     const r = st.reward; $('#spRwMsg').textContent = r && r.text ? r.text : 'Награду создаёт само приложение. Нужен вход через Twitch. Работает, когда включены «Награды за баллы» над плитками.'; $('#spRwMsg').style.color = r && !['ok', 'idle', 'wait'].includes(r.state) ? '#e5484d' : '';
   }
@@ -100,6 +104,29 @@
     sv = setTimeout(() => post('/api/soundpad/sound', { id: x.id, name: $('#spBName').value, emoji: $('#spBEm').value, volume: Number($('#spBVol').value), reward: { on: $('#spRwOn').checked, title: $('#spRwTitle').value, cost: $('#spRwCost').value === '' ? 0 : Number($('#spRwCost').value), cooldown: $('#spRwCd').value === '' ? -1 : Number($('#spRwCd').value), id: x.reward.id } }).then((j) => { if (j.success === false) flash(j.error); else { render(j); flash('Сохранено'); setTimeout(load, 4000); } }), 350);
   }
   ['#spBName', '#spBEm', '#spBVol', '#spRwOn', '#spRwTitle', '#spRwCost', '#spRwCd'].forEach((q) => $(q).addEventListener(q === '#spRwOn' ? 'change' : 'input', () => { $('#spBVolV').textContent = $('#spBVol').value + '%'; if (q === '#spRwOn') $('#spRwBox').style.display = $('#spRwOn').checked ? '' : 'none'; saveBox(); }));
+  // горячая клавиша: нажми в поле, затем сочетание
+  const KEYNAME = (e) => {
+    const c = e.code; let m;
+    if ((m = /^Key([A-Z])$/.exec(c))) return m[1]; if ((m = /^Digit([0-9])$/.exec(c))) return m[1]; if (/^F([1-9]|1[0-9]|2[0-4])$/.test(c)) return c;
+    if ((m = /^Numpad([0-9])$/.exec(c))) return 'Num' + m[1];
+    return ({ Space: 'Space', Insert: 'Insert', Delete: 'Delete', Home: 'Home', End: 'End', PageUp: 'PageUp', PageDown: 'PageDown', ArrowUp: 'Up', ArrowDown: 'Down', ArrowLeft: 'Left', ArrowRight: 'Right', Pause: 'Pause', ScrollLock: 'ScrollLock' })[c] || '';
+  };
+  function setHotkey(text) {
+    const x = cur(); if (!x) return;
+    post('/api/soundpad/sound', { id: x.id, hotkey: text }).then((j) => { if (j.success === false) { flash(j.error); $('#spHkMsg').textContent = j.error; $('#spHkMsg').style.color = '#e5484d'; $('#spHk').value = x.hotkey || ''; } else { render(j); flash(text ? 'Клавиша назначена' : 'Клавиша убрана'); setTimeout(load, 2500); } });
+  }
+  $('#spHk').addEventListener('focus', () => { $('#spHk').value = ''; $('#spHk').placeholder = 'Нажми сочетание клавиш…'; });
+  $('#spHk').addEventListener('blur', () => { const x = cur(); $('#spHk').value = x ? x.hotkey || '' : ''; $('#spHk').placeholder = 'Нажми сюда, затем сочетание, например Ctrl+Alt+1'; });
+  $('#spHk').addEventListener('keydown', (e) => {
+    e.preventDefault(); e.stopPropagation();
+    if (e.key === 'Escape') { $('#spHk').blur(); return; }
+    const key = KEYNAME(e); if (!key) return;    // одни модификаторы — ждём основную клавишу
+    const text = [e.ctrlKey ? 'Ctrl' : '', e.altKey ? 'Alt' : '', e.shiftKey ? 'Shift' : '', e.metaKey ? 'Win' : '', key].filter(Boolean).join('+');
+    $('#spHk').blur(); setHotkey(text);
+  });
+  $('#spHkClr').addEventListener('click', () => setHotkey(''));
+  $('#spSdCopy').addEventListener('click', () => { const u = $('#spSdUrl').value; (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => flash('Ссылка скопирована'), () => { $('#spSdUrl').select(); flash('Выдели и скопируй вручную'); }); });
+  $('#spSdUrl').addEventListener('focus', () => $('#spSdUrl').select());
   $('#spBListen').addEventListener('click', () => { const x = cur(); if (!x) return; if (listen) listen.pause(); listen = new Audio('/' + x.url); listen.volume = Number($('#spBVol').value) / 100 * (st.settings.volume / 100); listen.play().catch(() => {}); });
   $('#spBDel').addEventListener('click', () => { const x = cur(); if (!x || x.builtin) return; if (!window.confirm('Удалить звук «' + x.name + '»' + (x.reward.on ? ' и его награду на Twitch' : '') + '?')) return; post('/api/soundpad/delete', { id: x.id }).then((j) => { closeBox(); render(j); flash('Удалено'); }); });
   sec.addEventListener('click', (e) => { if (e.target.closest('[data-spclose]')) closeBox(); });

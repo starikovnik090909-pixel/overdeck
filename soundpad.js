@@ -3,6 +3,8 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+const Keys = require('./soundpadKeys');
 
 let DIR = __dirname;
 let useFile = true;
@@ -30,7 +32,7 @@ const RETIRED = ['airhorn', 'trombone', 'rimshot', 'boom', 'scratch', 'error', '
 const EXT = ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.webm'];
 const MAX_SOUNDS = 60;
 
-const DEFAULTS = { enabled: true, volume: 80, overlap: true, rewardsOn: false, rewardCost: 100, rewardCooldown: 0 };
+const DEFAULTS = { enabled: true, volume: 80, overlap: true, rewardsOn: false, rewardCost: 100, rewardCooldown: 0, hitKey: '' };
 // reward.on — звук отмечен для наград; cost 0 — «как у всех» (цена по умолчанию); cooldown -1 — «как у всех»; title пустой — название звука
 const REWARD_DEFAULT = { on: false, title: '', cost: 0, cooldown: -1, id: '' };
 
@@ -61,6 +63,7 @@ function cleanSound(s, base) {
     emoji: typeof s.emoji === 'string' ? [...s.emoji.trim()].slice(0, 2).join('') || b.emoji || '🔊' : (b.emoji || '🔊'),
     volume: clamp(s.volume, 0, 100, b.volume == null ? 100 : b.volume),
     reward: cleanReward(s.reward, b.reward),
+    hotkey: s.hotkey === undefined ? (b.hotkey || '') : ((Keys.parse(s.hotkey) || {}).text || ''),
   };
 }
 function mergeBuiltin() {
@@ -78,7 +81,7 @@ function load() {
   sounds = [];
   try {
     const j = JSON.parse(fs.readFileSync(file('soundpad_settings.json'), 'utf8'));
-    cfg = Object.assign({}, DEFAULTS, { enabled: j.enabled !== false, volume: clamp(j.volume, 0, 100, DEFAULTS.volume), overlap: j.overlap !== false, rewardsOn: j.rewardsOn === true, rewardCost: clamp(j.rewardCost, 1, 10000000, DEFAULTS.rewardCost), rewardCooldown: clamp(j.rewardCooldown, 0, 86400, DEFAULTS.rewardCooldown) });
+    cfg = Object.assign({}, DEFAULTS, { enabled: j.enabled !== false, volume: clamp(j.volume, 0, 100, DEFAULTS.volume), overlap: j.overlap !== false, rewardsOn: j.rewardsOn === true, rewardCost: clamp(j.rewardCost, 1, 10000000, DEFAULTS.rewardCost), rewardCooldown: clamp(j.rewardCooldown, 0, 86400, DEFAULTS.rewardCooldown), hitKey: typeof j.hitKey === 'string' && /^[a-f0-9]{16,64}$/.test(j.hitKey) ? j.hitKey : '' });
     (Array.isArray(j.sounds) ? j.sounds : []).slice(0, MAX_SOUNDS).forEach((x) => {
       if (!x || typeof x.id !== 'string' || !/^[a-z0-9_\-]{1,40}$/i.test(x.id)) return;
       if (RETIRED.includes(x.id)) return;
@@ -87,6 +90,7 @@ function load() {
       else if (typeof x.file === 'string' && /^[A-Za-z0-9_.\-]{1,90}$/.test(x.file) && EXT.includes(path.extname(x.file).toLowerCase())) sounds.push(cleanSound(x, { id: x.id, file: x.file, builtin: false, name: x.name, emoji: '🔊', volume: 100, reward: REWARD_DEFAULT }));
     });
   } catch (e) { cfg = Object.assign({}, DEFAULTS); }
+  if (!cfg.hitKey) cfg.hitKey = crypto.randomBytes(12).toString('hex');
   mergeBuiltin();
   sounds.forEach((x) => { if (x.reward.title === x.emoji + ' ' + x.name || x.reward.title === '🔊 ' + x.name) x.reward.title = ''; if (x.reward.cost === 100 && x.reward.cooldown === 0 && !x.reward.id) { x.reward.cost = 0; x.reward.cooldown = -1; } });
 }
@@ -99,14 +103,14 @@ function init(o) {
   if (x.dir) DIR = x.dir;
   useFile = !x.noFile;
   if (x.onChange) onChange = x.onChange;
-  if (useFile) { try { fs.mkdirSync(UP_DIR(), { recursive: true }); } catch (e) { /* ничего */ } load(); } else { cfg = Object.assign({}, DEFAULTS); sounds = []; mergeBuiltin(); }
+  if (useFile) { try { fs.mkdirSync(UP_DIR(), { recursive: true }); } catch (e) { /* ничего */ } load(); } else { cfg = Object.assign({}, DEFAULTS, { hitKey: crypto.randomBytes(12).toString('hex') }); sounds = []; mergeBuiltin(); }
   events = []; seq = 0;
 }
 const urlOf = (s) => (s.builtin ? 'soundpad/' + s.file : 'uploads/soundpad/' + encodeURIComponent(s.file));
 const rewardTitle = (s) => (s.reward.title || (s.emoji + ' ' + s.name)).slice(0, 45);
 const rewardCost = (s) => (s.reward.cost > 0 ? s.reward.cost : cfg.rewardCost);
 const rewardCooldown = (s) => (s.reward.cooldown >= 0 ? s.reward.cooldown : cfg.rewardCooldown);
-function view(s) { return { id: s.id, name: s.name, emoji: s.emoji, builtin: s.builtin, volume: s.volume, reward: Object.assign({}, s.reward, { effTitle: rewardTitle(s), effCost: rewardCost(s), effCooldown: rewardCooldown(s) }), url: urlOf(s) }; }
+function view(s) { return { id: s.id, name: s.name, emoji: s.emoji, builtin: s.builtin, volume: s.volume, reward: Object.assign({}, s.reward, { effTitle: rewardTitle(s), effCost: rewardCost(s), effCooldown: rewardCooldown(s) }), hotkey: s.hotkey || '', url: urlOf(s) }; }
 function state() { return { settings: { ...cfg }, sounds: sounds.map(view), max: MAX_SOUNDS }; }
 function find(id) { return sounds.find((s) => s.id === id) || null; }
 
@@ -122,6 +126,10 @@ function update(body) {
 }
 function updateSound(id, body) {
   const s = find(id); if (!s) throw new Error('Такого звука нет');
+  if (body && body.hotkey !== undefined && String(body.hotkey).trim() !== '') {
+    const k = Keys.parse(body.hotkey); if (!k) throw new Error('Такое сочетание не подойдёт: для букв, цифр и пробела нужен Ctrl, Alt или Shift');
+    const other = sounds.find((x) => x !== s && x.hotkey === k.text); if (other) throw new Error('Это сочетание уже занято звуком «' + other.name + '»');
+  }
   const n = cleanSound(body || {}, s); Object.assign(s, n);
   if (s.reward.title === s.emoji + ' ' + s.name) s.reward.title = '';
   persist(); onChange(); return view(s);
@@ -176,7 +184,7 @@ function onPoints(p) {
   return { sound: s, played: r.played };
 }
 function setRewardId(id, rewardId) { const s = find(id); if (s) { s.reward.id = rewardId || ''; persist(); } }
-function reset() { cfg = Object.assign({}, DEFAULTS); sounds = []; events = []; seq = 0; mergeBuiltin(); }
+function reset() { cfg = Object.assign({}, DEFAULTS, { hitKey: crypto.randomBytes(12).toString('hex') }); sounds = []; events = []; seq = 0; mergeBuiltin(); }
 function getSettings() { return { ...cfg }; }
 function listSounds() { return sounds; }
 

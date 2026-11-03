@@ -1397,7 +1397,10 @@ music.init({ say: (t) => chatBot.say(t), onOrder: () => { streamCounters.music +
 setTimeout(() => musicReward.sync(music.getSettings()).catch(() => {}), 12000);
 setInterval(() => musicReward.sync(music.getSettings()).catch(() => {}), 5 * 60 * 1000).unref();
 require('./routes/music').main({ music, musicReward, app });
-soundpad.init({ onChange: () => {} });
+const soundpadKeys = require('./soundpadKeys');
+const soundpadKeysSync = () => soundpadKeys.sync(soundpad.listSounds(), { dir: __dirname, onHit: (id) => { try { soundpad.play(id, 'Горячая клавиша'); } catch (e) { /* звук удалён */ } } });
+soundpad.init({ onChange: soundpadKeysSync });
+soundpadKeysSync();
 const SOUNDPAD_DIR = soundpad.UP_DIR();
 fs.mkdirSync(SOUNDPAD_DIR, { recursive: true });
 app.use('/uploads/soundpad', express.static(SOUNDPAD_DIR));
@@ -1409,7 +1412,7 @@ const soundpadUpload = multer({
   fileFilter: (req, file, cb) => cb(null, soundpad.EXT.includes(path.extname(file.originalname).toLowerCase())),
   limits: { fileSize: 5 * 1024 * 1024 },
 });
-require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, app, upload: soundpadUpload });
+require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, spKeys: soundpadKeys, app, upload: soundpadUpload });
 setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });

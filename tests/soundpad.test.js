@@ -30,5 +30,17 @@ const kv2 = sp.state().sounds.find((x) => x.id === 'king').reward; ok(kv2.effCos
 sp.updateSound('king', { name: 'Король' }); ok(sp.state().sounds.find((x) => x.id === 'king').reward.effTitle === '👑 Король', 'название награды следует за названием звука');
 ok(sp.onPoints({ reward: '👑 Король', name: 'v' }).sound.id === 'king', 'награда с названием звука играет');
 ok(sp.mark(['king'], false) === 1 && !sp.state().sounds.find((x) => x.id === 'king').reward.on, 'снять отметку');
+// горячие клавиши
+const K = require('../soundpadKeys');
+ok(K.parse('ctrl + alt+f5').text === 'Ctrl+Alt+F5' && K.parse('Ctrl+Alt+F5').vk === 0x74 && K.parse('Ctrl+Alt+F5').mods === 3, 'разбор сочетания');
+ok(K.parse('F9').text === 'F9' && K.parse('Num3').vk === 0x63 && K.parse('shift+space').text === 'Shift+Space', 'F-клавиши, цифровой блок, пробел с модификатором');
+ok(K.parse('A') === null && K.parse('space') === null && K.parse('ctrl') === null && K.parse('ctrl+ctrl+a') === null && K.parse('ctrl+a+b') === null && K.parse('') === null, 'буквы без модификатора и мусор отклоняются');
+sp.reset(); sp.updateSound('king', { hotkey: 'ctrl+alt+1' });
+ok(sp.state().sounds.find((x) => x.id === 'king').hotkey === 'Ctrl+Alt+1', 'клавиша сохраняется в нормальном виде');
+let dup = ''; try { sp.updateSound('aura', { hotkey: 'Ctrl+Alt+1' }); } catch (x) { dup = x.message; } ok(/занято/.test(dup), 'одно сочетание на два звука нельзя');
+let badk = ''; try { sp.updateSound('aura', { hotkey: 'Q' }); } catch (x) { badk = x.message; } ok(/не подойд/.test(badk), 'буква без модификатора не принимается');
+sp.updateSound('king', { name: 'Король' }); ok(sp.state().sounds.find((x) => x.id === 'king').hotkey === 'Ctrl+Alt+1', 'клавиша не сбрасывается при правке других полей');
+ok(sp.updateSound('king', { hotkey: '' }).hotkey === '', 'клавишу можно убрать');
+ok(/^[a-f0-9]{24}$/.test(sp.getSettings().hitKey), 'у ссылки Stream Deck есть секретный ключ');
 sp.reset(); sp.stopAll(); ok(sp.poll(0).events[0].stop === true, 'стоп-событие');
 console.log('soundpad.test: ' + n + ' проверок ок');

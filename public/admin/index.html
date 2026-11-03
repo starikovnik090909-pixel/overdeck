@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="ui3.css?v=61">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
-<link rel="stylesheet" href="soundpad.css?v=4">
+<link rel="stylesheet" href="soundpad.css?v=5">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -3158,6 +3158,13 @@
             <label class="sp-fl sp-em"><em>Значок</em><input type="text" id="spBEm" maxlength="4"></label>
             <label class="sp-fl sp-wide"><em>Громкость этого звука</em><span class="sp-row"><input type="range" id="spBVol" min="0" max="100" step="5"><b id="spBVolV">100%</b><button class="btn btn-secondary btn-sm" type="button" id="spBListen">▶ Послушать у себя</button></span></label>
           </div>
+          <div class="sp-rw sp-keys">
+            <h4 class="sp-kh">⌨ Горячая клавиша и Stream Deck</h4>
+            <label class="sp-fl"><em>Сочетание клавиш (работает и поверх игры)</em><span class="sp-row"><input type="text" id="spHk" readonly placeholder="Нажми сюда, затем сочетание, например Ctrl+Alt+1"><button class="btn btn-secondary btn-sm" type="button" id="spHkClr">Убрать</button></span></label>
+            <p class="ex-sm" id="spHkMsg"></p>
+            <label class="sp-fl"><em>Ссылка для Stream Deck</em><span class="sp-row"><input type="text" id="spSdUrl" readonly><button class="btn btn-secondary btn-sm" type="button" id="spSdCopy">Копировать</button></span></label>
+            <p class="ex-sm">В Stream Deck: действие «Website» (раздел System), вставь ссылку и включи «Access in background». Можно и действие «Hotkey» с сочетанием выше.</p>
+          </div>
           <div class="sp-rw">
             <label class="tg-sw"><input type="checkbox" id="spRwOn"><i></i><span>🪙 Отдавать этот звук за баллы</span></label>
             <div class="sp-form" id="spRwBox">
@@ -3896,7 +3903,7 @@
 <script src="soon.js?v=2"></script>
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
-<script src="soundpad.js?v=4"></script>
-<script src="whatsnew.js?v=49"></script>
+<script src="soundpad.js?v=5"></script>
+<script src="whatsnew.js?v=50"></script>
 </body>
 </html>

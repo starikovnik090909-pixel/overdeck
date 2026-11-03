@@ -22,7 +22,7 @@
 #tab-soundpad .sp-t .nm{font-size:13px;font-weight:600;text-align:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #tab-soundpad .sp-add{border-style:dashed;opacity:.8}
 #tab-soundpad .sp-hint{flex:none;font-size:12px;opacity:.65}#tab-soundpad .sp-hint b{font-weight:600;user-select:all}
-#tab-soundpad .sp-box{width:min(520px,100%)}
+#tab-soundpad .sp-box{width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto}
 #tab-soundpad .sp-bh{margin:0 0 12px;font-size:16px;display:flex;align-items:center;gap:8px}
 #tab-soundpad .sp-form{display:grid;grid-template-columns:1fr 90px;gap:12px}
 #tab-soundpad .sp-fl{display:flex;flex-direction:column;gap:4px;font-size:12px}
@@ -38,7 +38,7 @@
 #tab-soundpad .mu-modal[hidden]{display:none}
 #tab-soundpad .mu-mbox{position:relative;background:var(--bg-card);border:1px solid var(--divider);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 #tab-soundpad .mu-mbox .mu-x{position:absolute;right:10px;top:8px;z-index:2}
-#tab-soundpad .sp-box{width:min(520px,100%)}
+#tab-soundpad .sp-box{width:min(520px,100%);max-height:calc(100vh - 48px);overflow:auto}
 
 /* кнопки внутри плитки: монета награды, шестерёнка, «на стрим» */
 #tab-soundpad .sp-t .tb{position:absolute;border:0;background:transparent;color:inherit;cursor:pointer;font:inherit;border-radius:8px;padding:0;line-height:1;transition:.15s}
@@ -62,3 +62,10 @@
 #tab-soundpad .sp-rwmsg{font-size:12px;opacity:.75;flex:1 1 200px;min-width:0}
 #tab-soundpad .sp-rwpwr.on{border-color:#7a6320;background:rgba(255,200,60,.12);box-shadow:0 0 0 3px rgba(255,200,60,.10)}
 #tab-soundpad .sp-rwpwr.on .sw{background:#f5c542}
+
+#tab-soundpad .sp-keys .sp-kh{margin:0;font-size:13px}
+#tab-soundpad .sp-keys .sp-row input[type=text]{flex:1;min-width:0}
+#tab-soundpad .sp-keys .btn-sm{height:32px;border-radius:9px;white-space:nowrap}
+#tab-soundpad #spHk{cursor:pointer;font-weight:600}
+#tab-soundpad .sp-t .hk{position:absolute;left:7px;bottom:6px;font-size:10px;opacity:.6;white-space:nowrap;max-width:60%;overflow:hidden;text-overflow:ellipsis}
+#tab-soundpad .sp-t:hover .hk{opacity:0}
