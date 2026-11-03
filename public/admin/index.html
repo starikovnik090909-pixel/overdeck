@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="overvoice-admin.css?v=2">
+<link rel="stylesheet" href="overvoice-admin.css?v=3">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
@@ -3137,6 +3137,7 @@
     <section class="tab-section" id="tab-overvoice">
       <div class="page-head"><div><h1 class="tab-title">Овервойс</h1><p class="tab-description">Нейроголос для микрофона. Кинь папку с голосом, выбери карточку и нажми «В эфире». В OBS голос берётся с виртуального кабеля.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="ovSaved"></span>
+          <button class="btn btn-secondary ov-guide-btn" type="button" id="ovGuideBtn" title="Короткая инструкция: подключить к OBS и проверить, что работает">📖 Как подключить к OBS</button>
           <label class="tg-sw" id="ovAutoW" hidden title="Овервойс сам включается при запуске Overdeck"><input type="checkbox" id="ovAuto"><i></i><span>Запускать вместе с Overdeck</span></label>
           <button class="btn btn-secondary" type="button" id="ovStart" hidden>▶ Запустить Овервойс</button>
           <button class="btn btn-secondary" type="button" id="ovStop" hidden title="Выключить программу Овервойс целиком">■ Выключить</button>
@@ -3178,6 +3179,30 @@
             <div id="ovChecks"></div>
             <div class="ov-obs"><b>Как добавить в OBS</b><ol><li>Источники → ＋ → «Захват входящего звука»</li><li>Устройство: <code>CABLE Output</code> <button class="btn btn-secondary btn-sm" type="button" id="ovCopy">копировать</button></li><li>Свой микрофон из OBS отключи, чтобы не было двух голосов</li></ol></div>
           </div>
+        </div>
+      </div>
+      <div class="mu-modal" id="ovGuide" hidden>
+        <div class="mu-dim" data-ovgclose></div>
+        <div class="mu-mbox ov-box2 ov-gbox">
+          <button type="button" class="btn-tiny mu-x" data-ovgclose title="Закрыть">✕</button>
+          <h3 class="ov-bh">Как подключить Овервойс к OBS</h3>
+          <ol class="ov-steps">
+            <li><b>Проверь готовность.</b> Вкладка «Звук и OBS»: все пункты чек-листа должны быть зелёными (движок, голос, микрофон, кабель, вывод в кабель). Нет кабеля: нажми «Установить» и согласись в окне Windows, потом при необходимости перезагрузи компьютер.</li>
+            <li><b>Проверь голос на себе.</b> Во вкладке «Звук и OBS» выбери наушники в «Слышать себя», выбери карточку голоса и нажми «🎧 Проверить на мне». Говори: ты должен слышать изменённый голос. Нажми ещё раз, чтобы остановить.</li>
+            <li><b>Добавь голос в OBS.</b> Источники → ＋ → «Захват входящего звука» → Создать → в списке устройств выбери <code>CABLE Output (VB-Audio Virtual Cable)</code>.</li>
+            <li><b>Отключи обычный микрофон в OBS</b> (в микшере нажми на значок динамика у «Микрофон/AUX»), иначе в эфире будет два голоса.</li>
+            <li><b>Включи и проверь.</b> Нажми «В эфире» вверху этой вкладки и скажи что-нибудь. В микшере OBS полоска источника с кабелем должна прыгать. Хочешь слышать это в OBS: Расширенные свойства звука → «Монитор и вывод».</li>
+          </ol>
+          <div class="ov-gfix"><b>Не работает?</b>
+            <ul>
+              <li>Полоска в OBS молчит: в «Звук и OBS» поле «Куда отдавать голос» должно быть <code>CABLE Input</code>, а «В эфире» включено.</li>
+              <li>Индикатор микрофона не двигается: выбран не тот микрофон или Windows не даёт к нему доступ (Параметры → Конфиденциальность → Микрофон).</li>
+              <li>Кабель поставлен только что, а в списках его нет: перезагрузи компьютер.</li>
+              <li>Голос не меняется: включён режим «Свой голос» (нейросеть обходится). Переключи на «Нейроголос».</li>
+              <li>Большая задержка или рывки: закрой тяжёлые программы, а в лаунчере выбери вариант движка под свою видеокарту.</li>
+            </ul>
+          </div>
+          <div class="ov-foot"><button class="btn btn-secondary btn-sm" type="button" data-ovgclose>Закрыть</button><button class="btn btn-primary" type="button" id="ovGuideRead">✓ Прочитано</button></div>
         </div>
       </div>
       <div class="mu-modal" id="ovOv" hidden>
@@ -3972,7 +3997,7 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=2"></script>
+<script src="overvoice-admin.js?v=3"></script>
 <script src="navsort.js?v=1"></script>
 <script src="whatsnew.js?v=54"></script>
 </body>

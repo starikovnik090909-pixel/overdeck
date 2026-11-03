@@ -86,3 +86,13 @@
 #tab-overvoice .ov-pi .pb{grid-column:1/3;height:4px;border-radius:3px;background:var(--divider);overflow:hidden;margin-top:4px}#tab-overvoice .ov-pi .pb i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}#tab-overvoice .ov-pi.ok .pb i{background:var(--ok)}
 #tab-overvoice .ov-foot{display:flex;justify-content:space-between;gap:8px}
 #tab-overvoice .ov-ok{color:var(--ok)}#tab-overvoice .ov-bad{color:var(--err)}
+/* мини-гайд: кнопка пульсирует, пока гайд не отмечен прочитанным */
+#tab-overvoice .ov-guide-btn.pulse{border-color:var(--accent)!important;animation:ovPulse 1.6s ease-out infinite}
+@keyframes ovPulse{0%{box-shadow:0 0 0 0 rgba(216,75,85,.55)}70%{box-shadow:0 0 0 12px rgba(216,75,85,0)}100%{box-shadow:0 0 0 0 rgba(216,75,85,0)}}
+@media (prefers-reduced-motion:reduce){#tab-overvoice .ov-guide-btn.pulse{animation:none;box-shadow:0 0 0 3px rgba(216,75,85,.35)}}
+#tab-overvoice .ov-gbox{width:min(560px,100%)}
+#tab-overvoice .ov-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:var(--text-secondary)}
+#tab-overvoice .ov-steps b{color:var(--text-primary)}
+#tab-overvoice .ov-gbox code{background:var(--bg-app);border:1px solid var(--divider);border-radius:6px;padding:1px 6px;color:var(--text-primary);user-select:all;font-size:12.5px}
+#tab-overvoice .ov-gfix{background:var(--bg-card2);border:1px solid var(--divider);border-radius:12px;padding:10px 14px;font-size:13px;color:var(--text-secondary)}
+#tab-overvoice .ov-gfix ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}

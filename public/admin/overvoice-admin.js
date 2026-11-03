@@ -286,6 +286,17 @@
   window.addEventListener('dragover', (e) => { if (!active() || !hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; $('#ovDrop').classList.toggle('over', !!e.target.closest('#ovOv')); });
   window.addEventListener('drop', (e) => { if (!active() || !hasFiles(e)) return; e.preventDefault(); dragN = 0; $('#ovDrop').classList.remove('over'); if (working) return; openDlg(); fromDrop(e.dataTransfer).then(addFiles); });
 
+  // ---- мини-гайд: кнопка пульсирует, пока не нажато «Прочитано» ----
+  const gm = $('#ovGuide'), gb = $('#ovGuideBtn');
+  const guideRead = () => lsGet('guideRead') === '1';
+  const syncGuide = () => gb.classList.toggle('pulse', !guideRead());
+  const guideClose = () => { gm.hidden = true; };
+  gb.addEventListener('click', () => { gm.hidden = false; $('#ovGuideRead').textContent = guideRead() ? '✓ Прочитано (отмечено)' : '✓ Прочитано'; });
+  gm.addEventListener('click', (e) => { if (e.target.closest('[data-ovgclose]')) guideClose(); });
+  $('#ovGuideRead').addEventListener('click', () => { lsSet('guideRead', '1'); syncGuide(); guideClose(); flash('Гайд отмечен прочитанным'); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !gm.hidden) guideClose(); });
+  syncGuide();
+
   // ---- жизненный цикл ----
   const nav = document.querySelector('[data-tab="overvoice"]');
   if (nav) nav.addEventListener('click', () => { setTimeout(load, 50); });
