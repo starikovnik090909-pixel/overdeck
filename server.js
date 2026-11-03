@@ -50,7 +50,6 @@ const soundpadReward = require('./soundpadReward');
 const voicefx = require('./voicefx');
 const voicefxReward = require('./voicefxReward');
 const obsClient = require('./obsClient');
-const nv = require('./nvEngine');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -1422,39 +1421,23 @@ setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
 
 // ---------- Голосовые фильтры ----------
-let vfMicKey = null;   // какой источник мы последним включили в OBS ('' — обычный микрофон); пока фильтров не было, микрофон не трогаем
-let vfMicFx = '';
-let vfNvOn = false;
+let vfMicOn = null;   // что мы последним поставили в OBS; пока фильтров не было, микрофон не трогаем
 function vfApplyMic() {
-  const a = voicefx.active(), micOn = a.filter !== 'off' && a.targets.mic !== false;
-  const fx = micOn ? (voicefx.isNv(a.filter) ? (nv.getSettings().obsInput || '') : voicefx.getSettings().obs.fxInput) : '';
-  if (vfMicKey === null && !micOn) return;
-  if (vfMicKey === fx) return;
-  const prevFx = vfMicFx;
-  obsClient.switchMic(micOn, micOn ? fx : prevFx).then((done) => { if (done) { vfMicKey = fx; vfMicFx = fx || prevFx; } }).catch((e) => console.warn('[OBS]', e.message));
-}
-function vfApplyNv(a) {
-  const m = /^nv:(\d+)$/.exec(String(a.filter));
-  if (m && a.targets.mic !== false) { vfNvOn = true; nv.useVoice(Number(m[1])).catch((e) => console.warn('[NV]', e.message)); }
-  else if (vfNvOn) { vfNvOn = false; nv.release(); }
+  const a = voicefx.active(), want = a.filter !== 'off' && a.targets.mic !== false;
+  if (vfMicOn === null && !want) return;
+  if (vfMicOn === want) return;
+  obsClient.switchMic(want).then((done) => { if (done) vfMicOn = want; }).catch((e) => console.warn('[OBS]', e.message));
 }
 function vfChanged(a) {
   sendToOverlay({ type: 'voicefx', filter: a.filter, strength: a.strength, targets: a.targets });
   obsClient.configure(voicefx.getSettings().obs, { onReady: vfApplyMic });
-  vfApplyNv(a);
   vfApplyMic();
 }
 voicefx.init({ dir: __dirname, onChange: vfChanged });
 obsClient.configure(voicefx.getSettings().obs, { onReady: vfApplyMic });
-require('./routes/voicefx').main({ vf: voicefx, vfReward: voicefxReward, obs: obsClient, app, port: config.port || 3001, nv });
+require('./routes/voicefx').main({ vf: voicefx, vfReward: voicefxReward, obs: obsClient, app, port: config.port || 3001 });
 setTimeout(() => voicefxReward.sync(voicefx).catch(() => {}), 16000);
 setInterval(() => voicefxReward.sync(voicefx).catch(() => {}), 5 * 60 * 1000).unref();
-
-// ---------- NV: нейроголос (движок VCClient) ----------
-nv.init({ dir: __dirname });
-require('./routes/nv').main({ nv, app });
-if (nv.getSettings().autostart && nv.state().installed) setTimeout(() => nv.start().catch(() => {}), 5000);
-process.on('exit', () => { try { nv.stop(); } catch (e) { /* закрываемся */ } });
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });

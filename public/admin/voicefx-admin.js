@@ -8,13 +8,11 @@
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   var st = null, prev = null, timer = 0, sv = 0, loadedInputs = false;
   function flash(m) { var e = $('#vfSaved'); e.textContent = m; clearTimeout(flash.t); flash.t = setTimeout(function () { e.textContent = ''; }, 1600); }
-  var nvv = [];   // голоса нейросети NV (из движка или сохранённые)
-  var name = function (id) { var f = VoiceFX.FILTERS.find(function (x) { return x.id === id; }); if (f) return f.emoji + ' ' + f.name; var m = /^nv:(\d+)$/.exec(id || ''); if (m) { var v = nvv.find(function (x) { return String(x.slot) === m[1]; }); return '🧠 ' + (v ? v.name : 'Голос NV ' + m[1]); } return ''; };
+  var name = function (id) { var f = VoiceFX.FILTERS.find(function (x) { return x.id === id; }); return f ? f.emoji + ' ' + f.name : ''; };
 
   // проверка на слух: фраза «Есть пробитие» через выбранный фильтр
   var pctx = null;
   function listen(id) {
-    if (/^nv:/.test(id)) return;   // голос NV звучит только через микрофон
     if (prev) { try { prev.el.pause(); prev.fx && prev.fx.stop(); } catch (e) {} prev = null; }
     var el = new Audio('/soundpad/penetration.mp3'); el.volume = 0.9;
     if (id !== 'off') {
@@ -30,21 +28,17 @@
   }
 
   function opts(withSpecial) {
-    return (withSpecial ? '<option value="random">Случайный</option><option value="viewer">Тот, что назовёт зритель</option>' : '') + VoiceFX.FILTERS.map(function (f) { return '<option value="' + f.id + '">' + f.emoji + ' ' + f.name + '</option>'; }).join('') +
-      (nvv.length ? '<optgroup label="Нейроголоса NV (на микрофон)">' + nvv.map(function (v) { return '<option value="nv:' + v.slot + '">🧠 ' + esc(v.name) + '</option>'; }).join('') + '</optgroup>' : '');
+    return (withSpecial ? '<option value="random">Случайный</option><option value="viewer">Тот, что назовёт зритель</option>' : '') + VoiceFX.FILTERS.map(function (f) { return '<option value="' + f.id + '">' + f.emoji + ' ' + f.name + '</option>'; }).join('');
   }
-  var optKey = '';
-  function rebuildOpts() { var k = JSON.stringify(nvv); if (k === optKey) return; optKey = k; ['#vfRwFilter', '#vfDonFilter'].forEach(function (q) { var e = $(q), v = e.value; e.innerHTML = opts(true); if (v) e.value = v; }); }
-  rebuildOpts();
+  $('#vfRwFilter').innerHTML = opts(true); $('#vfDonFilter').innerHTML = opts(true);
 
   function render(s) {
-    st = s; nvv = s.nvVoices || []; rebuildOpts(); var c = s.settings, a = s.active;
+    st = s; var c = s.settings, a = s.active;
     $('#vfPwr').classList.toggle('on', !!c.enabled); $('#vfPwrT').textContent = c.enabled ? 'Фильтры включены' : 'Фильтры выключены';
     if (document.activeElement !== $('#vfStr')) $('#vfStr').value = c.strength; $('#vfStrV').textContent = c.strength + '%';
     sec.querySelectorAll('[data-tg]').forEach(function (b) { b.classList.toggle('on', c.targets[b.dataset.tg] !== false); });
     $('#vfGrid').innerHTML = '<button type="button" class="vf-t' + (c.filter === 'off' ? ' sel' : '') + '" data-f="off"><span class="em">🚫</span><span class="nm">Без фильтра</span><span class="ds">Голос как есть. Фильтры только за баллы или донат</span></button>' +
-      VoiceFX.FILTERS.map(function (f) { return '<button type="button" class="vf-t' + (c.filter === f.id ? ' sel' : '') + '" data-f="' + f.id + '"><span class="em">' + f.emoji + '</span><span class="nm">' + esc(f.name) + '</span><span class="ds">' + esc(f.note) + '</span></button>'; }).join('') +
-      nvv.map(function (v) { var id = 'nv:' + v.slot; return '<button type="button" class="vf-t' + (c.filter === id ? ' sel' : '') + '" data-f="' + id + '"><span class="em">🧠</span><span class="nm">' + esc(v.name) + '</span><span class="ds">Нейроголос NV, только на микрофон</span></button>'; }).join('');
+      VoiceFX.FILTERS.map(function (f) { return '<button type="button" class="vf-t' + (c.filter === f.id ? ' sel' : '') + '" data-f="' + f.id + '"><span class="em">' + f.emoji + '</span><span class="nm">' + esc(f.name) + '</span><span class="ds">' + esc(f.note) + '</span></button>'; }).join('');
     var left = a.until ? Math.max(0, Math.round((a.until - Date.now()) / 1000)) : 0;
     $('#vfNow').innerHTML = !c.enabled ? 'Выключено' : a.filter === 'off' ? 'Сейчас: без фильтра' : 'Сейчас: <b>' + esc(name(a.filter)) + '</b>' + (a.until ? ' · ' + (a.by ? esc(a.by) + ', ' : '') + 'ещё ' + left + ' сек' : '');
     $('#vfReset').hidden = !a.until;

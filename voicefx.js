@@ -9,7 +9,6 @@ const FILTERS = [
   ['water', 'Под водой'], ['announcer', 'Диктор'], ['bit8', '8-бит'], ['ghost', 'Призрак'], ['stadium', 'Стадион'], ['troll', 'Тролль'], ['drunk', 'Пьяный'], ['alien', 'Пришелец'], ['choir', 'Хор'],
 ].map(([id, name]) => ({ id, name }));
 const IDS = FILTERS.map((f) => f.id);
-const isNv = (f) => /^nv:\d{1,2}$/.test(String(f));   // голос нейросети NV (номер слота в движке)
 
 const DEFAULTS = {
   enabled: false, filter: 'off', strength: 60,
@@ -24,13 +23,13 @@ function clone(o) { return JSON.parse(JSON.stringify(o)); }
 const clamp = (v, a, b, f) => { const n = Number(v); return Number.isFinite(n) ? Math.max(a, Math.min(b, Math.round(n))) : f; };
 const str = (v, n, f) => (typeof v === 'string' ? v.trim().slice(0, n) : f);
 const bool = (v, f) => (typeof v === 'boolean' ? v : f);
-const pickFilter = (v, f) => (IDS.includes(v) || isNv(v) || v === 'random' || v === 'viewer' ? v : f);
+const pickFilter = (v, f) => (IDS.includes(v) || v === 'random' || v === 'viewer' ? v : f);
 
 function clean(b, base) {
   const s = b && typeof b === 'object' ? b : {}, o = base || cfg, r = s.reward || {}, d = s.donation || {}, ob = s.obs || {}, t = s.targets || {};
   return {
     enabled: bool(s.enabled, o.enabled),
-    filter: s.filter === 'off' ? 'off' : (IDS.includes(s.filter) || isNv(s.filter) ? s.filter : o.filter),
+    filter: s.filter === 'off' ? 'off' : (IDS.includes(s.filter) ? s.filter : o.filter),
     strength: clamp(s.strength, 0, 100, o.strength),
     targets: { tts: bool(t.tts, o.targets.tts), alert: bool(t.alert, o.targets.alert), mic: bool(t.mic, o.targets.mic) },
     reward: {
@@ -72,7 +71,7 @@ function update(body) { cfg = clean(body, cfg); persist(); onChange(active()); r
 /** Временно включить фильтр (seconds сек). */
 function trigger(filter, seconds, by, source) {
   if (!cfg.enabled) return null;
-  const f = IDS.includes(filter) || isNv(filter) ? filter : IDS[Math.floor(Math.random() * IDS.length)];
+  const f = IDS.includes(filter) ? filter : IDS[Math.floor(Math.random() * IDS.length)];
   temp = { filter: f, until: now() + clamp(seconds, 5, 3600, 30) * 1000, by: String(by || '').slice(0, 40), source: source || 'reward' };
   onChange(active()); return active();
 }
@@ -84,7 +83,7 @@ function fromText(text) {
   const hit = FILTERS.find((f) => t.includes(' ' + norm(f.name) + ' ')) || FILTERS.find((f) => norm(f.name).length > 3 && t.includes(norm(f.name).slice(0, Math.max(4, norm(f.name).length - 2))));
   return hit ? hit.id : '';
 }
-function choose(setting, text) { if (IDS.includes(setting) || isNv(setting)) return setting; if (setting === 'viewer') return fromText(text) || 'random'; return 'random'; }
+function choose(setting, text) { if (IDS.includes(setting)) return setting; if (setting === 'viewer') return fromText(text) || 'random'; return 'random'; }
 /** Награда за баллы куплена. */
 function onPoints(e) {
   const r = cfg.reward; if (!cfg.enabled || !r.on) return null;
@@ -99,4 +98,4 @@ function onDonation(e) {
   return trigger(choose(d.filter, e.message), d.duration, e.username, 'donation');
 }
 function setRewardId(id) { cfg.reward.id = id || ''; persist(); }
-module.exports = { init, state, update, active, trigger, reset, onPoints, onDonation, fromText, setRewardId, isNv, getSettings, tick, FILTERS, IDS };
+module.exports = { init, state, update, active, trigger, reset, onPoints, onDonation, fromText, setRewardId, getSettings, tick, FILTERS, IDS };
