@@ -518,7 +518,7 @@ class Launcher : Form
         Shown += delegate
         {
             WriteLog("Лаунчер запущен, папка: " + root + ", порт " + port);
-            try { modsForm = new ModsForm(root, port, delegate { return FindNode(); }); IntPtr hh = modsForm.Handle; modsForm.BackgroundCheck(); } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
+            try { modsForm = new ModsForm(root, port, delegate { return FindNode(); }); IntPtr hh = modsForm.Handle; } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
             ThreadPool.QueueUserWorkItem(delegate
             {
                 string nv = "не найден";
@@ -1187,6 +1187,9 @@ class Launcher : Form
                 dotUpd.DotColor = col;
                 lblUpdate.Cursor = page.Length > 0 ? Cursors.Hand : Cursors.Default;
                 btnUpdate.Enabled = true;
+                // моды обновляются вместе с Овердеком: если сам Овердек сейчас не ставится (после его перезапуска проверка пройдёт снова), проверяем и обновляем моды
+                bool installing = newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating && !(Program.JustUpdated && !manual);
+                if (!installing && !updating) { try { if (modsForm != null && !modsForm.IsDisposed) modsForm.BackgroundCheck(); } catch (Exception ex) { WriteLog("Моды: " + ex.Message); } }
                 if (newVersion.Length > 0 && newDownload.Length > 0 && autoUpdate && !updating)
                 {
                     // сразу после установки обновления второй раз подряд не обновляемся (защита от цикла «обновился — перезапустился»)
