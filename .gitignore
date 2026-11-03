@@ -136,3 +136,5 @@ music_settings.json
 music_state.json
 music_plays.json
 soundpad_keys.json
+mods.json
+mods/

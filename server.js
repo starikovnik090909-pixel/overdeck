@@ -1415,6 +1415,12 @@ const soundpadUpload = multer({
 require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, spKeys: soundpadKeys, app, upload: soundpadUpload });
 setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
+// ---------- Моды: Овервойс (нейроголос) ----------
+const modOvervoice = require('./modOvervoice');
+modOvervoice.init({ root: __dirname, port: config.port || 3001 });
+require('./routes/mods').main({ mod: modOvervoice, app });
+setTimeout(() => modOvervoice.autostart(), 6000);
+process.on('exit', () => modOvervoice.stopSync());
 require('./routes/chronicles').main({ fs, path, http, chronicles, polls, chatBot, telegramAnnounce, chrPublish, app, chroniclesUpload, getPollCredentials, pollErrorMessage });
 
 require('./routes/team').part2({ mvpData, app, mvpUpload, broadcastMvpUpdate });

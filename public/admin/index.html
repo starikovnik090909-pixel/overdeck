@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
+<link rel="stylesheet" href="overvoice-admin.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
@@ -341,6 +342,12 @@
           <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
         <span>Саундпад</span>
+      </div>
+      <div class="nav-item" data-tab="overvoice">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3Z M6 11a6 6 0 0 0 12 0 M12 17v4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Овервойс</span>
       </div>
       <div class="nav-item nav-sub" data-tab="extras" data-parent="widgets">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3126,6 +3133,26 @@
       </div>
     </section>
 
+    <section class="tab-section" id="tab-overvoice">
+      <div class="page-head"><div><h1 class="tab-title">Овервойс</h1><p class="tab-description">Нейроголос для микрофона. Это мод: ставится в лаунчере (кнопка «Моды»), а управляется здесь.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="ovSaved"></span>
+          <label class="tg-sw" id="ovAutoW" hidden><input type="checkbox" id="ovAuto"><i></i><span>Запускать вместе с Overdeck</span></label>
+          <button class="btn btn-secondary" type="button" id="ovStart" hidden>▶ Запустить</button>
+          <button class="btn btn-secondary" type="button" id="ovStop" hidden>■ Остановить</button>
+        </div></div>
+      <div class="ov-empty" id="ovEmpty" hidden>
+        <div class="ov-card">
+          <h3>Овервойс не установлен</h3>
+          <p class="ex-sm">Открой лаунчер Overdeck, нажми «Моды» и «Скачать и установить всё». Он поставит программу, виртуальный аудиокабель и движок голоса.</p>
+          <p class="ex-sm">После установки Овервойс будет запускаться вместе с Overdeck, а эта вкладка оживёт.</p>
+        </div>
+      </div>
+      <div class="ov-main" id="ovMain" hidden>
+        <iframe id="ovFrame" title="Овервойс" src="about:blank"></iframe>
+      </div>
+      <p class="ex-sm" id="ovMsg" hidden></p>
+    </section>
+
     <section class="tab-section" id="tab-soundpad">
       <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, чтобы послушать звук у себя. Кнопка «на стрим» играет его на стриме. Монета отмечает звук для наград за баллы, шестерёнка открывает настройки.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="spSaved"></span>
@@ -3904,6 +3931,7 @@
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
-<script src="whatsnew.js?v=51"></script>
+<script src="overvoice-admin.js?v=1"></script>
+<script src="whatsnew.js?v=52"></script>
 </body>
 </html>
