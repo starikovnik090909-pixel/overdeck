@@ -79,7 +79,8 @@
     if (st.state === 'downloading' || st.state === 'unpacking') { t.textContent = st.text || 'Устанавливаю движок…'; pr.hidden = false; $('#ovBar').style.width = (st.pct || 0) + '%'; btn.hidden = true; btn._a = ''; return; }
     if (!nv.installed) { b.classList.add('warn'); t.textContent = st.state === 'error' ? 'Не удалось скачать движок: ' + (st.text || '') : 'Движок голоса не установлен (около 3 ГБ). Без него голоса не работают, но их уже можно добавлять в библиотеку.'; btn.textContent = st.state === 'error' ? 'Повторить' : 'Скачать движок'; btn._a = 'install'; return; }
     if (st.state === 'starting') { t.textContent = st.text || 'Запускаю движок…'; btn.hidden = true; pr.hidden = true; return; }
-    if (!info) { b.classList.add('warn'); t.textContent = 'Движок остановлен. Голоса подключатся к нему при запуске.'; btn.textContent = '▶ Запустить движок'; btn._a = 'start'; return; }
+    if (!info) { b.classList.add('warn'); const why = (st.state === 'error' || (st.state === 'ready' && /код/.test(st.text || ''))) ? st.text : '', tl = (nv.tail || []).slice(-3).join('\n');
+      t.textContent = 'Движок остановлен. Голоса подключатся к нему при запуске.' + (why ? '\nПричина: ' + why : '') + (why && tl ? '\n' + tl : ''); btn.textContent = '▶ Запустить движок'; btn._a = 'start'; return; }
     b.hidden = true;
   }
   function renderGrid() {

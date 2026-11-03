@@ -107,3 +107,5 @@
 #tab-overvoice .ov-gauto ol{margin:6px 0 10px;padding-left:20px;display:flex;flex-direction:column;gap:5px}
 #tab-overvoice .ov-gauto ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
 #tab-overvoice .ov-gbox{max-height:calc(100vh - 80px);overflow:auto}
+#tab-overvoice #ovBannerT{white-space:pre-line;overflow-wrap:anywhere}
+#tab-overvoice #ovBannerT{font-variant-ligatures:none}
