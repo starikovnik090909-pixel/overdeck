@@ -103,3 +103,7 @@
 #tab-overvoice .ov-autog input,#tab-overvoice .ov-autog select{background:var(--bg-app);color:var(--text-primary);border:1px solid var(--divider);border-radius:8px;padding:6px 8px;min-width:0;font:inherit}
 #tab-overvoice .ov-autob{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 #tab-overvoice .ov-auto.off .ov-autog{opacity:.45;pointer-events:none}
+#tab-overvoice .ov-gauto{margin-top:10px}
+#tab-overvoice .ov-gauto ol{margin:6px 0 10px;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+#tab-overvoice .ov-gauto ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+#tab-overvoice .ov-gbox{max-height:calc(100vh - 80px);overflow:auto}
