@@ -20,7 +20,7 @@ let n = 0; const ok = (c, m) => { assert(c, m); n++; };
   mod.update({ port: 3957 });
   let s = await mod.state();
   ok(s.installed && !s.running && s.version === '9.9.9' && s.autostart === true, 'найден установленный мод, пока выключен');
-  mod.update({ autostart: false }); ok((await mod.state()).autostart === false, 'автозапуск выключается');
+  mod.update({ autostart: false }); ok((await mod.state()).autostart === false && mod.getSettings().autoupdate === true, 'автозапуск выключается, автообновление не слетает');
   await mod.autostart(); ok(!(await mod.state()).running, 'при выключенном автозапуске не стартует');
   mod.update({ autostart: true });
   await mod.autostart(); s = await mod.state(); ok(s.running, 'автозапуск поднимает Овервойс');

@@ -8,7 +8,7 @@ const { spawn, execFile } = require('child_process');
 
 const PORT = 3055;
 let ROOT = __dirname, OD_PORT = 3001, useFile = true;
-let cfg = { dir: '', autostart: true, port: PORT };
+let cfg = { dir: '', autostart: true, autoupdate: true, port: PORT };
 let child = null, starting = null;
 
 const cfgFile = () => path.join(ROOT, 'mods.json');
@@ -16,7 +16,7 @@ function load() { try { const j = (JSON.parse(fs.readFileSync(cfgFile(), 'utf8')
 function clean(j) {
   const o = j && typeof j === 'object' ? j : {};
   const port = Number(o.port);
-  return { dir: typeof o.dir === 'string' ? o.dir.trim().slice(0, 300) : cfg.dir, autostart: typeof o.autostart === 'boolean' ? o.autostart : cfg.autostart, port: Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : cfg.port };
+  return { dir: typeof o.dir === 'string' ? o.dir.trim().slice(0, 300) : cfg.dir, autostart: typeof o.autostart === 'boolean' ? o.autostart : cfg.autostart, autoupdate: typeof o.autoupdate === 'boolean' ? o.autoupdate : cfg.autoupdate, port: Number.isInteger(port) && port >= 1024 && port <= 65535 ? port : cfg.port };
 }
 function persist() { if (!useFile) return; try { fs.writeFileSync(cfgFile(), JSON.stringify({ overvoice: cfg }, null, 2)); } catch (e) { /* не критично */ } }
 const dir = () => cfg.dir || path.join(ROOT, 'mods', 'overvoice');

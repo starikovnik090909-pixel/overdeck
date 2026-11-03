@@ -518,6 +518,7 @@ class Launcher : Form
         Shown += delegate
         {
             WriteLog("Лаунчер запущен, папка: " + root + ", порт " + port);
+            try { modsForm = new ModsForm(root, port, delegate { return FindNode(); }); IntPtr hh = modsForm.Handle; modsForm.BackgroundCheck(); } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
             ThreadPool.QueueUserWorkItem(delegate
             {
                 string nv = "не найден";
@@ -1363,6 +1364,7 @@ class ModsForm : Form
 {
     const string AppUrl = "https://github.com/starikovnik090909-pixel/overvoice/archive/refs/heads/main.zip";
     const string CableUrl = "https://download.vb-audio.com/Download_CABLE/VBCABLE_Driver_Pack43.zip";
+    const string VerUrl = "https://raw.githubusercontent.com/starikovnik090909-pixel/overvoice/main/package.json";
     const int OvPort = 3055;
     const long NeedBytes = 9L * 1024 * 1024 * 1024;
 
@@ -1370,13 +1372,14 @@ class ModsForm : Form
     ComboBox cbDrive, cbGpu; ProgressLine prog; Label lblStatus, lblMsg; FancyButton btnGo;
     List<string> driveDirs = new List<string>();
     bool working, cancelled; Process ovProc;
+    Toggle chkAuto; string latestVer = ""; bool autoUpd = true;
 
     public ModsForm(string rootDir, int port, Func<string> nodeFinder)
     {
         root = rootDir; odPort = port; findNode = nodeFinder;
         Text = "Overdeck — моды";
         HandleCreated += delegate { DarkTitle.Apply(this, Ui.Bg1); };
-        ClientSize = new Size(520, 372);
+        ClientSize = new Size(520, 404);
         FormBorderStyle = FormBorderStyle.FixedSingle; MaximizeBox = false; MinimizeBox = false;
         StartPosition = FormStartPosition.CenterParent;
         BackColor = Ui.Bg1; ForeColor = Ui.Txt; Font = new Font("Segoe UI", 9.5f); DoubleBuffered = true;
@@ -1385,7 +1388,7 @@ class ModsForm : Form
         Label title = new Label(); title.Text = "Моды"; title.Font = new Font("Segoe UI Semibold", 17f); title.ForeColor = Color.White;
         title.BackColor = Color.Transparent; title.AutoSize = true; title.Location = new Point(22, 14); Controls.Add(title);
 
-        Card c = new Card(); c.Location = new Point(22, 58); c.Size = new Size(476, 272); Controls.Add(c);
+        Card c = new Card(); c.Location = new Point(22, 58); c.Size = new Size(476, 304); Controls.Add(c);
         Label nm = new Label(); nm.Text = "Овервойс"; nm.Font = new Font("Segoe UI Semibold", 12f); nm.ForeColor = Color.White; nm.BackColor = Color.Transparent; nm.AutoSize = true; nm.Location = new Point(16, 12); c.Controls.Add(nm);
         Label ds = new Label(); ds.Text = "Нейроголос для микрофона. Ставит программу, виртуальный аудиокабель VB-Cable и движок голоса (около 3 ГБ)."; ds.ForeColor = Ui.Dim; ds.BackColor = Color.Transparent; ds.AutoSize = false; ds.Size = new Size(444, 36); ds.Location = new Point(16, 38); ds.Font = new Font("Segoe UI", 9f); c.Controls.Add(ds);
         lblStatus = new Label(); lblStatus.ForeColor = Ui.Warn; lblStatus.BackColor = Color.Transparent; lblStatus.AutoSize = false; lblStatus.Size = new Size(444, 20); lblStatus.Location = new Point(16, 76); lblStatus.Font = new Font("Segoe UI Semibold", 9.5f); c.Controls.Add(lblStatus);
@@ -1397,14 +1400,17 @@ class ModsForm : Form
 
         prog = new ProgressLine(); prog.Location = new Point(16, 166); prog.Size = new Size(444, 6); c.Controls.Add(prog);
         lblMsg = new Label(); lblMsg.ForeColor = Ui.Dim; lblMsg.BackColor = Color.Transparent; lblMsg.AutoSize = false; lblMsg.Size = new Size(444, 34); lblMsg.Location = new Point(16, 178); lblMsg.Font = new Font("Segoe UI", 9f); c.Controls.Add(lblMsg);
-        btnGo = new FancyButton(); btnGo.Primary = true; btnGo.Text = "Скачать и установить всё"; btnGo.Location = new Point(16, 216); btnGo.Size = new Size(444, 42);
+        autoUpd = ReadAutoUpdate();
+        chkAuto = new Toggle(); chkAuto.Text = "Обновлять Овервойс автоматически"; chkAuto.Checked = autoUpd; chkAuto.Location = new Point(16, 214); chkAuto.Size = new Size(444, 24);
+        chkAuto.CheckedChanged += delegate { autoUpd = chkAuto.Checked; SaveAutoUpdate(autoUpd); }; c.Controls.Add(chkAuto);
+        btnGo = new FancyButton(); btnGo.Primary = true; btnGo.Text = "Скачать и установить всё"; btnGo.Location = new Point(16, 248); btnGo.Size = new Size(444, 42);
         btnGo.Click += delegate { StartInstall(); }; c.Controls.Add(btnGo);
 
         Label hint = new Label(); hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(150, 120, 126);
-        hint.BackColor = Color.Transparent; hint.Font = new Font("Segoe UI", 8.5f); hint.AutoSize = false; hint.Size = new Size(476, 32); hint.Location = new Point(24, 336); Controls.Add(hint);
+        hint.BackColor = Color.Transparent; hint.Font = new Font("Segoe UI", 8.5f); hint.AutoSize = false; hint.Size = new Size(476, 32); hint.Location = new Point(24, 368); Controls.Add(hint);
 
         FillDrives(); Refresh2();
-        FormClosing += delegate(object s, FormClosingEventArgs e) { if (working) { e.Cancel = true; Hide(); } };
+        FormClosing += delegate(object s, FormClosingEventArgs e) { if (e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); } };
     }
 
     static Label Cap(string t, int x, int y) { Label l = new Label(); l.Text = t; l.ForeColor = Ui.Dim; l.BackColor = Color.Transparent; l.AutoSize = true; l.Location = new Point(x, y); l.Font = new Font("Segoe UI", 8.5f); return l; }
@@ -1455,9 +1461,10 @@ class ModsForm : Form
         bool inst = File.Exists(Path.Combine(dir, "server.js"));
         string ver = "";
         try { Match m = Regex.Match(File.ReadAllText(Path.Combine(dir, "package.json"), Encoding.UTF8), "\"version\"\\s*:\\s*\"([^\"]+)\""); if (m.Success) ver = m.Groups[1].Value; } catch { }
-        lblStatus.Text = inst ? "Установлен · версия " + ver + " · " + dir : "Не установлен";
-        lblStatus.ForeColor = inst ? Ui.Ok : Ui.Warn;
-        btnGo.Text = inst ? "Обновить и докачать всё" : "Скачать и установить всё";
+        bool newer = inst && latestVer.Length > 0 && VerNewer(latestVer, ver);
+        lblStatus.Text = !inst ? "Не установлен" : (newer ? "Доступна версия " + latestVer + " (у тебя " + ver + ")" : "Установлен · версия " + ver + " · " + dir);
+        lblStatus.ForeColor = !inst ? Ui.Warn : (newer ? Ui.Warn : Ui.Ok);
+        btnGo.Text = !inst ? "Скачать и установить всё" : (newer ? "Обновить до " + latestVer : "Докачать и проверить всё");
     }
 
     void Report(string text, int pct, bool err)
@@ -1499,21 +1506,7 @@ class ModsForm : Form
         if (new DriveInfo(rootPath).AvailableFreeSpace < NeedBytes) throw new Exception("На диске " + rootPath + " меньше 9 ГБ свободного места. Выбери другой диск.");
         Directory.CreateDirectory(target);
 
-        Report("Скачиваю Овервойс…", 5, false);
-        string zip = Path.Combine(Path.GetTempPath(), "overvoice-app.zip");
-        using (WebClient wc = new WebClient()) { wc.Headers["User-Agent"] = "Overdeck-Launcher"; wc.DownloadFile(AppUrl, zip); }
-        Report("Распаковываю…", 12, false);
-        string tmp = Path.Combine(Path.GetTempPath(), "overvoice-app-x");
-        if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
-        ZipFile.ExtractToDirectory(zip, tmp);
-        string[] dirs = Directory.GetDirectories(tmp);
-        CopyDir(dirs.Length == 1 ? dirs[0] : tmp, target);
-        try { Directory.Delete(tmp, true); File.Delete(zip); } catch { }
-        if (!File.Exists(Path.Combine(target, "server.js"))) throw new Exception("В архиве не нашёлся файл программы");
-        WriteModsJson(target);
-
-        Report("Ставлю зависимости (одна минута)…", 18, false);
-        RunHidden("cmd.exe", "/c npm install --omit=dev", target, node, 300000);
+        UpdateApp(target, node);
         string sf = Path.Combine(target, "nv_settings.json");
         if (!File.Exists(sf)) File.WriteAllText(sf, "{\"variant\":\"" + variant + "\"}", new UTF8Encoding(false));
         else File.WriteAllText(sf, Regex.Replace(File.ReadAllText(sf, Encoding.UTF8), "\"variant\"\\s*:\\s*\"[a-z]+\"", "\"variant\":\"" + variant + "\""), new UTF8Encoding(false));
@@ -1536,6 +1529,85 @@ class ModsForm : Form
         }
         Report("Запускаю Овервойс…", 98, false);
         try { PostOverdeck("/api/mods/overvoice/start"); } catch { }
+    }
+
+
+    /// <summary>Скачивает программу Овервойс с GitHub и кладёт поверх старой (данные пользователя в архиве отсутствуют), затем ставит зависимости.</summary>
+    void UpdateApp(string target, string node)
+    {
+        Report("Скачиваю Овервойс…", 5, false);
+        string zip = Path.Combine(Path.GetTempPath(), "overvoice-app.zip");
+        using (WebClient wc = new WebClient()) { wc.Headers["User-Agent"] = "Overdeck-Launcher"; wc.DownloadFile(AppUrl, zip); }
+        Report("Распаковываю…", 12, false);
+        string tmp = Path.Combine(Path.GetTempPath(), "overvoice-app-x");
+        if (Directory.Exists(tmp)) Directory.Delete(tmp, true);
+        ZipFile.ExtractToDirectory(zip, tmp);
+        string[] dirs = Directory.GetDirectories(tmp);
+        CopyDir(dirs.Length == 1 ? dirs[0] : tmp, target);
+        try { Directory.Delete(tmp, true); File.Delete(zip); } catch { }
+        if (!File.Exists(Path.Combine(target, "server.js"))) throw new Exception("В архиве не нашёлся файл программы");
+        WriteModsJson(target);
+
+        Report("Ставлю зависимости (одна минута)…", 18, false);
+        RunHidden("cmd.exe", "/c npm install --omit=dev", target, node, 300000);
+    }
+
+    static int[] VerParts(string v) { int[] r = new int[3]; string[] p = (v ?? "").Split('.'); for (int i = 0; i < 3 && i < p.Length; i++) { Match m = Regex.Match(p[i], "^\\d+"); if (m.Success) int.TryParse(m.Value, out r[i]); } return r; }
+    static bool VerNewer(string a, string b) { int[] x = VerParts(a), y = VerParts(b); for (int i = 0; i < 3; i++) { if (x[i] != y[i]) return x[i] > y[i]; } return false; }
+
+    string InstalledDir() { string d = null; try { d = ReadModDir(); } catch { } return d ?? DefaultDir(); }
+    string InstalledVersion() { try { Match m = Regex.Match(File.ReadAllText(Path.Combine(InstalledDir(), "package.json"), Encoding.UTF8), "\"version\"\\s*:\\s*\"([^\"]+)\""); if (m.Success) return m.Groups[1].Value; } catch { } return ""; }
+
+    bool ReadAutoUpdate() { try { Match m = Regex.Match(File.ReadAllText(Path.Combine(root, "mods.json"), Encoding.UTF8), "\"autoupdate\"\\s*:\\s*(true|false)"); if (m.Success) return m.Groups[1].Value == "true"; } catch { } return true; }
+    void SaveAutoUpdate(bool on)
+    {
+        try
+        {
+            string f = Path.Combine(root, "mods.json"); string t = File.Exists(f) ? File.ReadAllText(f, Encoding.UTF8) : "";
+            if (Regex.IsMatch(t, "\"autoupdate\"\\s*:")) t = Regex.Replace(t, "\"autoupdate\"\\s*:\\s*(true|false)", "\"autoupdate\": " + (on ? "true" : "false"));
+            else if (t.IndexOf("\"overvoice\"") >= 0) t = Regex.Replace(t, "\"overvoice\"\\s*:\\s*\\{", "\"overvoice\": {\n    \"autoupdate\": " + (on ? "true" : "false") + ",");
+            else t = "{\n  \"overvoice\": {\n    \"autoupdate\": " + (on ? "true" : "false") + "\n  }\n}\n";
+            File.WriteAllText(f, t, new UTF8Encoding(false));
+        }
+        catch { }
+    }
+
+    /// <summary>Узнаёт последнюю версию Овервойса на GitHub. Если стоит автообновление, обновляет программу сама (движок и голоса не трогает).</summary>
+    public void BackgroundCheck()
+    {
+        if (working) return;
+        ThreadPool.QueueUserWorkItem(delegate
+        {
+            try
+            {
+                if (!File.Exists(Path.Combine(InstalledDir(), "server.js"))) return;
+                ServicePointManager.SecurityProtocol = (SecurityProtocolType)3072;
+                string json; using (WebClient wc = new WebClient()) { wc.Headers["User-Agent"] = "Overdeck-Launcher"; json = wc.DownloadString(VerUrl + "?t=" + DateTime.UtcNow.Ticks); }
+                Match m = Regex.Match(json, "\"version\"\\s*:\\s*\"([^\"]+)\"");
+                if (!m.Success) return;
+                latestVer = m.Groups[1].Value;
+                string cur = InstalledVersion();
+                try { BeginInvoke((MethodInvoker)delegate { Refresh2(); }); } catch { }
+                if (autoUpd && VerNewer(latestVer, cur) && !working) AutoUpdateNow();
+            }
+            catch (Exception ex) { Launcher.WriteLog("Моды: проверка обновления Овервойса не удалась: " + ex.Message); }
+        });
+    }
+
+    void AutoUpdateNow()
+    {
+        working = true; string error = null;
+        try
+        {
+            string node = findNode(); if (node == null) return;
+            bool wasRunning = Http(odPort, "GET", "/api/mods/overvoice").IndexOf("\"running\":true") >= 0;
+            if (wasRunning) Http(odPort, "POST", "/api/mods/overvoice/stop");
+            Launcher.WriteLog("Моды: обновляю Овервойс до " + latestVer);
+            UpdateApp(InstalledDir(), node);
+            if (wasRunning) Http(odPort, "POST", "/api/mods/overvoice/start");
+        }
+        catch (Exception ex) { error = ex.Message; Launcher.WriteLog("Моды: автообновление Овервойса не удалось: " + ex); }
+        try { BeginInvoke((MethodInvoker)delegate { working = false; lblMsg.Text = error == null ? "Овервойс обновлён до версии " + latestVer + "." : "Не удалось обновить Овервойс: " + error; lblMsg.ForeColor = error == null ? Ui.Ok : Ui.Err; prog.Value = 0; Refresh2(); }); } catch { working = false; }
     }
 
     void DownloadEngineViaOvervoice(string target, string node)
@@ -1594,7 +1666,7 @@ class ModsForm : Form
         string f = Path.Combine(root, "mods.json"); string auto = "true";
         try { Match m = Regex.Match(File.ReadAllText(f, Encoding.UTF8), "\"autostart\"\\s*:\\s*(true|false)"); if (m.Success) auto = m.Groups[1].Value; } catch { }
         string dir = string.Equals(target, DefaultDir(), StringComparison.OrdinalIgnoreCase) ? "" : target.Replace("\\", "\\\\");
-        File.WriteAllText(f, "{\n  \"overvoice\": {\n    \"dir\": \"" + dir + "\",\n    \"autostart\": " + auto + ",\n    \"port\": " + OvPort + "\n  }\n}\n", new UTF8Encoding(false));
+        File.WriteAllText(f, "{\n  \"overvoice\": {\n    \"dir\": \"" + dir + "\",\n    \"autostart\": " + auto + ",\n    \"autoupdate\": " + (autoUpd ? "true" : "false") + ",\n    \"port\": " + OvPort + "\n  }\n}\n", new UTF8Encoding(false));
     }
 
     static void CopyDir(string src, string dst)
