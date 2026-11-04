@@ -109,3 +109,4 @@
 #tab-overvoice .ov-gbox{max-height:calc(100vh - 80px);overflow:auto}
 #tab-overvoice #ovBannerT{white-space:pre-line;overflow-wrap:anywhere}
 #tab-overvoice #ovBannerT{font-variant-ligatures:none}
+#tab-overvoice .ov-pre{margin-top:6px;width:100%}#tab-overvoice .ov-pre button{flex:1}#tab-overvoice .ov-hint{display:block}

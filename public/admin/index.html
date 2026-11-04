@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="overvoice-admin.css?v=6">
+<link rel="stylesheet" href="overvoice-admin.css?v=7">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
@@ -3176,6 +3176,7 @@
             <label class="ov-lbl">Куда отдавать голос (в OBS)<select class="ov-sel" id="ovOut"></select></label>
             <label class="ov-lbl">Слышать себя<select class="ov-sel" id="ovMon"></select></label>
             <div class="ov-h2">Готовность к OBS</div>
+            <div class="ov-lbl">Скорость и нагрузка<div class="ov-seg ov-pre" id="ovPreset"><button type="button" data-k="ll">Мин. задержка</button><button type="button" data-k="bal">Баланс</button><button type="button" data-k="hq">Качество</button></div><small class="ov-hint" id="ovPreHint"></small></div>
             <div id="ovChecks"></div>
             <div class="ov-obs"><b>Как добавить в OBS</b><ol><li>Источники → ＋ → «Захват входящего звука»</li><li>Устройство: <code>CABLE Output</code> <button class="btn btn-secondary btn-sm" type="button" id="ovCopy">копировать</button></li><li>Свой микрофон из OBS отключи, чтобы не было двух голосов</li></ol></div>
             <div class="ov-obs ov-auto"><div class="ov-autoh"><b>Авто-переключение в OBS</b><label class="tg-sw"><input type="checkbox" id="ovObsOn"><span></span></label></div>
@@ -3222,6 +3223,7 @@
               <li>Индикатор микрофона не двигается: выбран не тот микрофон или Windows не даёт к нему доступ (Параметры → Конфиденциальность → Микрофон).</li>
               <li>Кабель поставлен только что, а в списках его нет: перезагрузи компьютер.</li>
               <li>Голос не меняется: включён режим «Свой голос» (нейросеть обходится). Переключи на «Нейроголос».</li>
+              <li>Слышишь повтор своего голоса: выключи «Слышать себя» во вкладке «Звук и OBS» (для стрима оно не нужно), убери в Windows «Прослушивать с этого устройства» для микрофона, а в OBS у источника с кабелем поставь «Только вывод» вместо «Монитор и вывод». Если слушаешь себя в наушниках, закрытые наушники и тише громкость помогают от «двойного» голоса.</li>
               <li>Большая задержка или рывки: закрой тяжёлые программы, а в лаунчере выбери вариант движка под свою видеокарту.</li>
             </ul>
           </div>
@@ -4020,8 +4022,8 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=7"></script>
+<script src="overvoice-admin.js?v=8"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=58"></script>
+<script src="whatsnew.js?v=59"></script>
 </body>
 </html>

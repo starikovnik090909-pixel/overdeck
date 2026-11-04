@@ -131,7 +131,9 @@
       [!!v && v.loaded, 'Голос выбран и подключён', v ? v.name : 'выбери карточку'],
       [!!inName, 'Микрофон выбран', inName || ''],
       [!!cable && cable.installed, 'Виртуальный кабель установлен', cable ? (cable.supported ? (cable.installed ? 'VB-Cable' : 'нет') : 'только Windows') : '...'],
-      [/CABLE Input/i.test(outName), 'Голос идёт в кабель', outName || '']
+      [/CABLE Input/i.test(outName), 'Голос идёт в кабель', outName || ''],
+      [!/CABLE Output/i.test(inName), 'Нет петли «кабель → микрофон»', /CABLE Output/i.test(inName) ? 'в качестве микрофона выбран кабель' : ''],
+      [!(i && Number(i.serverMonitorDeviceId) >= 0 && live()), 'Нет «слышать себя» в эфире', i && Number(i.serverMonitorDeviceId) >= 0 && live() ? 'из-за него слышен повтор голоса: выбери «—» в «Слышать себя»' : '']
     ];
     $('#ovChecks').innerHTML = items.map((c) => '<div class="ov-chk ' + (c[0] ? '' : 'bad') + '"><div class="ic">' + (c[0] ? '✓' : '!') + '</div><span>' + c[1] + '</span><small>' + esc(c[2]) + '</small></div>').join('') +
       ((cable && cable.supported && !cable.installed) ? '<div class="ov-chk todo"><div class="ic">·</div><span>Кабель нужен, чтобы голос попал в OBS</span><button type="button" class="btn btn-primary btn-sm" id="ovCable"' + (cable.status && cable.status.state === 'working' ? ' disabled' : '') + '>' + (cable.status && cable.status.state === 'working' ? 'Ставлю…' : 'Установить') + '</button></div>' : '');
@@ -184,6 +186,24 @@
   $('#ovObsLoad').addEventListener('click', obsInputs);
   const obsLive = (on) => (obsCfg && obsCfg.enabled ? jsend('POST', P + '/api/nv/obs/live', { on }).then((r) => { if (r && r.success === false) flash('OBS: ' + r.error); }).catch(() => {}) : Promise.resolve());
 
+  // ---- пресеты скорости: ключи ставятся только если они есть в движке и того же типа ----
+  const PRESETS = {
+    ll: { hint: 'Самая малая задержка, чуть выше нагрузка на видеокарту.', v: { serverReadChunkSize: 32, crossFadeOverlapSize: 0.05, f0Detector: 'rmvpe_onnx' } },
+    bal: { hint: 'Золотая середина для стрима.', v: { serverReadChunkSize: 64, crossFadeOverlapSize: 0.1, f0Detector: 'rmvpe_onnx' } },
+    hq: { hint: 'Чище голос, задержка больше.', v: { serverReadChunkSize: 128, crossFadeOverlapSize: 0.15, f0Detector: 'rmvpe_onnx' } }
+  };
+  function applyPreset(k) {
+    const p = PRESETS[k]; if (!p || !info) { flash('Сначала запусти движок'); return Promise.resolve(); }
+    const keys = Object.keys(p.v).filter((x) => info[x] !== undefined && typeof info[x] === typeof p.v[x]);
+    return keys.reduce((a, x) => a.then(() => setS(x, p.v[x])), Promise.resolve()).then(() => {
+      lsSet('preset', k); showPreset();
+      flash(keys.length === Object.keys(p.v).length ? 'Пресет применён' : 'Применено ' + keys.length + ' из ' + Object.keys(p.v).length + ' настроек (остальных нет в этой версии движка)');
+    });
+  }
+  function showPreset() { const k = lsGet('preset'); sec.querySelectorAll('#ovPreset button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === k ? 'true' : 'false')); $('#ovPreHint').textContent = PRESETS[k] ? PRESETS[k].hint : 'Не выбрано: движок работает со своими настройками.'; }
+  $('#ovPreset').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) applyPreset(b.dataset.k); });
+  showPreset();
+
   // режим и эфир
   $('#ovMode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || !info) return; setS('passThrough', b.dataset.m === 'own' ? 1 : 0).then(() => { flash(b.dataset.m === 'own' ? 'Обход: в эфир идёт твой голос' : 'Нейроголос включён'); render(); }); });
   function goLive(on) {
@@ -195,7 +215,7 @@
   $('#ovLive').addEventListener('click', () => {
     if (!info || busy) return; busy = true; $('#ovLive').disabled = true;
     const on = !live(), v = cur();
-    (on && v ? applyVoice(v) : Promise.resolve()).then(() => goLive(on)).then(() => obsLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
+    (on && v ? applyVoice(v) : Promise.resolve()).then(() => (on && PRESETS[lsGet('preset')] ? applyPreset(lsGet('preset')) : null)).then(() => goLive(on)).then(() => obsLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
   });
   // «проверить на мне»: звук идёт только в наушники, в кабель (OBS) ничего не уходит
   $('#ovSelf').addEventListener('click', () => {
