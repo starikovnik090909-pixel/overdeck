@@ -25,6 +25,10 @@
   const gateToVal = (v) => (Number(v) === 0 ? 0 : Math.pow(10, -5 + Number(v) / 50));
   const KEYS = { pitch: ['tran', (v) => v], idx: ['indexRatio', (v) => v / 100], gate: ['silentThreshold', gateToVal], vol: ['serverOutputAudioGain', (v) => v / 100] };
   const slotOf = (v) => { if (!info) return -1; const s = (info.modelSlots || []).filter((x) => x && x.name && norm(stem(x.name)) === norm(stem(v.model)))[0]; return s ? Number(s.slotIndex) : -1; };
+  // несохранённые правки ползунков по голосам; сохраняются кнопкой «Сохранить пресет»
+  const draft = {};
+  const getS = (v) => draft[v.name] || v.settings;
+  const isDirty = (v) => !!v && !!draft[v.name] && ['pitch', 'idx', 'gate', 'vol'].some((k) => draft[v.name][k] !== v.settings[k]);
   const cur = () => (lib && lib.voices || []).filter((v) => v.name === sel)[0] || null;
   const live = () => !!info && Number(info.serverAudioStated) === 1;
   const engineUp = () => !!info;
@@ -32,7 +36,7 @@
   function applyVoice(v) {   // выбрать голос в движке и применить его настройки
     const slot = slotOf(v); if (slot < 0) return Promise.resolve(false);
     let ch = setS('modelSlotIndex', slot).then(() => setS('passThrough', modeOwn() ? 1 : 0));
-    Object.keys(KEYS).forEach((k) => { ch = ch.then(() => { if (k === 'idx' && !v.hasIndex) return; return setS(KEYS[k][0], KEYS[k][1](v.settings[k])); }).catch(() => { }); });
+    Object.keys(KEYS).forEach((k) => { ch = ch.then(() => { if (k === 'idx' && !v.hasIndex) return; return setS(KEYS[k][0], KEYS[k][1](getS(v)[k])); }).catch(() => { }); });
     return ch.then(() => true);
   }
   const modeOwn = () => !!info && Number(info.passThrough) === 1;
@@ -102,9 +106,10 @@
     $('#ovVh').textContent = v ? 'Настройки: ' + v.name : 'Выбери голос слева';
     ['Pitch', 'Idx', 'Gate', 'Vol'].forEach((k) => { $('#ov' + k).disabled = e; });
     $('#ovSelf').disabled = e; $('#ovReset').disabled = e;
+    const dirty = isDirty(v); $('#ovSave').disabled = e || !dirty; $('#ovSave').textContent = dirty ? '💾 Сохранить пресет' : (e ? '💾 Сохранить пресет' : '✓ Сохранено');
     $('#ovSelf').textContent = selfTest ? '■ Остановить проверку' : '🎧 Проверить на мне';
     if (!v) return;
-    const s = v.settings, set = (id, val, f) => { const el = $('#' + id); if (document.activeElement !== el) el.value = val; $('#' + id + 'V').textContent = f(Number(el.value)); };
+    const s = getS(v), set = (id, val, f) => { const el = $('#' + id); if (document.activeElement !== el) el.value = val; $('#' + id + 'V').textContent = f(Number(el.value)); };
     set('ovPitch', s.pitch, (x) => (x > 0 ? '+' : '') + x); set('ovIdx', s.idx, (x) => x + '%'); set('ovGate', s.gate, (x) => x + '%'); set('ovVol', s.vol, (x) => x + '%');
     $('#ovIdx').disabled = !v.hasIndex; $('#ovIdxS').textContent = v.hasIndex ? 'насколько похоже на голос' : 'у этого голоса нет файла .index';
   }
@@ -146,26 +151,32 @@
     if (pb) { e.stopPropagation(); if (pb.disabled) return; const n = pb.dataset.p; if (playing === n) { audio.pause(); playing = ''; } else { audio.src = P + '/api/nv/library/' + encodeURIComponent(n) + '/sample'; audio.play().catch(() => toast('Не удалось проиграть пример')); playing = n; } renderGrid(); return; }
     if (e.target.closest('#ovDropTile')) { $('#ovDir').click(); return; }
     const c = e.target.closest('.ov-v'); if (!c) return;
-    sel = c.dataset.n; lsSet('sel', sel); const v = cur(); renderGrid(); renderPanel();
-    if (v && info) { if (slotOf(v) < 0) toast('Голос ещё подключается к движку'); else applyVoice(v).then(() => flash('Включён голос «' + v.name + '»')); }
+    sel = c.dataset.n; lsSet('sel', sel); const v = cur(); if (v) delete draft[v.name]; renderGrid(); renderPanel();
+    if (v && info) { if (slotOf(v) < 0) toast('Голос ещё подключается к движку'); else applyVoice(v).then(() => { jsend('PUT', P + '/api/nv/active', { name: v.name }).catch(() => { }); flash('Включён голос «' + v.name + '»'); }); }
   });
   $('#ovGrid').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.ov-v,#ovDropTile')) { e.preventDefault(); e.target.click(); } });
   $('#ovAdd').addEventListener('click', openDlg);
   sec.querySelector('.ov-tabs').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b) return; pane = b.dataset.p; [].forEach.call(sec.querySelectorAll('.ov-tabs button'), (x) => x.setAttribute('aria-selected', String(x === b))); $('#ovPvoice').hidden = pane !== 'voice'; $('#ovPsound').hidden = pane !== 'sound'; if (pane === 'sound') startMeter(); else stopMeter(); });
 
-  // ползунки голоса: сразу применяем в движке (если это активный голос) и сохраняем в библиотеку
-  const saveT = {};
+  // ползунки голоса: звучат сразу (если это активный голос), в библиотеку попадают по кнопке «Сохранить пресет»
+  const applyT = {};
   [['ovPitch', 'pitch', (x) => (x > 0 ? '+' : '') + x], ['ovIdx', 'idx', (x) => x + '%'], ['ovGate', 'gate', (x) => x + '%'], ['ovVol', 'vol', (x) => x + '%']].forEach(([id, k, f]) => {
     $('#' + id).addEventListener('input', (e) => {
-      const v = cur(); if (!v) return; const val = Number(e.target.value); v.settings[k] = val; $('#' + id + 'V').textContent = f(val);
-      clearTimeout(saveT[k]); saveT[k] = setTimeout(() => {
-        if (info && slotOf(v) === Number(info.modelSlotIndex)) setS(KEYS[k][0], KEYS[k][1](val)).catch(() => { });
-        jsend('PUT', P + '/api/nv/library/' + encodeURIComponent(v.name) + '/settings', { [k]: val }).then(() => flash('Сохранено'));
-      }, 250);
+      const v = cur(); if (!v) return; const val = Number(e.target.value);
+      draft[v.name] = Object.assign({}, getS(v), { [k]: val }); $('#' + id + 'V').textContent = f(val);
+      const dirty = isDirty(v); $('#ovSave').disabled = !dirty; $('#ovSave').textContent = dirty ? '💾 Сохранить пресет' : '✓ Сохранено';
+      clearTimeout(applyT[k]); applyT[k] = setTimeout(() => { if (info && slotOf(v) === Number(info.modelSlotIndex)) setS(KEYS[k][0], KEYS[k][1](val)).catch(() => { }); }, 200);
     });
   });
+  $('#ovSave').addEventListener('click', () => {
+    const v = cur(); if (!v || !isDirty(v)) return; const d = Object.assign({}, draft[v.name]);
+    jsend('PUT', P + '/api/nv/library/' + encodeURIComponent(v.name) + '/settings', d).then((r) => {
+      if (!r || !r.success) { flash('Не удалось сохранить'); return; }
+      v.settings = r.settings; delete draft[v.name]; jsend('PUT', P + '/api/nv/active', { name: v.name }).catch(() => { }); renderPanel(); flash('Пресет «' + v.name + '» сохранён');
+    }).catch(() => flash('Не удалось сохранить'));
+  });
   sec.querySelector('.ov-chips').addEventListener('click', (e) => { const b = e.target.closest('button'); const v = cur(); if (!b || !v) return; $('#ovPitch').value = b.dataset.v; $('#ovPitch').dispatchEvent(new Event('input')); });
-  $('#ovReset').addEventListener('click', () => { const v = cur(); if (!v) return; const d = { pitch: 0, idx: v.hasIndex ? 50 : 0, gate: 20, vol: 100 }; Object.assign(v.settings, d); renderPanel(); jsend('PUT', P + '/api/nv/library/' + encodeURIComponent(v.name) + '/settings', d).then(() => { if (info && slotOf(v) === Number(info.modelSlotIndex)) applyVoice(v); flash('Сброшено'); }); });
+  $('#ovReset').addEventListener('click', () => { const v = cur(); if (!v) return; draft[v.name] = { pitch: 0, idx: v.hasIndex ? 50 : 0, gate: 20, vol: 100 }; renderPanel(); if (info && slotOf(v) === Number(info.modelSlotIndex)) applyVoice(v); flash('Сброшено: нажми «Сохранить пресет», чтобы запомнить'); });
 
   // звук
   $('#ovIn').addEventListener('change', () => { lsSet('in', nameOf(info && info.serverAudioInputDevices, $('#ovIn').value)); setS('serverInputDeviceId', $('#ovIn').value).then(() => { startMeter(true); }); });
