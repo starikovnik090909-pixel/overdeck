@@ -333,6 +333,36 @@
   window.addEventListener('dragover', (e) => { if (!active() || !hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; $('#ovDrop').classList.toggle('over', !!e.target.closest('#ovOv')); });
   window.addEventListener('drop', (e) => { if (!active() || !hasFiles(e)) return; e.preventDefault(); dragN = 0; $('#ovDrop').classList.remove('over'); if (working) return; openDlg(); fromDrop(e.dataTransfer).then(addFiles); });
 
+  // ---- набор голосов: скачать готовые голоса из отдельного репозитория ----
+  const pm = $('#ovPack'); let packT = null;
+  const packClose = () => { pm.hidden = true; clearInterval(packT); packT = null; };
+  const packSync = () => { const n = pm.querySelectorAll('#ovPackList input:checked:not(:disabled)').length; $('#ovPackGo').disabled = !n; };
+  function packLoad() {
+    $('#ovPackMsg').textContent = 'Загружаю список…'; $('#ovPackList').innerHTML = '';
+    jget(P + '/api/nv/pack').then((r) => {
+      if (!r || !r.success) { $('#ovPackMsg').textContent = (r && r.error) || 'Не удалось получить список'; return; }
+      $('#ovPackMsg').textContent = r.voices.length ? '' : 'В наборе пока пусто';
+      $('#ovPackList').innerHTML = r.voices.map((v) => '<li class="' + (v.installed ? 'have' : '') + '"><label><input type="checkbox" data-n="' + esc(v.name) + '"' + (v.installed ? ' disabled' : ' checked') + '><span>' + esc(v.name) + (v.about ? ' <small>' + esc(v.about) + '</small>' : '') + '</span></label><small>' + (v.installed ? 'уже есть' : v.mb + ' МБ') + '</small></li>').join('');
+      packSync();
+    }).catch(() => { $('#ovPackMsg').textContent = 'Нет связи с Овервойсом'; });
+  }
+  function packPoll() {
+    jget(P + '/api/nv/pack/status').then((r) => {
+      const s = r && r.status; if (!s) return;
+      $('#ovPackProg').hidden = s.state !== 'working'; $('#ovPackBar').style.width = (s.pct || 0) + '%'; if (s.text) $('#ovPackMsg').textContent = s.text + (s.state === 'working' && s.pct ? ' ' + s.pct + '%' : '');
+      if (s.state === 'done' || s.state === 'error') { clearInterval(packT); packT = null; $('#ovPackGo').disabled = false; if (s.state === 'done') { load(); packLoad(); setTimeout(() => { $('#ovPackMsg').textContent = s.text; }, 600); } }
+    }).catch(() => { });
+  }
+  $('#ovPackBtn').addEventListener('click', () => { pm.hidden = false; packLoad(); });
+  pm.addEventListener('click', (e) => { if (e.target.closest('[data-ovpclose]')) packClose(); });
+  pm.addEventListener('change', packSync);
+  $('#ovPackGo').addEventListener('click', () => {
+    const names = [].map.call(pm.querySelectorAll('#ovPackList input:checked:not(:disabled)'), (i) => i.dataset.n); if (!names.length) return;
+    $('#ovPackGo').disabled = true; $('#ovPackMsg').textContent = 'Начинаю…';
+    jsend('POST', P + '/api/nv/pack/install', { names }).then(() => { clearInterval(packT); packT = setInterval(packPoll, 900); packPoll(); }).catch(() => { $('#ovPackMsg').textContent = 'Не удалось начать'; $('#ovPackGo').disabled = false; });
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !pm.hidden) packClose(); });
+
   // ---- мини-гайд: кнопка пульсирует, пока не нажато «Прочитано» ----
   const gm = $('#ovGuide'), gb = $('#ovGuideBtn');
   const guideRead = () => lsGet('guideRead') === '1';

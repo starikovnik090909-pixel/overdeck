@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
-<link rel="stylesheet" href="overvoice-admin.css?v=7">
+<link rel="stylesheet" href="overvoice-admin.css?v=8">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;</script>
@@ -3155,7 +3155,7 @@
       <div class="ov-banner" id="ovBanner" hidden><span id="ovBannerT"></span><div class="ov-prog" id="ovProg" hidden><i id="ovBar"></i></div><button class="btn btn-primary btn-sm" type="button" id="ovBannerBtn"></button><button class="btn btn-secondary btn-sm" type="button" id="ovBannerBtn2" hidden>Установить Visual C++</button></div>
       <div class="ov-main" id="ovMain" hidden>
         <div class="ov-card">
-          <div class="ov-h"><b>Голоса</b><em id="ovCnt"></em><span class="ov-sp"></span><button class="btn btn-secondary btn-sm" type="button" id="ovAdd">＋ Добавить</button></div>
+          <div class="ov-h"><b>Голоса</b><em id="ovCnt"></em><span class="ov-sp"></span><button class="btn btn-secondary btn-sm" type="button" id="ovPackBtn" title="Готовые голоса из набора: скачать одной кнопкой">⬇ Набор голосов</button><button class="btn btn-secondary btn-sm" type="button" id="ovAdd">＋ Добавить</button></div>
           <div class="ov-grid" id="ovGrid"></div>
         </div>
         <div class="ov-card">
@@ -3228,6 +3228,18 @@
             </ul>
           </div>
           <div class="ov-foot"><button class="btn btn-secondary btn-sm" type="button" data-ovgclose>Закрыть</button><button class="btn btn-primary" type="button" id="ovGuideRead">✓ Прочитано</button></div>
+        </div>
+      </div>
+      <div class="mu-modal" id="ovPack" hidden>
+        <div class="mu-dim" data-ovpclose></div>
+        <div class="mu-mbox ov-box2">
+          <button type="button" class="btn-tiny mu-x" data-ovpclose title="Закрыть">✕</button>
+          <h3 class="ov-bh">Набор голосов</h3>
+          <p class="ex-sm">Готовые голоса скачиваются в твою библиотеку и сами подключаются к движку. Отметь нужные.</p>
+          <ul class="ov-plist ov-packl" id="ovPackList"></ul>
+          <div class="ov-prog" id="ovPackProg" hidden><i id="ovPackBar"></i></div>
+          <p class="ex-sm" id="ovPackMsg"></p>
+          <div class="ov-foot"><button class="btn btn-secondary btn-sm" type="button" data-ovpclose>Закрыть</button><button class="btn btn-primary" type="button" id="ovPackGo" disabled>Скачать выбранные</button></div>
         </div>
       </div>
       <div class="mu-modal" id="ovOv" hidden>
@@ -4022,8 +4034,8 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=9"></script>
+<script src="overvoice-admin.js?v=10"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=60"></script>
+<script src="whatsnew.js?v=61"></script>
 </body>
 </html>
