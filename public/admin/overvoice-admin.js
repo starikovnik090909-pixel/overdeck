@@ -90,10 +90,12 @@
     b.hidden = true;
   }
   function renderGrid() {
+    renderSel();
     const g = $('#ovGrid'), vs = (lib && lib.voices) || [], active = (info && vs.filter((v) => slotOf(v) === Number(info.modelSlotIndex))[0]) || null;
     let h = '<div class="ov-drop" id="ovDropTile" tabindex="0" role="button"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 10v5M9.8 12.2 12 10l2.2 2.2"/></svg><span><b>Кинь сюда папку с голосом</b>или сразу папку с несколькими. Они сохранятся в библиотеку.</span></div>';
     h += vs.map((v) => {
-      const st = v.loaded ? 'on' : (lib.running ? 'wait' : 'wait'), stT = v.loaded ? 'в движке' : (lib.running ? (lib.syncError ? 'ошибка подключения' : 'подключается…') : 'ждёт запуска');
+      const st = v.loaded ? 'on' : (lib.running ? 'wait' : 'wait'), stT = v.loaded ? 'в движке' : (lib.running ? (lib.syncError ? 'ошибка подключения' : 'загрузится при выборе') : 'запустится при выборе'), sl = lib.select;
+      if (sl && sl.name === v.name && sl.phase === 'working') stT = 'готовится…'; else if (sl && sl.name === v.name && sl.phase === 'error') stT = 'ошибка';
       const isSel = v.name === sel, isAct = !!active && active.name === v.name && live();
       return '<div class="ov-v' + (isSel ? ' sel' : '') + '" role="button" tabindex="0" data-n="' + esc(v.name) + '"><div class="ov-av" style="background:linear-gradient(135deg,hsl(' + hue(v.name) + ' 70% 55%),hsl(' + ((hue(v.name) + 30) % 360) + ' 60% 32%))">' + esc(v.name.slice(0, 1).toUpperCase()) + '</div><span class="nm" title="' + esc(v.name) + '">' + esc(v.name) + '</span><span class="tg"><span class="ov-dot ' + (isAct ? 'on' : st) + '"></span>' + (isAct ? 'в эфире' : stT) + (v.hasIndex ? ' · .index' : '') + '</span><button type="button" class="ov-play' + (playing === v.name ? ' on' : '') + '" data-p="' + esc(v.name) + '"' + (v.hasSample ? '' : ' disabled') + ' title="' + (v.hasSample ? 'Послушать пример' : 'В папке нет файла примера (sample.mp3)') + '">' + (playing === v.name ? '<span class="ov-eq"><i></i><i></i><i></i></span>' : '▶') + '</button></div>';
     }).join('');
@@ -146,13 +148,20 @@
 
   // ---- действия ----
   const toast = (m) => flash(m);
+  let followT = null;
+  function follow() { clearInterval(followT); let n = 0; followT = setInterval(() => { load(); if (++n > 400 || !lib || !lib.select || lib.select.phase !== 'working') { if (n > 2) clearInterval(followT); } }, 600); }
+  function renderSel() {
+    const el = $('#ovSel'), s = lib && lib.select; if (!s || s.phase === 'idle') { el.hidden = true; return; }
+    el.hidden = false; el.className = 'ov-sel ' + (s.phase === 'working' ? 'work' : s.phase === 'error' ? 'err' : 'okk');
+    el.innerHTML = (s.phase === 'working' ? '<i class="sp"></i>' : '') + '<span>' + esc(s.phase === 'error' ? 'Голос «' + s.name + '» не включился: ' + s.error : s.text) + '</span>';
+  }
   $('#ovGrid').addEventListener('click', (e) => {
     const pb = e.target.closest('.ov-play');
     if (pb) { e.stopPropagation(); if (pb.disabled) return; const n = pb.dataset.p; if (playing === n) { audio.pause(); playing = ''; } else { audio.src = P + '/api/nv/library/' + encodeURIComponent(n) + '/sample'; audio.play().catch(() => toast('Не удалось проиграть пример')); playing = n; } renderGrid(); return; }
     if (e.target.closest('#ovDropTile')) { $('#ovDir').click(); return; }
     const c = e.target.closest('.ov-v'); if (!c) return;
     sel = c.dataset.n; lsSet('sel', sel); const v = cur(); if (v) delete draft[v.name]; renderGrid(); renderPanel();
-    if (v && info) { if (slotOf(v) < 0) { toast('Подключаю голос к движку…'); jsend('POST', P + '/api/nv/library/sync').catch(() => null).then((r) => load().then(() => r)).then((r) => { if (slotOf(v) >= 0) return applyVoice(v).then(() => { jsend('PUT', P + '/api/nv/active', { name: v.name }).catch(() => { }); flash('Включён голос «' + v.name + '»'); }); flash('Не удалось подключить голос' + ((r && r.error) || (lib && lib.syncError) ? ': ' + ((r && r.error) || lib.syncError) : '')); }); } else applyVoice(v).then(() => { jsend('PUT', P + '/api/nv/active', { name: v.name }).catch(() => { }); flash('Включён голос «' + v.name + '»'); }); }
+    if (v) { jsend('POST', P + '/api/nv/select', { name: v.name }).then((r) => { if (r && r.success === false) flash(r.error || 'Не удалось выбрать голос'); follow(); }).catch(() => flash('Не удалось выбрать голос')); lib.select = { name: v.name, phase: 'working', text: 'Готовлю голос…', error: '' }; renderSel(); renderGrid(); }
   });
   $('#ovGrid').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.ov-v,#ovDropTile')) { e.preventDefault(); e.target.click(); } });
   $('#ovAdd').addEventListener('click', openDlg);
