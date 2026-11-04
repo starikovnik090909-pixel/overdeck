@@ -81,7 +81,7 @@
     const st = nv.status || {}, btn = $('#ovBannerBtn'), t = $('#ovBannerT'), pr = $('#ovProg');
     b.hidden = false; b.classList.remove('warn'); pr.hidden = true; btn.hidden = false; btn.disabled = false;
     if (st.state === 'downloading' || st.state === 'unpacking') { t.textContent = st.text || 'Устанавливаю движок…'; pr.hidden = false; $('#ovBar').style.width = (st.pct || 0) + '%'; btn.hidden = true; btn._a = ''; return; }
-    if (!nv.installed) { b.classList.add('warn'); t.textContent = st.state === 'error' ? 'Не удалось скачать движок: ' + (st.text || '') : 'Движок голоса не установлен (около 3 ГБ). Без него голоса не работают, но их уже можно добавлять в библиотеку.'; btn.textContent = st.state === 'error' ? 'Повторить' : 'Скачать движок'; btn._a = 'install'; return; }
+    if (!nv.installed) { b.classList.add('warn'); t.textContent = st.state === 'error' ? 'Не удалось скачать движок: ' + (st.text || '') : 'Движок голоса не установлен (около 4 ГБ, ставится один раз). Без него голоса не работают, но их уже можно добавлять в библиотеку.'; btn.textContent = st.state === 'error' ? 'Повторить' : 'Скачать движок'; btn._a = 'install'; return; }
     const b2 = $('#ovBannerBtn2'); b2.hidden = true;
     if (st.state === 'working') { t.textContent = st.text || 'Подожди…'; btn.hidden = true; return; }
     if (st.state === 'starting') { t.textContent = st.text || 'Запускаю движок…'; btn.hidden = true; pr.hidden = true; return; }
