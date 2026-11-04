@@ -3186,7 +3186,7 @@
                 <label>Пароль<input type="password" id="ovObsPass" placeholder="если задан в OBS" autocomplete="off"></label>
                 <label>Обычный микрофон<select id="ovObsMain"></select></label>
                 <label>Источник с кабелем<select id="ovObsCable"></select></label>
-                <div class="ov-autob"><button class="btn btn-secondary btn-sm" type="button" id="ovObsLoad">Подключиться и найти источники</button><span id="ovObsMsg" class="ov-hint"></span></div>
+                <div class="ov-autob"><button class="btn btn-primary btn-sm" type="button" id="ovObsConn" title="Создаст в OBS источник «Захват входящего звука» с CABLE Output и всё настроит">🔌 Подключить источник в OBS</button><button class="btn btn-secondary btn-sm" type="button" id="ovObsLoad">Подключиться и найти источники</button><span id="ovObsMsg" class="ov-hint"></span></div>
               </div></div>
           </div>
         </div>
@@ -3199,7 +3199,7 @@
           <ol class="ov-steps">
             <li><b>Проверь готовность.</b> Вкладка «Звук и OBS»: все пункты чек-листа должны быть зелёными (движок, голос, микрофон, кабель, вывод в кабель). Нет кабеля: нажми «Установить» и согласись в окне Windows, потом при необходимости перезагрузи компьютер.</li>
             <li><b>Проверь голос на себе.</b> Во вкладке «Звук и OBS» выбери наушники в «Слышать себя», выбери карточку голоса и нажми «🎧 Проверить на мне». Говори: ты должен слышать изменённый голос. Нажми ещё раз, чтобы остановить.</li>
-            <li><b>Добавь голос в OBS.</b> Источники → ＋ → «Захват входящего звука» → Создать → в списке устройств выбери <code>CABLE Output (VB-Audio Virtual Cable)</code>.</li>
+            <li><b>Добавь голос в OBS.</b> Проще всего: включи WebSocket в OBS (Сервис → Настройки WebSocket-сервера), во вкладке «Звук и OBS» нажми «🔌 Подключить источник в OBS», и всё создастся само. Вручную: Источники → ＋ → «Захват входящего звука» → Создать → устройство <code>CABLE Output (VB-Audio Virtual Cable)</code>.</li>
             <li><b>Отключи обычный микрофон в OBS</b> (в микшере нажми на значок динамика у «Микрофон/AUX»), иначе в эфире будет два голоса.</li>
             <li><b>Включи и проверь.</b> Нажми «В эфире» вверху этой вкладки и скажи что-нибудь. В микшере OBS полоска источника с кабелем должна прыгать. Хочешь слышать это в OBS: Расширенные свойства звука → «Монитор и вывод».</li>
           </ol>
@@ -4034,8 +4034,8 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=10"></script>
+<script src="overvoice-admin.js?v=11"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=61"></script>
+<script src="whatsnew.js?v=62"></script>
 </body>
 </html>

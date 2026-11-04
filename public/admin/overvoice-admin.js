@@ -195,6 +195,13 @@
   $('#ovObsOn').addEventListener('change', () => { obsSave().then(() => { if ($('#ovObsOn').checked) obsInputs(); }); });
   ['ovObsMain', 'ovObsCable', 'ovObsPort'].forEach((id) => $('#' + id).addEventListener('change', () => { obsSave(); }));
   $('#ovObsLoad').addEventListener('click', obsInputs);
+  $('#ovObsConn').addEventListener('click', () => {
+    const b = $('#ovObsConn'); b.disabled = true; obsMsg('Подключаюсь к OBS…'); $('#ovObsOn').checked = true;
+    obsSave().then(() => jsend('POST', P + '/api/nv/obs/connect')).then((r) => {
+      if (!r || !r.success) { obsMsg((r && r.error) || 'Не получилось', true); return; }
+      obsMsg('Готово: ' + (r.log || []).join('; ') + '. Теперь нажми «В эфире».'); return jget(P + '/api/nv/obs').then((g) => { if (g && g.obs) { obsCfg = g.obs; obsFill($('#ovObsMain'), [obsCfg.main], obsCfg.main); obsFill($('#ovObsCable'), [obsCfg.cable], obsCfg.cable); } return obsInputs(); }).then(() => { obsMsg('Готово: ' + (r.log || []).join('; ') + '. Теперь нажми «В эфире».'); });
+    }).catch(() => obsMsg('Нет связи с Овервойсом', true)).then(() => { b.disabled = false; });
+  });
   const obsLive = (on) => (obsCfg && obsCfg.enabled ? jsend('POST', P + '/api/nv/obs/live', { on }).then((r) => { if (r && r.success === false) flash('OBS: ' + r.error); }).catch(() => {}) : Promise.resolve());
 
   // ---- пресеты скорости: ключи ставятся только если они есть в движке и того же типа ----
