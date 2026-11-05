@@ -1356,6 +1356,7 @@
       <div class="ui3-tabs" id="botTabs">
         <span class="on" data-pane="cmd">Команды <i id="botCntCmd"></i></span>
         <span data-pane="tim">Таймеры <i id="botCntTim"></i></span>
+        <span data-pane="so">Отметки</span>
         <span data-pane="mod">Модерация</span>
         <span data-pane="av">Команды аватаров</span>
         <span data-pane="auth">Подключение бота</span>
@@ -1444,6 +1445,26 @@
           <tbody id="botTimersBody"><tr><td colspan="5" class="card-hint">Загружаем…</td></tr></tbody>
         </table>
         <div class="form-message" id="botTimersStatus"></div>
+      </div>
+
+</div>
+          <div class="bot-pane" data-pane="so" hidden>
+      <div class="card" id="soCard">
+        <div class="chat-card-head"><h2 class="section-title" style="margin:0;">Отметка стримеров</h2></div>
+        <p class="card-hint">Когда тебя рейдит стример, бот отмечает его канал в чате и запоминает. Позже, когда он сам напишет в твоём чате (даже без рейда), бот отметит его снова.</p>
+        <div class="toggle-row"><span class="toggle-row-label">Отмечать стримеров</span><label class="toggle-switch"><input type="checkbox" id="soEnabled"><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-row-label">Отмечать сразу при рейде</span><label class="toggle-switch"><input type="checkbox" id="soOnRaid"><span class="toggle-slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-row-label">Отмечать, когда запомненный стример пишет в чате</span><label class="toggle-switch"><input type="checkbox" id="soOnReturn"><span class="toggle-slider"></span></label></div>
+        <div class="field"><label for="soText">Сообщение бота</label>
+          <textarea id="soText" rows="2" maxlength="400"></textarea>
+          <p class="card-hint" style="margin-top:6px;">{user} — имя стримера, {login} — ник в ссылке на канал.</p></div>
+        <div class="field"><label for="soCooldown">Не отмечать одного и того же чаще, чем раз в (часов)</label>
+          <input type="number" id="soCooldown" min="1" max="168" step="1" style="max-width:140px;"></div>
+        <div class="actions"><button class="btn btn-primary" id="soSave" type="button">Сохранить</button><button class="btn btn-secondary" id="soTest" type="button">Проверить в чате</button></div>
+        <div class="form-message" id="soMsg"></div>
+        <h3 class="section-title" style="margin:18px 0 8px;">Запомненные стримеры <span id="soCount" class="card-hint"></span></h3>
+        <div class="field" style="display:flex;gap:8px;"><input type="text" id="soAddLogin" placeholder="ник канала, чтобы добавить вручную" autocomplete="off"><button class="btn btn-secondary" id="soAdd" type="button">Добавить</button></div>
+        <table class="bot-cmd-table"><thead><tr><th>Стример</th><th>Рейдов</th><th>Последняя отметка</th><th></th></tr></thead><tbody id="soBody"><tr><td colspan="4" class="card-hint">Загружаем…</td></tr></tbody></table>
       </div>
 
 </div>
@@ -4019,6 +4040,7 @@
 <script src="/photo-crop.js?v=1"></script>
 <script src="/bracket-de.js"></script>
 <script src="app.js?v=193"></script>
+<script src="shoutouts.js?v=1"></script>
 <script src="guides-data.js?v=12"></script>
 <script src="tabtips.js?v=2"></script>
 <script src="guides.js?v=9"></script>
@@ -4043,6 +4065,6 @@
 <script src="voicepack.js?v=1"></script>
 <script src="overvoice-admin.js?v=14"></script>
 <script src="navsort.js?v=1"></script>
-<script src="whatsnew.js?v=67"></script>
+<script src="whatsnew.js?v=68"></script>
 </body>
 </html>

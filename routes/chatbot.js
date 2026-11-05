@@ -143,4 +143,18 @@ app.post('/api/chat-bot/connect', async (req, res) => {
   return {  };
 }
 
-module.exports = { main, part2, part3, part4, part5, part6 };
+function part7(ctx) {
+  const { shoutouts, app } = ctx;
+  app.get('/api/shoutouts', (req, res) => res.json(shoutouts.getState()));
+  app.post('/api/shoutouts/settings', (req, res) => res.json({ success: true, ...shoutouts.setSettings(req.body || {}) }));
+  app.post('/api/shoutouts/add', (req, res) => { const r = shoutouts.add(req.body && req.body.login); if (!r.ok) return res.status(400).json({ success: false, error: r.error }); res.json({ success: true, ...r }); });
+  app.post('/api/shoutouts/remove', (req, res) => res.json({ success: true, ...shoutouts.remove(req.body && req.body.login) }));
+  app.post('/api/shoutouts/test', async (req, res) => {
+    const ok = await shoutouts.test(req.body && req.body.login);
+    if (!ok) return res.status(409).json({ success: false, error: 'Бот не подключён к чату.' });
+    res.json({ success: true });
+  });
+  return {};
+}
+
+module.exports = { main, part2, part3, part4, part5, part6, part7 };

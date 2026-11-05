@@ -77,6 +77,7 @@ const chatBot = require('./chatBot');
 const botCommands = require('./botCommands');
 const { createAvatarCommands } = require('./avatarCommands');
 const botTimers = require('./botTimers');
+const shoutouts = require('./shoutouts');
 const autoMod = require('./autoMod');
 const donorLeaderboard = require('./donorLeaderboard');
 const pointsLeaderboard = require('./pointsLeaderboard');
@@ -405,6 +406,7 @@ function handleEventAlertRaw(type, e) {
     case 'channel.subscription.gift':
       fireEventAlert('sub', { type: 'gift', username: e.is_anonymous ? 'Аноним' : e.user_name, anonymous: !!e.is_anonymous, count: e.total, tier: e.tier }); break;
     case 'channel.raid':
+      try { shoutouts.onRaid({ login: e.from_broadcaster_user_login, name: e.from_broadcaster_user_name, id: e.from_broadcaster_user_id }); } catch (x) { /* отметка необязательна */ }
       fireEventAlert('raid', { username: e.from_broadcaster_user_name, login: e.from_broadcaster_user_login, id: e.from_broadcaster_user_id, viewers: e.viewers }); break;
     case 'channel.follow':
       fireEventAlert('follow', { username: e.user_name, login: e.user_login, at: e.followed_at });
@@ -713,6 +715,7 @@ botCommands.init(); // команды подгружаются из bot_commands
 const avatarCommands = createAvatarCommands({ botHas: (name) => !!botCommands.findByToken(name) });
 botCommands.setReservedChecker((name) => avatarCommands.hasName(name));
 botTimers.init(); // сообщения по таймеру — из bot_timers.json
+shoutouts.init({ say: (t) => chatBot.say(t) }); // отметка рейдеров и их возвращений — из shoutouts.json
 autoMod.init(); // список автомодерации — из banned_words.json (нет файла — создаётся со списком по умолчанию)
 // Автообновление токена бота использует Client ID/Secret приложения из вкладки «Подключения» (те же, что для входа в админку).
 chatBot.setAppCredentialsProvider(() => ({ clientId: config.twitch.clientId || '', clientSecret: config.twitch.clientSecret || '' }));
@@ -1348,6 +1351,7 @@ function botTimersPayload() {
 }
 
 require('./routes/chatbot').part3({ chatBot, botTimers, app, botTimersPayload });
+require('./routes/chatbot').part7({ shoutouts, app });
 
 // ---------- REST API: автомодерация (список запрещённых слов) ----------
 // Сам список отдаётся ТОЛЬКО этим запросом — его использует модальное окно «Автомодерация»; в остальные ответы (статус бота и т.п.) слова не попадают.

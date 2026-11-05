@@ -22,6 +22,7 @@ const WebSocket = require('ws');
 const botCommands = require('./botCommands');
 const botTimers = require('./botTimers');
 const autoMod = require('./autoMod');
+const shoutouts = require('./shoutouts');
 const crypto = require('crypto');
 
 const FILE_PATH = path.join(__dirname, 'chat_bot.json');
@@ -584,6 +585,10 @@ async function handleChatMessage(event) {
   let flagged = false;
   try { flagged = await moderateMessage(event); } catch (e) { console.warn('[Автомодерация] Ошибка:', e.message); }
   if (flagged) return;
+  try {
+    const own = [session && session.botLogin, session && session.channelDisplay, data && data.channelName].filter(Boolean);
+    shoutouts.onChat(event.chatter_user_login, own);
+  } catch (e) { /* отметка стримера необязательна */ }
   const text = ((event.message && event.message.text) || '').trim();
   if (!text.startsWith('!')) return;
   if (session && event.chatter_user_id === session.botUserId) {
