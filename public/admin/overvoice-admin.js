@@ -74,7 +74,7 @@
       $('#ovLive').classList.toggle('on', live()); $('#ovLiveT').textContent = live() ? 'В эфире: идёт' : 'В эфире: выключено';
     }
     if (!lib) return;
-    renderGrid(); renderPanel(); renderSound();
+    renderGrid(); renderPanel(); renderSound(); renderLat();
   }
   // маленькие индикаторы: что работает, что нет (наведи — подробности)
   function renderChips() {
@@ -246,14 +246,32 @@
     bal: { hint: 'Золотая середина для стрима.', v: { serverReadChunkSize: 64, crossFadeOverlapSize: 0.1, f0Detector: 'rmvpe_onnx' } },
     hq: { hint: 'Чище голос, задержка больше.', v: { serverReadChunkSize: 128, crossFadeOverlapSize: 0.15, f0Detector: 'rmvpe_onnx' } }
   };
-  function applyPreset(k) {
+  function applyPreset(k, keepLat) {
     const p = PRESETS[k]; if (!p || !info) { flash('Сначала запусти движок'); return Promise.resolve(); }
     const keys = Object.keys(p.v).filter((x) => info[x] !== undefined && typeof info[x] === typeof p.v[x]);
     return keys.reduce((a, x) => a.then(() => setS(x, p.v[x])), Promise.resolve()).then(() => {
-      lsSet('preset', k); showPreset();
+      lsSet('preset', k); showPreset(); if (!keepLat) lsSet('lat', LAT_PRE[k] || 400); return (keepLat ? Promise.resolve() : latApply(LAT_PRE[k] || 400).then(() => load())).then(() => {
       flash(keys.length === Object.keys(p.v).length ? 'Пресет применён' : 'Применено ' + keys.length + ' из ' + Object.keys(p.v).length + ' настроек (остальных нет в этой версии движка)');
-    });
+    }); });
   }
+  // ползунок «Время на обработку»: размер блока в мс (и запас контекста для качества); итоговая задержка = блок + расчёт, её показывает движок
+  const LAT_PRE = { ll: 85, bal: 170, hq: 340 };
+  let latT = null;
+  function latApply(ms) {
+    ms = Math.max(100, Math.min(1000, Number(ms) || 400));
+    return setS('serverReadChunkSize', Math.round(ms * 0.375)).then(() => setS('extraConvertSize', Math.min(3, Math.max(1, ms / 200)).toFixed(2)));
+  }
+  function renderLat() {
+    const el = $('#ovLat'); if (!el || !info || document.activeElement === el) return;
+    const unit = Number(info.serverReadChunkSize); const ms = unit > 0 ? Math.round(unit * 128 / 48) : Number(lsGet('lat')) || 400;
+    el.value = String(Math.round(ms / 10) * 10); $('#ovLatV').textContent = el.value + ' мс';
+    $('#ovLatS').textContent = 'в эфире сейчас ≈ ' + (Number(info.latency_ms) || '—') + ' мс; больше — чище голос';
+  }
+  $('#ovLat').addEventListener('input', () => { $('#ovLatV').textContent = $('#ovLat').value + ' мс'; });
+  $('#ovLat').addEventListener('change', () => {
+    const v = Number($('#ovLat').value); lsSet('lat', v); clearTimeout(latT);
+    latT = setTimeout(() => latApply(v).then(() => { flash('Время на обработку: ' + v + ' мс'); return load(); }).catch(() => flash('Не удалось применить')), 150);
+  });
   function showPreset() { const k = lsGet('preset'); sec.querySelectorAll('#ovPreset button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === k ? 'true' : 'false')); $('#ovPreHint').textContent = PRESETS[k] ? PRESETS[k].hint : 'Не выбрано: движок работает со своими настройками.'; }
   $('#ovPreset').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) applyPreset(b.dataset.k); });
   showPreset();
@@ -269,7 +287,7 @@
   $('#ovLive').addEventListener('click', () => {
     if (!info || busy) return; busy = true; $('#ovLive').disabled = true;
     const on = !live(), v = cur();
-    (on && v ? applyVoice(v) : Promise.resolve()).then(() => (on && PRESETS[lsGet('preset')] ? applyPreset(lsGet('preset')) : null)).then(() => goLive(on)).then(() => obsLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
+    (on && v ? applyVoice(v) : Promise.resolve()).then(() => (on && PRESETS[lsGet('preset')] ? applyPreset(lsGet('preset'), true) : null)).then(() => (on && Number(lsGet('lat')) ? latApply(Number(lsGet('lat'))) : null)).then(() => goLive(on)).then(() => obsLive(on)).then(() => { selfTest = null; return load(); }).catch(() => flash('Не удалось переключить эфир')).then(() => { busy = false; $('#ovLive').disabled = false; });
   });
   // «проверить на мне»: звук идёт только в наушники, в кабель (OBS) ничего не уходит
   $('#ovSelf').addEventListener('click', () => {
