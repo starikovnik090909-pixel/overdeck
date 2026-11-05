@@ -16,7 +16,7 @@
     const i = document.createElement('i');
     fx.appendChild(i);
     const w = panel.getBoundingClientRect().width;
-    const dur = kind === 'drift' ? 12000 + Math.random() * 6000 : 700;
+    const dur = kind === 'drift' ? 7000 + Math.random() * 2000 : 700;
     if (kind === 'drift') { fx.style.setProperty('--toki-d', dur + 'ms'); fx.style.setProperty('--toki-w', Math.round(w) + 'px'); }
     panel.appendChild(fx);
     setTimeout(() => { fx.remove(); busy = false; }, dur + 150);
@@ -26,8 +26,8 @@
       const list = panels();
       if (list.length) play(list[Math.floor(Math.random() * list.length)], Math.random() < 0.45 ? 'scare' : 'drift');
     }
-    setTimeout(tick, 45000 + Math.random() * 75000); // раз в 45–120 с
+    setTimeout(tick, 8000 + Math.random() * 4000); // примерно раз в 10 с
   }
-  setTimeout(tick, 15000 + Math.random() * 25000);
+  setTimeout(tick, 4000);
   window.__tokiPlay = (kind) => { const l = panels(); if (!busy && l.length) play(l[Math.floor(Math.random() * l.length)], kind || 'scare'); };
 })();
