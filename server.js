@@ -1151,7 +1151,7 @@ app.post('/api/key/channel', express.json({ limit: '10kb' }), (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-require('./routes/chronicles').source({ express, chronicles, app });
+require('./routes/chronicles').source({ express, chronicles, app, authCredentials });
 
 app.use(express.json());
 

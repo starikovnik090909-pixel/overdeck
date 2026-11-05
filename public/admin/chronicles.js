@@ -236,6 +236,7 @@
     $('chrType').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === t));
     $('chrHoursWrap').hidden = t !== 'game';
     $('chrSteamWrap').hidden = t !== 'game';
+    $('chrKpWrap').hidden = t !== 'movie';
   }
   const curType = () => $('chrType').querySelector('button.on').dataset.v;
   function showPoster(url) {
@@ -255,6 +256,7 @@
     $('chrPosterFile').value = ''; $('chrPosterUrl').value = '';
     $('chrMsg').textContent = ''; $('chrMsg').className = 'form-message';
     $('chrSteam').value = ''; $('chrSteamMsg').textContent = ''; $('chrSteamMsg').className = 'form-message';
+    $('chrKp').value = ''; $('chrKpMsg').textContent = ''; $('chrKpMsg').className = 'form-message'; $('chrKpKey').hidden = true; $('chrKpKeyIn').value = '';
     $('chrModal').hidden = false;
     setTimeout(() => $('chrTitle').focus(), 30);
   }
@@ -461,6 +463,33 @@
       m.className = 'form-message success';
     } catch (e) { if (my === steamSeq) { m.textContent = e.message; m.className = 'form-message error'; } }
   }
+  /* Автозаполнение фильма по ссылке Кинопоиска; если Кинопоиск закрыт капчей, просим бесплатный ключ (запоминается) */
+  let kpSeq = 0;
+  async function kpFill(withKey) {
+    const m = $('chrKpMsg'), url = $('chrKp').value.trim(), key = withKey ? $('chrKpKeyIn').value.trim() : '';
+    if (!url) { m.textContent = ''; m.className = 'form-message'; return; }
+    if (!/kinopoisk\.(ru|dev)\/(level\/\d+\/)?(film|series|movie)\/\d+/i.test(url)) { m.textContent = 'Нужна ссылка на фильм или сериал: kinopoisk.ru/film/…'; m.className = 'form-message error'; return; }
+    const my = ++kpSeq; m.textContent = 'Загружаю с Кинопоиска…'; m.className = 'form-message';
+    try {
+      const d = await api('/api/chronicles/kinopoisk', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, key }) });
+      if (my !== kpSeq) return;
+      if (d.title) $('chrTitle').value = d.title;
+      if (d.year) $('chrYear').value = d.year;
+      if (d.poster) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; $('chrPosterUrl').value = d.poster; showPoster(d.poster); }
+      $('chrKpKey').hidden = true;
+      m.textContent = 'Подставлено: ' + (d.title || '') + (d.year ? ' · ' + d.year : '') + (d.kind === 'series' ? ' · сериал' : '');
+      m.className = 'form-message success';
+    } catch (e) {
+      if (my !== kpSeq) return;
+      m.textContent = e.message; m.className = 'form-message error';
+      if (e.needKey) { $('chrKpKey').hidden = false; $('chrKpKeyIn').focus(); }
+    }
+  }
+  $('chrKp').addEventListener('paste', () => setTimeout(() => kpFill(false), 30));
+  $('chrKp').addEventListener('change', () => kpFill(false));
+  $('chrKp').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); kpFill(false); } });
+  $('chrKpKeyIn').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); kpFill(true); } });
+  $('chrKpKeyIn').addEventListener('paste', () => setTimeout(() => { if ($('chrKpKeyIn').value.trim().length >= 20) kpFill(true); }, 30));
   $('chrSteam').addEventListener('paste', () => setTimeout(steamFill, 30));
   $('chrSteam').addEventListener('change', steamFill);
   $('chrSteam').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); steamFill(); } });

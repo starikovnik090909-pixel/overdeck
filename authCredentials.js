@@ -21,6 +21,7 @@ function emptyData() {
     donateX: { apiToken: '' },
     donatePay: { apiKey: '' },
     youtubeChat: { apiKey: '' },
+    kinopoisk: { apiKey: '' },
   };
 }
 
@@ -37,6 +38,7 @@ function load() {
         donateX: { ...base.donateX, ...(raw.donateX || {}) },
         donatePay: { ...base.donatePay, ...(raw.donatePay || {}) },
         youtubeChat: { ...base.youtubeChat, ...(raw.youtubeChat || {}) },
+        kinopoisk: { ...base.kinopoisk, ...(raw.kinopoisk || {}) },
       };
       return;
     }

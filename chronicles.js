@@ -208,6 +208,43 @@ async function steamLookup(link) {
   if (!poster) { vertical = false; poster = d.header_image ? String(d.header_image).split('?')[0] : ''; }
   return { appid: id, title: d.name || '', year: ym ? ym[0] : '', poster, vertical, link: 'https://store.steampowered.com/app/' + id + '/' };
 }
+/* ---------- Автозаполнение фильма по ссылке Кинопоиска ---------- */
+const KP_API = () => process.env.OV_KP_API || 'https://kinopoiskapiunofficial.tech/api/v2.2/films/';
+const KP_PAGE = () => process.env.OV_KP_PAGE || 'https://www.kinopoisk.ru/film/';
+function kpId(text) {
+  const m = String(text || '').trim().match(/kinopoisk\.(?:ru|dev)\/(?:level\/\d+\/)?(?:film|series|movie)\/(\d{1,9})/i);
+  return m ? m[1] : null;
+}
+const kpErr = (msg, needKey) => Object.assign(new Error(msg), { needKey: !!needKey });
+const KP_NEED_KEY = 'Кинопоиск не отдаёт данные программам без ключа. Вставь бесплатный ключ (инструкция ниже), он запомнится.';
+/** Название, год и обложка по ссылке на фильм или сериал Кинопоиска. С ключом (kinopoiskapiunofficial.tech) — через API, без ключа — пробуем страницу (Кинопоиск часто закрывает её капчей). */
+async function kpLookup(link, apiKey) {
+  const id = kpId(link);
+  if (!id) throw kpErr('Это не ссылка на фильм или сериал Кинопоиска (нужна вида kinopoisk.ru/film/…).');
+  if (apiKey) {
+    let r;
+    try { r = await fetch(KP_API() + id, { headers: { 'X-API-KEY': apiKey, 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(12000) }); }
+    catch (e) { throw kpErr(e.name === 'TimeoutError' ? 'Сервис Кинопоиска долго не отвечает, попробуй ещё раз.' : 'Не удалось связаться с сервисом Кинопоиска: ' + (e.message || 'нет связи')); }
+    if (r.status === 401) throw kpErr('Ключ не подошёл. Проверь, что скопировал его целиком.', true);
+    if (r.status === 402) throw kpErr('Дневной лимит ключа исчерпан (500 запросов), попробуй завтра или впиши название вручную.');
+    if (r.status === 404) throw kpErr('Кинопоиск не знает такого фильма. Проверь ссылку.');
+    if (!r.ok) throw kpErr('Сервис Кинопоиска ответил ' + r.status + '.');
+    const d = await r.json();
+    return { id, title: d.nameRu || d.nameOriginal || d.nameEn || '', year: d.year ? String(d.year) : '', poster: d.posterUrl || d.posterUrlPreview || '', vertical: true, kind: /SERIES|SHOW/i.test(String(d.type || '')) ? 'series' : 'film', link: 'https://www.kinopoisk.ru/film/' + id + '/' };
+  }
+  let html = '';
+  try {
+    const r = await fetch(KP_PAGE() + id + '/', { redirect: 'follow', signal: AbortSignal.timeout(12000), headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/124 Safari/537.36', 'Accept-Language': 'ru-RU,ru;q=0.9' } });
+    html = r.ok ? await r.text() : '';
+  } catch (e) { html = ''; }
+  const og = (name) => { const m = html.match(new RegExp('<meta[^>]+(?:property|name)=["\']' + name + '["\'][^>]+content=["\']([^"\']*)["\']', 'i')) || html.match(new RegExp('<meta[^>]+content=["\']([^"\']*)["\'][^>]+(?:property|name)=["\']' + name + '["\']', 'i')); return m ? m[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'") : ''; };
+  const t = og('og:title');
+  if (!t || /captcha|showcaptcha|вы не робот/i.test(html.slice(0, 4000) + t)) throw kpErr(KP_NEED_KEY, true);
+  const ym = t.match(/\((?:[^)]*?,\s*)?((?:19|20)\d\d)/);
+  const title = t.replace(/\s*\([^)]*\)\s*[—–-]\s*Кинопоиск.*$/i, '').replace(/\s*[—–-]\s*Кинопоиск.*$/i, '').trim();
+  const img = og('og:image');
+  return { id, title, year: ym ? ym[1] : '', poster: img ? (img.startsWith('//') ? 'https:' + img : img) : '', vertical: true, kind: /сериал/i.test(t) ? 'series' : 'film', link: 'https://www.kinopoisk.ru/film/' + id + '/' };
+}
 const posterQueue = []; let posterRunning = false;
 function queuePosters(list) {
   posterQueue.push(...list);
@@ -390,4 +427,4 @@ async function sync(type) {
 function forgetSource(type) { delete sources[type]; persist(); }
 function sourcesInfo() { const o = {}; Object.keys(sources).forEach((k) => { o[k] = { url: sources[k].url, at: sources[k].at }; }); return o; }
 
-module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, steamLookup, steamAppId, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR, events };
+module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, steamLookup, steamAppId, kpLookup, kpId, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR, events };

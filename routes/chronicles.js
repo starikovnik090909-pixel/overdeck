@@ -139,12 +139,24 @@ const chroniclesUpload = multer({
 }
 
 function source(ctx) {
-  const { express, chronicles, app } = ctx;
+  const { express, chronicles, app, authCredentials } = ctx;
 // ---------- Хроники: подключение таблицы (до общего express.json(): у файла свой лимит) ----------
 const chrJson = express.json({ limit: '10mb' });
 const chrFail = (res, e) => res.status(400).json({ success: false, error: (e && e.message) || 'Не удалось выполнить.' });
 app.post('/api/chronicles/steam', chrJson, async (req, res) => {
   try { res.json({ success: true, ...(await chronicles.steamLookup((req.body || {}).url)) }); } catch (e) { chrFail(res, e); }
+});
+app.post('/api/chronicles/kinopoisk', chrJson, async (req, res) => {
+  const b = req.body || {};
+  const key = String(b.key || '').trim();
+  try {
+    if (key) { authCredentials.setRemembered('kinopoisk', true, { apiKey: key }); }
+    const saved = ((authCredentials.get().kinopoisk) || {}).apiKey || '';
+    res.json({ success: true, ...(await chronicles.kpLookup(b.url, key || saved)) });
+  } catch (e) {
+    if (key && e.needKey) authCredentials.setRemembered('kinopoisk', false, {});   // неверный ключ не храним
+    res.status(400).json({ success: false, error: e.message || 'Не удалось выполнить.', needKey: !!e.needKey });
+  }
 });
 app.post('/api/chronicles/source/preview', chrJson, async (req, res) => {
   try {
