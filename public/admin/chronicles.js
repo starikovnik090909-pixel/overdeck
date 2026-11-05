@@ -235,6 +235,7 @@
   function setType(t) {
     $('chrType').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === t));
     $('chrHoursWrap').hidden = t !== 'game';
+    $('chrSteamWrap').hidden = t !== 'game';
   }
   const curType = () => $('chrType').querySelector('button.on').dataset.v;
   function showPoster(url) {
@@ -253,6 +254,7 @@
     showPoster(it && it.poster ? posterUrl(it) : '');
     $('chrPosterFile').value = ''; $('chrPosterUrl').value = '';
     $('chrMsg').textContent = ''; $('chrMsg').className = 'form-message';
+    $('chrSteam').value = ''; $('chrSteamMsg').textContent = ''; $('chrSteamMsg').className = 'form-message';
     $('chrModal').hidden = false;
     setTimeout(() => $('chrTitle').focus(), 30);
   }
@@ -442,6 +444,26 @@
     posterFile = f; posterCleared = false; $('chrPosterUrl').value = ''; showPoster(URL.createObjectURL(f));
   });
   $('chrPosterUrl').addEventListener('change', (e) => { const u = e.target.value.trim(); if (/^https?:\/\//i.test(u)) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; showPoster(u); } });
+  /* Автозаполнение игры по ссылке Steam: название, год, вертикальная обложка */
+  let steamSeq = 0;
+  async function steamFill() {
+    const inp = $('chrSteam'), m = $('chrSteamMsg'), url = inp.value.trim();
+    if (!url) { m.textContent = ''; m.className = 'form-message'; return; }
+    if (!/steampowered\.com\/app\/\d+|steamcommunity\.com\/app\/\d+/i.test(url)) { m.textContent = 'Нужна ссылка на страницу игры: store.steampowered.com/app/…'; m.className = 'form-message error'; return; }
+    const my = ++steamSeq; m.textContent = 'Загружаю из Steam…'; m.className = 'form-message';
+    try {
+      const d = await api('/api/chronicles/steam', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+      if (my !== steamSeq) return;
+      if (d.title) $('chrTitle').value = d.title;
+      if (d.year) $('chrYear').value = d.year;
+      if (d.poster) { posterFile = null; posterCleared = false; $('chrPosterFile').value = ''; $('chrPosterUrl').value = d.poster; showPoster(d.poster); }
+      m.textContent = 'Подставлено: ' + (d.title || '') + (d.year ? ' · ' + d.year : '') + (d.poster && !d.vertical ? ' · вертикальной обложки нет, взята горизонтальная' : '');
+      m.className = 'form-message success';
+    } catch (e) { if (my === steamSeq) { m.textContent = e.message; m.className = 'form-message error'; } }
+  }
+  $('chrSteam').addEventListener('paste', () => setTimeout(steamFill, 30));
+  $('chrSteam').addEventListener('change', steamFill);
+  $('chrSteam').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); steamFill(); } });
   $('chrPosterDel').addEventListener('click', () => { posterFile = null; posterCleared = true; $('chrPosterFile').value = ''; $('chrPosterUrl').value = ''; showPoster(''); });
   $('chrTabs').addEventListener('click', (e) => { const s = e.target.closest('span[data-t]'); if (!s) return; useTab(s.dataset.t); render(); autoSync(); });
   $('chrViews').addEventListener('change', (e) => { if (e.target.id === 'chrShowChat') { showChat = e.target.checked; S[tab].chat = showChat; saveState(); render(); } });

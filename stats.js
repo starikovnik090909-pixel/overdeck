@@ -70,8 +70,8 @@ function recordMessage(username, userId, message, tagsEmotes) {
     clean = chars.join('');
   }
 
-  // команды (!муз, !скип, !дискорд …) в топ слов не идут; ссылки вырезаются целиком
-  const words = /^\s*!/.test(message) ? [] : stripLinks(clean).toLowerCase()
+  // команды (!муз, !скип, !дискорд …) в топ слов не идут; ссылки и @упоминания (ники) вырезаются целиком
+  const words = /^\s*!/.test(message) ? [] : stripLinks(clean).replace(/@[\p{L}\p{N}_]+/gu, ' ').toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, ' ')
     .split(/\s+/)
     .filter((w) => w.length >= 3 && !STOPWORDS.has(w) && !/^\d+$/.test(w));

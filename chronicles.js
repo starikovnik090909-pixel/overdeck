@@ -181,6 +181,33 @@ async function downloadPoster(urlStr) {
   fs.writeFileSync(path.join(POSTERS_DIR, name), buf);
   return name;
 }
+/* ---------- Автозаполнение игры по ссылке Steam ---------- */
+const STEAM_CDN = 'https://cdn.akamai.steamstatic.com/steam/apps/';
+function steamAppId(text) {
+  const m = String(text || '').trim().match(/^(?:https?:\/\/)?(?:store\.steampowered\.com|steamcommunity\.com)\/(?:agecheck\/)?app\/(\d{1,9})/i);
+  return m ? m[1] : null;
+}
+async function steamExists(url) {
+  try { const r = await fetch(url, { method: 'HEAD', redirect: 'follow', signal: AbortSignal.timeout(8000) }); return r.ok; } catch (e) { return false; }
+}
+/** По ссылке на страницу игры в Steam: название, год выхода и вертикальная обложка (600×900; если её нет — горизонтальная шапка). */
+async function steamLookup(link) {
+  const id = steamAppId(link);
+  if (!id) throw new Error('Это не ссылка на страницу игры в Steam (нужна вида store.steampowered.com/app/…).');
+  let j;
+  try {
+    const r = await fetch('https://store.steampowered.com/api/appdetails?appids=' + id + '&l=russian&cc=ru', { signal: AbortSignal.timeout(12000), headers: { 'User-Agent': 'Mozilla/5.0 Overdeck' } });
+    if (!r.ok) throw new Error('Steam ответил ' + r.status);
+    j = await r.json();
+  } catch (e) { throw new Error(e.name === 'TimeoutError' ? 'Steam долго не отвечает, попробуй ещё раз.' : 'Не удалось связаться со Steam: ' + (e.message || 'нет связи')); }
+  const d = j && j[id] && j[id].success ? j[id].data : null;
+  if (!d) throw new Error('Steam не отдаёт эту игру (убрана из магазина или закрыта по региону). Заполни вручную.');
+  const ym = String((d.release_date && d.release_date.date) || '').match(/(19|20)\d\d/);
+  let poster = '', vertical = true;
+  for (const f of ['library_600x900.jpg', 'library_600x900_2x.jpg']) { if (await steamExists(STEAM_CDN + id + '/' + f)) { poster = STEAM_CDN + id + '/' + f; break; } }
+  if (!poster) { vertical = false; poster = d.header_image ? String(d.header_image).split('?')[0] : ''; }
+  return { appid: id, title: d.name || '', year: ym ? ym[0] : '', poster, vertical, link: 'https://store.steampowered.com/app/' + id + '/' };
+}
 const posterQueue = []; let posterRunning = false;
 function queuePosters(list) {
   posterQueue.push(...list);
@@ -363,4 +390,4 @@ async function sync(type) {
 function forgetSource(type) { delete sources[type]; persist(); }
 function sourcesInfo() { const o = {}; Object.keys(sources).forEach((k) => { o[k] = { url: sources[k].url, at: sources[k].at }; }); return o; }
 
-module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR, events };
+module.exports = { init, list, save, setPoster, remove, importMany, downloadPoster, steamLookup, steamAppId, previewTable, fetchSheet, importPreviewed, sync, forgetSource, sourcesInfo, POSTERS_DIR, events };

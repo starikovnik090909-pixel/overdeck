@@ -143,6 +143,9 @@ function source(ctx) {
 // ---------- Хроники: подключение таблицы (до общего express.json(): у файла свой лимит) ----------
 const chrJson = express.json({ limit: '10mb' });
 const chrFail = (res, e) => res.status(400).json({ success: false, error: (e && e.message) || 'Не удалось выполнить.' });
+app.post('/api/chronicles/steam', chrJson, async (req, res) => {
+  try { res.json({ success: true, ...(await chronicles.steamLookup((req.body || {}).url)) }); } catch (e) { chrFail(res, e); }
+});
 app.post('/api/chronicles/source/preview', chrJson, async (req, res) => {
   try {
     const b = req.body || {};
