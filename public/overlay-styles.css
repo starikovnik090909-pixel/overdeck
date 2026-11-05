@@ -351,13 +351,16 @@ body[data-ostyle="p"] .wc-poster { --wc-hero: linear-gradient(#fff, #ffb3ad); --
 body[data-ostyle="p"] .wc-ln i { background: linear-gradient(90deg, #5c0b0b, #e22a22); }
 body[data-ostyle="p"] .ef-host { --ef-hi: #ff8a82; --ef-follow: #ff8a82; --ef-sub: #e22a22; --ef-gift: #ff5a52; --ef-don: #ffb3ad; --ef-raid: #c0161a; }
 body[data-ostyle="p"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #e22a22; }
-/* силуэт Toki: ~10%, красно-чёрный; на всех панелях виджетов, целиком (contain) — виден при любом размере плашки */
-body[data-ostyle="p"] .panel[data-widget]::before {
-  content: ''; position: absolute; inset: 0; pointer-events: none; z-index: -1; border-radius: inherit;
-  background: url('ovl-fonts/dbd-silhouette.png') right bottom / contain no-repeat; opacity: .10; mix-blend-mode: screen;
-  filter: grayscale(1) contrast(1.2) sepia(1) hue-rotate(-40deg) saturate(3.4) brightness(1);
-  -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent);
-}
+/* силуэт Toki: больше не висит постоянно — dbd-toki.js изредка показывает его на ОДНОЙ плашке (скример или медленный проплыв) */
+body[data-ostyle="p"] .toki-fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; border-radius: inherit; }
+body[data-ostyle="p"] .toki-fx i { position: absolute; display: block; height: 100%; aspect-ratio: 1 / 1; bottom: 0; background: url('ovl-fonts/dbd-silhouette.png') center bottom / contain no-repeat; opacity: 0; mix-blend-mode: screen;
+  filter: grayscale(1) contrast(1.2) sepia(1) hue-rotate(-40deg) saturate(3.4) brightness(1.1); will-change: transform, opacity; }
+body[data-ostyle="p"] .toki-fx.scare { background: radial-gradient(ellipse at 50% 60%, rgba(226,42,34,.0), rgba(226,42,34,.28)); animation: toki-flash .7s steps(1,end); }
+body[data-ostyle="p"] .toki-fx.scare i { right: 6%; animation: toki-scare .7s cubic-bezier(.1,.9,.2,1); }
+body[data-ostyle="p"] .toki-fx.drift i { left: 0; animation: toki-drift var(--toki-d, 14s) linear forwards; }
+@keyframes toki-scare { 0% { opacity: 0; transform: scale(.7); } 12% { opacity: .85; transform: scale(1.12); } 30% { opacity: .55; transform: scale(1.06) translateX(-2%); } 55% { opacity: .75; transform: scale(1.1) translateX(2%); } 100% { opacity: 0; transform: scale(1.18); } }
+@keyframes toki-flash { 0%, 20% { opacity: 1; } 10% { opacity: .3; } 100% { opacity: 0; } }
+@keyframes toki-drift { 0% { opacity: 0; transform: translateX(-100%); } 15% { opacity: .22; } 85% { opacity: .22; } 100% { opacity: 0; transform: translateX(var(--toki-w, 400px)); } }
 
 
 /* ================= 17 · GRAPHITE (новый): графитовые карточки без размытия, тонкие линии, один акцент из темы. Шрифт — как в классическом (Unbounded + Inter).
