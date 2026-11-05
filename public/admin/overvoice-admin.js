@@ -65,7 +65,7 @@
     $('#ovStart').disabled = busy || p.starting; $('#ovStart').textContent = (busy || p.starting) ? 'Запускаю…' : '▶ Запустить Овервойс';
     const msg = $('#ovMsg'); msg.hidden = !(p.installed && !p.running); msg.textContent = 'Овервойс сейчас выключен. Нажми «Запустить Овервойс».';
     $('#ovMain').hidden = !(p.installed && p.running && lib);
-    renderBanner();
+    renderBanner(); renderChips();
     const up = engineUp();
     $('#ovMode').hidden = !up; $('#ovLive').hidden = !up;
     if (up) {
@@ -75,6 +75,24 @@
     }
     if (!lib) return;
     renderGrid(); renderPanel(); renderSound();
+  }
+  // маленькие индикаторы: что работает, что нет (наведи — подробности)
+  function renderChips() {
+    const box = $('#ovChips'), p = prog; if (!box || !p) return;
+    const i = info, v = cur(), ins = (i && i.serverAudioInputDevices) || [], outs = (i && i.serverAudioOutputDevices) || [];
+    const inName = i ? nameOf(ins, i.serverInputDeviceId) : '', outName = i ? nameOf(outs, i.serverOutputDeviceId) : '';
+    const c = (state, name, tip) => '<span class="ov-chip ' + state + '" title="' + esc(tip) + '"><i></i>' + name + '</span>';
+    const inst = !!p.installed, run = !!p.running, up = !!i;
+    const h = [
+      c(!inst ? 'bad' : (run ? 'ok' : 'off'), 'Программа', !inst ? 'Овервойс не установлен' : (run ? 'Работает' : 'Выключена: нажми «Запустить Овервойс»')),
+      c(!run ? 'off' : (up ? 'ok' : 'bad'), 'Движок', !run ? 'Программа выключена' : (up ? ((i.gpus || []).filter((g) => g && g.id >= 0)[0] || { name: 'процессор' }).name : 'Движок остановлен или не отвечает: открой «Лог»')),
+      c(!up ? 'off' : (v && v.loaded ? 'ok' : 'bad'), 'Голос', !up ? 'Нужен работающий движок' : (v ? (v.loaded ? v.name + ' загружен' : v.name + ': не загружен') : 'Голос не выбран')),
+      c(!up ? 'off' : (inName ? 'ok' : 'bad'), 'Микрофон', !up ? 'Нужен работающий движок' : (inName || 'Микрофон не выбран')),
+      c(!up ? 'off' : (/CABLE Input/i.test(outName) ? 'ok' : 'bad'), 'Кабель', !up ? 'Нужен работающий движок' : (/CABLE Input/i.test(outName) ? outName : 'Голос не идёт в виртуальный кабель')),
+      c(!up ? 'off' : (live() ? 'ok' : 'off'), 'Эфир', !up ? 'Нужен работающий движок' : (live() ? 'Идёт' : 'Выключен'))
+    ].join('');
+    const key = h + (i && i.error ? '1' : '');
+    if (box._k !== key) { const btn = $('#ovLog'); box.innerHTML = h; box.appendChild(btn); box._k = key; }
   }
   function renderBanner() {
     const b = $('#ovBanner'); if (!nv || !prog.running) { b.hidden = true; return; }
@@ -147,6 +165,15 @@
   }
 
   // ---- действия ----
+  $('#ovLog').addEventListener('click', () => {
+    jget(P + '/api/nv/log').then((r) => {
+      const text = String((r && r.text) || '');
+      const done = () => flash('Лог скопирован: вставь его в сообщение');
+      const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) { flash('Не удалось скопировать'); } ta.remove(); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    }).catch(() => flash('Лог недоступен: Овервойс не запущен. Нажми «Запустить Овервойс».'));
+  });
+
   const toast = (m) => flash(m);
   let followT = null;
   function follow() { clearInterval(followT); let n = 0; followT = setInterval(() => { load(); if (++n > 400 || !lib || !lib.select || lib.select.phase !== 'working') { if (n > 2) clearInterval(followT); } }, 600); }

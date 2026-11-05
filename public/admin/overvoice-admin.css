@@ -122,3 +122,9 @@
 #tab-overvoice .ov-sel.okk{color:var(--ok,#3ecf8e)}
 #tab-overvoice .ov-sel .sp{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:ovspin .8s linear infinite;flex:none}
 @keyframes ovspin{to{transform:rotate(360deg)}}
+
+#tab-overvoice .ov-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+#tab-overvoice .ov-chip{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:12px;border:1px solid var(--divider);font-size:12px;color:var(--text-secondary);cursor:default}
+#tab-overvoice .ov-chip i{width:8px;height:8px;border-radius:50%;background:var(--ok)}
+#tab-overvoice .ov-chip.bad i{background:var(--err)}#tab-overvoice .ov-chip.off i{background:var(--divider)}
+#tab-overvoice .ov-logbtn{margin-left:auto;height:24px;padding:0 12px;border-radius:12px;border:1px solid var(--divider);background:transparent;color:var(--text-secondary);font-size:12px;cursor:pointer}#tab-overvoice .ov-logbtn:hover{color:var(--accent);border-color:var(--accent)}
