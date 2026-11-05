@@ -29,5 +29,5 @@
     setTimeout(tick, 8000 + Math.random() * 4000); // примерно раз в 10 с
   }
   setTimeout(tick, 4000);
-  window.__tokiPlay = (kind) => { const l = panels(); if (!busy && l.length) play(l[Math.floor(Math.random() * l.length)], kind || 'scare'); };
+  window.__tokiPlay = (kind, i) => { const l = panels(); if (!busy && l.length) play(l[i != null ? i : Math.floor(Math.random() * l.length)], kind || 'scare'); };
 })();
