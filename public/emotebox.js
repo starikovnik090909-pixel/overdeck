@@ -48,7 +48,70 @@
   });
   ro.observe(canvas.parentElement);
 
+  /* ---------- Мозаика (вид по умолчанию) ---------- */
+  const mosaic = document.createElement('div');
+  mosaic.className = 'emo-mosaic';
+  canvas.parentElement.insertBefore(mosaic, canvas.nextSibling);
+  const tiles = new Map();      // id -> {el, img, n, last}
+  let lookMosaic = true;
+  const opts = () => (window.widgetSettings && window.widgetSettings.emotebox) || {};
+  function applyLook() {
+    const m = opts().look !== 'look-reactions';
+    if (m === lookMosaic && mosaic.dataset.ready) return;
+    lookMosaic = m; mosaic.dataset.ready = '1';
+    mosaic.style.display = m ? '' : 'none';
+    canvas.style.display = m ? 'none' : '';
+    podsEl.style.display = m ? 'none' : '';
+  }
+  function squarify(items, x, y, w, h, out) {
+    items = items.slice(); const sum = items.reduce((s, i) => s + i.v, 0) || 1;
+    items.forEach((i) => { i.a = i.v / sum * w * h; });
+    const worst = (row, side) => { const s = row.reduce((t, i) => t + i.a, 0), mx = Math.max(...row.map((i) => i.a)), mn = Math.min(...row.map((i) => i.a)); return Math.max(side * side * mx / (s * s), s * s / (side * side * mn)); };
+    while (items.length) {
+      const side = Math.min(w, h), row = [items.shift()];
+      while (items.length && worst(row.concat([items[0]]), side) <= worst(row, side)) row.push(items.shift());
+      const s = row.reduce((t, i) => t + i.a, 0);
+      if (w >= h) { const cw = s / h; let cy = y; row.forEach((i) => { const ch = i.a / cw; out.push({ e: i.e, x, y: cy, w: cw, h: ch }); cy += ch; }); x += cw; w -= cw; }
+      else { const rh = s / w; let cx = x; row.forEach((i) => { const cwid = i.a / rh; out.push({ e: i.e, x: cx, y, w: cwid, h: rh }); cx += cwid; }); y += rh; h -= rh; }
+    }
+  }
+  function drawMosaic() {
+    const W = mosaic.clientWidth, H = mosaic.clientHeight;
+    if (!W || !H) return;
+    const o = opts(), maxN = clamp(Number(o.maxTiles) || 8, 4, 12), showShare = o.showShare !== false;
+    const list = top.filter((e) => e.imageUrl && (e.count || 0) > 0).slice(0, maxN);
+    const keep = new Set(list.map((e) => e.id));
+    tiles.forEach((t, id) => { if (!keep.has(id)) { t.el.style.opacity = 0; const el = t.el; setTimeout(() => { if (!keep.has(id) && tiles.get(id) === t) { el.remove(); tiles.delete(id); } }, 600); } });
+    if (!list.length) return;
+    const tot = list.reduce((s, e) => s + (e.count || 0), 0) || 1, out = [];
+    squarify(list.map((e) => ({ e, v: Math.pow(e.count || 1, 1.15) })), 0, 0, W, H, out);
+    out.forEach((r) => {
+      const e = r.e; let t = tiles.get(e.id);
+      if (!t) {
+        const el = document.createElement('div'); el.className = 'emo-tile'; el.style.opacity = 0;
+        const img = document.createElement('img'); img.alt = ''; img.src = e.imageUrl;
+        const n = document.createElement('span'); n.className = 'emo-n';
+        el.append(img, n); mosaic.appendChild(el);
+        t = { el, img, n, last: e.count }; tiles.set(e.id, t);
+        el.style.left = (r.x + 2) + 'px'; el.style.top = (r.y + 2) + 'px'; el.style.width = '0px'; el.style.height = '0px';
+        void el.offsetWidth;
+      }
+      if (t.img.getAttribute('src') !== e.imageUrl) t.img.src = e.imageUrl;
+      const g = 2, share = (e.count || 0) / tot;
+      t.el.style.opacity = 1;
+      t.el.style.left = (r.x + g) + 'px'; t.el.style.top = (r.y + g) + 'px';
+      t.el.style.width = Math.max(0, r.w - g * 2) + 'px'; t.el.style.height = Math.max(0, r.h - g * 2) + 'px';
+      t.el.style.setProperty('--emo-a', (0.1 + share * 1.5).toFixed(2));
+      const sz = Math.round(clamp(Math.min(r.w, r.h) * 0.55, 18, 112));
+      t.img.style.width = t.img.style.height = sz + 'px';
+      t.n.textContent = (e.count || 0).toLocaleString('ru-RU') + (showShare ? ' · ' + Math.round(share * 100) + '%' : '');
+      if ((e.count || 0) !== t.last) { t.last = e.count || 0; t.el.classList.remove('emo-pulse'); void t.el.offsetWidth; t.el.classList.add('emo-pulse'); }
+    });
+  }
+  if (window.ResizeObserver) new ResizeObserver(() => { if (lookMosaic) drawMosaic(); }).observe(mosaic);
+
   function render(data) {
+    applyLook();
     top = (data.topEmotes || []).slice(0, 3 + 22);
     const sum = top.reduce((a, e) => a + (e.count || 0), 0);
     const nt = typeof data.emoteTotal === 'number' ? data.emoteTotal : sum;
@@ -58,6 +121,7 @@
       queue.push({ at: now + (i / Math.max(arr.length, 1)) * 0.9 + Math.random() * 0.1, drop: d });
     });
     if (queue.length > 200) queue = queue.slice(-200);
+    if (lookMosaic) { queue = []; drawMosaic(); }
   }
 
   function spawn(drop, time, W, H, k, baseY, ambient) {
@@ -131,6 +195,7 @@
   let lastT = performance.now() / 1000;
   function tick() {
     requestAnimationFrame(tick);
+    if (lookMosaic) return; // мозаика рисуется по событиям, постоянная анимация не нужна
     const dpr = devicePixelRatio;
     const W = canvas.width / dpr, H = canvas.height / dpr;
     if (!W || !H) return;

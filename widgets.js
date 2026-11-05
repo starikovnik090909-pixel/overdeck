@@ -209,7 +209,13 @@ const WIDGET_SETTINGS_SCHEMA = {
     sumMusic: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Заказы музыки (×N)', default: true },
     sumPoints: { type: 'toggle', group: 'Итоги стрима (внизу)', label: 'Потрачено баллов канала', default: true },
   },
-  // Другие виджеты (emotebox, wordcloud) пока без собственных настроек —
+  // Топ эмодзи: по умолчанию мозаика (плитки по популярности), прежний вид со всплывающими реакциями остался вторым вариантом.
+  emotebox: {
+    look: { type: 'select', label: 'Вид виджета', options: ['look-mosaic', 'look-reactions'], default: 'look-mosaic' },
+    maxTiles: { type: 'range', label: 'Сколько смайлов в мозаике', min: 4, max: 12, step: 1, default: 8 },
+    showShare: { type: 'toggle', label: 'Показывать долю в процентах', default: true },
+  },
+  // Другие виджеты (wordcloud) пока без собственных настроек —
   // добавляются сюда точно так же, когда понадобятся.
 };
 
