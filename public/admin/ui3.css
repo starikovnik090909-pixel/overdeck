@@ -744,6 +744,9 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .chr-kpkey{display:flex;flex-direction:column;gap:6px;margin-top:8px}
 .chr-kpkey a{color:var(--accent)}
 .chr-kpkey[hidden]{display:none}
+.chr-kpsteps{margin:0;padding-left:18px}
+.chr-q{width:18px;height:18px;border-radius:50%;border:1px solid var(--line,rgba(255,255,255,.25));background:transparent;color:inherit;font:600 11px/1 inherit;cursor:pointer;padding:0;vertical-align:middle;opacity:.75}
+.chr-q:hover{opacity:1;border-color:var(--accent);color:var(--accent)}
 .chr-chips{display:flex;gap:5px;flex-wrap:wrap}
 .chr-chip{font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg-card2);color:var(--text-secondary);border:1px solid var(--divider)}
 .chr-chip.o{background:var(--accent-soft);color:var(--accent2);border-color:transparent}

@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=139">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=63">
+<link rel="stylesheet" href="ui3.css?v=64">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
@@ -1279,10 +1279,14 @@
             <div class="chr-fields">
               <div class="chr-seg" id="chrType"><button type="button" data-v="game" class="on">Игра</button><button type="button" data-v="movie">Фильм</button></div>
               <div class="field" id="chrSteamWrap"><label for="chrSteam">Ссылка Steam <span class="chr-meta">— название, год и обложка подставятся сами</span></label><input type="url" id="chrSteam" maxlength="300" placeholder="https://store.steampowered.com/app/…" autocomplete="off"><div class="form-message" id="chrSteamMsg"></div></div>
-              <div class="field" id="chrKpWrap" hidden><label for="chrKp">Ссылка Кинопоиск <span class="chr-meta">— название, год и обложка подставятся сами</span></label><input type="url" id="chrKp" maxlength="300" placeholder="https://www.kinopoisk.ru/film/…" autocomplete="off"><div class="form-message" id="chrKpMsg"></div>
+              <div class="field" id="chrKpWrap" hidden><label for="chrKp">Ссылка Кинопоиск <span class="chr-meta">— название, год и обложка подставятся сами</span> <button type="button" class="chr-q" id="chrKpHelp" title="Где взять ключ" aria-label="Где взять ключ Кинопоиска">?</button></label><input type="url" id="chrKp" maxlength="300" placeholder="https://www.kinopoisk.ru/film/…" autocomplete="off"><div class="form-message" id="chrKpMsg"></div>
                 <div class="chr-kpkey" id="chrKpKey" hidden>
                   <input type="text" id="chrKpKeyIn" maxlength="80" placeholder="Ключ API Кинопоиска (вставь и нажми Enter)" autocomplete="off" spellcheck="false">
-                  <div class="chr-meta">Кинопоиск не отдаёт данные программам без ключа. Бесплатный ключ (500 запросов в день): открой <a href="https://kinopoiskapiunofficial.tech/" target="_blank" rel="noopener noreferrer">kinopoiskapiunofficial.tech</a>, войди через почту или Google и нажми «Получить ключ». Ключ запомнится на этом компьютере, вводить его нужно один раз.</div>
+                  <ol class="chr-meta chr-kpsteps">
+                    <li>Открой <a href="https://kinopoiskapiunofficial.tech/" target="_blank" rel="noopener noreferrer">kinopoiskapiunofficial.tech</a> и войди через почту или Google.</li>
+                    <li>Нажми «Получить ключ» и скопируй его.</li>
+                    <li>Вставь сюда и нажми Enter. Ключ запомнится, вводить нужно один раз (бесплатно, 500 запросов в день).</li>
+                  </ol>
                 </div></div>
               <div class="field"><label for="chrTitle">Название</label><input type="text" id="chrTitle" maxlength="200" autocomplete="off"></div>
               <div class="chr-row chr-row-stars">
@@ -4048,7 +4052,7 @@
 <script src="ui3.js?v=31"></script>
 <script src="help.js?v=1"></script>
 <script src="themepick.js?v=2"></script>
-<script src="chronicles.js?v=19"></script>
+<script src="chronicles.js?v=20"></script>
 <script src="telegram.js?v=5"></script>
 
 <div class="ex-amb-ov" id="exAmbOv" hidden><div class="ex-amb" role="dialog" aria-modal="true" aria-label="Фоновый эмбиент">

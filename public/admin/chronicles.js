@@ -464,6 +464,7 @@
     } catch (e) { if (my === steamSeq) { m.textContent = e.message; m.className = 'form-message error'; } }
   }
   /* Автозаполнение фильма по ссылке Кинопоиска; если Кинопоиск закрыт капчей, просим бесплатный ключ (запоминается) */
+  $('chrKpHelp').addEventListener('click', () => { const k = $('chrKpKey'); k.hidden = !k.hidden; if (!k.hidden) $('chrKpKeyIn').focus(); });
   let kpSeq = 0;
   async function kpFill(withKey) {
     const m = $('chrKpMsg'), url = $('chrKp').value.trim(), key = withKey ? $('chrKpKeyIn').value.trim() : '';
