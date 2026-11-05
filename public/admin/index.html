@@ -3211,6 +3211,10 @@
             <div class="ov-h2">Готовность к OBS</div>
             <div class="ov-lbl">Скорость и нагрузка<div class="ov-seg ov-pre" id="ovPreset"><button type="button" data-k="ll">Мин. задержка</button><button type="button" data-k="bal">Баланс</button><button type="button" data-k="hq">Качество</button></div><small class="ov-hint" id="ovPreHint"></small></div>
             <label class="ov-sl"><span>Время на обработку<small id="ovLatS">больше — чище голос, но позже в эфире</small></span><input type="range" id="ovLat" min="100" max="1000" step="10"><b id="ovLatV"></b></label>
+            <div class="ov-h2">Чистый звук</div>
+            <label class="ov-sl"><span>Шумоподавление<small>убирает фон микрофона до обработки</small></span><input type="range" id="ovDn" min="0" max="100"><b id="ovDnV"></b></label>
+            <label class="ov-sl"><span>Компрессор<small>выравнивает громкость, тихое и громкое ближе</small></span><input type="range" id="ovCp" min="0" max="100"><b id="ovCpV"></b></label>
+            <label class="ov-sl"><span>Ограничитель<small>потолок громкости, чтобы не «прыгал»</small></span><input type="range" id="ovLm" min="0" max="12"><b id="ovLmV"></b></label>
             <div id="ovChecks"></div>
             <div class="ov-obs"><b>Как добавить в OBS</b><ol><li>Источники → ＋ → «Захват входящего звука»</li><li>Устройство: <code>CABLE Output</code> <button class="btn btn-secondary btn-sm" type="button" id="ovCopy">копировать</button></li><li>Свой микрофон из OBS отключи, чтобы не было двух голосов</li></ol></div>
             <div class="ov-obs ov-auto"><div class="ov-autoh"><b>Авто-переключение в OBS</b><label class="tg-sw"><input type="checkbox" id="ovObsOn"><span></span></label></div>
@@ -4069,7 +4073,7 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="voicepack.js?v=1"></script>
-<script src="overvoice-admin.js?v=17"></script>
+<script src="overvoice-admin.js?v=18"></script>
 <script src="navsort.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>
 </body>

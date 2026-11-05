@@ -49,7 +49,7 @@
       return Promise.all([jget(P + '/api/nv/state'), jget(P + '/api/nv/library')]).then((r) => {
         nv = r[0]; lib = r[1];
         if (!sel && lib.voices && lib.voices[0]) { sel = lib.voices[0].name; }
-        if (nv.status && nv.status.running) return jget(P + '/api/nv/engine/info').then((i) => { info = i; }).catch(() => { info = null; });
+        if (nv.status && nv.status.running) return jget(P + '/api/nv/engine/info').then((i) => { info = i; if (!fxDone) { fxDone = true; fxApply(); } }).catch(() => { info = null; });
         info = null;
       }).then(() => { if (!cable || tick % 4 === 0) return jget(P + '/api/nv/cable').then((c) => { cable = c; }).catch(() => { }); });
     }).catch(() => { }).then(() => { tick++; render(); });
@@ -272,6 +272,17 @@
     const v = Number($('#ovLat').value); lsSet('lat', v); clearTimeout(latT);
     latT = setTimeout(() => latApply(v).then(() => { flash('Время на обработку: ' + v + ' мс'); return load(); }).catch(() => flash('Не удалось применить')), 150);
   });
+  // чистый звук: шумодав, компрессор, ограничитель (общие для всех голосов)
+  const FX = { ovDn: ['dn', 'noiseReduce', 50, (v) => v / 100, (x) => x + '%'], ovCp: ['cp', 'compressor', 40, (v) => v / 100, (x) => x + '%'], ovLm: ['lm', 'limiterDb', 3, (v) => -v, (x) => '−' + x + ' дБ'] };
+  const fxVal = (id) => { const n = Number(lsGet(FX[id][0])); return lsGet(FX[id][0]) == null || isNaN(n) ? FX[id][2] : n; };
+  let fxDone = false;
+  function fxApply() { return Object.keys(FX).reduce((a, id) => a.then(() => setS(FX[id][1], FX[id][3](fxVal(id)))), Promise.resolve()).catch(() => { }); }
+  Object.keys(FX).forEach((id) => {
+    const el = $('#' + id); if (!el) return; const f = FX[id];
+    el.value = String(fxVal(id)); $('#' + id + 'V').textContent = f[4](el.value);
+    el.addEventListener('input', () => { $('#' + id + 'V').textContent = f[4](el.value); });
+    el.addEventListener('change', () => { lsSet(f[0], Number(el.value)); setS(f[1], f[3](Number(el.value))).catch(() => { }); });
+  });
   function showPreset() { const k = lsGet('preset'); sec.querySelectorAll('#ovPreset button').forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === k ? 'true' : 'false')); $('#ovPreHint').textContent = PRESETS[k] ? PRESETS[k].hint : 'Не выбрано: движок работает со своими настройками.'; }
   $('#ovPreset').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) applyPreset(b.dataset.k); });
   showPreset();
@@ -280,7 +291,7 @@
   $('#ovMode').addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || !info) return; setS('passThrough', b.dataset.m === 'own' ? 1 : 0).then(() => { flash(b.dataset.m === 'own' ? 'Обход: в эфир идёт твой голос' : 'Нейроголос включён'); render(); }); });
   function goLive(on) {
     const ch = on
-      ? setS('serverInputDeviceId', $('#ovIn').value).then(() => setS('serverOutputDeviceId', $('#ovOut').value)).then(() => setS('serverMonitorDeviceId', $('#ovMon').value)).then(() => setS('enableServerAudio', 1)).then(() => setS('serverAudioStated', 1))
+      ? fxApply().then(() => setS('serverInputDeviceId', $('#ovIn').value)).then(() => setS('serverOutputDeviceId', $('#ovOut').value)).then(() => setS('serverMonitorDeviceId', $('#ovMon').value)).then(() => setS('enableServerAudio', 1)).then(() => setS('serverAudioStated', 1))
       : setS('serverAudioStated', 0);
     return ch;
   }
