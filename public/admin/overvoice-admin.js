@@ -22,7 +22,7 @@
   // ---- движок ----
   const setS = (key, val) => fetch(P + '/api/nv/engine/update_settings', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ key: key, val: String(val) }) })
     .then((r) => r.json()).then((j) => { if (j && j.modelSlots) info = j; return j; });
-  const gateToVal = (v) => (Number(v) === 0 ? 0 : Math.pow(10, -5 + Number(v) / 50));
+  const gateToVal = (v) => (Number(v) <= 0 ? 0 : Math.pow(10, (-70 + 0.4 * Number(v)) / 20));   // 0–100 % → −70…−30 дБ
   const KEYS = { pitch: ['tran', (v) => v], idx: ['indexRatio', (v) => v / 100], gate: ['silentThreshold', gateToVal], vol: ['serverOutputAudioGain', (v) => v / 100] };
   const slotOf = (v) => { if (!info) return -1; const s = (info.modelSlots || []).filter((x) => x && x.name && norm(stem(x.name)) === norm(stem(v.model)))[0]; return s ? Number(s.slotIndex) : -1; };
   // несохранённые правки ползунков по голосам; сохраняются кнопкой «Сохранить пресет»
@@ -212,7 +212,7 @@
     }).catch(() => flash('Не удалось сохранить'));
   });
   sec.querySelector('.ov-chips').addEventListener('click', (e) => { const b = e.target.closest('button'); const v = cur(); if (!b || !v) return; $('#ovPitch').value = b.dataset.v; $('#ovPitch').dispatchEvent(new Event('input')); });
-  $('#ovReset').addEventListener('click', () => { const v = cur(); if (!v) return; draft[v.name] = { pitch: 0, idx: v.hasIndex ? 50 : 0, gate: 20, vol: 100 }; renderPanel(); if (info && slotOf(v) === Number(info.modelSlotIndex)) applyVoice(v); flash('Сброшено: нажми «Сохранить пресет», чтобы запомнить'); });
+  $('#ovReset').addEventListener('click', () => { const v = cur(); if (!v) return; draft[v.name] = { pitch: 0, idx: v.hasIndex ? 50 : 0, gate: 55, vol: 100 }; renderPanel(); if (info && slotOf(v) === Number(info.modelSlotIndex)) applyVoice(v); flash('Сброшено: нажми «Сохранить пресет», чтобы запомнить'); });
 
   // звук
   $('#ovIn').addEventListener('change', () => { lsSet('in', nameOf(info && info.serverAudioInputDevices, $('#ovIn').value)); setS('serverInputDeviceId', $('#ovIn').value).then(() => { startMeter(true); }); });
