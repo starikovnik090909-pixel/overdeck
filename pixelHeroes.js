@@ -221,6 +221,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
     const after = XPR.levelFromTotal(p.xp);
     const r = roster.get(p.login);
     if (r) r.level = after;
+    if (before !== after && opts.onLevel) { try { opts.onLevel(p.login, after); } catch (e) { /* достижения не должны ломать опыт */ } }
     return before !== after && !!r;
   }
   const countsXp = () => settings.chatters && (!settings.xpOnlyLive || !!isLive());
@@ -407,6 +408,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
       const p = profiles.get(key) || mkProfile(key, key, null, now());
       const before = XPR.levelFromTotal(p.xp); p.xp = r2(p.xp + amount); profiles.set(key, p);
       const after = XPR.levelFromTotal(p.xp), r = roster.get(key); if (r) r.level = after;
+      if (before !== after && opts.onLevel) { try { opts.onLevel(key, after); } catch (e) { /* достижения не должны ломать опыт */ } }
       trimProfiles(); saveProfiles();
       return before !== after && !!r;
     },
@@ -417,6 +419,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
       const p = profiles.get(key) || mkProfile(key, key, null, now());
       const v = r2(xp), changed = p.xp !== v; p.xp = v; profiles.set(key, p);
       const r = roster.get(key); if (r) r.level = XPR.levelFromTotal(v);
+      if (changed && opts.onLevel) { try { opts.onLevel(key, XPR.levelFromTotal(v)); } catch (e) { /* см. выше */ } }
       trimProfiles(); if (changed) saveProfiles();
       return changed;
     },
@@ -490,7 +493,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
         const rt = runtime.get(key) || { lastPresenceAt: 0, lastMsgAt: 0, winStart: 0, winXp: 0 };
         runtime.set(key, rt);
         if (!rt.lastPresenceAt || t - prevSeen > XPR.XP.presenceWindowMs) rt.lastPresenceAt = t; // серия «человек в чате» начинается с этого сообщения
-        if (p.joinSession !== session.id) { p.joinSession = session.id; changed = gain(p, XPR.XP.join) || changed; } // заход на трансляцию — раз за трансляцию
+        if (p.joinSession !== session.id) { p.joinSession = session.id; changed = gain(p, XPR.XP.join) || changed; if (opts.onJoin) { try { opts.onJoin(p.login); } catch (e) { /* см. выше */ } } } // заход на трансляцию — раз за трансляцию
         if (!isCommand && t - rt.lastMsgAt >= XPR.XP.messageCooldownMs) {                                            // сообщение: не чаще паузы и не больше потолка за час
           if (t - rt.winStart >= 3600 * 1000) { rt.winStart = t; rt.winXp = 0; }
           const room = Math.min(XPR.XP.message, XPR.XP.messageCapPerHour - rt.winXp);

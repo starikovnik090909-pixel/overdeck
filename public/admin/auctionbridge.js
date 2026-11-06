@@ -24,14 +24,20 @@
   function render(r, first) {
     st = r; const a = r.state;
     $('#abPwr').classList.toggle('on', a.active); $('#abPwrT').textContent = a.active ? 'Аукцион идёт' : 'Аукцион не идёт';
-    $('#abSum').textContent = a.active ? ('Внесли: ' + a.contributors.length + ', сумма ' + a.total + '.') : 'Аукцион не идёт. Нажми переключатель сверху, чтобы начать: награда включится на Twitch.';
-    const items = a.contributors.map((c) => '<div class="ab-it"><span><b>' + esc(c.login) + '</b> — ' + esc(c.lot) + '</span><b>' + c.amount + '</b></div>');
+    $('#abSum').textContent = (!a.active && a.markOf === 'last') ? 'Аукцион закончен. Отметь победивший лот: зритель получит очко достижения «Золотой лот», бот напишет в чат.' : a.active ? ('Внесли: ' + a.contributors.length + ', сумма ' + a.total + '.') : 'Аукцион не идёт. Нажми переключатель сверху, чтобы начать: награда включится на Twitch.';
+    const items = (a.markable || []).map((c) => '<div class="ab-it"><span><b>' + esc(c.login) + '</b> — ' + esc(c.lot) + '</span><span class="ab-r"><b>' + c.amount + '</b><button type="button" class="ab-win' + (c.won ? ' on' : '') + '" data-login="' + esc(c.login) + '" data-won="' + (c.won ? 0 : 1) + '" title="Отметить, что этот лот победил: зритель получит очко достижения «Золотой лот»">' + (c.won ? '★ Победил' : '☆ Победил?') + '</button></span></div>');
     const errs = a.log.filter((l) => l.status !== 'sent').slice(0, 6).map((l) => '<div class="ab-it err"><span>' + esc(l.name || l.login) + ': ' + esc(l.text) + '</span></div>');
     $('#abList').innerHTML = items.concat(errs).join('') || '<div class="ab-hint">Пока никто не внёс.</div>';
     const w = r.reward; const rw = $('#abRw'); rw.textContent = w.text || 'Награда ещё не проверялась.'; rw.className = 'ab-rw' + (w.state === 'ok' ? ' ok' : (w.state === 'idle' ? '' : ' bad'));
     $('#abRwMake').hidden = w.state === 'ok';
     if (first || !sec.dataset.dirty) fillSettings(r.settings);
   }
+  $('#abList').addEventListener('click', async (e) => {
+    const b = e.target.closest('.ab-win'); if (!b) return;
+    b.disabled = true;
+    try { const r = await post('/api/auction-bridge/win', { login: b.dataset.login, won: b.dataset.won === '1' }); if (r.success) { render(r); msg(b.dataset.won === '1' ? ('Лот «' + r.lot + '» отмечен победившим. Побед у зрителя: ' + r.wins + '.') : 'Отметка снята.'); } else msg(r.error || 'Не вышло.', true); } catch (err) { msg('Не вышло: ' + err.message, true); }
+    b.disabled = false;
+  });
   async function load(first) { try { const r = await api('/api/auction-bridge'); if (r.success) render(r, first); } catch (e) { /* сервер перезапускается */ } }
   sec.addEventListener('input', (e) => { if (e.target.closest('.ab-col')) sec.dataset.dirty = '1'; hint(); });
   $('#abPwr').addEventListener('click', async () => {

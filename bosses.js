@@ -64,6 +64,7 @@ function createBosses(deps = {}) {
     function finish() {                                      // вызывается, когда бой на оверлее закончился
       current = null; const rewards = [];
       if (res.won) {
+        if (deps.onKill) { try { deps.onKill(list.map((h) => h.login)); } catch (e) { /* достижения не должны ломать бой */ } }
         const down = new Set(res.downed);
         for (const h of list) { let xp = def.xp * (down.has(h.login) ? 0.6 : 1); if (h.login === res.mvp) xp += def.xp * 0.5; if (h.login === res.lastHit) xp += 25; xp = Math.round(xp); if (xp > 0) { bonusXp(h.login, xp); rewards.push({ login: h.login, xp }); } }
       }

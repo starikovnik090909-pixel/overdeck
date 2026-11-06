@@ -32,3 +32,7 @@
 #tab-auctionbridge .ab-rw.ok{color:#3ecf8e;opacity:1}#tab-auctionbridge .ab-rw.bad{color:#f0b429;opacity:1}
 #tab-auctionbridge .btn{height:36px;border-radius:12px;padding:0 14px;display:inline-flex;align-items:center;justify-content:center}
 @media (max-width:1000px){#tab-auctionbridge .ab-grid{grid-template-columns:1fr}}
+
+#tab-auctionbridge .ab-r{display:flex;align-items:center;gap:8px;flex:none}
+#tab-auctionbridge .ab-win{border:1px solid var(--border,rgba(255,255,255,.18));background:transparent;color:inherit;border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer}
+#tab-auctionbridge .ab-win.on{background:#2BC4B4;border-color:#2BC4B4;color:#0b1513;font-weight:600}

@@ -63,7 +63,7 @@ const pixelHeroesModule = require('./pixelHeroes');
 const twitchExtensionModule = require('./extension');
 const awardsModule = require('./awards');
 // isLive: идёт ли стрим (для опыта чаттеров). Пока статус неизвестен — нет входа в Twitch, чтобы его спрашивать — считаем, что идёт: иначе опыт не копился бы вовсе.
-const pixelHeroes = pixelHeroesModule.createState(undefined, { file: pixelHeroesModule.SETTINGS_FILE, profilesFile: pixelHeroesModule.PROFILES_FILE, isLive: () => streamIsLive || !twitch.hasCredentials(config) });
+const pixelHeroes = pixelHeroesModule.createState(undefined, { onLevel: (l, lv) => achievements.onLevel(l, lv), onJoin: (l) => achievements.add('streams', l, 1), file: pixelHeroesModule.SETTINGS_FILE, profilesFile: pixelHeroesModule.PROFILES_FILE, isLive: () => streamIsLive || !twitch.hasCredentials(config) });
 // Расширение Twitch (кнопка сбоку плеера): шлёт в Twitch снимок сцены и топа. Подробнее — extension.js и README §99.
 const awards = awardsModule.createAwards({ recentLogins: (ms) => pixelHeroes.recentLogins(ms), hasProfile: (l) => pixelHeroes.hasProfile(l) });
 const twitchExt = twitchExtensionModule.createExtension({ pixelHeroes, awards, getChooseCommand: () => { try { const c = avatarCommands.getState().commands.find((x) => x.action === 'choose' && x.enabled); return c && c.names[0] ? c.names[0] : ''; } catch (e) { return ''; } }, getOwnerId: () => (config.twitchAuth && config.twitchAuth.userId) || '', isLive: () => streamIsLive });
@@ -82,6 +82,7 @@ const { createAvatarCommands } = require('./avatarCommands');
 const { createPvp } = require('./pvp');
 const { createDuelProgress } = require('./duelProgress');
 const { createCollectorProgress } = require('./collectorProgress');
+const { createAchievements } = require('./achievements');
 const { createBosses } = require('./bosses');
 const botTimers = require('./botTimers');
 const shoutouts = require('./shoutouts');
@@ -731,8 +732,18 @@ botCommands.init(); // команды подгружаются из bot_commands
 const avatarCommands = createAvatarCommands({ botHas: (name) => !!botCommands.findByToken(name) });
 botCommands.setReservedChecker((name) => avatarCommands.hasName(name));
 // Награда «Аукцион»: взнос зрителя (подписка + VIP + уровень аватара) уходит в PointAuc; открыта только пока аукцион идёт, один взнос на человека за аукцион.
-const auctionBridge = createAuctionBridge({ getProfile: (l) => pixelHeroes.getProfile(l), cancel: (rid, id) => auctionReward.refund(rid, id), fulfil: (rid, id) => soundpadReward.fulfil(rid, id) });
-const bosses = createBosses({ roster: () => pixelHeroes.getRoster(), bonusXp: (l, a) => pixelHeroes.bonusXp(l, a), knownPack: (id) => pixelHeroes.list().some((h) => h.id === id) });
+// Ступенчатые достижения: Ветеран, Завсегдатай, Убийца монстров, Меценат, Золотой лот (achievements.js)
+const achievements = createAchievements({ awards });
+achievements.ensureAwards();
+const auctionBridge = createAuctionBridge({
+  onContribution: (login) => { achievements.add('contribs', login, 1); },
+  onWin: (login, delta, c) => {
+    const r = achievements.add('wins', login, delta);
+    if (r && delta > 0) chatBot.say(`🏆 @${login}, твой лот «${String(c.lot).slice(0, 80)}» победил! Победивших лотов: ${r.value}.` + (r.tierUp ? ` Новое достижение: ${r.tierUp.title}!` : '')).catch(() => {});
+    return r;
+  },
+  getProfile: (l) => pixelHeroes.getProfile(l), cancel: (rid, id) => auctionReward.refund(rid, id), fulfil: (rid, id) => soundpadReward.fulfil(rid, id) });
+const bosses = createBosses({ onKill: (logins) => logins.forEach((l) => achievements.add('kills', l, 1)), roster: () => pixelHeroes.getRoster(), bonusXp: (l, a) => pixelHeroes.bonusXp(l, a), knownPack: (id) => pixelHeroes.list().some((h) => h.id === id) });
 const duelProgress = createDuelProgress({ awards, pixel: pixelHeroes });
 duelProgress.ensureAwards();
 const collectorProgress = createCollectorProgress({ awards });
@@ -1443,6 +1454,9 @@ const soundpadUpload = multer({
 require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, spKeys: soundpadKeys, app, upload: soundpadUpload });
 require('./routes/auction').main({ app, bridge: auctionBridge, reward: auctionReward, pixel: pixelHeroes });
 setTimeout(() => auctionReward.sync(auctionBridge).catch(() => {}), 16000);
+// Ветеран: тем, кто уже набрал уровень до появления достижения, значок выдаётся при старте
+setTimeout(() => { try { for (const l of pixelHeroes.allLogins()) { const p = pixelHeroes.getProfile(l); if (p && p.level >= 10) achievements.onLevel(l, p.level); } } catch (e) { console.warn('[Достижения]', e.message); } }, 20000);
+app.get('/api/achievements/:login', (req, res) => res.json({ success: true, ...achievements.summary(req.params.login) }));
 setInterval(() => auctionReward.sync(auctionBridge).catch(() => {}), 5 * 60 * 1000).unref();
 setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();

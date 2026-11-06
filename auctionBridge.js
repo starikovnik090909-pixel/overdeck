@@ -42,8 +42,10 @@ function createAuctionBridge(deps = {}) {
   let settings = { ...DEFAULTS };
   let session = null;                    // { id, startedAt, contributors: { login: { amount, lot, at } } } — идущий аукцион
   let log = [];
-  try { const raw = JSON.parse(fs.readFileSync(file, 'utf8')); if (raw.settings) settings = clean(raw.settings, settings); if (Array.isArray(raw.log)) log = raw.log.slice(0, MAX_LOG); if (raw.session && raw.session.id) session = raw.session; } catch (e) { /* первый запуск */ }
-  function save() { if (!file) return; try { fs.writeFileSync(file + '.tmp', JSON.stringify({ settings, session, log })); fs.renameSync(file + '.tmp', file); } catch (e) { console.warn('[Аукцион] Не удалось сохранить:', e.message); } }
+  let last = null;                       // последний закончившийся аукцион — в нём стример отмечает победившие лоты
+  const onContribution = deps.onContribution || (() => {}), onWin = deps.onWin || (() => null);
+  try { const raw = JSON.parse(fs.readFileSync(file, 'utf8')); if (raw.settings) settings = clean(raw.settings, settings); if (Array.isArray(raw.log)) log = raw.log.slice(0, MAX_LOG); if (raw.session && raw.session.id) session = raw.session; if (raw.last && raw.last.id) last = raw.last; } catch (e) { /* первый запуск */ }
+  function save() { if (!file) return; try { fs.writeFileSync(file + '.tmp', JSON.stringify({ settings, session, last, log })); fs.renameSync(file + '.tmp', file); } catch (e) { console.warn('[Аукцион] Не удалось сохранить:', e.message); } }
   function note(e) { log.unshift({ at: now(), ...e }); if (log.length > MAX_LOG) log.length = MAX_LOG; }
 
   /** Взнос зрителя: подписка + VIP + уровень × perLevel (не больше levelCap). */
@@ -78,6 +80,7 @@ function createAuctionBridge(deps = {}) {
       return { handled: true, status: 'error', text: err.message, refunded: true };
     }
     session.contributors[login].pending = false;
+    try { onContribution(login, name); } catch (x) { /* достижение не должно ломать взнос */ }
     note({ login, name, status: 'sent', amount: c.total, lot, parts: { sub: c.subPart, vip: c.vipPart, level: c.levelBonus, lvl: c.level } }); save();
     try { await fulfil(e.rewardId, e.redemptionId); } catch (x) { /* не критично */ }
     return { handled: true, status: 'sent', amount: c.total, lot, calc: c, name };
@@ -90,10 +93,22 @@ function createAuctionBridge(deps = {}) {
     setRewardId(id) { settings.rewardId = String(id || ''); save(); },
     isActive: () => !!session,
     start() { if (session) return { ok: false, error: 'Аукцион уже идёт.' }; session = { id: String(now()), startedAt: now(), contributors: {} }; save(); return { ok: true }; },
-    stop() { if (!session) return { ok: false, error: 'Аукцион не идёт.' }; const s = session; session = null; save(); const list = Object.values(s.contributors); return { ok: true, count: list.length, total: list.reduce((a, c) => a + c.amount, 0) }; },
+    stop() { if (!session) return { ok: false, error: 'Аукцион не идёт.' }; const s = session; session = null; last = s; save(); const list = Object.values(s.contributors); return { ok: true, count: list.length, total: list.reduce((a, c) => a + c.amount, 0) }; },
     state() {
       const list = session ? Object.entries(session.contributors).map(([login, c]) => ({ login, amount: c.amount, lot: c.lot, at: c.at })).sort((a, b) => b.at - a.at) : [];
-      return { active: !!session, startedAt: session ? session.startedAt : 0, contributors: list, total: list.reduce((a, c) => a + c.amount, 0), log: log.slice(0, 30) };
+      const src = session || last;   // отметка победивших лотов — в идущем аукционе или (если не идёт) в последнем законченном
+      const marks = src ? Object.entries(src.contributors).filter(([, c]) => !c.pending).map(([login, c]) => ({ login, lot: c.lot, amount: c.amount, won: !!c.won })).sort((a, b) => b.amount - a.amount) : [];
+      return { active: !!session, markable: marks, markOf: src ? (session ? 'current' : 'last') : '', startedAt: session ? session.startedAt : 0, contributors: list, total: list.reduce((a, c) => a + c.amount, 0), log: log.slice(0, 30) };
+    },
+    /** Отметить (won=true) или снять отметку «лот победил» у взноса зрителя — в идущем аукционе или в последнем законченном. { ok, lot, wins } */
+    markWin(login, won) {
+      const src = session || last, key = String(login || '').toLowerCase();
+      const c = src && src.contributors[key];
+      if (!c || c.pending) return { ok: false, error: 'Такого взноса нет.' };
+      if (!!c.won === !!won) return { ok: true, lot: c.lot, same: true, wins: null };
+      c.won = !!won; save();
+      const r = onWin(key, won ? 1 : -1, c);
+      return { ok: true, lot: c.lot, wins: r ? r.value : null };
     },
     /** Расчёт для проверки в админке: «а сколько внесёт такой зритель». */
     preview(p) { return compute(p); },

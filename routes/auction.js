@@ -6,6 +6,11 @@ function main({ app, bridge, reward, pixel }) {
   app.post('/api/auction-bridge/settings', async (req, res) => { bridge.setSettings(req.body || {}); await resync(); res.json(state()); });
   app.post('/api/auction-bridge/start', async (req, res) => { const r = bridge.start(); if (!r.ok) return res.status(400).json({ success: false, error: r.error }); await resync(); res.json(state()); });
   app.post('/api/auction-bridge/stop', async (req, res) => { const r = bridge.stop(); if (!r.ok) return res.status(400).json({ success: false, error: r.error }); await resync(); res.json({ ...state(), finished: r }); });
+  app.post('/api/auction-bridge/win', (req, res) => {
+    const b = req.body || {}; const r = bridge.markWin(b.login, b.won !== false);
+    if (!r.ok) return res.status(400).json({ success: false, error: r.error });
+    res.json({ ...state(), success: true, lot: r.lot, wins: r.wins });
+  });
   app.post('/api/auction-bridge/reward/create', async (req, res) => { const r = await reward.create(bridge); res.json({ ...state(), success: r.ok, error: r.error }); });
   app.post('/api/auction-bridge/reward/sync', async (req, res) => { await resync(); res.json(state()); });
   // «А сколько внесёт зритель?» — по нику (из профилей аватаров) или вручную (уровень, подписка, VIP)
