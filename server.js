@@ -81,6 +81,7 @@ const botCommands = require('./botCommands');
 const { createAvatarCommands } = require('./avatarCommands');
 const { createPvp } = require('./pvp');
 const { createDuelProgress } = require('./duelProgress');
+const { createCollectorProgress } = require('./collectorProgress');
 const { createBosses } = require('./bosses');
 const botTimers = require('./botTimers');
 const shoutouts = require('./shoutouts');
@@ -734,6 +735,8 @@ const auctionBridge = createAuctionBridge({ getProfile: (l) => pixelHeroes.getPr
 const bosses = createBosses({ roster: () => pixelHeroes.getRoster(), bonusXp: (l, a) => pixelHeroes.bonusXp(l, a), knownPack: (id) => pixelHeroes.list().some((h) => h.id === id) });
 const duelProgress = createDuelProgress({ awards, pixel: pixelHeroes });
 duelProgress.ensureAwards();
+const collectorProgress = createCollectorProgress({ awards });
+collectorProgress.ensureAwards();
 const pvp = createPvp({ isBlocked: () => bosses.isBusy(), isOnStage: (l) => pixelHeroes.isOnStage(l), nameOf: (l) => { try { const r = pixelHeroes.getRoster().find((x) => x.login === l); return r && r.name ? r.name : l; } catch (e) { return l; } } });
 botTimers.init(); // сообщения по таймеру — из bot_timers.json
 shoutouts.init({ say: (t) => chatBot.say(t) }); // отметка рейдеров и их возвращений — из shoutouts.json
@@ -2822,7 +2825,8 @@ function unlockAvatarFor(login, name) {
   const r = pixelHeroes.unlockRandom(login, name);
   const user = name || login;
   let text;
-  if (r.ok) text = String(pixelHeroes.getUnlock().text).replace(/\{user\}/gi, user).replace(/\{hero\}/gi, r.title).replace(/\{command\}/gi, avatarCommands.commandWord('choose')).slice(0, 500);
+  if (r.ok) { try { collectorProgress.onUnlock(String(login).toLowerCase(), r.unlocked); } catch (e) { console.warn('[Коллекционер]', e.message); } }
+  if (r.ok) text = String(pixelHeroes.getUnlock().text).replace(/\{count\}/gi, r.unlocked).replace(/\{total\}/gi, r.total).replace(/\{user\}/gi, user).replace(/\{hero\}/gi, r.title).replace(/\{command\}/gi, avatarCommands.commandWord('choose')).slice(0, 500);
   else if (r.reason === 'none-left') text = `@${user}, у тебя уже открыты все закрытые аватары!`;
   else return { ...r, text: '' };   // 'login' и 'no-closed' (закрытых героев нет) — молча
   chatBot.say(text).catch(() => {});

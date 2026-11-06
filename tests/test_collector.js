@@ -1,0 +1,15 @@
+const { createCollectorProgress, tierFor, TIERS } = require('../collectorProgress');
+const { createAwards } = require('../awards');
+let ok = 0, fail = 0; const t = (n, c) => { if (c) ok++; else { fail++; console.log('FAIL', n); } };
+t('tiers', [0, 1, 4, 5, 14, 15, 29, 30, 49, 50, 500].map(tierFor).join() === '0,1,1,2,2,3,3,4,4,5,5');
+const aw = createAwards({ file: null });
+const cp = createCollectorProgress({ awards: aw, file: null, icons: [] });
+cp.ensureAwards(); cp.ensureAwards();
+t('5 awards', cp.awardIds().length === 5 && new Set(cp.awardIds()).size === 5);
+t('none at 0', cp.onUnlock('a', 0).tier === 0 && aw.awardsOf('a').length === 0);
+let r = cp.onUnlock('a', 1); t('first', r.tierUp && r.tierUp.tier === 1 && aw.awardsOf('a').length === 1);
+r = cp.onUnlock('a', 3); t('same tier no repeat', r.tierUp === null && aw.awardsOf('a').length === 1);
+r = cp.onUnlock('a', 5); t('tier2 replaces', r.tierUp.tier === 2 && aw.awardsOf('a').length === 1 && aw.awardsOf('a')[0] === cp.awardIds()[1]);
+cp.onUnlock('a', 50); r = cp.onUnlock('a', 400);
+t('capped at 5', r.tier === 5 && r.tierUp === null && aw.awardsOf('a')[0] === cp.awardIds()[4] && aw.awardsOf('a').length === 1);
+console.log(ok + ' ok, ' + fail + ' fail'); process.exit(fail ? 1 : 0);

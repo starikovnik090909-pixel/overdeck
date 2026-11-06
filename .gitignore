@@ -143,6 +143,8 @@ shoutouts.json.tmp
 
 duel_stats.json
 duel_stats.json.tmp
+collector_stats.json
+collector_stats.json.tmp
 boss_data.json
 boss_data.json.tmp
 auction_bridge.json

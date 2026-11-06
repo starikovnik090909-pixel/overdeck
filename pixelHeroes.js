@@ -68,7 +68,7 @@ function mergeBehavior(base, patch) {
   if (!any || next.walksMin > next.walksMax || next.restMin > next.restMax || next.pauseMin > next.pauseMax) return null;
   return next;
 }
-const UNLOCK_DEFAULT = { lock: false, rewardTitle: 'Разблокировать аватар', rewardCost: 1000, text: '@{user}, ты открыл аватар «{hero}»! Сменить на него: {command} {hero}' };
+const UNLOCK_DEFAULT = { lock: false, rewardTitle: 'Разблокировать аватар', rewardCost: 1000, text: '@{user}, ты открыл аватар «{hero}»! Сменить на него: {command} {hero}. Открыто {count} из {total}.' };
 const UNLOCK_TEXT_MAX = 300, UNLOCK_TITLE_MAX = 60, MAX_UNLOCKED = 200;
 const PROFILES_FILE = path.join(__dirname, 'pixel_profiles.json');
 
@@ -334,7 +334,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
       const p = profiles.get(String(login || '').toLowerCase());
       if (!p) return null;
       const pr = XPR.progress(p.xp);
-      return { login: p.login, uid: p.uid || '', name: p.name, color: p.color, hero: p.hero, level: pr.level, xp: Math.floor(pr.xp), xpNeed: pr.need, maxed: pr.maxed, totalXp: Math.floor(p.xp), multiplier: XPR.multiplier(p.flags), flags: { ...p.flags }, lastSeen: p.lastSeen, onStage: roster.has(p.login), unlocked: this.earnedOf(p.login).length };
+      return { login: p.login, uid: p.uid || '', name: p.name, color: p.color, hero: p.hero, level: pr.level, xp: Math.floor(pr.xp), xpNeed: pr.need, maxed: pr.maxed, totalXp: Math.floor(p.xp), multiplier: XPR.multiplier(p.flags), flags: { ...p.flags }, lastSeen: p.lastSeen, onStage: roster.has(p.login), unlocked: this.earnedOf(p.login).length, collected: this.earnedOf(p.login).length, collectedTotal: this.closedIds().length };
     },
     /**
      * Смена аватара игрока из админки: у человека есть профиль и такой герой есть в папке. Если игрок сейчас на сцене — его герой меняется сразу (changed: true — страницам нужно
