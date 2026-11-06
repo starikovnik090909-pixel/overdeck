@@ -1,0 +1,81 @@
+{
+  "name": "executioner",
+  "title": "Палач-кукла",
+  "group": "Боссы",
+  "fps": 12,
+  "scale": 2.5,
+  "cell": {
+    "w": 64,
+    "h": 68
+  },
+  "pivot": {
+    "x": 32,
+    "y": 63
+  },
+  "headTop": 3,
+  "speed": 40,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "Undead executioner puppet",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 4,
+      "west": 4
+    },
+    "columns": 4
+  },
+  "extras": [
+    {
+      "name": "attack",
+      "title": "Удар косой",
+      "kind": "attack",
+      "file": "x_attack.png",
+      "frames": {
+        "east": 13,
+        "west": 13
+      },
+      "columns": 13,
+      "cell": {
+        "w": 98,
+        "h": 78
+      },
+      "pivot": {
+        "x": 49,
+        "y": 71
+      }
+    },
+    {
+      "name": "skill",
+      "title": "Рывок тьмы",
+      "kind": "cast",
+      "file": "x_skill.png",
+      "frames": {
+        "east": 12,
+        "west": 12
+      },
+      "columns": 12,
+      "cell": {
+        "w": 96,
+        "h": 74
+      },
+      "pivot": {
+        "x": 48,
+        "y": 68
+      }
+    }
+  ],
+  "boss": true,
+  "flying": true
+}
