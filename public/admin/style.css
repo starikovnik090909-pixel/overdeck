@@ -104,8 +104,8 @@ html, body {
   transition: transform 0.25s ease;
 }
 :root[data-theme="light"] .theme-toggle .knob { transform: translateX(26px); }
-:root[data-theme="dark"] .theme-toggle .icon-sun { opacity: 1; }
-:root[data-theme="light"] .theme-toggle .icon-moon { opacity: 1; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { opacity: 1; }
+:root[data-theme="light"] .theme-toggle .icon-sun { opacity: 1; }
 
 .header-settings-group { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 

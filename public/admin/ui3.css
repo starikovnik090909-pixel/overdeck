@@ -1185,3 +1185,7 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 .tg-warn summary span::after{content:" ▾"}
 .tg-warn[open] summary span::after{content:" ▴"}
 .tg-warn[open] .tg-warn-b{margin-top:8px}
+
+/* переключатель темы: луна слева (тёмная), солнце справа (светлая); значок на бегунке тёмный */
+.theme-toggle .icon-moon { order: -1; }
+:root[data-theme="dark"] .theme-toggle .icon-moon, :root[data-theme="light"] .theme-toggle .icon-sun { color: var(--on-accent); }
