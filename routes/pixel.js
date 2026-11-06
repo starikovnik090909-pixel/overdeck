@@ -93,13 +93,17 @@ app.post('/api/pixel-heroes/show', (req, res) => {
 }
 
 function part3(ctx) {
-  const { pixelHeroes, chatBot, app, unlockAvatarFor } = ctx;
+  const { pixelHeroes, chatBot, app, unlockAvatarFor, unlockReward } = ctx;
 // Разблокировка аватаров за баллы канала: замок (менять можно только на открытые), название награды, текст сообщения бота.
 app.post('/api/pixel-heroes/unlock-settings', (req, res) => {
   const u = pixelHeroes.setUnlock(req.body);
   if (!u) return res.status(400).json({ success: false, error: 'Не удалось сохранить: название награды — до 60 символов, текст сообщения — от 1 до 300 символов, замок — да/нет.' });
   res.json({ success: true, unlock: u });
 });
+
+// Награда на Twitch: статус и создание кнопкой
+app.get('/api/pixel-heroes/unlock-reward', async (req, res) => { res.json({ success: true, status: await unlockReward.sync(pixelHeroes.getUnlock()) }); });
+app.post('/api/pixel-heroes/unlock-reward/create', async (req, res) => { const r = await unlockReward.create(pixelHeroes.getUnlock()); res.json({ success: r.ok, error: r.error, status: r.status }); });
 
 // Выдать аватар вручную (проверка награды или подарок): { login } — ник зрителя; открывает случайный закрытый аватар, бот пишет об этом в чат (если подключён).
 app.post('/api/pixel-heroes/unlock', (req, res) => {

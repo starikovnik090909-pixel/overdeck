@@ -1,5 +1,5 @@
 // avatarCommands.js
-// Команды чат-аватаров: зритель пишет в чат «!аватар» — и его герой на оверлее меняется на случайного; «!прыжок», «!удар» — герой прыгает или бьёт.
+// Команды чат-аватаров: зритель пишет в чат «!аватар» — и его герой на оверлее меняется на случайного; «!герой имя» — выбрать нужного; «!мойаватар» — узнать свой.
 // Отдельно от конструктора команд бота (botCommands.js): те — «слово → текст ответа», эти — действия над героем зрителя. Хранятся в avatar_commands.json.
 //
 //  • ДЕЙСТВИЯ фиксированы (набор в ACTIONS): random — случайный аватар, choose — выбрать по названию («!герой самурай»), info — «какой у меня аватар», jump / attack / emote / cast —
@@ -17,15 +17,11 @@ const FILE_PATH = path.join(__dirname, 'avatar_commands.json');
 const NAME_MAX = 32, REPLY_MAX = 300, NAMES_MAX = 6;
 const COOLDOWN_MIN = 0, COOLDOWN_MAX = 3600;
 
-/** id → описание действия и значения по умолчанию. kind — вид доп. анимации (для jump/attack/emote/cast). */
+/** id → описание действия и значения по умолчанию. */
 const ACTIONS = {
   random: { title: 'Случайный аватар', hint: 'Меняет героя зрителя на случайного (не такого же, как сейчас).', names: ['!аватар', '!avatar'], cooldownSec: 60, text: '@{user}, твой новый аватар — {hero}!' },
   choose: { title: 'Выбрать аватар', hint: 'Герой по названию: «!герой самурай». Подходит часть названия.', names: ['!герой', '!hero'], cooldownSec: 30, text: '@{user}, теперь ты — {hero}!', args: true },
   info: { title: 'Мой аватар', hint: 'Отвечает, какой у зрителя аватар и уровень.', names: ['!мойаватар', '!myavatar'], cooldownSec: 30, text: '@{user}, твой аватар — {hero}, lvl {level}.' },
-  jump: { title: 'Прыжок', hint: 'Герой прыгает (если у него есть такая анимация).', names: ['!прыжок', '!jump'], cooldownSec: 10, text: '', kind: 'jump', noAnim: '@{user}, {hero} не умеет прыгать.' },
-  attack: { title: 'Удар', hint: 'Герой бьёт (удар, выстрел, взмах).', names: ['!удар', '!attack'], cooldownSec: 10, text: '', kind: 'attack', noAnim: '@{user}, {hero} не умеет драться.' },
-  emote: { title: 'Жест', hint: 'Герой машет рукой, ликует, читает, защищается — что есть у героя.', names: ['!жест', '!emote'], cooldownSec: 10, text: '', kind: 'emote', noAnim: '@{user}, у {hero} нет жестов.' },
-  cast: { title: 'Заклинание', hint: 'Герой колдует или кричит (если умеет).', names: ['!магия', '!cast'], cooldownSec: 10, text: '', kind: 'cast', noAnim: '@{user}, {hero} не умеет колдовать.' },
 };
 
 function defaults() {
@@ -84,7 +80,7 @@ function createAvatarCommands(opts = {}) {
       const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
       if (raw && typeof raw === 'object') {
         const base = defaults();
-        const v = Array.isArray(raw.commands) ? validate(raw.commands.map((c) => ({ ...c })), true) : { ok: false };
+        const v = Array.isArray(raw.commands) ? validate(raw.commands.filter((c) => c && ACTIONS[c.action]).map((c) => ({ ...c })), true) : { ok: false };   // старые «!прыжок» и др. из файла отбрасываются
         state = { enabled: typeof raw.enabled === 'boolean' ? raw.enabled : true, commands: v.ok ? v.commands : base.commands };
         if (!v.ok) state = { enabled: state.enabled, commands: base.commands };
       }
@@ -160,12 +156,7 @@ function createAvatarCommands(opts = {}) {
         vars.hero = pick.title;
         return done({ reply: say(cmd.text), changed: !!r.changed });
       }
-      // jump / attack / emote / cast — доп. анимация героя; какую именно из однотипных — выбирает страница (случайную)
-      const own = pixel.extrasOf(heroId).filter((e) => e.kind === a.kind);
-      if (!own.length) return done({ reply: note(a.noAnim) });
-      const ex = own[Math.min(own.length - 1, Math.floor(random() * own.length))];
-      vars.anim = ex.title;
-      return done({ reply: say(cmd.text), play: { login: key, kind: a.kind, name: ex.name } });
+      return null;
     },
   };
 }

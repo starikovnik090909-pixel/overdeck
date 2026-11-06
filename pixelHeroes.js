@@ -68,7 +68,7 @@ function mergeBehavior(base, patch) {
   if (!any || next.walksMin > next.walksMax || next.restMin > next.restMax || next.pauseMin > next.pauseMax) return null;
   return next;
 }
-const UNLOCK_DEFAULT = { lock: false, rewardTitle: 'Разблокировать аватар', text: '@{user}, ты открыл аватар «{hero}»! Сменить на него: {command} {hero}' };
+const UNLOCK_DEFAULT = { lock: false, rewardTitle: 'Разблокировать аватар', rewardCost: 1000, text: '@{user}, ты открыл аватар «{hero}»! Сменить на него: {command} {hero}' };
 const UNLOCK_TEXT_MAX = 300, UNLOCK_TITLE_MAX = 60, MAX_UNLOCKED = 200;
 const PROFILES_FILE = path.join(__dirname, 'pixel_profiles.json');
 
@@ -154,6 +154,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
         }
         if (raw.unlock && typeof raw.unlock === 'object') {
           if (typeof raw.unlock.lock === 'boolean') unlockCfg.lock = raw.unlock.lock;
+          if (Number.isInteger(raw.unlock.rewardCost) && raw.unlock.rewardCost >= 1 && raw.unlock.rewardCost <= 10000000) unlockCfg.rewardCost = raw.unlock.rewardCost;
           if (typeof raw.unlock.rewardTitle === 'string' && raw.unlock.rewardTitle.length <= UNLOCK_TITLE_MAX) unlockCfg.rewardTitle = raw.unlock.rewardTitle.trim();
           if (typeof raw.unlock.text === 'string' && raw.unlock.text.trim() && raw.unlock.text.length <= UNLOCK_TEXT_MAX) unlockCfg.text = raw.unlock.text.trim();
         }
@@ -238,7 +239,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
     getSession: () => ({ ...session }),
     getGroupScales: () => ({ ...groupScale }),
     getUnlock: () => ({ ...unlockCfg }),
-    /** Настройки разблокировки: { lock, rewardTitle, text } (любая часть). null — недопустимо, ничего не изменено. */
+    /** Настройки разблокировки: { lock, rewardTitle, rewardCost, text } (любая часть). null — недопустимо, ничего не изменено. */
     setUnlock(patch) {
       if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return null;
       const next = { ...unlockCfg }; let any = false;
@@ -246,6 +247,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
         const v = patch[k];
         if (k === 'lock') { if (typeof v !== 'boolean') return null; next.lock = v; }
         else if (k === 'rewardTitle') { if (typeof v !== 'string' || v.trim().length > UNLOCK_TITLE_MAX) return null; next.rewardTitle = v.trim(); }
+        else if (k === 'rewardCost') { if (!Number.isInteger(v) || v < 1 || v > 10000000) return null; next.rewardCost = v; }
         else if (k === 'text') { if (typeof v !== 'string' || !v.trim() || v.length > UNLOCK_TEXT_MAX) return null; next.text = v.replace(/\s*[\r\n]+\s*/g, ' ').trim(); }
         else return null;
         any = true;

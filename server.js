@@ -48,6 +48,7 @@ const musicReward = require('./musicReward');
 const soundpad = require('./soundpad');
 const soundpadReward = require('./soundpadReward');
 const auctionReward = require('./auctionReward');
+const avatarUnlockReward = require('./avatarUnlockReward');
 const { createAuctionBridge } = require('./auctionBridge');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
@@ -1360,7 +1361,7 @@ app.get('/api/avatar-commands', (req, res) => {
   res.json({ success: true, ...avatarCommands.getState(), actions: avatarCommands.getActions(), chatters: pixelHeroes.getSettings().chatters, unlock: pixelHeroes.getUnlock() });
 });
 
-require('./routes/pixel').part3({ pixelHeroes, chatBot, app, unlockAvatarFor });
+require('./routes/pixel').part3({ pixelHeroes, chatBot, app, unlockAvatarFor, unlockReward: avatarUnlockReward });
 
 require('./routes/chatbot').part4({ avatarCommands, app });
 

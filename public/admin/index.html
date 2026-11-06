@@ -1501,7 +1501,7 @@
             <span class="toggle-slider"></span>
           </label>
         </div>
-        <p class="card-hint">Зритель пишет команду — его герой на оверлее меняется или играет анимацию.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Зритель пишет команду — и его герой на оверлее меняется или играет анимацию. Например <code>!аватар</code> — случайный аватар, <code>!герой самурай</code> — выбрать по названию, <code>!прыжок</code> — прыжок. Ответ в чат отправляет подключённый бот (с правом <code>user:write:chat</code>); без бота команды всё равно работают на оверлее. Слова не должны совпадать с «Командами бота». В ответах можно использовать <code>{user}</code> — ник, <code>{hero}</code> — название героя, <code>{level}</code> — уровень, <code>{anim}</code> — название анимации.</p></details>
+        <p class="card-hint">Зритель пишет команду — его герой на оверлее меняется.</p><details class="ui3-more ui3-more-in"><summary>Подробнее</summary><p class="card-hint">Зритель пишет команду — и его герой на оверлее меняется или играет анимацию. Например <code>!аватар</code> — случайный аватар, <code>!герой самурай</code> — выбрать по названию, <code>!прыжок</code> — прыжок. Ответ в чат отправляет подключённый бот (с правом <code>user:write:chat</code>); без бота команды всё равно работают на оверлее. Слова не должны совпадать с «Командами бота». В ответах можно использовать <code>{user}</code> — ник, <code>{hero}</code> — название героя, <code>{level}</code> — уровень, <code>{anim}</code> — название анимации.</p></details>
         <div class="form-message" id="avatarCmdWarning"></div>
         <div class="avatar-cmd-list" id="avatarCmdList"><p class="card-hint">Загружаем…</p></div>
         <div class="avatar-unlock" id="avatarUnlock">
@@ -1512,9 +1512,12 @@
             <label class="toggle-switch"><input type="checkbox" id="unlockLock"><span class="toggle-slider"></span></label>
           </div>
           <div class="avatar-unlock-row"><label for="unlockReward">Название награды</label><input type="text" id="unlockReward" maxlength="60" placeholder="Разблокировать аватар" autocomplete="off"></div>
+          <div class="avatar-unlock-row"><label for="unlockCost">Цена в баллах</label><input type="number" id="unlockCost" min="1" max="10000000" step="1" autocomplete="off"></div>
           <div class="avatar-unlock-row avatar-unlock-row-wide"><label for="unlockText">Сообщение бота</label><input type="text" id="unlockText" maxlength="300" autocomplete="off"></div>
           <p class="card-hint" style="margin:4px 0 8px;">Подстановки: <code>{user}</code> — ник, <code>{hero}</code> — открытый аватар, <code>{command}</code> — команда выбора аватара.</p>
           <div class="actions"><button class="btn btn-primary" id="btnUnlockSave" type="button">Сохранить</button></div>
+          <div class="actions"><button class="btn btn-secondary" id="btnUnlockRewardCreate" type="button">Создать награду на Twitch</button></div>
+          <div class="form-message" id="unlockRewardStatus"></div>
           <div class="avatar-unlock-row avatar-unlock-give"><label for="unlockGiveLogin">Выдать вручную</label><input type="text" id="unlockGiveLogin" maxlength="40" placeholder="ник зрителя" autocomplete="off"><button class="btn btn-secondary" id="btnUnlockGive" type="button">Открыть случайный</button></div>
           <div class="form-message" id="unlockMessage"></div>
         </div>

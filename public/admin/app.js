@@ -8478,11 +8478,12 @@
     const u = avatarCmdState && avatarCmdState.unlock; if (!u) return;
     document.getElementById('unlockLock').checked = !!u.lock;
     document.getElementById('unlockReward').value = u.rewardTitle || '';
+    document.getElementById('unlockCost').value = u.rewardCost || 1000;
     document.getElementById('unlockText').value = u.text || '';
   }
   document.getElementById('btnUnlockSave').addEventListener('click', async () => {
     try {
-      const data = await avatarCmdRequest('/api/pixel-heroes/unlock-settings', { lock: document.getElementById('unlockLock').checked, rewardTitle: document.getElementById('unlockReward').value, text: document.getElementById('unlockText').value });
+      const data = await avatarCmdRequest('/api/pixel-heroes/unlock-settings', { lock: document.getElementById('unlockLock').checked, rewardTitle: document.getElementById('unlockReward').value, rewardCost: parseInt(document.getElementById('unlockCost').value, 10) || 0, text: document.getElementById('unlockText').value });
       avatarCmdState = { ...avatarCmdState, unlock: data.unlock };
       showUnlockMessage(data.unlock.rewardTitle ? `Сохранено. Награда «${data.unlock.rewardTitle}» открывает случайный аватар.` : 'Сохранено, но название награды пустое — за баллы ничего открываться не будет.', 'success');
     } catch (e) { showUnlockMessage(e.message, 'error'); }
@@ -8502,6 +8503,18 @@
       const d = await avatarCmdRequest('/api/pixel-heroes/unlock', { login: input.value });
       showUnlockMessage(`Открыт аватар «${d.title}» (открыто ${d.unlocked} из ${d.total}).` + (d.botConnected ? ' Бот написал об этом в чат.' : ' Бот не подключён — в чат ничего не отправлено.'), 'success');
     } catch (e) { showUnlockMessage(e.message, 'error'); }
+  });
+  const unlockRewardStatus = document.getElementById('unlockRewardStatus');
+  const showUnlockReward = (st) => { if (!st) return; unlockRewardStatus.textContent = st.text || ''; unlockRewardStatus.className = 'form-message' + (st.state === 'ok' ? ' success' : (st.state === 'missing' || st.state === 'idle' || st.state === 'wait' ? '' : ' error')); };
+  fetch('/api/pixel-heroes/unlock-reward').then((r) => r.json()).then((d) => showUnlockReward(d.status)).catch(() => {});
+  document.getElementById('btnUnlockRewardCreate').addEventListener('click', async () => {
+    const b = document.getElementById('btnUnlockRewardCreate'); b.disabled = true;
+    try {
+      await avatarCmdRequest('/api/pixel-heroes/unlock-settings', { rewardTitle: document.getElementById('unlockReward').value, rewardCost: parseInt(document.getElementById('unlockCost').value, 10) || 0 });
+      const d = await (await fetch('/api/pixel-heroes/unlock-reward/create', { method: 'POST' })).json();
+      showUnlockReward(d.status || { state: 'error', text: d.error || 'Не получилось.' });
+    } catch (e) { showUnlockMessage(e.message, 'error'); }
+    b.disabled = false;
   });
   loadAvatarCommands();
 
