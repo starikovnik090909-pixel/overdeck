@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
+<link rel="stylesheet" href="auctionbridge.css?v=1">
 <link rel="stylesheet" href="bosses.css?v=1">
 <link rel="stylesheet" href="overvoice-admin.css?v=10">
 <link rel="stylesheet" href="navsort.css?v=1">
@@ -344,6 +345,12 @@
           <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
         <span>Саундпад</span>
+      </div>
+      <div class="nav-item" data-tab="auctionbridge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 20h9M9.5 20v-6M4 8l6-5 3 3-6 5zM12 7l5 4M14 12l6 6" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Аукцион</span>
       </div>
       <div class="nav-item" data-tab="overvoice">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -3294,6 +3301,39 @@
       </div>
     </section>
 
+    <section class="tab-section" id="tab-auctionbridge">
+      <div class="page-head"><div><h1 class="tab-title">Аукцион</h1><p class="tab-description">Зритель активирует награду за баллы канала и пишет название лота. Overdeck считает его взнос (подписка, VIP, уровень аватара) и отправляет в PointAuc. Награда открыта только пока аукцион идёт, один взнос на человека.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="abSaved"></span>
+          <button class="ab-pwr" type="button" id="abPwr" title="Начать или закончить аукцион"><span class="sw"></span><span><b id="abPwrT">Аукцион не идёт</b></span></button>
+        </div></div>
+      <div class="ab-grid">
+        <div class="ab-col">
+          <div class="ab-card"><h3>Взносы в этом аукционе</h3>
+            <div class="ab-sum" id="abSum">Аукцион не идёт.</div>
+            <div class="ab-list" id="abList"></div></div>
+          <div class="ab-card"><h3>Сколько внесёт зритель</h3>
+            <div class="ab-row"><input type="text" id="abPrLogin" maxlength="25" placeholder="ник в Twitch" autocomplete="off"><button class="btn btn-secondary btn-sm" type="button" id="abPrGo">Посчитать</button></div>
+            <div class="ab-row"><label class="ab-mini">Уровень <input type="number" id="abPrLvl" min="0" max="99" value="10"></label><label class="ab-chk"><input type="checkbox" id="abPrSub"> подписчик</label><label class="ab-chk"><input type="checkbox" id="abPrVip"> VIP</label><button class="btn btn-secondary btn-sm" type="button" id="abPrMan">Вручную</button></div>
+            <div class="ab-pr" id="abPr"></div></div>
+        </div>
+        <div class="ab-col">
+          <div class="ab-card"><h3>Награда на Twitch</h3>
+            <div class="ab-rw" id="abRw"></div>
+            <div class="ab-row"><label class="ab-fl"><em>Название</em><input type="text" id="abTitle" maxlength="45"></label><label class="ab-fl ab-w90"><em>Цена, баллов</em><input type="number" id="abCost" min="1" max="10000000"></label></div>
+            <div class="ab-row"><button class="btn btn-secondary btn-sm" type="button" id="abRwMake">Создать награду</button><button class="btn btn-secondary btn-sm" type="button" id="abRwSync">Проверить</button></div></div>
+          <div class="ab-card"><h3>Взнос зрителя</h3>
+            <div class="ab-row"><label class="ab-fl"><em>Подписчик</em><input type="number" id="abSub" min="0"></label><label class="ab-fl"><em>VIP</em><input type="number" id="abVip" min="0"></label></div>
+            <div class="ab-row"><label class="ab-fl"><em>За каждый уровень аватара</em><input type="number" id="abPer" min="0"></label><label class="ab-fl"><em>Максимум за уровни</em><input type="number" id="abCap" min="0"></label></div>
+            <div class="ab-hint" id="abHint"></div>
+            <label class="ab-chk"><input type="checkbox" id="abChat"> отвечать зрителю в чате</label></div>
+          <div class="ab-card"><h3>PointAuc</h3>
+            <div class="ab-row"><label class="ab-fl"><em>Личный токен (pointauc.com/settings, внизу «Personal Token»)</em><input type="password" id="abToken" autocomplete="off" placeholder=""></label></div>
+            <div class="ab-hint" id="abTokHint"></div>
+            <div class="ab-row"><button class="btn btn-primary btn-sm" type="button" id="abSave">Сохранить</button><span class="form-message" id="abMsg"></span></div></div>
+        </div>
+      </div>
+    </section>
+
     <section class="tab-section" id="tab-soundpad">
       <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, чтобы послушать звук у себя. Кнопка «на стрим» играет его на стриме. Монета отмечает звук для наград за баллы, шестерёнка открывает настройки.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="spSaved"></span>
@@ -4128,6 +4168,7 @@
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
 <script src="bosses.js?v=1"></script>
+<script src="auctionbridge.js?v=1"></script>
 <script src="voicepack.js?v=1"></script>
 <script src="overvoice-admin.js?v=18"></script>
 <script src="navsort.js?v=1"></script>

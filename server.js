@@ -47,6 +47,8 @@ const music = require('./musicRequests');
 const musicReward = require('./musicReward');
 const soundpad = require('./soundpad');
 const soundpadReward = require('./soundpadReward');
+const auctionReward = require('./auctionReward');
+const { createAuctionBridge } = require('./auctionBridge');
 const factData = require('./factData');
 const factPresets = require('./factPresets');
 const fundData = require('./fundData');
@@ -428,6 +430,15 @@ function handleEventAlertRaw(type, e) {
       fireEventAlert('points', { username: e.user_name, reward: e.reward && e.reward.title, cost: e.reward && e.reward.cost, input: e.user_input });
       try { gazetteService.journal.noteRedeem(e.user_name, e.reward && e.reward.title, e.reward && e.reward.cost); } catch (er) { /* журнал необязателен */ }
       music.onPoints({ name: e.user_name, login: String(e.user_login || '').toLowerCase(), reward: e.reward && e.reward.title, input: e.user_input }).then((r) => { if (r === 'off') return musicReward.refund(e.reward && e.reward.id, e.id); }).catch((er) => console.warn('[Музыка]', er.message));
+      auctionBridge.onRedeem({ login: String(e.user_login || '').toLowerCase(), name: e.user_name, input: e.user_input, reward: e.reward && e.reward.title, rewardId: e.reward && e.reward.id, redemptionId: e.id }).then((r) => {
+        if (!r || !r.handled || !auctionBridge.getSettings().chatReply) return;
+        const who = '@' + (e.user_name || e.user_login);
+        if (r.status === 'sent') chatBot.say(`${who}, взнос ${r.amount} в аукцион внесён: «${r.lot}»`).catch(() => {});
+        else if (r.status === 'duplicate') chatBot.say(`${who}, ты уже вносил взнос в этот аукцион, баллы вернули.`).catch(() => {});
+        else if (r.status === 'closed') chatBot.say(`${who}, аукцион сейчас не идёт, баллы вернули.`).catch(() => {});
+        else if (r.status === 'empty') chatBot.say(`${who}, для взноса нужна подписка, VIP или уровень аватара. Баллы вернули.`).catch(() => {});
+        else if (r.status === 'error') chatBot.say(`${who}, не получилось отправить ставку в аукцион, баллы вернули.`).catch(() => {});
+      }).catch((er) => console.warn('[Аукцион]', er.message));
       try { const hit = soundpad.onPoints({ name: e.user_name, reward: e.reward && e.reward.title, rewardId: e.reward && e.reward.id }); if (hit && hit.sound.reward.id) soundpadReward.fulfil(hit.sound.reward.id, e.id).catch(() => {}); } catch (er) { /* саундпад необязателен */ }
       break;
     default: break;
@@ -717,6 +728,8 @@ botCommands.init(); // команды подгружаются из bot_commands
 // Команды чат-аватаров (!аватар, !прыжок…) — avatar_commands.json; слова не должны пересекаться с командами бота в обе стороны.
 const avatarCommands = createAvatarCommands({ botHas: (name) => !!botCommands.findByToken(name) });
 botCommands.setReservedChecker((name) => avatarCommands.hasName(name));
+// Награда «Аукцион»: взнос зрителя (подписка + VIP + уровень аватара) уходит в PointAuc; открыта только пока аукцион идёт, один взнос на человека за аукцион.
+const auctionBridge = createAuctionBridge({ getProfile: (l) => pixelHeroes.getProfile(l), cancel: (rid, id) => auctionReward.refund(rid, id), fulfil: (rid, id) => soundpadReward.fulfil(rid, id) });
 const bosses = createBosses({ roster: () => pixelHeroes.getRoster(), bonusXp: (l, a) => pixelHeroes.bonusXp(l, a), knownPack: (id) => pixelHeroes.list().some((h) => h.id === id) });
 const duelProgress = createDuelProgress({ awards, pixel: pixelHeroes });
 duelProgress.ensureAwards();
@@ -1424,6 +1437,9 @@ const soundpadUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 },
 });
 require('./routes/soundpad').main({ sp: soundpad, spReward: soundpadReward, spKeys: soundpadKeys, app, upload: soundpadUpload });
+require('./routes/auction').main({ app, bridge: auctionBridge, reward: auctionReward, pixel: pixelHeroes });
+setTimeout(() => auctionReward.sync(auctionBridge).catch(() => {}), 16000);
+setInterval(() => auctionReward.sync(auctionBridge).catch(() => {}), 5 * 60 * 1000).unref();
 setTimeout(() => soundpadReward.sync(soundpad).catch(() => {}), 14000);
 setInterval(() => soundpadReward.sync(soundpad).catch(() => {}), 5 * 60 * 1000).unref();
 // ---------- Моды: Овервойс (нейроголос) ----------
