@@ -94,13 +94,21 @@ static class Ui
     static Ui()
     {
         Txt = Color.FromArgb(240, 233, 234); Ok = Color.FromArgb(95, 224, 160); Warn = Color.FromArgb(255, 184, 107); Err = Color.FromArgb(240, 140, 140);
-        int pal = 1;
+        int pal = 3;
         try { string v = Environment.GetEnvironmentVariable("OVERDECK_PALETTE"); if (!string.IsNullOrEmpty(v)) pal = int.Parse(v); } catch { }
         if (pal == 0)
         {
             Bg1 = Color.FromArgb(23, 10, 13); Bg2 = Color.FromArgb(12, 5, 7); Glow = Color.FromArgb(58, 18, 27); GlowAlpha = 120;
             CardTop = Color.FromArgb(150, 56, 20, 30); CardBot = Color.FromArgb(150, 36, 12, 18); Line = Color.FromArgb(70, 255, 100, 110); GhostLine = Color.FromArgb(255, 100, 110);
             Coral = Color.FromArgb(255, 90, 100); Coral2 = Color.FromArgb(214, 47, 69); Peach = Color.FromArgb(255, 154, 106); Pink = Color.FromArgb(240, 160, 166); Dim = Color.FromArgb(185, 143, 149);
+        }
+        else if (pal == 3)
+        {
+            // STARIKOV: чёрный фон, бирюзовый акцент #2BC4B4
+            Txt = Color.FromArgb(242, 245, 245); Ok = Color.FromArgb(92, 235, 221);
+            Bg1 = Color.FromArgb(3, 10, 9); Bg2 = Color.FromArgb(0, 0, 0); Glow = Color.FromArgb(43, 196, 180); GlowAlpha = 26;
+            CardTop = Color.FromArgb(214, 10, 13, 13); CardBot = Color.FromArgb(214, 8, 11, 11); Line = Color.FromArgb(255, 34, 43, 43); GhostLine = Color.FromArgb(43, 196, 180);
+            Coral = Color.FromArgb(43, 196, 180); Coral2 = Color.FromArgb(30, 154, 141); Peach = Color.FromArgb(92, 235, 221); Pink = Color.FromArgb(92, 235, 221); Dim = Color.FromArgb(140, 153, 152);
         }
         else if (pal == 1)
         {
@@ -137,7 +145,7 @@ class Card : Panel
     {
         e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
         Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
-        using (GraphicsPath p = Ui.Round(r, 14))
+        using (GraphicsPath p = Ui.Round(r, 10))
         {
             using (LinearGradientBrush b = new LinearGradientBrush(r, Ui.CardTop, Ui.CardBot, 90f)) e.Graphics.FillPath(b, p);
             using (Pen pen = new Pen(Ui.Line, 1f)) e.Graphics.DrawPath(pen, p);
@@ -169,7 +177,7 @@ class FancyButton : Button
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
         Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
         int alpha = Enabled ? 255 : 110;
-        using (GraphicsPath p = Ui.Round(r, 11))
+        using (GraphicsPath p = Ui.Round(r, 8))
         {
             if (Primary)
             {
@@ -185,11 +193,11 @@ class FancyButton : Button
             }
             else
             {
-                using (SolidBrush b = new SolidBrush(Color.FromArgb(hover ? 30 : 14, 255, 255, 255))) g.FillPath(b, p);
+                using (SolidBrush b = new SolidBrush(Color.FromArgb(hover ? 28 : 0, 43, 196, 180))) g.FillPath(b, p);
                 using (Pen pen = new Pen(Color.FromArgb(hover ? 110 : 55, Ui.GhostLine), 1f)) g.DrawPath(pen, p);
             }
         }
-        TextRenderer.DrawText(g, Text, Font, ClientRectangle, Color.FromArgb(alpha, Primary ? Color.White : Ui.Txt), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+        TextRenderer.DrawText(g, Text, Font, ClientRectangle, Color.FromArgb(alpha, Primary ? Color.FromArgb(4, 17, 15) : Ui.Txt), TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
     }
 }
 
@@ -203,9 +211,9 @@ class Toggle : CheckBox
         g.SmoothingMode = SmoothingMode.AntiAlias;
         Rectangle tr = new Rectangle(0, 3, 38, 18);
         using (GraphicsPath p = Ui.Round(tr, 9))
-        using (SolidBrush b = new SolidBrush(Checked ? Ui.Coral : Color.FromArgb(90, 58, 64))) g.FillPath(b, p);
+        using (SolidBrush b = new SolidBrush(Checked ? Ui.Coral : Color.FromArgb(34, 43, 43))) g.FillPath(b, p);
         int kx = Checked ? tr.Right - 16 : tr.X + 2;
-        using (SolidBrush b = new SolidBrush(Color.White)) g.FillEllipse(b, kx, tr.Y + 2, 14, 14);
+        using (SolidBrush b = new SolidBrush(Checked ? Color.FromArgb(4, 17, 15) : Ui.Dim)) g.FillEllipse(b, kx, tr.Y + 2, 14, 14);
         TextRenderer.DrawText(g, Text, Font, new Rectangle(46, 0, Width - 46, Height), Ui.Dim, TextFormatFlags.Left | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
     }
 }
@@ -284,7 +292,7 @@ class Launcher : Form
 {
     static readonly Color Bg = Color.FromArgb(20, 15, 17);
     static readonly Color CardBg = Color.FromArgb(30, 24, 26);
-    static readonly Color Accent = Color.FromArgb(209, 75, 84);
+    static readonly Color Accent = Color.FromArgb(43, 196, 180);
     static readonly Color Dim = Color.FromArgb(150, 138, 140);
     static readonly Color Txt = Color.FromArgb(240, 233, 234);
     static readonly Color Ok = Color.FromArgb(95, 224, 160);
@@ -483,7 +491,7 @@ class Launcher : Form
 
         Label hint = new Label();
         hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать. Полностью выйти: значок в трее → «Выход».";
-        hint.ForeColor = Color.FromArgb(150, 120, 126);
+        hint.ForeColor = Color.FromArgb(92, 105, 104);
         hint.BackColor = Color.Transparent;
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
@@ -1067,7 +1075,7 @@ class Launcher : Form
             tb.Text = notes.Length > 0 ? notes : "Описание этой версии на странице релиза не заполнено.";
             tb.SetBounds(20, 82, 520, 288); tb.Select(0, 0); f.Controls.Add(tb);
             Button ok = new Button(); ok.Text = "Понятно"; ok.FlatStyle = FlatStyle.Flat; ok.FlatAppearance.BorderSize = 0;
-            ok.BackColor = Ui.Coral; ok.ForeColor = Color.White; ok.Font = new Font("Segoe UI Semibold", 10f);
+            ok.BackColor = Ui.Coral; ok.ForeColor = Color.FromArgb(4, 17, 15); ok.Font = new Font("Segoe UI Semibold", 10f);
             ok.SetBounds(420, 384, 120, 36); ok.Click += delegate { f.Close(); }; f.Controls.Add(ok); f.AcceptButton = ok;
             f.Show();
         }
@@ -1409,7 +1417,7 @@ class ModsForm : Form
         btnGo = new FancyButton(); btnGo.Primary = true; btnGo.Text = "Скачать и установить всё"; btnGo.Location = new Point(16, 248); btnGo.Size = new Size(444, 42);
         btnGo.Click += delegate { StartInstall(); }; c.Controls.Add(btnGo);
 
-        Label hint = new Label(); hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(150, 120, 126);
+        Label hint = new Label(); hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(92, 105, 104);
         hint.BackColor = Color.Transparent; hint.Font = new Font("Segoe UI", 8.5f); hint.AutoSize = false; hint.Size = new Size(476, 32); hint.Location = new Point(24, 368); Controls.Add(hint);
 
         FillDrives(); Refresh2();
