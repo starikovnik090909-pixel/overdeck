@@ -358,6 +358,7 @@ class Launcher : Form
     FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut, btnMods;
     ModsForm modsForm;
     IntroOverlay introOverlay;
+    MethodInvoker startup;
     List<Control> introReveal;
     BrandHeader introHeader;
     Dot dotUpd, dotServer;
@@ -561,9 +562,11 @@ class Launcher : Form
         poll = new System.Windows.Forms.Timer();
         poll.Interval = 1000;
         poll.Tick += delegate { RefreshStatus(); };
-        poll.Start();
+        bool introOn = Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1";
+        if (!introOn) poll.Start();
 
-        Shown += delegate
+        // тяжёлая стартовая работа (окно модов, проверка Node, обновления) идёт после анимации, чтобы не рвать кадры
+        startup = delegate
         {
             WriteLog("Лаунчер запущен, папка: " + root + ", порт " + port);
             try { modsForm = new ModsForm(root, port, delegate { return FindNode(); }); IntPtr hh = modsForm.Handle; } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
@@ -590,6 +593,7 @@ class Launcher : Form
             ThreadPool.QueueUserWorkItem(delegate { Thread.Sleep(2500); BeginInvoke((MethodInvoker)delegate { CheckUpdates(false); }); });
             CheckWhatsNew();
         };
+        Shown += delegate { if (!introOn) startup(); };
         FormClosing += delegate(object s, FormClosingEventArgs e)
         {
             if (!quitting && e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); }
@@ -949,7 +953,7 @@ class Launcher : Form
             t.Tick += delegate
             {
                 while (i < introReveal.Count && introReveal[i] == introHeader) i++;
-                if (i >= introReveal.Count) { t.Stop(); t.Dispose(); return; }
+                if (i >= introReveal.Count) { t.Stop(); t.Dispose(); poll.Start(); if (startup != null) startup(); return; }
                 introReveal[i++].Visible = true;
             };
             t.Start();
@@ -958,6 +962,7 @@ class Launcher : Form
         {
             WriteLog("Анимация запуска: " + ex.Message);
             if (introReveal != null) foreach (Control c in introReveal) c.Visible = true;
+            poll.Start(); if (startup != null) startup();
         }
     }
 

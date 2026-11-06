@@ -279,6 +279,28 @@ static class Intro
     public const double P2A = 4.6, P2B = 5.4;
     const float F = 210f, K = F / 1000f, W = 1280f, H = 720f, CX = 323f, CY = 350f, L = -7f, R = 653f;
 
+    static Bitmap glow;
+    static Bitmap GlowBmp()
+    {
+        if (glow != null) return glow;
+        Bitmap b = new Bitmap(256, 256, PixelFormat.Format32bppPArgb);
+        using (Graphics gg = Graphics.FromImage(b))
+        using (GraphicsPath gp = new GraphicsPath())
+        {
+            gg.SmoothingMode = SmoothingMode.AntiAlias;
+            gp.AddEllipse(0, 0, 255, 255);
+            using (PathGradientBrush pg = new PathGradientBrush(gp))
+            {
+                pg.CenterColor = Color.FromArgb(255, 43, 196, 180);
+                pg.SurroundColors = new Color[] { Color.FromArgb(0, 43, 196, 180) };
+                gg.FillPath(pg, gp);
+            }
+        }
+        glow = b;
+        return glow;
+    }
+    static GraphicsPath bridgeL, bridgeR;
+
     static double Cl(double t, double a, double b) { return Math.Max(0.0, Math.Min(1.0, (t - a) / (b - a))); }
     static double Eio(double t) { return t < .5 ? 4 * t * t * t : 1 - Math.Pow(-2 * t + 2, 3) / 2; }
     static double Eo(double t) { return 1 - Math.Pow(1 - t, 3); }
@@ -309,19 +331,16 @@ static class Intro
         g.TranslateTransform(tx, ty);
         g.ScaleTransform(a, a);
 
-        // свечение
+        // свечение: готовая картинка (градиент считается один раз), на кадр меняется только прозрачность
         double op = Math.Max(Cl(t1, 0.5, 1.4) * (1 - Cl(t1, 2.4, 3.4)), Cl(t1, 3.4, 4.2) * .6) * (1 - p2);
         if (op > 0.01)
         {
-            using (GraphicsPath gp = new GraphicsPath())
+            Bitmap gb = GlowBmp();
+            ColorMatrix gm = new ColorMatrix(); gm.Matrix33 = (float)(.22 * op);
+            using (ImageAttributes ia = new ImageAttributes())
             {
-                gp.AddEllipse(W / 2f - 404f, H / 2f - 404f, 808f, 808f);
-                using (PathGradientBrush pg = new PathGradientBrush(gp))
-                {
-                    pg.CenterColor = Color.FromArgb((int)(.22 * op * 255), 43, 196, 180);
-                    pg.SurroundColors = new Color[] { Color.FromArgb(0, 43, 196, 180) };
-                    g.FillPath(pg, gp);
-                }
+                ia.SetColorMatrix(gm);
+                g.DrawImage(gb, new Rectangle((int)(W / 2f - 404f), (int)(H / 2f - 404f), 808, 808), 0, 0, gb.Width, gb.Height, GraphicsUnit.Pixel, ia);
             }
         }
 
@@ -374,8 +393,8 @@ static class Intro
                 using (SolidBrush gb = new SolidBrush(Brand.Ac)) g.FillRectangle(gb, lr);
             }
             g.SetClip(new RectangleF(head, -430f, R + 20f - head, 160f));
-            using (GraphicsPath bl = Brand.Bridge(false)) using (GraphicsPath br = Brand.Bridge(true))
-            using (SolidBrush wb = new SolidBrush(Color.FromArgb(oa, Brand.Fg))) { g.FillPath(wb, bl); g.FillPath(wb, br); }
+            if (bridgeL == null) { bridgeL = Brand.Bridge(false); bridgeR = Brand.Bridge(true); }
+            using (SolidBrush wb = new SolidBrush(Color.FromArgb(oa, Brand.Fg))) { g.FillPath(wb, bridgeL); g.FillPath(wb, bridgeR); }
             g.Restore(so);
         }
 
@@ -404,45 +423,82 @@ static class Intro
 // Накладывается на всё окно при первом показе, играет анимацию и сообщает о конце. Клик — пропустить.
 class IntroOverlay : Control
 {
+    [DllImport("winmm.dll")] static extern uint timeBeginPeriod(uint ms);
+    [DllImport("winmm.dll")] static extern uint timeEndPeriod(uint ms);
     Stopwatch sw;
-    Timer tm;
     Bitmap backdrop;
-    bool done;
+    volatile bool done, running, pending;
+    bool period;
     public event EventHandler Finished;
     public IntroOverlay()
     {
-        SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque, true);
         Dock = DockStyle.Fill; BackColor = Color.Black; Cursor = Cursors.Default;
     }
     public void Begin()
     {
         try
         {
-            backdrop = new Bitmap(Math.Max(1, Width), Math.Max(1, Height));
+            backdrop = new Bitmap(Math.Max(1, Width), Math.Max(1, Height), PixelFormat.Format32bppPArgb);
             using (Graphics bg = Graphics.FromImage(backdrop)) Backdrop.Paint(bg, new Rectangle(0, 0, backdrop.Width, backdrop.Height));
         }
         catch { backdrop = null; }
+        try { timeBeginPeriod(1); period = true; } catch { }
         sw = Stopwatch.StartNew();
-        tm = new Timer(); tm.Interval = 15;
-        tm.Tick += delegate { if (Time() >= Intro.P2B) Finish(); else Invalidate(); };
-        tm.Start();
+        running = true;
+        // кадры задаёт отдельный поток по часам Stopwatch (шаг 1 мс), а не WinForms Timer с его дрожанием ~15 мс;
+        // следующий кадр просим, только когда предыдущий уже нарисован, — очередь сообщений не копится
+        System.Threading.Thread th = new System.Threading.Thread(delegate()
+        {
+            double next = 0, step = 1000.0 / 60.0;
+            while (running)
+            {
+                double now = sw.Elapsed.TotalMilliseconds;
+                if (now >= next)
+                {
+                    next += step;
+                    if (now - next > 100) next = now;
+                    if (!pending)
+                    {
+                        pending = true;
+                        try { BeginInvoke((MethodInvoker)Tick); } catch { running = false; }
+                    }
+                }
+                else System.Threading.Thread.Sleep(1);
+            }
+        });
+        th.IsBackground = true;
+        th.Priority = System.Threading.ThreadPriority.AboveNormal;
+        th.Start();
+    }
+    void Tick()
+    {
+        pending = false;
+        if (done) return;
+        if (Time() >= Intro.P2B) { Finish(); return; }
+        Invalidate();
+        Update();
     }
     double Time() { return sw == null ? 0.0 : sw.Elapsed.TotalSeconds; }
     void Finish()
     {
         if (done) return;
-        done = true;
-        if (tm != null) { tm.Stop(); tm.Dispose(); }
+        done = true; running = false;
+        if (period) { try { timeEndPeriod(1); } catch { } period = false; }
         EventHandler h = Finished;
         if (h != null) h(this, EventArgs.Empty);
     }
     protected override void OnMouseDown(MouseEventArgs e) { if (sw != null) Finish(); base.OnMouseDown(e); }
     protected override void OnPaint(PaintEventArgs e)
     {
+        e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
         Intro.Render(e.Graphics, Width, Height, done ? Intro.P2B : Time(), backdrop);
     }
     protected override void Dispose(bool disposing)
     {
+        running = false;
+        if (period) { try { timeEndPeriod(1); } catch { } period = false; }
         if (disposing && backdrop != null) { backdrop.Dispose(); backdrop = null; }
         base.Dispose(disposing);
     }
