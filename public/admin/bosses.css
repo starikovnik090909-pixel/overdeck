@@ -1,0 +1,8 @@
+/* bosses.css — вкладка «Боссы» в ЧатАватарах (стили карточек берутся из .awd-*) */
+#pixelPane-bosses .bs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+#pixelPane-bosses .bs-check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+#pixelPane-bosses .bs-check input { accent-color: var(--accent, #2BC4B4); }
+#pixelPane-bosses .bs-abil { display: grid; gap: 6px; }
+#pixelPane-bosses .bs-abil label { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; cursor: pointer; }
+#pixelPane-bosses .bs-abil small { display: block; opacity: .65; }
+#pixelPane-bosses .bs-bal-good { color: #2BC4B4; } #pixelPane-bosses .bs-bal-bad { color: #ff6b7d; }

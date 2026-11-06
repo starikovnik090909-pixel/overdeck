@@ -86,6 +86,8 @@ function listHeroes(dir = HEROES_DIR) {
         title: typeof m.title === 'string' && m.title ? m.title : id,
         group: typeof m.group === 'string' && m.group ? m.group : 'Герои', // заголовок над карточками в админке
         scale: Number.isFinite(m.scale) && m.scale > 0 ? m.scale : 1,       // во сколько раз герой показывается крупнее ячейки (у мелких кадров ×1.5…×3)
+        boss: m.boss === true,                                               // внешность только для боссов: чаттерам не выдаётся
+        flying: m.flying === true,                                           // летающий босс
         afk: Array.isArray(m.afk) && m.afk.length > 0,                       // есть ли афк-действия (например «садится и сидит»)
         cell: { w: m.cell.w, h: m.cell.h },
         pivot: m.pivot && Number.isFinite(m.pivot.x) && Number.isFinite(m.pivot.y) ? { x: m.pivot.x, y: m.pivot.y } : { x: Math.round(m.cell.w / 2), y: m.cell.h }, // опорная точка (ноги) — по ней в превью совмещаются доп. анимации
@@ -267,7 +269,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
     /** Можно ли игроку взять этого героя: замок выключен — любого; включён — выдаваемого всем или уже открытого игроком. */
     canUse(login, heroId) { return !unlockCfg.lock || !disabled.has(heroId) || this.unlockedOf(login).includes(heroId); },
     /** Герои, которых игрок может получить случайной командой: выдаваемые всем + открытые им закрытые. */
-    availableOf(login) { const own = new Set(this.unlockedOf(login)); return listHeroes(dir).map((h) => h.id).filter((id) => !disabled.has(id) || own.has(id)); },
+    availableOf(login) { const own = new Set(this.unlockedOf(login)); return listHeroes(dir).filter((h) => !h.boss).map((h) => h.id).filter((id) => !disabled.has(id) || own.has(id)); },
     /**
      * Открывает игроку случайный ЕЩЁ ЗАКРЫТЫЙ аватар — из тех, у кого снята галочка «выдавать» (обычным чаттерам они не достаются).
      * Профиль создаётся, если игрок ещё ни разу не писал.
@@ -396,6 +398,16 @@ function createState(dir = HEROES_DIR, opts = {}) {
         .sort((a, b) => (b.raw - a.raw) || (b.lastSeen - a.lastSeen) || a.login.localeCompare(b.login))
         .slice(0, n).map(({ raw, ...p }, i) => ({ rank: i + 1, ...p }));
     },
+    /** Разовый бонус опыта (без множителей ролей), например за победу в дуэли. true — у стоящего на сцене сменился уровень. */
+    bonusXp(login, amount) {
+      const key = String(login || '').toLowerCase();
+      if (!LOGIN_RE.test(key) || !Number.isFinite(amount) || amount <= 0) return false;
+      const p = profiles.get(key) || mkProfile(key, key, null, now());
+      const before = XPR.levelFromTotal(p.xp); p.xp = r2(p.xp + amount); profiles.set(key, p);
+      const after = XPR.levelFromTotal(p.xp), r = roster.get(key); if (r) r.level = after;
+      trimProfiles(); saveProfiles();
+      return before !== after && !!r;
+    },
     /** Общий опыт человека (число ≥ 0, хранится с точностью до сотых). Возвращает true, если значение изменилось. Задел и инструмент для ручной правки. */
     setXp(login, xp) {
       const key = String(login || '').toLowerCase();
@@ -450,7 +462,7 @@ function createState(dir = HEROES_DIR, opts = {}) {
       save();
       return true;
     },
-    getPool: () => listHeroes(dir).map((h) => h.id).filter((id) => !disabled.has(id)),
+    getPool: () => listHeroes(dir).filter((h) => !h.boss).map((h) => h.id).filter((id) => !disabled.has(id)),
 
     /**
      * Пришло сообщение от человека. info: { login, name, color, roles: { sub, vip, mod }, isCommand }.

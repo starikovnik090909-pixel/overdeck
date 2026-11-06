@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
+<link rel="stylesheet" href="bosses.css?v=1">
 <link rel="stylesheet" href="overvoice-admin.css?v=10">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
@@ -3664,6 +3665,7 @@
         <button class="pixel-subtab active" type="button" role="tab" aria-selected="true" data-pixel-pane="heroes">Аватары</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-pixel-pane="top">Топ игроков</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-pixel-pane="events">События</button>
+        <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-pixel-pane="bosses">Боссы</button>
         <button class="pixel-subtab" type="button" role="tab" aria-selected="false" data-pixel-pane="settings">Настройки</button>
       </div>
 
@@ -3732,6 +3734,59 @@
         <h3 class="awd-h awd-h2">Все награды</h3>
         <div id="awdList" class="awd-list"></div>
         <details class="awd-log"><summary>Журнал выдач</summary><ul id="awdLog"></ul></details>
+      </div>
+
+      <div class="pixel-pane" id="pixelPane-bosses" role="tabpanel" hidden>
+        <p class="card-hint">Босс появляется на сцене, и все герои, которые сейчас на оверлее, дерутся с ним по правилам D&amp;D. Здоровье босса считается по числу героев (и по их среднему уровню), чем оно больше — тем он крупнее и сильнее. Победа даёт участникам опыт. Вызвать босса можно вручную или включить случайное появление.</p>
+        <div class="awd-layout">
+          <section class="awd-card" aria-labelledby="bsFormTitle">
+            <h3 id="bsFormTitle" class="awd-h">Босс</h3>
+            <label class="awd-field"><span>Какого босса править</span><select id="bsPick"></select></label>
+            <label class="awd-field"><span>Имя</span><input type="text" id="bsName" maxlength="40" placeholder="Например: Лесной голем"></label>
+            <label class="awd-field"><span>Внешность (герой из пака)</span><select id="bsPack"></select></label>
+            <div class="bs-grid">
+              <label class="awd-field"><span>Здоровье на 1 героя</span><input type="number" id="bsHp" min="5" max="500" step="1"></label>
+              <label class="awd-field"><span>Класс брони босса</span><input type="number" id="bsAc" min="5" max="25" step="1"></label>
+              <label class="awd-field"><span>Бонус атаки</span><input type="number" id="bsHit" min="0" max="15" step="1"></label>
+              <label class="awd-field"><span>Кость урона</span><select id="bsDie"><option>4</option><option>6</option><option>8</option><option>10</option><option>12</option><option>20</option></select></label>
+              <label class="awd-field"><span>Бонус урона</span><input type="number" id="bsDmg" min="0" max="15" step="1"></label>
+              <label class="awd-field"><span>Героев на один удар босса</span><input type="number" id="bsEvery" min="1" max="20" step="1"></label>
+              <label class="awd-field"><span>Опыт за победу</span><input type="number" id="bsXp" min="0" max="1000" step="1"></label>
+            </div>
+            <label class="bs-check"><input type="checkbox" id="bsScale"> Крепче от среднего уровня героев</label>
+            <label class="bs-check"><input type="checkbox" id="bsEnabled"> Может появляться случайно</label>
+            <div class="awd-field"><span>Способности</span><div id="bsAbilities" class="bs-abil"></div></div>
+            <div class="awd-actions">
+              <button class="btn-primary" type="button" id="btnBsSave">Сохранить</button>
+              <button class="btn-tiny" type="button" id="btnBsNew">Новый босс</button>
+              <button class="btn-tiny" type="button" id="btnBsDel">Удалить</button>
+            </div>
+            <div class="form-message" id="bsMessage"></div>
+          </section>
+          <section class="awd-card" aria-labelledby="bsSummonTitle">
+            <h3 id="bsSummonTitle" class="awd-h">Вызов</h3>
+            <div id="bsNow" class="awd-now" aria-live="polite"></div>
+            <label class="awd-field"><span>Кого вызвать</span><select id="bsSummonPick"></select></label>
+            <div class="awd-actions"><button class="btn-primary" type="button" id="btnBsSummon">Вызвать босса</button></div>
+            <h3 class="awd-h awd-h2">Случайное появление</h3>
+            <label class="bs-check"><input type="checkbox" id="bsRandom"> Босс сам приходит на стрим</label>
+            <div class="bs-grid">
+              <label class="awd-field"><span>Не чаще, минут</span><input type="number" id="bsMin" min="5" max="600" step="1"></label>
+              <label class="awd-field"><span>Не реже, минут</span><input type="number" id="bsMax" min="5" max="1200" step="1"></label>
+              <label class="awd-field"><span>Нужно героев на сцене</span><input type="number" id="bsViewers" min="1" max="40" step="1"></label>
+            </div>
+            <label class="bs-check"><input type="checkbox" id="bsAnnounce"> Писать о бое в чат</label>
+            <div class="awd-actions"><button class="btn-tiny" type="button" id="btnBsSettings">Сохранить настройки</button></div>
+            <h3 class="awd-h awd-h2">Проверка баланса</h3>
+            <div class="bs-grid">
+              <label class="awd-field"><span>Героев</span><input type="number" id="bsBalN" min="1" max="40" value="10"></label>
+              <label class="awd-field"><span>Средний уровень</span><input type="number" id="bsBalL" min="0" max="99" value="5"></label>
+            </div>
+            <div class="awd-actions"><button class="btn-tiny" type="button" id="btnBsBalance">Прогнать 400 боёв</button></div>
+            <div class="awd-now" id="bsBalOut"></div>
+          </section>
+        </div>
+        <details class="awd-log"><summary>Журнал боёв с боссами</summary><ul id="bsLog"></ul></details>
       </div>
 
       <div class="pixel-pane" id="pixelPane-settings" role="tabpanel" hidden>
@@ -4072,6 +4127,7 @@
 <script src="../music-skins.js?v=5"></script>
 <script src="music.js?v=20"></script>
 <script src="soundpad.js?v=5"></script>
+<script src="bosses.js?v=1"></script>
 <script src="voicepack.js?v=1"></script>
 <script src="overvoice-admin.js?v=18"></script>
 <script src="navsort.js?v=1"></script>

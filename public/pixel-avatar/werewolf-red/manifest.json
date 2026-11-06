@@ -1,0 +1,118 @@
+{
+  "name": "werewolf-red",
+  "title": "Красный оборотень",
+  "group": "Боссы",
+  "fps": 12,
+  "scale": 2,
+  "cell": {
+    "w": 98,
+    "h": 84
+  },
+  "pivot": {
+    "x": 49,
+    "y": 81
+  },
+  "headTop": 3,
+  "speed": 70,
+  "directions": [
+    "east",
+    "west"
+  ],
+  "faces": "right",
+  "source": "craftpix werewolf",
+  "walk": {
+    "file": "walk.png",
+    "frames": {
+      "east": 11,
+      "west": 11
+    },
+    "columns": 11
+  },
+  "idle": {
+    "file": "idle.png",
+    "frames": {
+      "east": 8,
+      "west": 8
+    },
+    "columns": 8
+  },
+  "extras": [
+    {
+      "name": "attack1",
+      "title": "Удар когтями",
+      "kind": "attack",
+      "file": "x_attack1.png",
+      "frames": {
+        "east": 6,
+        "west": 6
+      },
+      "columns": 6,
+      "cell": {
+        "w": 120,
+        "h": 96
+      },
+      "pivot": {
+        "x": 60,
+        "y": 92
+      }
+    },
+    {
+      "name": "attack2",
+      "title": "Удар 2",
+      "kind": "attack",
+      "file": "x_attack2.png",
+      "frames": {
+        "east": 4,
+        "west": 4
+      },
+      "columns": 4,
+      "cell": {
+        "w": 120,
+        "h": 90
+      },
+      "pivot": {
+        "x": 60,
+        "y": 87
+      }
+    },
+    {
+      "name": "attack3",
+      "title": "Удар 3",
+      "kind": "attack",
+      "file": "x_attack3.png",
+      "frames": {
+        "east": 5,
+        "west": 5
+      },
+      "columns": 5,
+      "cell": {
+        "w": 124,
+        "h": 100
+      },
+      "pivot": {
+        "x": 62,
+        "y": 97
+      }
+    },
+    {
+      "name": "rush",
+      "title": "Бросок",
+      "kind": "attack",
+      "file": "x_rush.png",
+      "frames": {
+        "east": 7,
+        "west": 7
+      },
+      "columns": 7,
+      "cell": {
+        "w": 134,
+        "h": 86
+      },
+      "pivot": {
+        "x": 67,
+        "y": 83
+      }
+    }
+  ],
+  "boss": true
+}

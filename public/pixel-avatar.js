@@ -181,11 +181,13 @@
   /* ---------- Герой ---------- */
   const heroes = [];          // герои на сцене: сначала показанные вручную (в порядке списка), затем герои чаттеров (в порядке списка сервера)
   let loopId = 0;
+  const extraHeroes = [];
   function ensureLoop() { if (!loopId) loopId = requestAnimationFrame(loop); }
   function loop(now) {
     loopId = 0;
     heroes.forEach((h) => h.tick(now));
-    if (heroes.length) ensureLoop(); // стойка тоже анимирована («дыхание»), поэтому цикл идёт, пока есть хоть один герой; холст перерисовывается только при смене кадра
+    extraHeroes.forEach((h) => h.tick(now));      // босс не входит в список героев чата (его не трогают синхронизации списка)
+    if (heroes.length || extraHeroes.length) ensureLoop(); // стойка тоже анимирована («дыхание»), поэтому цикл идёт, пока есть хоть один герой; холст перерисовывается только при смене кадра
   }
 
   const NAME_TAG_H = 22; // высота подписи ника над головой (20px) и зазор под ней (2px)
@@ -411,7 +413,7 @@
     }
 
     afterIdle() {
-      if (this.removed) return;
+      if (this.removed || this.fighting) return;   // в дуэли герой стоит на месте, пока бой не кончится
       if (BEH.mode === 'stay') { this.decide(); return; }
       if (BEH.mode === 'limited' && this.walksLeft <= 0) {
         if (performance.now() < this.restUntil) { this.decide(); return; }  // отдых ещё идёт — можно сыграть анимацию
@@ -737,6 +739,154 @@
     }
   }
 
+  /* ---------- Дуэль («!пвп ник») ----------
+     Сервер присылает pixel_duel с готовым боем (броски по раундам). Страница только проигрывает: герои подбегают друг к другу,
+     каждый раунд оба бьют, над целью всплывает число/«ПРОМАХ»/«КРИТ», полоска HP убывает, в конце победитель ликует. */
+  const DUEL_HP = 25;
+  let duelBusy = false;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  function hpBar(h) {
+    if (!h.hpEl) { h.hpEl = document.createElement('div'); h.hpEl.className = 'duel-hp'; h.hpFill = document.createElement('i'); h.hpEl.appendChild(h.hpFill); h.el.appendChild(h.hpEl); }
+    return h.hpEl;
+  }
+  function setHp(h, hp, max) { max = max || DUEL_HP; hpBar(h); h.hpFill.style.width = Math.max(0, Math.min(100, hp / max * 100)) + '%'; h.hpFill.className = hp <= max * 0.3 ? 'low' : ''; }
+  function floatText(h, text, cls) {
+    const d = document.createElement('div'); d.className = 'duel-float ' + cls; d.textContent = text; h.el.appendChild(d);
+    setTimeout(() => d.remove(), 1300);
+  }
+  function faceEachOther(a, b) {
+    [[a, b], [b, a]].forEach(([x, y]) => {
+      const d = dirFromVector((y.pos.x + y.heroW / 2) - (x.pos.x + x.heroW / 2), 0, x.pack.directions);
+      if (d !== null && d >= 0) { x.dirIdx = d; x.drawnKey = ''; }
+    });
+  }
+  async function waitIdle(hs, maxMs) {
+    const t0 = performance.now();
+    while (performance.now() - t0 < maxMs && hs.some((h) => h.anim === 'walk' && !h.removed)) await sleep(80);
+  }
+  async function playDuel(duel) {
+    const A = chatterHero(duel.a.login), B = chatterHero(duel.b.login);
+    if (!A || !B || A === B || duelBusy) return;
+    duelBusy = true;
+    const hs = [A, B];
+    try {
+      hs.forEach((h) => { h.fighting = true; clearTimeout(h.nextTimer); clearTimeout(h.walkTimer); h.haltWalk(); h.endAction(); h.anim = 'idle'; h.animStart = performance.now(); });
+      // встреча посередине на общей линии земли; тот, кто левее, встаёт слева
+      const [L, R] = A.pos.x <= B.pos.x ? [A, B] : [B, A];
+      const cx = ((L.pos.x + L.heroW / 2) + (R.pos.x + R.heroW / 2)) / 2, y = (L.pos.y + R.pos.y) / 2, gap = Math.max(150, Math.max(L.heroW, R.heroW) * 1.2);   // подписи ников (≈130px) не должны налезать друг на друга
+      const clampTo = (h, x0, y0) => { const bd = h.bounds(); return { x: Math.max(bd.minX, Math.min(bd.maxX, x0)), y: Math.max(bd.minY, Math.min(bd.maxY, y0)) }; };
+      L.startWalk(clampTo(L, cx - gap / 2 - L.heroW / 2, L.floorY())); R.startWalk(clampTo(R, cx + gap / 2 - R.heroW / 2, R.floorY()));   // дуэль — на земле внизу экрана
+      await sleep(250); await waitIdle(hs, 9000);
+      hs.forEach((h) => { h.anim = 'idle'; h.animStart = performance.now(); h.nextTimer && clearTimeout(h.nextTimer); setHp(h, DUEL_HP); });
+      faceEachOther(A, B);
+      await sleep(500);
+      const ROUND = (duel.timing && duel.timing.roundMs) || 1700;
+      for (const r of duel.rounds) {
+        if (!r.a) continue;                                           // строка тай-брейка: бросок в конце, показывать нечего
+        A.playAction('', 'attack'); B.playAction('', 'attack');
+        await sleep(ROUND * 0.35);
+        [[A, B, r.a.swing, r.b.hp], [B, A, r.b.swing, r.a.hp]].forEach(([att, tgt, sw, hpLeft]) => {
+          if (sw.fumble) floatText(att, 'ПРОМАХ!', 'miss');
+          else if (!sw.hit) floatText(tgt, 'ПРОМАХ', 'miss');
+          else floatText(tgt, (sw.crit ? 'КРИТ −' : '−') + sw.dmg, sw.crit ? 'crit' : 'hit');
+          setHp(tgt, hpLeft);
+        });
+        await sleep(ROUND * 0.65);
+      }
+      const win = duel.winner === 'a' ? A : B, lose = win === A ? B : A;
+      lose.el.classList.add('duel-lose'); win.playAction('', 'emote') || win.playAction('', 'jump');
+      floatText(win, '🏆 ПОБЕДА', 'win');
+      await sleep((duel.timing && duel.timing.endMs) || 2500);
+    } finally {
+      hs.forEach((h) => {
+        h.fighting = false; h.el.classList.remove('duel-lose');
+        if (h.hpEl) { h.hpEl.remove(); h.hpEl = null; }
+        if (!h.removed) { h.goIdle(); h.applyPlane(); }
+      });
+      duelBusy = false;
+    }
+  }
+
+  /* ---------- Босс ----------
+     Сервер присылает pixel_boss: рассчитанный бой (раунды с бросками героев и босса). Страница проигрывает: появляется босс (размер по его
+     здоровью), герои встают перед ним строем, каждый раунд бьют все по очереди, босс отвечает, полоски HP убывают, павшие серые. */
+  let bossBusy = false;
+  function bossBar(name, hp, max) {
+    let b = document.getElementById('boss-bar');
+    if (!b) { b = document.createElement('div'); b.id = 'boss-bar'; b.innerHTML = '<div class="bb-name"></div><div class="bb-track"><i></i></div><div class="bb-hp"></div>'; document.body.appendChild(b); }
+    b.querySelector('.bb-name').textContent = '👹 ' + name; b.querySelector('i').style.width = Math.max(0, hp / max * 100) + '%'; b.querySelector('.bb-hp').textContent = Math.max(0, hp) + ' / ' + max; b.classList.add('on');
+    return b;
+  }
+  async function playBoss(ev) {
+    if (bossBusy || duelBusy || !ev || !Array.isArray(ev.rounds)) return;
+    bossBusy = duelBusy = true;
+    const T = ev.timing || {}, ROUND = T.roundMs || 1900, pres = new Map();
+    let boss = null, bobTimer = null;
+    try {
+      const data = await loadPack(`/pixel-avatar/${ev.boss.pack}/manifest.json`);
+      ev.heroes.forEach((h) => { const hero = chatterHero(h.login); if (hero) pres.set(h.login, hero); });
+      const fighters = [...pres.values()];
+      fighters.forEach((h) => { h.fighting = true; clearTimeout(h.nextTimer); clearTimeout(h.walkTimer); h.haltWalk(); h.endAction(); h.anim = 'idle'; h.animStart = performance.now(); });
+      // босс: крупнее при большом здоровье, стоит справа
+      boss = new Hero(ev.boss.pack, data, { owner: '', name: ev.boss.name });
+      boss.fighting = true; extraHeroes.push(boss);
+      boss.sizeFactor = Math.max(1, ev.boss.scale || 1) * 1.3; boss.applySize();
+      // бой идёт на земле, внизу экрана (как в режиме 2D, даже если он выключен): наземный босс стоит на линии земли, летающий (manifest.flying) парит над ней и качается
+      const bx = innerWidth * 0.72 - boss.heroW / 2, ground = boss.floorY();
+      const flying = data.pack.flying === true, by = flying ? Math.max(CFG.top, ground - Math.round(boss.heroH * 0.3 + 60)) : ground;
+      boss.startPos = { x: bx, y: by }; boss.start(); clearTimeout(boss.nextTimer); boss.dirIdx = 0;
+      boss.pos = { x: bx, y: by }; boss.el.style.transition = 'opacity 0.5s ease'; boss.el.style.transform = `translate(${bx}px, ${by}px)`;
+      boss.el.classList.add('boss-in');
+      if (flying) { const t0 = performance.now(); bobTimer = setInterval(() => { boss.el.style.transform = `translate(${bx}px, ${by + Math.sin((performance.now() - t0) / 420) * 7}px)`; }, 40); }
+      bossBar(ev.boss.name, ev.boss.hp, ev.boss.hp);
+      // строй героев слева от босса на земле: до 4 рядов вглубь (задние выше и позади), колонки идут от босса влево
+      const n = fighters.length, rows = Math.min(4, Math.max(1, Math.ceil(n / 5))), cols = Math.ceil(n / rows);
+      const hw = Math.max(60, ...fighters.map((h) => h.heroW));
+      const sw = Math.max(40, Math.min(hw * 1.05 + 10, (bx - 40) / cols)), rowStep = 34;
+      fighters.forEach((h, i) => {
+        const c = Math.floor(i / rows), r = i % rows;
+        h.el.style.zIndex = String(100 - r);
+        h.startWalk({ x: Math.max(0, bx - 30 - h.heroW - c * sw), y: Math.max(CFG.top, h.floorY() - r * rowStep) });
+      });
+      await sleep(300); await waitIdle(fighters, 10000);
+      fighters.forEach((h) => { h.anim = 'idle'; h.animStart = performance.now(); clearTimeout(h.nextTimer); h.dirIdx = 0; const d = dirFromVector(1, 0, h.pack.directions); if (d !== null && d >= 0) h.dirIdx = d; h.drawnKey = ''; });
+      { const d = dirFromVector(-1, 0, boss.pack.directions); if (d !== null && d >= 0) { boss.dirIdx = d; boss.drawnKey = ''; } }
+      const maxOf = Object.fromEntries(ev.heroes.map((h) => [h.login, h.max]));
+      fighters.forEach((h) => setHp(h, maxOf[h.owner], maxOf[h.owner])); setHp(boss, ev.boss.hp, ev.boss.hp);
+      await sleep(500);
+      const dead = new Set();
+      for (const r of ev.rounds) {
+        // 1) удары героев
+        r.hits.forEach((x) => { const h = pres.get(x.a); if (h && !dead.has(x.a)) h.playAction('', 'attack'); });
+        await sleep(ROUND * 0.3);
+        let sum = 0, crit = false;
+        r.hits.forEach((x) => { sum += x.dmg; crit = crit || x.crit; const h = pres.get(x.a); if (h && ev.heroes.length <= 16) floatText(h, x.crit ? 'КРИТ −' + x.dmg : (x.hit ? '−' + x.dmg : '✕'), x.crit ? 'crit' : (x.hit ? 'hit small' : 'miss')); });
+        floatText(boss, sum ? (crit ? 'КРИТ −' : '−') + sum : 'ПРОМАХИ', sum ? (crit ? 'crit' : 'hit') : 'miss');
+        setHp(boss, r.bossHp, ev.boss.hp); bossBar(ev.boss.name, r.bossHp, ev.boss.hp);
+        await sleep(ROUND * 0.3);
+        // 2) ответ босса
+        if (r.bossHits.length) {
+          boss.playAction('', 'attack') || boss.playAction('', 'cast');
+          const ab = r.bossHits.find((b) => b.ab); if (ab) floatText(boss, ab.ab === 'power' ? 'МОЩНЫЙ УДАР!' : 'ДЫХАНИЕ!', 'crit');
+          r.bossHits.forEach((b) => { const h = pres.get(b.t); if (h) floatText(h, b.hit ? (b.crit ? 'КРИТ −' : '−') + b.dmg : 'ПРОМАХ', b.hit ? (b.crit ? 'crit' : 'hit') : 'miss'); });
+        }
+        if (r.note === 'rage') boss.el.classList.add('boss-rage');
+        for (const [login, hp] of Object.entries(r.hp)) { const h = pres.get(login); if (!h) continue; setHp(h, hp, maxOf[login]); if (hp <= 0 && !dead.has(login)) { dead.add(login); h.el.classList.add('duel-lose'); } }
+        await sleep(ROUND * 0.4);
+      }
+      if (ev.won) { boss.el.classList.add('boss-dead'); floatText(boss, '☠ ПОВЕРЖЕН', 'win'); fighters.filter((h) => !dead.has(h.owner)).forEach((h) => h.playAction('', 'jump') || h.playAction('', 'emote')); }
+      else { floatText(boss, 'ПОБЕДА БОССА', 'win'); }
+      await sleep(T.endMs || 4500);
+    } catch (e) { console.warn('[босс]', e && e.message); }
+    finally {
+      clearInterval(bobTimer);
+      pres.forEach((h) => { h.fighting = false; h.el.style.zIndex = ''; h.el.classList.remove('duel-lose'); if (h.hpEl) { h.hpEl.remove(); h.hpEl = null; } if (!h.removed) { h.goIdle(); h.applyPlane(); } });
+      if (boss) { const i = extraHeroes.indexOf(boss); if (i >= 0) extraHeroes.splice(i, 1); boss.remove(); }
+      const b = document.getElementById('boss-bar'); if (b) b.classList.remove('on');
+      bossBusy = duelBusy = false;
+    }
+  }
+
   function connect() {
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/?type=chat&view=pixel`);
     ws.onmessage = (event) => {
@@ -748,6 +898,10 @@
       } else if (data.type === 'pixel_action' && !CFG.pack) {         // команда чата: герой этого зрителя играет доп. анимацию
         const login = String(data.login || '').toLowerCase();
         if (LOGIN_RE.test(login) && EXTRA_KINDS.includes(data.kind)) { const h = chatterHero(login); if (h) h.playAction(typeof data.name === 'string' ? data.name : '', data.kind); }
+      } else if (data.type === 'pixel_duel' && !CFG.pack && data.duel && Array.isArray(data.duel.rounds)) {
+        playDuel(data.duel).catch((e) => console.warn('[дуэль]', e && e.message));
+      } else if (data.type === 'pixel_boss' && !CFG.pack && data.boss && Array.isArray(data.boss.rounds)) {
+        playBoss(data.boss).catch((e) => console.warn('[босс]', e && e.message));
       } else if (data.type === 'pixel_heroes' && !CFG.pack) {         // в режиме ?pack=… список от сервера не нужен
         applySettings(data.settings);                                // настройки раньше списков: герои сразу появятся в нужном режиме
         syncActive(data.active);

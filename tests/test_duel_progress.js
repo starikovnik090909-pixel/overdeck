@@ -1,0 +1,26 @@
+const { createDuelProgress, TIERS } = require('../duelProgress.js'); const { createAwards } = require('../awards.js');
+let ok = 0, bad = 0; const t = (n, c) => { c ? ok++ : (bad++, console.log('FAIL', n)); };
+const xp = {}; const pixel = { bonusXp: (l, a) => { xp[l] = (xp[l] || 0) + a; } };
+const awards = createAwards({ file: null, hasProfile: () => true });
+const dp = createDuelProgress({ file: null, awards, pixel });
+dp.ensureAwards(); dp.ensureAwards();
+t('создано ровно 5 наград (без дублей)', awards.list().length === 5 && dp.awardIds().length === 5);
+t('иконки есть у всех', awards.list().every((a) => /^data:image\/png/.test(a.icon) && /^data:image\/png/.test(a.iconSmall)));
+const tiers = (l) => awards.awardsOf(l).map((id) => dp.awardIds().indexOf(id) + 1);
+let r = dp.recordResult('al', 'bob');
+t('1-я победа: ступень I, +20 +100 опыта', r.tierUp && r.tierUp.tier === 1 && xp.al === 120 && r.totalXp === 120);
+t('в профиле только I', JSON.stringify(tiers('al')) === '[1]');
+for (let i = 2; i <= 4; i++) { r = dp.recordResult('al', 'bob'); t('победа ' + i + ' без новой ступени', !r.tierUp); }
+r = dp.recordResult('al', 'bob');
+t('5-я победа: ступень II, I снята', r.tierUp && r.tierUp.tier === 2 && JSON.stringify(tiers('al')) === '[2]');
+for (let i = 6; i <= 14; i++) dp.recordResult('al', 'bob');
+r = dp.recordResult('al', 'bob'); t('15-я: ступень III', r.tierUp && r.tierUp.tier === 3 && JSON.stringify(tiers('al')) === '[3]');
+for (let i = 16; i <= 49; i++) dp.recordResult('al', 'bob');
+r = dp.recordResult('al', 'bob'); t('50-я: ступень IV', r.tierUp && r.tierUp.tier === 4);
+for (let i = 51; i <= 99; i++) dp.recordResult('al', 'bob');
+r = dp.recordResult('al', 'bob'); t('100-я: ступень V (высшая)', r.tierUp && r.tierUp.tier === 5 && JSON.stringify(tiers('al')) === '[5]');
+for (let i = 0; i < 30; i++) r = dp.recordResult('al', 'bob');
+t('после 100 значок не меняется', !r.tierUp && JSON.stringify(tiers('al')) === '[5]' && dp.statsOf('al').wins === 130);
+t('у проигравшего нет медали, опыта нет', tiers('bob').length === 0 && !xp.bob && dp.statsOf('bob').losses === 130);
+t('суммарный опыт al = побед×20 + бонусы ступеней', xp.al === 130 * 20 + TIERS.reduce((a, x) => a + x.xp, 0));
+console.log(ok + ' ok, ' + bad + ' fail'); process.exit(bad ? 1 : 0);

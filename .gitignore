@@ -140,3 +140,8 @@ mods.json
 mods/
 shoutouts.json
 shoutouts.json.tmp
+
+duel_stats.json
+duel_stats.json.tmp
+boss_data.json
+boss_data.json.tmp

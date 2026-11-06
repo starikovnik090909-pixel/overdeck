@@ -76,6 +76,9 @@ const adminThemes = require('./adminThemes');
 const chatBot = require('./chatBot');
 const botCommands = require('./botCommands');
 const { createAvatarCommands } = require('./avatarCommands');
+const { createPvp } = require('./pvp');
+const { createDuelProgress } = require('./duelProgress');
+const { createBosses } = require('./bosses');
 const botTimers = require('./botTimers');
 const shoutouts = require('./shoutouts');
 const autoMod = require('./autoMod');
@@ -714,6 +717,10 @@ botCommands.init(); // команды подгружаются из bot_commands
 // Команды чат-аватаров (!аватар, !прыжок…) — avatar_commands.json; слова не должны пересекаться с командами бота в обе стороны.
 const avatarCommands = createAvatarCommands({ botHas: (name) => !!botCommands.findByToken(name) });
 botCommands.setReservedChecker((name) => avatarCommands.hasName(name));
+const bosses = createBosses({ roster: () => pixelHeroes.getRoster(), bonusXp: (l, a) => pixelHeroes.bonusXp(l, a), knownPack: (id) => pixelHeroes.list().some((h) => h.id === id) });
+const duelProgress = createDuelProgress({ awards, pixel: pixelHeroes });
+duelProgress.ensureAwards();
+const pvp = createPvp({ isBlocked: () => bosses.isBusy(), isOnStage: (l) => pixelHeroes.isOnStage(l), nameOf: (l) => { try { const r = pixelHeroes.getRoster().find((x) => x.login === l); return r && r.name ? r.name : l; } catch (e) { return l; } } });
 botTimers.init(); // сообщения по таймеру — из bot_timers.json
 shoutouts.init({ say: (t) => chatBot.say(t) }); // отметка рейдеров и их возвращений — из shoutouts.json
 autoMod.init(); // список автомодерации — из banned_words.json (нет файла — создаётся со списком по умолчанию)
@@ -1643,6 +1650,7 @@ require('./routes/awards').main({ pixelHeroes, awards, app });
 
 const withAwards = (p) => (p ? { ...p, awards: awards.awardsOf(p.login).map((id) => awards.getAward(id)).filter(Boolean).map((a) => ({ id: a.id, title: a.title, description: a.description, icon: a.icon })) } : p);
 require('./routes/pixel').main({ twitch, pixelHeroes, app, withAwards, broadcastPixelHeroes });
+require('./routes/bosses').main({ app, bosses, startBossFight });
 
 require('./routes/fund').main({ fundBoxData, app, broadcastFundBoxState, broadcastFundBoxEvents });
 
@@ -2747,8 +2755,43 @@ setInterval(() => { twitchExt.tick().catch((e) => console.warn('[Расшире�
 setInterval(() => { if (pixelHeroes.presenceTick().changed) broadcastPixelHeroes(); }, 60 * 1000).unref();
 setInterval(() => { const r = awards.tick(); if (r.finished) console.log('[Награды] Событие завершено, награду получили: ' + r.granted); }, 5 * 1000).unref();
 
+/** Запуск боя с боссом (вручную из админки или по таймеру): рассылает оверлею бой, пишет в чат, по окончании выдаёт опыт. */
+function startBossFight(r) {
+  if (!r || !r.ok) return r;
+  const json = JSON.stringify({ type: 'pixel_boss', boss: r.event });
+  chatClients.forEach((ws) => { if (ws.readyState === ws.OPEN) ws.send(json); });
+  if (bosses.getState().settings.announce) chatBot.say(r.announce).catch(() => {});
+  setTimeout(() => {
+    let fin = null; try { fin = r.finish(); } catch (e) { console.warn('[Боссы] Ошибка итога:', e.message); }
+    if (fin && bosses.getState().settings.announce) chatBot.say(fin.text).catch(() => {});
+    broadcastPixelHeroes();
+  }, r.event.timing.totalMs).unref();
+  return r;
+}
+setInterval(() => { try { startBossFight(bosses.tick(pixelHeroes.getRoster().length)); } catch (e) { console.warn('[Боссы] Таймер:', e.message); } }, 30 * 1000).unref();
+
 /** Команды чат-аватаров: «!аватар» и др. Выполняются после выдачи героя; ответ шлёт бот (если подключён). */
 function runAvatarCommand(login, name, message) {
+  let pv = null;
+  try { pv = pvp.handle({ login, name, message }); } catch (e) { console.warn('[ПВП] Ошибка:', e.message); }
+  if (pv) {
+    if (pv.reply) chatBot.say(pv.reply).catch(() => {});
+    if (pv.duel) {
+      const json = JSON.stringify({ type: 'pixel_duel', duel: pv.duel });
+      chatClients.forEach((ws) => { if (ws.readyState === ws.OPEN) ws.send(json); });
+      chatBot.say(`⚔ ${pv.duel.a.name} вызывает ${pv.duel.b.name} на дуэль!`).catch(() => {});
+      const a = pv.announce;
+      setTimeout(() => {                                          // бой на оверлее закончился: итог, опыт, медаль
+        let res = null;
+        try { res = duelProgress.recordResult(pv.winnerLogin, pv.loserLogin); } catch (e) { console.warn('[Дуэли] Ошибка итога:', e.message); }
+        let text = `🏆 ${a.winnerName} побеждает ${a.loserName}!` + (res ? ` +${res.winXp} опыта.` : '');
+        if (res && res.tierUp) text += ` Новая медаль «${res.tierUp.title}» (+${res.tierUp.xp} опыта)!`;
+        chatBot.say(text).catch(() => {});
+        broadcastPixelHeroes();
+      }, a.afterMs).unref();
+    }
+    return;
+  }
   let r = null;
   try { r = avatarCommands.handle({ login, name, message, pixel: pixelHeroes }); } catch (e) { console.warn('[Команды аватаров] Ошибка:', e.message); }
   if (!r) return;
