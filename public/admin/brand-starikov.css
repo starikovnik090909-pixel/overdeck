@@ -1,0 +1,11 @@
+/* Тема админки STARIKOV (закрытая): фирменный шрифт только на крупном, всё остальное остаётся на Inter. */
+:root[data-brand="starikov"] .tab-title,
+:root[data-brand="starikov"] .brand-name {
+  font-family: 'Starikov Sans Slit', 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+:root[data-brand="starikov"] .brand-by {
+  font-family: 'Starikov Sans Slit', 'Inter', system-ui, sans-serif;
+  letter-spacing: .12em;
+}

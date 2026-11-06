@@ -139,6 +139,7 @@
   lockOv.addEventListener('click', (e) => { if (e.target === lockOv) closeLock(); });
 
   function refreshLockUi() {
+    window.dispatchEvent(new Event('locktoggle')); // темы админки и виджетов перечитывают список: закрытые появляются/исчезают
     syncBotAvTab();
     document.querySelectorAll('.dev-hidden, .dev-shown').forEach((el) => { el.classList.toggle('dev-hidden', !unlocked); el.classList.toggle('dev-shown', unlocked); });
     devPaint();

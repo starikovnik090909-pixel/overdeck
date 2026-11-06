@@ -36,6 +36,8 @@ const PRESETS = [
   { id: 'p-bumaga', name: 'Бумага', bgColor: '#F3F0EA', textColor: '#1F1D1A', accentColor: '#D4553B' },
   { id: 'p-sneg', name: 'Снег', bgColor: '#F2F4F8', textColor: '#14181F', accentColor: '#3B6EF5' },
   { id: 'p-myata', name: 'Мята', bgColor: '#EDF3F0', textColor: '#10201A', accentColor: '#1F9D6B' },
+  // Закрытая тема в фирменном стиле автора: чёрный фон, белый текст, бирюзовый акцент. Видна только после пароля (lock.js).
+  { id: 'p-starikov', name: 'STARIKOV', bgColor: '#000000', textColor: '#FFFFFF', accentColor: '#2BC4B4', locked: true },
 ].map((t) => ({ ...t, isDefault: false, isBuiltin: true }));
 const PRESET_IDS = new Set(PRESETS.map((t) => t.id));
 
@@ -105,6 +107,16 @@ function get() {
   return data;
 }
 
+/** Копия данных без закрытых тем, если пароль не введён. Активной закрытая тема тогда не считается. */
+function visible(unlocked) {
+  if (unlocked) return data;
+  const themes = data.themes.filter((t) => !t.locked);
+  const activeThemeId = themes.some((t) => t.id === data.activeThemeId) ? data.activeThemeId : DEFAULT_THEME_ID;
+  return { ...data, themes, activeThemeId };
+}
+
+function isLocked(id) { return data.themes.some((t) => t.id === id && t.locked); }
+
 /** Добавляет новую тему и сразу делает её активной (естественное продолжение действия "Сохранить" в форме создания). */
 function addTheme(name, bgColor, textColor, accentColor) {
   const theme = normalizeTheme({ name, bgColor, textColor, accentColor });
@@ -138,4 +150,4 @@ function setActiveTheme(id) {
 /** Отмечает, что окно выбора темы уже показывали (даже если оставили «Overdeck»). */
 function markPicked() { data.picked = true; save(); return { success: true, data }; }
 
-module.exports = { init, get, addTheme, deleteTheme, setActiveTheme, markPicked, DEFAULT_THEME_ID, FILE_PATH };
+module.exports = { visible, isLocked, init, get, addTheme, deleteTheme, setActiveTheme, markPicked, DEFAULT_THEME_ID, FILE_PATH };

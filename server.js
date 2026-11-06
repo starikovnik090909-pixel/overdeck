@@ -1397,7 +1397,7 @@ require('./routes/chatbot').main({ chatBot, app });
 
 // ---------- REST API: "Настройки админки" — темы оформления самой панели ----------
 
-require('./routes/themes').part4({ themes, adminThemes, app });
+require('./routes/themes').part4({ themes, adminThemes, tabLock, app });
 
 require('./routes/misc').part3({ tabLock, app });
 
@@ -2219,7 +2219,7 @@ require('./routes/themes').part3({ config, saveConfigToDisk, DEFAULT_THEME, app,
 
 // ---------- REST API: готовые темы (блок "Темы" в Основных настройках) ----------
 
-require('./routes/themes').part2({ timeline, widgets, widgetsPersistence, themes, config, saveConfigToDisk, DEFAULT_THEME, app, broadcast });
+require('./routes/themes').part2({ tabLock, timeline, widgets, widgetsPersistence, themes, config, saveConfigToDisk, DEFAULT_THEME, app, broadcast });
 
 // ---------- REST API: свои шрифты (загрузка в fonts/) ----------
 

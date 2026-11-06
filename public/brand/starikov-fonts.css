@@ -1,0 +1,6 @@
+/* Starikov Sans Slit — фирменный шрифт автора для крупных заголовков и цифр (закрытые темы STARIKOV). В нём нет знаков ? ( ) « » — / # %, поэтому всегда с запасным Inter. */
+@font-face{font-family:"Starikov Sans Slit";font-weight:300;font-display:swap;src:url("/brand/fonts/StarikovSansSlit-Light.ttf") format("truetype")}
+@font-face{font-family:"Starikov Sans Slit";font-weight:400;font-display:swap;src:url("/brand/fonts/StarikovSansSlit-Regular.ttf") format("truetype")}
+@font-face{font-family:"Starikov Sans Slit";font-weight:500;font-display:swap;src:url("/brand/fonts/StarikovSansSlit-Medium.ttf") format("truetype")}
+@font-face{font-family:"Starikov Sans Slit";font-weight:600;font-display:swap;src:url("/brand/fonts/StarikovSansSlit-SemiBold.ttf") format("truetype")}
+@font-face{font-family:"Starikov Sans Slit";font-weight:700;font-display:swap;src:url("/brand/fonts/StarikovSansSlit-Bold.ttf") format("truetype")}

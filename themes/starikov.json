@@ -1,0 +1,35 @@
+{
+  "name": "STARIKOV",
+  "locked": true,
+  "preview": "",
+  "params": {
+    "colors": {
+      "panelBg": "#0A0D0D",
+      "accent": "#2BC4B4",
+      "text": "#F2F5F5"
+    },
+    "opacity": 0.82,
+    "fonts": {
+      "heading": "Starikov Sans Slit",
+      "text": "Inter"
+    },
+    "sizes": {
+      "headingText": 18,
+      "bodyText": 14
+    },
+    "borderRadius": 4,
+    "panels": {
+      "showHeaderIcon": false,
+      "showCategoryThumbnails": true,
+      "glassEffect": false
+    },
+    "timeline": {
+      "showTimecodes": true,
+      "waveGradient": [
+        "#2BC4B4",
+        "#2BC4B4"
+      ],
+      "dotColor": "#FFFFFF"
+    }
+  }
+}

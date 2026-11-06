@@ -16,9 +16,12 @@ app.post('/api/overlay-style', (req, res) => {
 }
 
 function part2(ctx) {
-  const { timeline, widgets, widgetsPersistence, themes, config, saveConfigToDisk, DEFAULT_THEME, app, broadcast } = ctx;
+  const { tabLock, timeline, widgets, widgetsPersistence, themes, config, saveConfigToDisk, DEFAULT_THEME, app, broadcast } = ctx;
 app.get('/api/themes', (req, res) => {
-  res.json({ themes: themes.listThemes(), selected: config.selectedTheme || 'default' });
+  const open = tabLock.isValidToken(req.get('X-Lock-Token')); // закрытые темы (locked) видны только после пароля
+  const list = themes.listThemes().filter((t) => open || !t.locked);
+  const sel = config.selectedTheme || 'default';
+  res.json({ themes: list, selected: list.some((t) => t.id === sel) ? sel : 'default' });
 });
 
 app.post('/api/themes/apply', (req, res) => {
@@ -27,6 +30,7 @@ app.post('/api/themes/apply', (req, res) => {
   if (!preset) {
     return res.status(400).json({ success: false, error: 'Такой темы не найдено' });
   }
+  if (preset.locked && !tabLock.isValidToken(req.get('X-Lock-Token'))) return res.status(403).json({ success: false, error: 'Тема закрыта. Введи пароль на закрытых вкладках.' });
   const defaultTimelineSettings = widgets.getDefaultWidgetSettings().timeline;
   const { theme, timeline: timelinePatch } = themes.applyPreset(preset.params, DEFAULT_THEME, defaultTimelineSettings);
 
@@ -61,30 +65,32 @@ app.post('/api/theme/reset', (req, res) => {
 }
 
 function part4(ctx) {
-  const { themes, adminThemes, app } = ctx;
+  const { themes, adminThemes, tabLock, app } = ctx;
+  const open = (req) => tabLock.isValidToken(req.get('X-Lock-Token'));
 app.get('/api/admin-themes', (req, res) => {
-  res.json({ adminThemes: adminThemes.get() });
+  res.json({ adminThemes: adminThemes.visible(open(req)) });
 });
 
 app.post('/api/admin-themes', (req, res) => {
   const { name, bgColor, textColor, accentColor } = req.body || {};
   const result = adminThemes.addTheme(name, bgColor, textColor, accentColor);
   if (!result.success) return res.status(400).json({ success: false, error: 'Проверь название и все три цвета (формат #rrggbb).' });
-  res.json({ success: true, adminThemes: result.data, theme: result.theme });
+  res.json({ success: true, adminThemes: adminThemes.visible(open(req)), theme: result.theme });
 });
 
 app.post('/api/admin-themes/:id/activate', (req, res) => {
+  if (adminThemes.isLocked(req.params.id) && !open(req)) return res.status(403).json({ success: false, error: 'Тема закрыта. Введи пароль на закрытых вкладках.' });
   const result = adminThemes.setActiveTheme(req.params.id);
   if (!result.success) return res.status(404).json({ success: false, error: result.error });
-  res.json({ success: true, adminThemes: result.data });
+  res.json({ success: true, adminThemes: adminThemes.visible(open(req)) });
 });
 
-app.post('/api/admin-themes/picked', (req, res) => res.json({ success: true, adminThemes: adminThemes.markPicked().data }));
+app.post('/api/admin-themes/picked', (req, res) => res.json({ success: true, adminThemes: (adminThemes.markPicked(), adminThemes.visible(open(req))) }));
 
 app.post('/api/admin-themes/:id/delete', (req, res) => {
   const result = adminThemes.deleteTheme(req.params.id);
   if (!result.success) return res.status(400).json({ success: false, error: result.error });
-  res.json({ success: true, adminThemes: result.data });
+  res.json({ success: true, adminThemes: adminThemes.visible(open(req)) });
 });
   return {  };
 }

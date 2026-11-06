@@ -108,6 +108,7 @@ function listThemes() {
           name: raw.name || path.basename(f, '.json'),
           preview: raw.preview || '',
           params: raw.params || {},
+          locked: raw.locked === true,   // закрытая тема: видна и применяется только после ввода пароля (см. lock.js)
         };
       } catch (e) {
         console.warn(`[Темы] Не удалось прочитать ${f}:`, e.message);

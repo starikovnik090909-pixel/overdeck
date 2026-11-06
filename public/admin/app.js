@@ -111,6 +111,7 @@
   function applyActiveAdminTheme(adminThemeData) {
     adminThemeLastData = adminThemeData;
     const active = adminThemeData.themes.find((t) => t.id === adminThemeData.activeThemeId) || adminThemeData.themes[0];
+    if (active && active.id === 'p-starikov') document.documentElement.setAttribute('data-brand', 'starikov'); else document.documentElement.removeAttribute('data-brand'); // фирменные заголовки только у темы STARIKOV
     const wantLight = (localStorage.getItem(THEME_KEY) || 'dark') === 'light';
     if (!active || active.isDefault) {
       if (!wantLight) { clearAdminThemeVars(); return; }
@@ -197,7 +198,7 @@
     }
   });
 
-  (async function loadAdminThemes() {
+  async function loadAdminThemes() {
     try {
       const res = await fetch('/api/admin-themes');
       const data = await res.json();
@@ -208,7 +209,9 @@
     } catch (e) {
       // не критично — просто останется встроенная тема Starikov (ничего не переопределено)
     }
-  })();
+  }
+  loadAdminThemes();
+  window.addEventListener('locktoggle', loadAdminThemes);
 
   /* ---------- Вкладка «ЧатАватары»: плашка с адресом алерта для OBS ---------- */
 
@@ -1458,7 +1461,7 @@
   const FONT_LIST = [
     'Inter', 'Unbounded', 'Roboto', 'Montserrat', 'Oswald', 'Rubik',
     'JetBrains Mono', 'Playfair Display', 'Poppins', 'Bebas Neue',
-    'Comfortaa', 'Press Start 2P', 'Nunito', 'Manrope', 'Space Grotesk',
+    'Comfortaa', 'Press Start 2P', 'Nunito', 'Manrope', 'Space Grotesk', 'Starikov Sans Slit',
   ];
 
   const themeAccent = document.getElementById('themeAccent');
@@ -1677,6 +1680,7 @@
     }
   }
   loadThemePresets();
+  window.addEventListener('locktoggle', loadThemePresets);
 
   themePresetSelect.addEventListener('change', async () => {
     const themeId = themePresetSelect.value;

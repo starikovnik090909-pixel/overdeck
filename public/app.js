@@ -36,6 +36,9 @@ function ensureFontLoaded(family) {
   if (!family || loadedFonts.has(family)) return;
   loadedFonts.add(family);
 
+  if (family === 'Starikov Sans Slit') { // фирменный шрифт автора лежит в public/brand
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = '/brand/starikov-fonts.css'; document.head.appendChild(l); return;
+  }
   const custom = customFontsMap.get(family);
   if (custom) {
     // Свой загруженный шрифт — раздаётся сервером как статика из /fonts/…
@@ -72,7 +75,7 @@ function applyTheme(theme) {
   root.style.setProperty('--text-main', t.textMain);
   const [r, g, b] = t.bgPanelRGB;
   root.style.setProperty('--bg-panel', `rgba(${r},${g},${b},${t.bgPanelAlpha})`);
-  root.style.setProperty('--font-main', `'${t.fontMain}', system-ui, sans-serif`);
+  root.style.setProperty('--font-main', `'${t.fontMain}', 'Inter', system-ui, sans-serif`);
   root.style.setProperty('--font-text', `'${t.fontText}', system-ui, sans-serif`);
   root.style.setProperty('--font-size-main', t.fontSizeMain + 'px');
   root.style.setProperty('--font-size-text', t.fontSizeText + 'px');

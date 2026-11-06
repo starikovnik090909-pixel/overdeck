@@ -642,7 +642,8 @@
         return '<button type="button" class="ui3-theme' + (sel && sel.value === t.id ? ' on' : '') + '" data-id="' + t.id + '"><span class="sw" style="background:linear-gradient(135deg,' + (c.panelBg || '#141419') + ' 45%,' + (c.accent || '#B14846') + ')"></span><span class="nm">' + String(t.name).replace(/[<>&]/g, '') + '</span></button>';
       }).join('');
     };
-    fetch('/api/themes').then((r) => r.json()).then((d) => { themes = d.themes || []; draw(); }).catch(() => {});
+    const loadThemes = () => fetch('/api/themes').then((r) => r.json()).then((d) => { themes = d.themes || []; draw(); }).catch(() => {});
+    loadThemes(); window.addEventListener('locktoggle', loadThemes);
     grid.addEventListener('click', (e) => { const b = e.target.closest('.ui3-theme'); if (!b || !sel) return; sel.value = b.dataset.id; sel.dispatchEvent(new Event('change', { bubbles: true })); draw(); });
     if (sel) { sel.addEventListener('change', draw); new MutationObserver(draw).observe(sel, { childList: true }); setInterval(draw, 2500); }
     // предпросмотр: настоящий оверлей в уменьшенном виде

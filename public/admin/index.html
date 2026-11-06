@@ -18,7 +18,13 @@
 <link rel="stylesheet" href="overvoice-admin.css?v=10">
 <link rel="stylesheet" href="navsort.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
-<script>window.__ovQuery = location.search;</script>
+<script>window.__ovQuery = location.search;
+/* замок: к запросам про темы добавляем токен, чтобы закрытые темы STARIKOV показывались только после пароля */
+(function () { var f = window.fetch; window.fetch = function (u, o) { try { var url = typeof u === 'string' ? u : (u && u.url) || ''; var t = localStorage.getItem('tabLockToken_v1');
+  if (t && /\/api\/(admin-)?themes/.test(url)) { o = Object.assign({}, o); o.headers = Object.assign({}, o.headers || {}, { 'X-Lock-Token': t }); } } catch (e) {} return f.call(this, u, o); }; })();
+</script>
+<link rel="stylesheet" href="/brand/starikov-fonts.css">
+<link rel="stylesheet" href="brand-starikov.css?v=1">
 <link rel="stylesheet" href="ovl-fonts.css?v=1">
 </head>
 <body>
