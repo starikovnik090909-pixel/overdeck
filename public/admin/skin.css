@@ -47,10 +47,10 @@
   content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px; border-radius: 3px;
   background: var(--accent-grad);
 }
-.btn-primary { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 14px var(--accent-glow); }
+.btn-primary { background: var(--accent-grad); color:var(--on-accent,#04110F); box-shadow: 0 4px 14px var(--accent-glow); }
 .btn-primary:hover { filter: brightness(1.08); }
 .help-fab { background: linear-gradient(135deg, rgba(43,196,180,.22), rgba(31,31,35,.95)); border-color: rgba(43,196,180,.45); }
-.help-fab-icon { background: var(--accent-grad); color: #fff; }
+.help-fab-icon { background: var(--accent-grad); color:var(--on-accent,#04110F); }
 .guide-body h3, .guide-link, .guide-how > summary { color: var(--accent2); }
 .guide-modal { border-color: rgba(43,196,180,.3); }
 .guide-how > summary { color: var(--accent); }

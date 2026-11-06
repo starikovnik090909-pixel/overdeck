@@ -160,7 +160,7 @@
 #tab-music .mu-ib{width:38px;height:38px;border-radius:10px;border:1px solid var(--divider);background:var(--bg-card2);color:inherit;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:border-color .15s,background .15s}
 #tab-music .mu-ib:hover:not(:disabled){border-color:var(--accent)}
 #tab-music .mu-ib:disabled{opacity:.4;cursor:default}
-#tab-music .mu-ib-main{background:var(--accent);border-color:var(--accent);color:#fff}
+#tab-music .mu-ib-main{background:var(--accent);border-color:var(--accent);color:var(--on-accent,#04110F)}
 #tab-music .mu-ib-ban{margin-left:auto;opacity:.75}
 #tab-music .mu-info .mu-btns{margin-top:4px;gap:8px}
 #tab-music #muLive .mu-grid{height:calc(100vh - 230px);min-height:520px;align-items:stretch;margin-bottom:0;gap:14px}

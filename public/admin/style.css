@@ -138,7 +138,7 @@ html, body {
   width: 40px; height: 40px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent,#04110F);
   border: none;
   font-size: 22px; font-weight: 700; line-height: 1;
   cursor: pointer;
@@ -327,7 +327,7 @@ html, body {
   transition: opacity 0.15s ease, background-color 0.15s ease;
 }
 .btn:hover { opacity: 0.88; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color:var(--on-accent,#04110F); }
 .btn-secondary {
   background: transparent;
   color: var(--text-primary);
@@ -926,7 +926,7 @@ html, body {
 .help-fab:hover { background: var(--hover); padding: 0 14px; }
 .help-fab-icon {
   flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
-  background: var(--accent); color: #fff; font-weight: 700; font-size: 12px; line-height: 1;
+  background: var(--accent); color:var(--on-accent,#04110F); font-weight: 700; font-size: 12px; line-height: 1;
   display: flex; align-items: center; justify-content: center;
 }
 .help-fab-text {
@@ -1119,7 +1119,7 @@ html, body {
 .event-cover-btn:hover { background: var(--hover); border-color: var(--accent); }
 .event-cover.has-image .event-cover-btn { background: rgba(14,14,16,0.72); border-color: rgba(255,255,255,0.22); color: #fff; backdrop-filter: blur(4px); }
 .event-cover.has-image .event-cover-btn:hover { background: rgba(14,14,16,0.9); border-color: var(--accent); }
-.event-cover-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; padding: 9px 18px; font-size: 14px; }
+.event-cover-btn-primary { background: var(--accent); border-color: var(--accent); color:var(--on-accent,#04110F); padding: 9px 18px; font-size: 14px; }
 .event-cover-btn-primary:hover { background: var(--accent); filter: brightness(1.1); }
 
 .event-cover-name-input {
@@ -1176,7 +1176,7 @@ html, body {
   .event-cover-plate, .event-cover-media, .event-cover-pill-label, .event-cover-pill-chevron, .event-accordion-reveal, .event-accordion-reveal.is-open { transition: none; }
 }
 .event-accordion-btn:hover { background: var(--hover); }
-.event-accordion-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.event-accordion-btn.active { background: var(--accent); border-color: var(--accent); color:var(--on-accent,#04110F); }
 
 /* --- Живой предпросмотр виджетов (MVP/Факт) — iframe того же widget.html?preview=1 --- */
 .widget-preview-box {
@@ -1705,7 +1705,7 @@ html, body {
 /* Маленькие кружки одного размера (22px): «обс» — вывести героя на оверлей, «%» — размер героя */
 .pixel-dot { flex-shrink: 0; width: 22px; height: 22px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--divider); border-radius: 50%; background: var(--bg-card); color: var(--text-secondary); font: inherit; font-size: 9px; font-weight: 800; line-height: 1; cursor: pointer; }
 .pixel-dot:hover { border-color: var(--text-secondary); color: var(--text-primary); }
-.pixel-dot-obs.is-on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pixel-dot-obs.is-on { background: var(--accent); border-color: var(--accent); color:var(--on-accent,#04110F); }
 .pixel-dot-size { font-size: 12px; }
 .pixel-dot-size.is-set { border-color: var(--accent); color: var(--accent); }
 .pixel-dot:disabled { opacity: 0.5; cursor: default; }
@@ -2097,7 +2097,7 @@ html, body {
 #tab-widgets .ostyle-dot-e { border-radius: 0; background: #ffd84d; box-shadow: 3px 3px 0 rgba(0,0,0,.5); }
 #tab-widgets .ostyle-list { max-height: 440px; overflow-y: auto; padding-right: 4px; }
 #tab-widgets .ostyle-num { width: 26px; height: 26px; flex: 0 0 26px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: var(--divider); color: var(--text-secondary); }
-#tab-widgets .ostyle-item.active .ostyle-num { background: var(--accent); color: #fff; }
+#tab-widgets .ostyle-item.active .ostyle-num { background: var(--accent); color:var(--on-accent,#04110F); }
 
 /* ---- панель кнопок над предпросмотром (вкладка «Виджеты») ---- */
 #tab-widgets .wtool-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -2276,7 +2276,7 @@ html, body {
 .chat-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
 .chat-filter button { height: 28px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--divider); background: var(--bg-card); color: var(--text-secondary); font: 600 12px inherit; font-family: inherit; cursor: pointer; }
 .chat-filter button:hover { color: var(--text-primary); }
-.chat-filter button.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chat-filter button.on { background: var(--accent); border-color: var(--accent); color:var(--on-accent,#04110F); }
 #chatMirror[data-filter="twitch"] .chat-mirror-line:not([data-platform="twitch"]),
 #chatMirror[data-filter="kick"] .chat-mirror-line:not([data-platform="kick"]),
 #chatMirror[data-filter="youtube"] .chat-mirror-line:not([data-platform="youtube"]),
@@ -2343,7 +2343,7 @@ html, body {
 .ext-tag .chat-platform-tag, .ptag-prev .chat-platform-tag { font-size: 11px; font-weight: 800; letter-spacing: .06em; line-height: 1.3; padding: 2px 6px; }
 .ext-tag { display: inline-flex; vertical-align: middle; margin-left: 6px; }
 
-#tab-widgets .ostyle-new { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 6px; margin-left: 6px; background: var(--accent); color: #fff; vertical-align: 1px; }
+#tab-widgets .ostyle-new { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 6px; margin-left: 6px; background: var(--accent); color:var(--on-accent,#04110F); vertical-align: 1px; }
 
 /* Доп. функционал: звук афиши */
 .ex-snd { display: grid; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border, rgba(255,255,255,.08)); }
@@ -2364,7 +2364,7 @@ html, body {
 .ex-amb-row.sel { border-color: var(--accent, #2BC4B4); background: rgba(43,196,180,.12); }
 .ex-amb-play, .ex-amb-sp { flex: none; width: 36px; height: 36px; border-radius: 50%; }
 .ex-amb-play { border: 0; background: rgba(255,255,255,.1); color: inherit; cursor: pointer; font-size: 13px; }
-.ex-amb-play.on { background: var(--accent, #2BC4B4); color: #fff; }
+.ex-amb-play.on { background: var(--accent, #2BC4B4); color:var(--on-accent,#04110F); }
 .ex-amb-t { flex: 1; min-width: 0; display: grid; }
 .ex-amb-t small { color: var(--text-secondary); font-size: 12px; }
 .ex-snd select { width: 100%; background: var(--bg-input, #20222a); color: inherit; border: 1px solid var(--border, rgba(255,255,255,.1)); border-radius: 8px; padding: 8px 10px; font: inherit; }
