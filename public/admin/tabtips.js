@@ -129,7 +129,7 @@ S.obs1=()=>{
 };
 S.chat0=()=>{
   let h=frame(8,6,224,158,'Чат · в реальном времени');
-  const m=[['anna','привет всем!','#D84B55'],['max','го играть 🔥','#5B8DEF'],['kot','KEKW','#3DD68C'],['lis','лучший стрим','#F2A93B']];
+  const m=[['anna','привет всем!','#2BC4B4'],['max','го играть 🔥','#5B8DEF'],['kot','KEKW','#3DD68C'],['lis','лучший стрим','#F2A93B']];
   m.forEach((r,i)=>{h+=row(16,28+i*30,208,25,'<i class="av" style="background:'+r[2]+'"></i><b style="color:'+r[2]+'">'+r[0]+'</b>'+r[1],A('slide',6+i*16,92));});
   h+=frame(238,6,94,158,'Вид');
   [['Бейджи',8],['Аватарки',40],['Смайлы 7TV',64]].forEach((r,i)=>{
@@ -163,8 +163,8 @@ S.chat2=()=>{
 };
 S.don0=()=>{
   let h=frame(8,6,324,158,'Донатный хаб');
-  [['DonationAlerts','#D84B55'],['DonateX','#F2A93B'],['DonatePay','#3DD68C']].forEach((r,i)=>{h+=chip(16+i*86,28,80,16,r[0],'n');});
-  [['anna','DonationAlerts','+300 ₽','#D84B55'],['max','DonateX','+150 ₽','#F2A93B'],['kot','DonatePay','+500 ₽','#3DD68C']].forEach((r,i)=>{
+  [['DonationAlerts','#2BC4B4'],['DonateX','#F2A93B'],['DonatePay','#3DD68C']].forEach((r,i)=>{h+=chip(16+i*86,28,80,16,r[0],'n');});
+  [['anna','DonationAlerts','+300 ₽','#2BC4B4'],['max','DonateX','+150 ₽','#F2A93B'],['kot','DonatePay','+500 ₽','#3DD68C']].forEach((r,i)=>{
     h+=row(16,52+i*34,308,29,'<i class="av" style="background:'+r[3]+'"></i><b>'+r[0]+'</b><span class="mut">'+r[1]+'</span><b class="okc" style="margin-left:auto">'+r[2]+'</b>',A('drop',10+i*22,92));});
   return h;
 };
@@ -189,7 +189,7 @@ S.al1=()=>{
   ['Донат','Подписки','Рейд','Фоллоу'].forEach((n,i)=>{h+=row(14,28+i*28,88,24,n,i===2?'border-color:#E8545F':'');});
   h+=frame(116,6,216,158,'Настройки алерта',A('fade',22,92))
    +E('mut',126,28,100,12,'Текст',A('rise',26,92))+E('u-in',126,40,196,20,'Спасибо за рейд, {user}!',A('rise',26,92))
-   +E('mut',126,66,100,12,'Цвета',A('rise',32,92))+E('u-in',126,78,80,20,'<i class="av" style="background:#D84B55"></i>&nbsp;акцент',A('rise',32,92))
+   +E('mut',126,66,100,12,'Цвета',A('rise',32,92))+E('u-in',126,78,80,20,'<i class="av" style="background:#2BC4B4"></i>&nbsp;акцент',A('rise',32,92))
    +E('mut',126,102,120,12,'Звук и время показа',A('rise',38,92))+E('u-in',126,117,116,20,'raid.ogg ▾',A('rise',38,92))+E('u-in',250,117,72,20,'6 сек',A('rise',38,92))
    +btn(246,140,76,20,'Сохранить',true,A('rise',44,92));
   h+=cur([[0,300,150],[14,56,86],[20,56,86],[56,290,150],[100,300,150]])+rip(56,86,20);
@@ -295,7 +295,7 @@ S.tg0=()=>{
 S.wid0=()=>{
   let h=E('u-card',8,6,324,158,'','background:repeating-linear-gradient(0deg,transparent 0 19px,rgba(237,237,239,.06) 19px 20px),repeating-linear-gradient(90deg,transparent 0 19px,rgba(237,237,239,.06) 19px 20px),#0A0A0C');
   const key='wm'; CSS+='@keyframes tt_wm{0%,8%{left:20px;top:20px;width:80px;height:40px}36%,48%{left:180px;top:80px;width:80px;height:40px}74%,92%{left:180px;top:80px;width:120px;height:62px}100%{left:180px;top:80px;width:120px;height:62px;opacity:0}}';
-  h+='<div class="e" style="border:1.5px solid #E8545F;background:rgba(216,75,85,.16);border-radius:7px;animation:tt_wm var(--T) ease-in-out infinite both;display:flex;align-items:center;justify-content:center;font-weight:700" ><span class="acc">Чат</span></div>';
+  h+='<div class="e" style="border:1.5px solid #E8545F;background:rgba(43,196,180,.16);border-radius:7px;animation:tt_wm var(--T) ease-in-out infinite both;display:flex;align-items:center;justify-content:center;font-weight:700" ><span class="acc">Чат</span></div>';
   h+=chip(204,12,120,14,'в оверлее сразу ✓','g',A('pop',74,92));
   h+=cur([[0,60,36],[8,60,36],[36,220,100],[48,220,100],[56,262,134],[74,298,142],[100,298,142]]);
   return h;
@@ -321,11 +321,11 @@ S.wid2=()=>{
 };
 S.set0=()=>{
   let h=frame(8,6,150,158,'Акцентный цвет');
-  [['#D84B55',6],['#2DC4D6',30],['#3DD68C',54],['#F2A93B',78]].forEach((c,i)=>{h+=E('','',0,0,'')+E('',20+i*32,32,22,22,'','background:'+c[0]+';border-radius:50%;border:2px solid rgba(255,255,255,.15)');});
+  [['#2BC4B4',6],['#2DC4D6',30],['#3DD68C',54],['#F2A93B',78]].forEach((c,i)=>{h+=E('','',0,0,'')+E('',20+i*32,32,22,22,'','background:'+c[0]+';border-radius:50%;border:2px solid rgba(255,255,255,.15)');});
   h+=E('e',0,0,0,0,'')+E('hl',17,29,28,28,'',A('fade',6,28)+'border-radius:50%')+E('hl',49,29,28,28,'',A('fade',30,52)+'border-radius:50%')+E('hl',81,29,28,28,'',A('fade',54,76)+'border-radius:50%')+E('hl',113,29,28,28,'',A('fade',78,92)+'border-radius:50%');
   h+=E('mut',18,64,130,12,'подхватят все виджеты')+E('u-in',18,82,128,20,'Шрифт: Inter ▾')+E('mut',18,112,130,36,'Цвет текста, фон панелей и прозрачность',A('fade',10,92),'white-space:normal');
   h+=frame(166,6,166,158,'Предпросмотр');
-  [['#D84B55',6,28],['#2DC4D6',30,52],['#3DD68C',54,76],['#F2A93B',78,92]].forEach(c=>{
+  [['#2BC4B4',6,28],['#2DC4D6',30,52],['#3DD68C',54,76],['#F2A93B',78,92]].forEach(c=>{
     h+=E('u-card',176,32,146,50,'<div style="padding:8px 10px"><b style="color:'+c[0]+'">Донат +500 ₽</b><br><span class="mut">kot</span></div>','border-color:'+c[0]+';'+A('fade',c[1],c[2]))
      +E('',176,92,146,8,'','border-radius:5px;background:'+c[0]+';'+A('fade',c[1],c[2]))
      +chip(176,108,50,16,'Цель','',A('fade',c[1],c[2]));});
@@ -343,7 +343,7 @@ S.set2=()=>{
   let h=E('u-card',8,6,324,24,'','border-radius:8px')+E('u-h',18,13,120,12,'Overdeck')+E('',298,10,18,16,'⚙','text-align:center;color:#E8545F;font-size:13px')
    +hl(293,8,26,20,6,92);
   h+=frame(8,36,324,128,'Настройки админки · Темы');
-  [['Overdeck','#0E0E10','#D84B55'],['Океан','#091518','#2DC4D6'],['Бумага','#F3F0EA','#E0583C']].forEach((t,i)=>{
+  [['Overdeck','#0E0E10','#2BC4B4'],['Океан','#091518','#2DC4D6'],['Бумага','#F3F0EA','#E0583C']].forEach((t,i)=>{
     h+=row(16,62+i*27,308,24,'<span style="display:flex;border-radius:5px;overflow:hidden"><i style="width:10px;height:14px;background:'+t[1]+'"></i><i style="width:10px;height:14px;background:#EDEDEF"></i><i style="width:10px;height:14px;background:'+t[2]+'"></i></span>'+t[0]);});
   h+=btn(196,142,128,18,'Создать свою тему',true,A('rise',34,92))+E('hl',14,60,312,28,'',A('fade',14,34)+'border-radius:7px');
   h+=cur([[0,300,150],[8,306,18],[14,306,18],[30,120,100],[40,270,150],[100,300,150]])+rip(306,18,14);

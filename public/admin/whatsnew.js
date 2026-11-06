@@ -151,9 +151,9 @@
   const unseen = (f) => window.WHATSNEW.items.filter((i) => !seen[i.id] && f(i));
 
   const st = document.createElement('style');
-  st.textContent = '.wn-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff3b4a;box-shadow:0 0 0 0 rgba(255,59,74,.7);animation:wnPulse 1.4s infinite;flex:none;margin-left:6px;vertical-align:middle;pointer-events:none}' +
+  st.textContent = '.wn-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 rgba(43,196,180,.7);animation:wnPulse 1.4s infinite;flex:none;margin-left:6px;vertical-align:middle;pointer-events:none}' +
     '.nav-item>.wn-dot{position:absolute;right:10px;top:50%;margin-top:-4px;margin-left:0}.da-nav-it>.wn-dot{position:absolute;right:56px;top:50%;margin-top:-4px}.da-nav-it{position:relative}' +
-    '@keyframes wnPulse{0%{box-shadow:0 0 0 0 rgba(255,59,74,.7)}70%{box-shadow:0 0 0 7px rgba(255,59,74,0)}100%{box-shadow:0 0 0 0 rgba(255,59,74,0)}}';
+    '@keyframes wnPulse{0%{box-shadow:0 0 0 0 rgba(43,196,180,.7)}70%{box-shadow:0 0 0 7px rgba(43,196,180,0)}100%{box-shadow:0 0 0 0 rgba(43,196,180,0)}}';
   document.head.appendChild(st);
 
   function put(el, on) {

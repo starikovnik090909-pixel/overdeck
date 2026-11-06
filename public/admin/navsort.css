@@ -1,9 +1,9 @@
 /* полоска-ручка для перетаскивания пунктов меню */
 .nav-item .nav-grip { position: absolute; left: 2px; top: 50%; width: 4px; height: 16px; margin-top: -8px; border-radius: 3px; background: var(--text-mute, #777); opacity: 0; cursor: grab; touch-action: none; transition: opacity .12s, background .12s; }
 .nav-item:hover .nav-grip { opacity: .35; }
-.nav-item .nav-grip:hover { opacity: .9; background: var(--accent, #D84B55); }
+.nav-item .nav-grip:hover { opacity: .9; background: var(--accent, var(--accent)); }
 .nav-sorting, .nav-sorting .nav-grip { cursor: grabbing; }
 .nav-sorting .nav-item:not(.nav-dragging):hover { background: transparent; }
-.nav-item.nav-dragging { background: var(--bg-card2, #1c1c20); outline: 1px solid var(--accent, #D84B55); outline-offset: -1px; opacity: .92; z-index: 2; }
-.nav-item.nav-dragging .nav-grip { opacity: 1; background: var(--accent, #D84B55); }
+.nav-item.nav-dragging { background: var(--bg-card2, #1c1c20); outline: 1px solid var(--accent, var(--accent)); outline-offset: -1px; opacity: .92; z-index: 2; }
+.nav-item.nav-dragging .nav-grip { opacity: 1; background: var(--accent, var(--accent)); }
 .nav-sorting { user-select: none; }

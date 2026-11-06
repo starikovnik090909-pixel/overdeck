@@ -118,7 +118,7 @@
   function pick(i) {
     const x = palItems[i]; if (!x) return;
     closePal(); goTab(x.tab);
-    if (x.el) setTimeout(() => { x.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); const c = x.el.closest('.card') || x.el; c.animate([{ boxShadow: '0 0 0 2px #D84B55' }, { boxShadow: '0 0 0 2px transparent' }], { duration: 1400 }); }, 80);
+    if (x.el) setTimeout(() => { x.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); const c = x.el.closest('.card') || x.el; c.animate([{ boxShadow: '0 0 0 2px #2BC4B4' }, { boxShadow: '0 0 0 2px transparent' }], { duration: 1400 }); }, 80);
   }
   palIn.addEventListener('input', () => { palSel = 0; renderPal(); });
   palIn.addEventListener('keydown', (e) => {
@@ -428,7 +428,7 @@
       if (step === 2) body = '<h1>Проверим</h1><p>Нажми — в OBS должен появиться алерт. В статистику тестовые события не попадают.</p><div class="ui3-tests" style="padding:0;margin:16px 0 0">' +
         [['donation', 'Донат'], ['follow', 'Фоллов'], ['sub', 'Подписка'], ['raid', 'Рейд']].map((x) => '<button class="btn btn-secondary" type="button" data-wtest="' + x[0] + '">' + x[1] + '</button>').join('') + '</div>' +
         '<div class="ui3-wz-act"><button class="btn btn-primary" type="button" data-wz="finish">Всё работает — в админку</button></div>';
-      ov.innerHTML = '<div class="ui3-wz-box"><div class="ui3-wz-brand"><img src="assets/overdeck-icon.svg" width="30" height="30" alt=""><b>Overdeck</b></div>' + bar + '<div class="card ui3-wz-card">' + body + '</div>' +
+      ov.innerHTML = '<div class="ui3-wz-box"><div class="ui3-wz-brand"><img src="assets/overdeck-icon-brand.svg" width="30" height="30" alt=""><b>Overdeck</b></div>' + bar + '<div class="card ui3-wz-card">' + body + '</div>' +
         '<div class="ui3-wz-foot"><button class="btn btn-ghost btn-sm" type="button" data-wz="skip">Пропустить мастер</button>' + (step === 0 ? '<button class="btn btn-ghost btn-sm" type="button" data-wz="key">Уже настраивал на другом ПК? Открыть файл авторизации</button>' : '') + '</div></div>';
       if (step === 0) deviceBlock($('#wzDev', ov), (st) => { store.set('ov3WizardStep', '1'); if (!st.restart) setTimeout(() => { step = 1; draw(); }, 1200); });
     }
@@ -639,7 +639,7 @@
     const draw = () => {
       grid.innerHTML = themes.map((t) => {
         const c = (t.params && t.params.colors) || {};
-        return '<button type="button" class="ui3-theme' + (sel && sel.value === t.id ? ' on' : '') + '" data-id="' + t.id + '"><span class="sw" style="background:linear-gradient(135deg,' + (c.panelBg || '#141419') + ' 45%,' + (c.accent || '#B14846') + ')"></span><span class="nm">' + String(t.name).replace(/[<>&]/g, '') + '</span></button>';
+        return '<button type="button" class="ui3-theme' + (sel && sel.value === t.id ? ' on' : '') + '" data-id="' + t.id + '"><span class="sw" style="background:linear-gradient(135deg,' + (c.panelBg || '#141419') + ' 45%,' + (c.accent || '#2BC4B4') + ')"></span><span class="nm">' + String(t.name).replace(/[<>&]/g, '') + '</span></button>';
       }).join('');
     };
     const loadThemes = () => fetch('/api/themes').then((r) => r.json()).then((d) => { themes = d.themes || []; draw(); }).catch(() => {});

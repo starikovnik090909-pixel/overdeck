@@ -9,7 +9,7 @@
     if (document.getElementById('tpOv')) return;
     const themes = data.themes.filter((t) => t.isDefault || t.isBuiltin);
     let sel = data.activeThemeId;
-    const sw = (t) => (t.isDefault ? ['#0E0E10', '#EDEDEF', '#D84B55'] : [t.bgColor, t.textColor, t.accentColor]);
+    const sw = (t) => (t.isDefault ? ['#0E0E10', '#EDEDEF', '#2BC4B4'] : [t.bgColor, t.textColor, t.accentColor]);
     const ov = document.createElement('div');
     ov.id = 'tpOv';
     ov.className = 'tp-ov';

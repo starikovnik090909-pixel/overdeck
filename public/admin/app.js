@@ -111,12 +111,10 @@
   function applyActiveAdminTheme(adminThemeData) {
     adminThemeLastData = adminThemeData;
     const active = adminThemeData.themes.find((t) => t.id === adminThemeData.activeThemeId) || adminThemeData.themes[0];
-    if (active && active.id === 'p-starikov') document.documentElement.setAttribute('data-brand', 'starikov'); else document.documentElement.removeAttribute('data-brand'); // фирменные заголовки только у темы STARIKOV
+    if (!active || active.isDefault || active.id === 'p-starikov') document.documentElement.setAttribute('data-brand', 'starikov'); else document.documentElement.removeAttribute('data-brand'); // фирменные заголовки только у темы STARIKOV
     const wantLight = (localStorage.getItem(THEME_KEY) || 'dark') === 'light';
     if (!active || active.isDefault) {
-      if (!wantLight) { clearAdminThemeVars(); return; }
-      const v = adminThemeVariant({ accentColor: '#D84B55' }, true); // светлый вариант «Overdeck» считается так же, как у остальных тем
-      applyAdminColors(v.bg, v.tx, v.ac);
+      clearAdminThemeVars(); // фирменная светлая/тёмная палитра задана в ui3.css (data-brand)
       return;
     }
     if (wantLight === (adminThemeNaturalMode(active) === 'light')) applyAdminColors(active.bgColor, active.textColor, active.accentColor);
@@ -130,7 +128,7 @@
   }
 
   function renderAdminThemeList(adminThemeData) {
-    const sw = (t) => t.isDefault ? ['#0E0E10', '#EDEDEF', '#D84B55'] : [t.bgColor, t.textColor, t.accentColor];
+    const sw = (t) => t.isDefault ? ['#060808', '#F2F5F5', '#2BC4B4'] : [t.bgColor, t.textColor, t.accentColor];
     adminThemeList.innerHTML = adminThemeData.themes.map((t) => `
       <div class="admin-theme-row">
         <div class="admin-theme-swatch">${sw(t).map((c) => `<span style="background:${c}"></span>`).join('')}</div>
