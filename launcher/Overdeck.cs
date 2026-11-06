@@ -156,6 +156,9 @@ class Card : Panel
 class FancyButton : Button
 {
     public bool Primary;
+    public bool Round;          // круглая кнопка с иконкой (проверка обновлений); при тексте, отличном от базового, растягивается в «таблетку»
+    public int RightEdge;       // правая кромка круглой кнопки в родителе — чтобы при изменении ширины она не уезжала
+    public string BaseText = "";
     bool hover, down;
     public FancyButton()
     {
@@ -169,12 +172,51 @@ class FancyButton : Button
     protected override void OnMouseDown(MouseEventArgs e) { down = true; Invalidate(); base.OnMouseDown(e); }
     protected override void OnMouseUp(MouseEventArgs e) { down = false; Invalidate(); base.OnMouseUp(e); }
     protected override void OnEnabledChanged(EventArgs e) { Invalidate(); base.OnEnabledChanged(e); }
+    protected override void OnTextChanged(EventArgs e)
+    {
+        base.OnTextChanged(e);
+        if (!Round || RightEdge <= 0) return;
+        int w = 28;
+        if (Text != BaseText && Text.Length > 0) { try { w = TextRenderer.MeasureText(Text, Font).Width + 26; } catch { w = 150; } }
+        Width = w; Left = RightEdge - w; Invalidate();
+    }
+    void PaintRound(Graphics g)
+    {
+        Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
+        int alpha = Enabled ? 255 : 110;
+        bool pill = Width > Height + 4;
+        using (GraphicsPath p = Ui.Round(r, Height / 2))
+        {
+            using (SolidBrush b = new SolidBrush(Color.FromArgb(pill ? alpha : (hover ? 46 : 20), 43, 196, 180))) g.FillPath(b, p);
+            using (Pen pen = new Pen(Color.FromArgb(hover ? 255 : 115, 43, 196, 180), 1f)) g.DrawPath(pen, p);
+        }
+        Color ic = pill ? Color.FromArgb(4, 17, 15) : Color.FromArgb(alpha, 92, 235, 221);
+        if (pill)
+        {
+            TextRenderer.DrawText(g, Text, Font, ClientRectangle, ic, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter | TextFormatFlags.NoPadding);
+            return;
+        }
+        // значок «обновить»: две дуги со стрелками
+        float cx = Width / 2f - 0.5f, cy = Height / 2f - 0.5f, rad = 5.2f;
+        using (Pen pen = new Pen(ic, 1.6f))
+        {
+            pen.StartCap = LineCap.Round; pen.EndCap = LineCap.Round;
+            g.DrawArc(pen, cx - rad, cy - rad, rad * 2, rad * 2, 200f, 130f);
+            g.DrawArc(pen, cx - rad, cy - rad, rad * 2, rad * 2, 20f, 130f);
+            using (SolidBrush hb = new SolidBrush(ic))
+            {
+                g.FillPolygon(hb, new PointF[] { new PointF(cx + rad + 3f, cy - 1.5f), new PointF(cx + rad - 3f, cy - 1.5f), new PointF(cx + rad, cy + 2.5f) });
+                g.FillPolygon(hb, new PointF[] { new PointF(cx - rad - 3f, cy + 1.5f), new PointF(cx - rad + 3f, cy + 1.5f), new PointF(cx - rad, cy - 2.5f) });
+            }
+        }
+    }
     protected override void OnPaint(PaintEventArgs e)
     {
         Graphics g = e.Graphics;
         base.OnPaintBackground(e);
         g.SmoothingMode = SmoothingMode.AntiAlias;
         g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        if (Round) { PaintRound(g); return; }
         Rectangle r = new Rectangle(0, 0, Width - 1, Height - 1);
         int alpha = Enabled ? 255 : 110;
         using (GraphicsPath p = Ui.Round(r, 8))
@@ -315,6 +357,9 @@ class Launcher : Form
     Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
     FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut, btnMods;
     ModsForm modsForm;
+    IntroOverlay introOverlay;
+    List<Control> introReveal;
+    BrandHeader introHeader;
     Dot dotUpd, dotServer;
     ProgressLine progUpd;
     NotifyIcon tray;
@@ -373,41 +418,15 @@ class Launcher : Form
         DoubleBuffered = true;
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
-        // --- шапка ---
-        PictureBox logo = new PictureBox();
-        logo.Size = new Size(56, 56);
-        logo.Location = new Point(22, 18);
-        logo.SizeMode = PictureBoxSizeMode.Zoom;
-        logo.BackColor = Color.Transparent;
-        try
-        {
-            using (Stream rs = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("logo.png"))
-                logo.Image = new Bitmap(rs);
-        }
-        catch { try { logo.Image = Icon.ToBitmap(); } catch { } }
-        Controls.Add(logo);
-
-        Label by = new Label();
-        by.Text = "BY STARIKOV";
-        by.Font = new Font("Consolas", 8.5f, FontStyle.Bold);
-        by.ForeColor = Ui.Pink;
-        by.BackColor = Color.Transparent;
-        by.AutoSize = true;
-        by.Location = new Point(88, 20);
-        Controls.Add(by);
-
-        Label title = new Label();
-        title.Text = "Overdeck";
-        title.Font = new Font("Segoe UI Semibold", 23f);
-        title.ForeColor = Color.White;
-        title.BackColor = Color.Transparent;
-        title.AutoSize = true;
-        title.Location = new Point(84, 32);
-        Controls.Add(title);
+        // --- шапка: слово «Overdeck» контурами шрифта STARIKOV, подпись и линия ---
+        Brand.Init();
+        BrandHeader hdr = new BrandHeader();
+        hdr.Location = new Point(0, 0);
+        Controls.Add(hdr);
 
         Card verPill = new Card();
-        verPill.Size = new Size(96, 28);
-        verPill.Location = new Point(326, 34);
+        verPill.Size = new Size(90, 28);
+        verPill.Location = new Point(586, 28);
         lblVersion = new Label();
         lblVersion.Text = "v" + version;
         lblVersion.Font = new Font("Consolas", 9.5f, FontStyle.Bold);
@@ -421,7 +440,7 @@ class Launcher : Form
 
         // --- карточка обновлений ---
         Card cUpd = new Card();
-        cUpd.Location = new Point(22, 96);
+        cUpd.Location = new Point(22, 98);
         cUpd.Size = new Size(400, 92);
         Controls.Add(cUpd);
         dotUpd = new Dot(); dotUpd.Location = new Point(16, 16); dotUpd.DotColor = Ui.Dim; cUpd.Controls.Add(dotUpd);
@@ -450,7 +469,7 @@ class Launcher : Form
 
         // --- карточка состояния ---
         Card cSt = new Card();
-        cSt.Location = new Point(22, 200);
+        cSt.Location = new Point(22, 202);
         cSt.Size = new Size(400, 116);
         Controls.Add(cSt);
         dotServer = new Dot(); dotServer.Location = new Point(16, 14); cSt.Controls.Add(dotServer);
@@ -464,27 +483,35 @@ class Launcher : Form
         lblAdminUrl = RowValue(79); lblAdminUrl.Text = "localhost:" + port + "/admin"; cSt.Controls.Add(lblAdminUrl);
 
         // --- кнопки ---
-        btnAdmin = MakeButton("Открыть админку", 438, 96, 240, 42, false);
+        btnAdmin = MakeButton("Открыть админку", 438, 98, 240, 44, false);
         btnAdmin.Click += delegate { OpenAdmin(); };
-        btnConsole = MakeButton("Консоль сервера", 438, 146, 240, 42, false);
+        btnConsole = MakeButton("Консоль сервера", 438, 152, 240, 44, false);
         btnConsole.Click += delegate { ShowConsole(); };
-        btnUpdate = MakeButton("Проверить обновления", 438, 196, 240, 42, false);
+        btnToggle = MakeButton("Остановить сервер", 438, 206, 240, 44, false);
+        btnToggle.Click += delegate { ToggleServer(); };
+        btnShortcut = MakeButton("Ярлык на рабочий стол", 438, 260, 240, 44, false);
+        btnShortcut.Click += delegate { CreateDesktopShortcut(); };
+        btnMods = MakeButton("Моды", 438, 314, 240, 44, false);
+        btnMods.Click += delegate { ShowMods(); };
+
+        // маленькая круглая кнопка проверки обновлений на плашке обновлений
+        btnUpdate = new FancyButton();
+        btnUpdate.Round = true; btnUpdate.BaseText = "Проверить обновления"; btnUpdate.Text = "Проверить обновления";
+        btnUpdate.Font = new Font("Segoe UI Semibold", 9f);
+        btnUpdate.RightEdge = 386; btnUpdate.Size = new Size(28, 28); btnUpdate.Location = new Point(358, 10);
         btnUpdate.Click += delegate
         {
             if (pendingVersion.Length > 0 && downloadUrl.Length > 0 && !updating) InstallUpdate(pendingVersion);
             else CheckUpdates(true);
         };
-        btnToggle = MakeButton("Остановить сервер", 438, 246, 240, 42, false);
-        btnToggle.Click += delegate { ToggleServer(); };
-        btnShortcut = MakeButton("Ярлык на рабочий стол", 438, 296, 240, 42, false);
-        btnShortcut.Click += delegate { CreateDesktopShortcut(); };
-        btnMods = MakeButton("Моды", 438, 346, 240, 42, false);
-        btnMods.Click += delegate { ShowMods(); };
+        cUpd.Controls.Add(btnUpdate);
+        try { ToolTip tip = new ToolTip(); tip.SetToolTip(btnUpdate, "Проверить обновления"); } catch { }
+        btnUpdate.BringToFront();
 
         chkAuto = new Toggle();
         chkAuto.Text = "Обновлять автоматически";
         chkAuto.Checked = autoUpdate;
-        chkAuto.Location = new Point(24, 334);
+        chkAuto.Location = new Point(24, 336);
         chkAuto.Size = new Size(280, 24);
         chkAuto.CheckedChanged += delegate { autoUpdate = chkAuto.Checked; SaveUpdateConfig(); };
         Controls.Add(chkAuto);
@@ -496,8 +523,21 @@ class Launcher : Form
         hint.Font = new Font("Segoe UI", 8.5f);
         hint.AutoSize = false;
         hint.Size = new Size(654, 20);
-        hint.Location = new Point(24, 398);
+        hint.Location = new Point(24, 400);
         Controls.Add(hint);
+
+        // --- анимация запуска: поверх окна, пока слово «Overdeck» не доедет в шапку; потом пункты проявляются по очереди ---
+        if (Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1")
+        {
+            introReveal = new List<Control>();
+            foreach (Control c in Controls) { introReveal.Add(c); c.Visible = false; }
+            introHeader = hdr;
+            introOverlay = new IntroOverlay();
+            Controls.Add(introOverlay);
+            introOverlay.BringToFront();
+            introOverlay.Finished += delegate { FinishIntro(); };
+            Shown += delegate { if (introOverlay != null) introOverlay.Begin(); };
+        }
 
         console = new ConsoleForm();
         console.HandleCreated += delegate { FlushPendingLog(); };
@@ -619,20 +659,7 @@ class Launcher : Form
 
     protected override void OnPaintBackground(PaintEventArgs e)
     {
-        Graphics g = e.Graphics;
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        using (LinearGradientBrush b = new LinearGradientBrush(ClientRectangle, Ui.Bg1, Ui.Bg2, 90f)) g.FillRectangle(b, ClientRectangle);
-        using (GraphicsPath gp = new GraphicsPath())
-        {
-            Rectangle gr = new Rectangle(-260, -200, 760, 420);
-            gp.AddEllipse(gr);
-            using (PathGradientBrush pg = new PathGradientBrush(gp))
-            {
-                pg.CenterColor = Color.FromArgb(Ui.GlowAlpha, Ui.Glow);
-                pg.SurroundColors = new Color[] { Color.FromArgb(0, Ui.Glow) };
-                g.FillPath(pg, gp);
-            }
-        }
+        Backdrop.Paint(e.Graphics, ClientRectangle);
     }
 
     // ---------- сервер ----------
@@ -907,6 +934,31 @@ class Launcher : Form
         console.Show();
         console.WindowState = FormWindowState.Normal;
         console.Activate();
+    }
+
+    void FinishIntro()
+    {
+        try
+        {
+            IntroOverlay ov = introOverlay; introOverlay = null;
+            Controls.Remove(ov); ov.Dispose();
+            introHeader.Visible = true; introHeader.FadeIn();
+            int i = 0;
+            System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+            t.Interval = 55;
+            t.Tick += delegate
+            {
+                while (i < introReveal.Count && introReveal[i] == introHeader) i++;
+                if (i >= introReveal.Count) { t.Stop(); t.Dispose(); return; }
+                introReveal[i++].Visible = true;
+            };
+            t.Start();
+        }
+        catch (Exception ex)
+        {
+            WriteLog("Анимация запуска: " + ex.Message);
+            if (introReveal != null) foreach (Control c in introReveal) c.Visible = true;
+        }
     }
 
     public void ShowMain()
