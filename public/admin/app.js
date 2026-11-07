@@ -2082,14 +2082,7 @@
       el.style.width = rect.w + 'px';
       el.style.height = rect.h + 'px';
 
-      if (w.id === 'activity') {
-        // Настоящее содержимое вместо ярлыка — реально реагирует на изменение
-        // размера блока (см. refreshActivityPreview), как и на оверлее в OBS.
-        el.classList.add('preview-widget-live');
-        el.innerHTML = `<div class="preview-widget-label pv-live-label">${w.label}</div><div class="pv-activity-list"></div>${RESIZE_HANDLES_HTML}`;
-      } else {
-        el.innerHTML = `<div class="preview-widget-label">${w.label}</div>${RESIZE_HANDLES_HTML}`;
-      }
+      el.innerHTML = `<div class="preview-widget-label">${w.label}</div>${RESIZE_HANDLES_HTML}`;
       previewScene.appendChild(el);
     });
     // обновляем подсветку в списке слева тоже
