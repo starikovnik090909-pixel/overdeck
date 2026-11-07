@@ -2418,3 +2418,13 @@ html, body {
 .st-inp { flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--divider); background: var(--bg-app); color: var(--text-primary); font-size: 13px; }
 .st-hint { font-size: 11px; color: var(--text-secondary); }
 #tab-settings .form-message { margin: 0; min-height: 0; font-size: 12px; }
+
+/* Алерты: переключатель Основные / Дополнительные */
+.lvl-hide { display: none !important; }
+.lvl-bar { display: inline-flex; gap: 4px; padding: 3px; margin: 0 0 12px; border-radius: 10px; background: var(--bg-app); border: 1px solid var(--divider); }
+.lvl-bar button { height: 28px; padding: 0 14px; border: none; border-radius: 7px; background: none; color: var(--text-secondary); font-size: 12.5px; font-weight: 600; cursor: pointer; }
+.lvl-bar button:hover { color: var(--text-primary); }
+.lvl-bar button.on { background: var(--accent); color: var(--on-accent); }
+.lvl-bar i { font-style: normal; opacity: .7; margin-left: 4px; font-weight: 500; }
+#tab-donalerts .da-mid > .card:not([hidden]) { max-height: calc(100vh - 250px); overflow-y: auto; scrollbar-width: thin; }
+#tab-donalerts .da-group > summary { padding-top: 10px; padding-bottom: 10px; }
