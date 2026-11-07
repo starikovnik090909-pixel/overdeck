@@ -128,6 +128,7 @@
   }
 
   function renderAdminThemeList(adminThemeData) {
+    adminThemesCache = adminThemeData; if (window.renderStyleThemeGrid) window.renderStyleThemeGrid(adminThemeData);
     const sw = (t) => t.isDefault ? ['#060808', '#F2F5F5', '#2BC4B4'] : [t.bgColor, t.textColor, t.accentColor];
     adminThemeList.innerHTML = adminThemeData.themes.map((t) => `
       <div class="admin-theme-row">
@@ -1692,32 +1693,42 @@
     themePresetMessage.className = 'form-message' + (kind ? ' ' + kind : '');
   }
 
-  function renderThemeGrid(list, selected) {
+  function renderThemeGrid(data) {
     const grid = document.getElementById('stThemeGrid');
-    if (!grid) return;
+    if (!grid || !data) return;
     grid.innerHTML = '';
-    list.forEach((t) => {
-      const p = t.params || {}, c = p.colors || {}, f = p.fonts || {};
-      const rgb = hexToRgbArray(c.panelBg || '#141419');
+    data.themes.forEach((t) => {
+      const bg = t.isDefault ? '#060808' : t.bgColor, tx = t.isDefault ? '#F2F5F5' : t.textColor, ac = t.isDefault ? '#2BC4B4' : t.accentColor;
       const el = document.createElement('div');
-      el.className = 'st-th' + (t.id === selected ? ' on' : '');
+      el.className = 'st-th' + (t.id === data.activeThemeId ? ' on' : '');
       el.tabIndex = 0;
-      el.innerHTML = `<div class="pv" style="background:linear-gradient(rgba(${rgb.join(',')},${Math.max(0.6, p.opacity || 0.6)}),rgba(${rgb.join(',')},${Math.max(0.6, p.opacity || 0.6)})),#0d1111;color:${c.text || '#fff'};font-family:'${f.heading || 'Inter'}',sans-serif"><b style="color:${c.accent || '#fff'}">Aa 123</b><i style="background:${c.accent || '#fff'}"></i></div><div class="nm"></div>`;
-      el.querySelector('.nm').textContent = t.name;
-      if (t.custom) {
+      el.innerHTML = `<div class="pv" style="background:${bg};color:${tx}"><b style="color:${ac}">Aa 123</b><i style="background:${ac}"></i></div><div class="nm"></div>`;
+      el.querySelector('.nm').textContent = t.isDefault ? 'Овердек 4.0' : t.name;
+      if (!t.isDefault && !t.isBuiltin) {
         const d = document.createElement('button');
-        d.className = 'del'; d.type = 'button'; d.textContent = '×'; d.title = 'Убрать тему';
+        d.className = 'del'; d.type = 'button'; d.textContent = '×'; d.title = 'Удалить тему';
         d.onclick = async (e) => {
           e.stopPropagation();
-          const { ok } = await postJSON(`/api/themes/${t.id}/delete`, {});
-          if (ok) loadThemePresets();
+          const { ok, data: r } = await postJSON(`/api/admin-themes/${t.id}/delete`, {});
+          if (ok && r.success) { renderAdminThemeList(r.adminThemes); applyActiveAdminTheme(r.adminThemes); }
         };
         el.appendChild(d);
       }
-      el.onclick = () => { themePresetSelect.value = t.id; themePresetSelect.dispatchEvent(new Event('change')); };
+      el.onclick = async () => {
+        const { ok, data: r } = await postJSON(`/api/admin-themes/${t.id}/activate`, {});
+        if (!ok || !r.success) return;
+        syncModeToTheme(r.adminThemes.themes.find((x) => x.id === r.adminThemes.activeThemeId));
+        renderAdminThemeList(r.adminThemes); applyActiveAdminTheme(r.adminThemes);
+        // те же цвета — на оверлей
+        const res = await postJSON('/api/theme', { accent: ac, textMain: tx, bgPanelRGB: hexToRgbArray(bg) });
+        if (res.ok && res.data.success) applyThemeToForm(res.data.theme);
+        showThemePresetMessage(`Тема «${el.querySelector('.nm').textContent}» применена.`, 'success');
+      };
       grid.appendChild(el);
     });
   }
+  window.renderStyleThemeGrid = renderThemeGrid;
+  if (adminThemesCache) renderThemeGrid(adminThemesCache);
 
   async function loadThemePresets() {
     try {
@@ -1731,7 +1742,6 @@
         themePresetSelect.appendChild(opt);
       });
       if (data.selected) themePresetSelect.value = data.selected;
-      renderThemeGrid(data.themes || [], data.selected);
     } catch (e) {
       showThemePresetMessage('Не удалось загрузить список тем.', 'error');
     }
@@ -1747,8 +1757,6 @@
       if (ok && data.success) {
         applyThemeToForm(data.theme); // подставляем новые значения в поля выше — оверлей уже обновлён сервером
         showThemePresetMessage(`Тема «${themePresetSelect.selectedOptions[0].textContent}» применена.`, 'success');
-        document.querySelectorAll('#stThemeGrid .st-th').forEach((n) => n.classList.remove('on'));
-        loadThemePresets();
       } else {
         showThemePresetMessage((data && data.error) || 'Не удалось применить тему.', 'error');
       }
@@ -1763,15 +1771,12 @@
     const msg = document.getElementById('customThemeMessage');
     const name = document.getElementById('customThemeName').value.trim();
     if (!name) { msg.textContent = 'Введи название темы.'; msg.className = 'form-message error'; return; }
-    const { ok, data } = await postJSON('/api/themes/custom', {
-      name, accent: themeAccent.value, textMain: themeTextMain.value, bgPanel: themeBgPanel.value,
-      alpha: Number(themeBgAlpha.value) / 100, fontMain: themeFontMain.value, fontText: themeFontText.value,
-      sizeMain: Number(themeFontSizeMain.value), sizeText: Number(themeFontSizeText.value),
-    });
+    const { ok, data } = await postJSON('/api/admin-themes', { name, bgColor: themeBgPanel.value, textColor: themeTextMain.value, accentColor: themeAccent.value });
     if (ok && data.success) {
       msg.textContent = `Тема «${name}» добавлена в список.`; msg.className = 'form-message success';
       document.getElementById('customThemeName').value = '';
-      loadThemePresets();
+      syncModeToTheme(data.adminThemes.themes.find((t) => t.id === data.adminThemes.activeThemeId));
+      renderAdminThemeList(data.adminThemes); applyActiveAdminTheme(data.adminThemes);
     } else { msg.textContent = (data && data.error) || 'Не удалось сохранить тему.'; msg.className = 'form-message error'; }
   });
 

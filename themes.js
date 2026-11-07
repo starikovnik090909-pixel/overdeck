@@ -108,7 +108,6 @@ function listThemes() {
           name: raw.name || path.basename(f, '.json'),
           preview: raw.preview || '',
           params: raw.params || {},
-          custom: raw.custom === true,
           locked: raw.locked === true,   // закрытая тема: видна и применяется только после ввода пароля (см. lock.js)
         };
       } catch (e) {
