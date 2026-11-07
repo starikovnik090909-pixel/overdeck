@@ -2,6 +2,7 @@
 // Код под C# 5 / .NET Framework 4. Собирается вместе с Overdeck.cs (см. build-launcher.bat).
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -91,6 +92,7 @@ static class Brand
         + "86 L3206 -478 L3216 -473 L3235 -462 L3254 -450 Z M3469 -178 L3469 0 L3343 0 L3343 -700 L3469 -700 L3469 -340 L"
         + "3669 -508 L3863 -508 L3659 -337 L3910 0 L3754 0 L3563 -257 Z";
     public const float WordAdv = 3873;
+    public const float Track = 34f; // добавка между буквами «verdeck», единицы шрифта (чтобы буквы не слипались)
 
     public static bool Init()
     {
@@ -99,8 +101,7 @@ static class Brand
         try
         {
             PathO = Parse(GlyphO);
-            PathWord = Parse(GlyphWord);
-            RestUnits = WordAdv;
+            PathWord = Spread(GlyphWord, Track, out RestUnits);
             return true;
         }
         catch (Exception ex)
@@ -109,6 +110,36 @@ static class Brand
             Launcher.WriteLog("Контуры шрифта STARIKOV не разобраны: " + ex.Message);
             return false;
         }
+    }
+
+    // «verdeck» с равномерной добавкой между буквами: контуры делятся на буквы (внутренние контуры — дырки — остаются в своей букве)
+    static GraphicsPath Spread(string d, float extra, out float total)
+    {
+        List<GraphicsPath> figs = new List<GraphicsPath>();
+        foreach (string part in d.Split('M'))
+        {
+            if (part.Trim().Length == 0) continue;
+            figs.Add(Parse("M" + part));
+        }
+        List<RectangleF> outer = new List<RectangleF>();
+        List<List<GraphicsPath>> letters = new List<List<GraphicsPath>>();
+        figs.Sort(delegate(GraphicsPath a, GraphicsPath b) { return a.GetBounds().Left.CompareTo(b.GetBounds().Left); });
+        foreach (GraphicsPath f in figs)
+        {
+            RectangleF r = f.GetBounds(); int at = -1;
+            for (int i = 0; i < outer.Count; i++) { RectangleF o = outer[i]; if (r.Left >= o.Left - 1 && r.Right <= o.Right + 1 && r.Top >= o.Top - 1 && r.Bottom <= o.Bottom + 1) { at = i; break; } }
+            if (at < 0) { outer.Add(r); letters.Add(new List<GraphicsPath>()); at = letters.Count - 1; }
+            letters[at].Add(f);
+        }
+        GraphicsPath res = new GraphicsPath(FillMode.Winding);
+        for (int i = 0; i < letters.Count; i++)
+            foreach (GraphicsPath f in letters[i])
+            {
+                using (Matrix m = new Matrix()) { m.Translate(i * extra, 0); f.Transform(m); }
+                res.AddPath(f, false);
+            }
+        total = WordAdv + (letters.Count - 1) * extra;
+        return res;
     }
 
     // мини-язык: M x y, L x y, Q cx cy x y, C x1 y1 x2 y2 x y, Z
