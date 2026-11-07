@@ -515,6 +515,7 @@
   const show = (id) => {
     tabs.querySelectorAll('span[data-pane]').forEach((t) => t.classList.toggle('on', t.dataset.pane === id));
     sec.querySelectorAll('.bot-pane').forEach((p) => { p.hidden = p.dataset.pane !== id; });
+    sec.dataset.pane = id;
     try { localStorage.setItem('ov3BotPane', id); } catch (e) {}
   };
   tabs.addEventListener('click', (e) => { const t = e.target.closest('span[data-pane]'); if (t) show(t.dataset.pane); });
@@ -533,6 +534,7 @@
   function sync() {
     const st = src ? src.dataset.state : 'disconnected';
     const name = user && user.value ? user.value : 'Бот';
+    { const nv = document.getElementById('botTabs'); if (nv) nv.dataset.bot = st === 'connected' ? 'ok' : ''; }
     ico.className = 'ui3-ico ' + (st === 'connected' ? 'ok' : st === 'connecting' ? 'warn' : '');
     ttl.textContent = st === 'connected' ? name + ' в чате' : st === 'connecting' ? 'Подключаемся…' : st === 'error' ? 'Ошибка подключения' : 'Бот не подключён';
     sub.textContent = st === 'connected' ? 'Отвечает на команды и шлёт таймеры' : st === 'error' ? ((src && src.title) || 'Проверь токен в «Подключение бота»') : 'Подключи бота, чтобы он отвечал в чате';
@@ -826,4 +828,19 @@
   });
   document.addEventListener('click', (e) => { if (!e.target.closest('.wsec')) secs.forEach((x) => { x.classList.remove('open'); x.querySelector('.wsec-hd').setAttribute('aria-expanded', 'false'); }); });
   paint(); setTimeout(paint, 1500);
+})();
+
+// ---------- Чат-бот: быстрые заготовки команд ----------
+(function () {
+  const card = document.getElementById('botCommandsCard'); if (!card) return;
+  const table = card.querySelector('.bot-cmd-table'); if (!table) return;
+  const presets = [['!дискорд', 'Заходи в наш Discord: ссылка в описании канала, {user}!'], ['!тг', 'Анонсы и новости в Telegram: ссылка в описании канала'], ['!правила', 'Правила чата: без спама, без оскорблений, уважай других зрителей, {user}.'], ['!донат', 'Поддержать стрим можно по ссылке в описании канала. Спасибо, {user}!'], ['!привет', 'Привет, {user}! Добро пожаловать на канал {channel}!']];
+  const box = document.createElement('div'); box.className = 'bot-presets';
+  box.innerHTML = '<span>Быстро добавить:</span>' + presets.map((p, i) => `<button type="button" class="bot-chip" data-i="${i}">${p[0]}</button>`).join('');
+  table.parentNode.insertBefore(box, table);
+  box.addEventListener('click', (e) => {
+    const b = e.target.closest('.bot-chip'); if (!b) return; const p = presets[b.dataset.i];
+    const add = document.getElementById('btnBotCommandAdd'); if (add) add.click();
+    setTimeout(() => { const c = document.getElementById('botCmdCommand'), r = document.getElementById('botCmdResponse'); if (c) c.value = p[0]; if (r) r.value = p[1]; if (c) c.focus(); }, 30);
+  });
 })();

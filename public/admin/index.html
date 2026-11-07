@@ -1337,15 +1337,15 @@
         </button>
       </div>
 </div>
-      <div class="ui3-tabs" id="botTabs">
-        <span class="on" data-pane="cmd">Команды <i id="botCntCmd"></i></span>
-        <span data-pane="tim">Таймеры <i id="botCntTim"></i></span>
-        <span data-pane="so">Отметки</span>
-        <span data-pane="mod">Модерация</span>
-        <span data-pane="av">Команды аватаров</span>
-        <span data-pane="auth">Подключение бота</span>
-      </div>
       <div class="ui3-grid bot-grid">
+      <div class="ui3-tabs bot-nav" id="botTabs">
+        <span class="on" data-pane="cmd"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17l6-6-6-6M12 19h8"/></svg><em><b>Команды</b><small>Ответы на !команды</small></em><i id="botCntCmd"></i></span>
+        <span data-pane="tim"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg><em><b>Таймеры</b><small>Повтор сообщений</small></em><i id="botCntTim"></i></span>
+        <span data-pane="so"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-8-8 18-2-8-8-2z"/></svg><em><b>Отметки</b><small>Шаутаут после рейда</small></em></span>
+        <span data-pane="mod"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><em><b>Модерация</b><small>Слова из списка</small></em></span>
+        <span data-pane="av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg><em><b>Команды аватаров</b><small>Герой по команде</small></em></span>
+        <span data-pane="auth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="12" rx="3"/><path d="M12 8V4M8 14h.01M16 14h.01"/></svg><em><b>Подключение бота</b><small>Аккаунт и токены</small></em><u class="bt-dot"></u></span>
+      </div>
         <div class="bot-panes">
           <div class="bot-pane" data-pane="cmd">
       <div class="card" id="botCommandsCard">
