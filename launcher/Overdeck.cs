@@ -357,6 +357,8 @@ class Launcher : Form
     Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
     FancyButton btnAdmin, btnConsole, btnUpdate, btnToggle, btnShortcut, btnMods;
     ModsForm modsForm;
+    ModsPage modsPage;
+    bool onMods, sliding;
     IntroOverlay introOverlay;
     MethodInvoker startup;
     List<Control> introReveal;
@@ -540,6 +542,10 @@ class Launcher : Form
             Shown += delegate { if (introOverlay != null) introOverlay.Begin(); };
         }
 
+        modsPage = new ModsPage(delegate { SlideTo(false); }, delegate { return modsForm != null && modsForm.IsInstalled(); }, delegate { OpenModSheet(); });
+        modsPage.Location = new Point(700, 0);
+        Controls.Add(modsPage);
+
         console = new ConsoleForm();
         console.HandleCreated += delegate { FlushPendingLog(); };
         try { console.Icon = Icon; } catch { }
@@ -569,7 +575,7 @@ class Launcher : Form
         startup = delegate
         {
             WriteLog("Лаунчер запущен, папка: " + root + ", порт " + port);
-            try { modsForm = new ModsForm(root, port, delegate { return FindNode(); }); IntPtr hh = modsForm.Handle; } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
+            try { EnsureMods(); } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
             ThreadPool.QueueUserWorkItem(delegate
             {
                 string nv = "не найден";
@@ -627,10 +633,77 @@ class Launcher : Form
         }
     }
 
-    void ShowMods()
+    // окно настроек мода встроено в панель поверх страницы «Моды»
+    void EnsureMods()
     {
         if (modsForm == null || modsForm.IsDisposed) modsForm = new ModsForm(root, port, delegate { return FindNode(); });
-        modsForm.Show(); modsForm.BringToFront(); modsForm.Activate();
+        if (modsForm.Parent == null) modsForm.EmbedInto(modsPage.Sheet.Inner, 22, 66);
+    }
+
+    void OpenModSheet()
+    {
+        EnsureMods();
+        modsPage.Sheet.LblName.Text = "Овервойс";
+        modsPage.Sheet.LblSub.Text = "Нейроголос для микрофона";
+        modsPage.Sheet.Open();
+    }
+
+    void ShowMods()
+    {
+        try { EnsureMods(); } catch (Exception ex) { WriteLog("Моды: " + ex.Message); }
+        modsPage.Rebuild();
+        SlideTo(true);
+    }
+
+    // плавная прокрутка: окно «листается» — главная уезжает влево, страница модов въезжает справа (и обратно).
+    // Движется готовый снимок обеих страниц, поэтому без мерцания; настоящие элементы переставляются разом в конце.
+    void SlideTo(bool toMods)
+    {
+        if (sliding || onMods == toMods) return;
+        sliding = true;
+        int cur = onMods ? -700 : 0, to = toMods ? -700 : 0;
+        Bitmap bmMain = null, bmMods = null;
+        try
+        {
+            bmMain = new Bitmap(700, 428);
+            using (Graphics g = Graphics.FromImage(bmMain))
+            {
+                Backdrop.Paint(g, new Rectangle(0, 0, 700, 428));
+                foreach (Control c in Controls)
+                {
+                    if (c == modsPage || c == introOverlay || !c.Visible || c.Width <= 0 || c.Height <= 0) continue;
+                    using (Bitmap tb = new Bitmap(c.Width, c.Height))
+                    {
+                        c.DrawToBitmap(tb, new Rectangle(0, 0, c.Width, c.Height));
+                        g.DrawImageUnscaled(tb, c.Left - cur, c.Top);
+                    }
+                }
+            }
+            bmMods = new Bitmap(700, 428);
+            modsPage.DrawToBitmap(bmMods, new Rectangle(0, 0, 700, 428));
+        }
+        catch (Exception ex) { WriteLog("Листание: " + ex.Message); bmMain = null; }
+        // настоящие элементы сразу в конечное положение
+        foreach (Control c in Controls) { if (c == introOverlay) continue; c.Left = c.Left - cur + to; }
+        if (bmMain == null) { onMods = toMods; sliding = false; return; }
+        SlideOverlay ov = new SlideOverlay(bmMain, bmMods);
+        ov.Bounds = new Rectangle(0, 0, 700, 428);
+        Controls.Add(ov); ov.BringToFront();
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        System.Windows.Forms.Timer t = new System.Windows.Forms.Timer();
+        t.Interval = 10;
+        t.Tick += delegate
+        {
+            double k = Ez.InOut(sw.ElapsedMilliseconds / 480.0);
+            ov.Off = (int)Math.Round(cur + (to - cur) * k); ov.Invalidate();
+            if (sw.ElapsedMilliseconds >= 480)
+            {
+                t.Stop(); t.Dispose();
+                Controls.Remove(ov); ov.Dispose(); bmMain.Dispose(); bmMods.Dispose();
+                onMods = toMods; sliding = false; Invalidate(true);
+            }
+        };
+        t.Start();
     }
 
     FancyButton MakeButton(string text, int x, int y, int w, int h, bool primary)
@@ -1441,6 +1514,7 @@ class ModsForm : Form
     List<string> driveDirs = new List<string>();
     bool working, cancelled; Process ovProc;
     Toggle chkAuto; string latestVer = ""; bool autoUpd = true;
+    Label lblTitle, lblName; Card cardMain; Label lblHint;
 
     public ModsForm(string rootDir, int port, Func<string> nodeFinder)
     {
@@ -1453,11 +1527,11 @@ class ModsForm : Form
         BackColor = Ui.Bg1; ForeColor = Ui.Txt; Font = new Font("Segoe UI", 9.5f); DoubleBuffered = true;
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
-        Label title = new Label(); title.Text = "Моды"; title.Font = new Font("Segoe UI Semibold", 17f); title.ForeColor = Color.White;
+        Label title = new Label(); lblTitle = title; title.Text = "Моды"; title.Font = new Font("Segoe UI Semibold", 17f); title.ForeColor = Color.White;
         title.BackColor = Color.Transparent; title.AutoSize = true; title.Location = new Point(22, 14); Controls.Add(title);
 
-        Card c = new Card(); c.Location = new Point(22, 58); c.Size = new Size(476, 304); Controls.Add(c);
-        Label nm = new Label(); nm.Text = "Овервойс"; nm.Font = new Font("Segoe UI Semibold", 12f); nm.ForeColor = Color.White; nm.BackColor = Color.Transparent; nm.AutoSize = true; nm.Location = new Point(16, 12); c.Controls.Add(nm);
+        Card c = new Card(); cardMain = c; c.Location = new Point(22, 58); c.Size = new Size(476, 304); Controls.Add(c);
+        Label nm = new Label(); lblName = nm; nm.Text = "Овервойс"; nm.Font = new Font("Segoe UI Semibold", 12f); nm.ForeColor = Color.White; nm.BackColor = Color.Transparent; nm.AutoSize = true; nm.Location = new Point(16, 12); c.Controls.Add(nm);
         Label ds = new Label(); ds.Text = "Нейроголос для микрофона. Ставит программу, виртуальный аудиокабель VB-Cable и движок голоса (около 3 ГБ)."; ds.ForeColor = Ui.Dim; ds.BackColor = Color.Transparent; ds.AutoSize = false; ds.Size = new Size(444, 36); ds.Location = new Point(16, 38); ds.Font = new Font("Segoe UI", 9f); c.Controls.Add(ds);
         lblStatus = new Label(); lblStatus.ForeColor = Ui.Warn; lblStatus.BackColor = Color.Transparent; lblStatus.AutoSize = false; lblStatus.Size = new Size(444, 20); lblStatus.Location = new Point(16, 76); lblStatus.Font = new Font("Segoe UI Semibold", 9.5f); c.Controls.Add(lblStatus);
 
@@ -1474,11 +1548,29 @@ class ModsForm : Form
         btnGo = new FancyButton(); btnGo.Primary = true; btnGo.Text = "Скачать и установить всё"; btnGo.Location = new Point(16, 248); btnGo.Size = new Size(444, 42);
         btnGo.Click += delegate { StartInstall(); }; c.Controls.Add(btnGo);
 
-        Label hint = new Label(); hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(92, 105, 104);
+        Label hint = new Label(); lblHint = hint; hint.Text = "Windows спросит разрешение на установку драйвера кабеля. Можно закрыть окно: установка продолжится."; hint.ForeColor = Color.FromArgb(92, 105, 104);
         hint.BackColor = Color.Transparent; hint.Font = new Font("Segoe UI", 8.5f); hint.AutoSize = false; hint.Size = new Size(476, 32); hint.Location = new Point(24, 368); Controls.Add(hint);
 
         FillDrives(); Refresh2();
         FormClosing += delegate(object s, FormClosingEventArgs e) { if (e.CloseReason == CloseReason.UserClosing) { e.Cancel = true; Hide(); } };
+    }
+
+    public bool IsInstalled()
+    {
+        string dir = null; try { dir = ReadModDir(); } catch { }
+        if (dir == null) dir = DefaultDir();
+        return File.Exists(Path.Combine(dir, "server.js"));
+    }
+
+    // встроить содержимое окна в панель страницы «Моды» (без заголовка и рамки)
+    public void EmbedInto(Control host, int x, int y)
+    {
+        lblTitle.Visible = false; lblName.Visible = false;
+        cardMain.Location = new Point(0, 0);
+        lblHint.Location = new Point(2, 310); lblHint.Size = new Size(476, 30);
+        FormBorderStyle = FormBorderStyle.None; TopLevel = false;
+        ClientSize = new Size(476, 340); BackColor = Color.FromArgb(9, 12, 12);
+        Location = new Point(x, y); Parent = host; Show();
     }
 
     static Label Cap(string t, int x, int y) { Label l = new Label(); l.Text = t; l.ForeColor = Ui.Dim; l.BackColor = Color.Transparent; l.AutoSize = true; l.Location = new Point(x, y); l.Font = new Font("Segoe UI", 8.5f); return l; }
