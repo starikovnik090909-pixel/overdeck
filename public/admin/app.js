@@ -1861,6 +1861,7 @@
   let gridShow = gridPrefs.show;
 
   // Настройки СОДЕРЖИМОГО виджетов (не позиция/размер) — универсально по схеме с сервера.
+  window.__widgetSchemaIds = () => Object.keys(widgetSettingsSchema || {});
   let widgetSettingsSchema = {};   // {widgetId: {key: {label, unit, min, max, step, default}}}
   let widgetSettingsState = {};    // {widgetId: {key: value}} — рабочая (несохранённая) копия
   let latestTopChatters = [];      // для живого превью блока "Активность", обновляется по WS

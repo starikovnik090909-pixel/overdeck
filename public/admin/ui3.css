@@ -1250,3 +1250,17 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-telegram #tgPresets { display: none; }
 #tab-telegram #tgTpl { min-height: 150px; }
 #tab-telegram .tg-pill[hidden], #tab-telegram #tgUnlink[hidden] { display: none !important; }
+
+/* ---------- Сцена: панель «Положение / Настройки» ---------- */
+.si-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--divider); }
+.si-tabs button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 34px; border: none; border-radius: 9px; background: none; color: var(--text-secondary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.si-tabs button svg { width: 15px; height: 15px; }
+.si-tabs button:hover:not(:disabled) { color: var(--text-primary); }
+.si-tabs button.on { background: var(--accent); color: var(--on-accent); }
+.si-tabs button:disabled { opacity: .4; cursor: default; }
+#tab-widgets .widgets-side-col[data-m="set"] #widgetProps .wp-grid, #tab-widgets .widgets-side-col[data-m="set"] #wpTlWarn { display: none; }
+#tab-widgets .widgets-side-col[data-m="pos"] #widgetContentSettings { display: none !important; }
+#tab-widgets .widgets-side-col[data-m="set"] #widgetContentSettings { max-height: calc(100vh - 520px); min-height: 260px; overflow-y: auto; scrollbar-width: thin; }
+#tab-widgets .widgets-side-col[data-m="set"] #widgetProps { padding-bottom: 8px; }
+#tab-widgets .wgear { font-style: normal; color: var(--accent); font-size: 13px; margin-left: auto; padding: 0 6px; opacity: .85; }
+#tab-widgets .wicon .wgear + .wstate { margin-left: 0; }

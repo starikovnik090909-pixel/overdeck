@@ -3586,7 +3586,7 @@
             <div class="ex-col ex-opts"><h4 class="ex-h">Настройки</h4><div class="field"><label>Скорость титров</label><div class="chr-seg" id="exSpeed"><button type="button" data-v="slow">Медленно</button><button type="button" data-v="normal">Обычно</button><button type="button" data-v="fast">Быстро</button></div></div><div class="field"><label>Убрать экран после титров через, сек <span class="ex-sm">0 — не убирать, пока не нажмёшь «Скрыть»</span></label><input type="number" id="exHold" min="0" max="600" step="5"></div><label class="tg-sw"><input type="checkbox" id="exGhost"><i></i><span>Реплики чата плывут по фону</span></label><br><br><label class="tg-sw"><input type="checkbox" id="exWall"><i></i><span>В конце титров — все, кто писал</span></label><div class="ex-snd"><h5>Звук афиши</h5><button class="btn btn-secondary ex-amb-btn" type="button" id="exAmbBtn">Фоновый эмбиент: <b id="exAmbName">выкл</b></button><div class="field"><label>Громкость, % <span class="ex-sm">потолок: звук нарастает до него</span></label><div class="ex-vol"><input type="range" id="exVol" min="0" max="100" step="5"><b id="exVolV">40</b></div></div><div class="field"><label>Нарастание, сек <span class="ex-sm">после «Показать на стриме»</span></label><input type="number" id="exFade" min="0" max="30" step="1"></div><label class="tg-sw"><input type="checkbox" id="exSfx"><i></i><span>Звуки сцены: печать, удары заголовка, свуш, тики счётчиков</span></label><div class="field"><label>Громкость звуков сцены, %</label><div class="ex-vol"><input type="range" id="exSfxVol" min="0" max="100" step="1"><b id="exSfxVolV">10</b></div></div><div class="field"><label>Звук печати текста</label><select id="exType"><option value="k1">Линейные на пене</option><option value="k2">Тактильные</option><option value="k3">Топре</option><option value="k4">Коричневые</option><option value="k5">Синие, приглушённые</option><option value="k6">Кремовые</option></select></div><div class="field"><label>Звук заголовка</label><select id="exTitle"><option value="chord">Синтовый аккорд</option><option value="soft">Мягче</option><option value="echo">С эхом</option></select></div></div><div class="ex-snd"><h5>Обложки категорий</h5><div class="field"><label>Показ <span class="ex-sm">под главной обложкой — остальные категории вечера со временем; короче 5 минут не показываются</span></label><select id="exCovers"><option value="deck">Колода</option><option value="flip">Листание</option><option value="static">Обычная, одна обложка</option></select></div></div></div>
           </div>
         </div>
-        <div class="card ui3-card ex-card" data-fmt="gazette">
+        <div class="card ui3-card ex-card dev-hidden" data-fmt="gazette">
           <div class="ex-head" role="button" tabindex="0" aria-expanded="false">
             <div class="ex-prev"><span class="ex-now" data-now="gazette"></span><iframe data-page="gazette" title="Предпросмотр: Газета" tabindex="-1"></iframe></div>
             <div class="ex-main"><h3>Газета</h3><span class="ex-hint">Настройки и показ</span><span class="ex-chev" aria-hidden="true"></span></div>
@@ -3599,7 +3599,7 @@
             <div class="ex-col ex-opts"><h4 class="ex-h">Настройки</h4><p class="ex-sm">Настроек у газеты нет: название берётся из блока «Общее» вверху, «шёпот на полях» включается вместе с репликами на фоне афиши.</p></div>
           </div>
         </div>
-        <div class="card ui3-card ex-card" data-fmt="onair">
+        <div class="card ui3-card ex-card dev-hidden" data-fmt="onair">
           <div class="ex-head" role="button" tabindex="0" aria-expanded="false">
             <div class="ex-prev"><span class="ex-now" data-now="onair"></span><iframe data-page="onair" title="Предпросмотр: Эфир" tabindex="-1"></iframe></div>
             <div class="ex-main"><h3>Эфир</h3><span class="ex-hint">Настройки и показ</span><span class="ex-chev" aria-hidden="true"></span></div>
@@ -4152,6 +4152,7 @@
 <script src="alertlevels.js?v=1"></script>
 <script src="chatmenu.js?v=1"></script>
 <script src="tgnav.js?v=1"></script>
+<script src="sceneinspector.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>
 </body>
 </html>
