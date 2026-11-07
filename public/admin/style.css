@@ -2428,3 +2428,45 @@ html, body {
 .lvl-bar i { font-style: normal; opacity: .7; margin-left: 4px; font-weight: 500; }
 #tab-donalerts .da-mid > .card:not([hidden]) { max-height: calc(100vh - 250px); overflow-y: auto; scrollbar-width: thin; }
 #tab-donalerts .da-group > summary { padding-top: 10px; padding-bottom: 10px; }
+
+/* ===== Вкладка «Чат»: заполненная раскладка, меню вместо россыпи кнопок ===== */
+html body #tab-chat .chat-main-body { align-items: stretch; }
+html body #tab-chat .chat-games-col { flex: 1 1 0; min-width: 0; grid-template-columns: 1fr 1fr; align-items: stretch; align-content: start; }
+@media (max-width: 1750px) { html body #tab-chat .chat-games-col { flex: 1 1 0; grid-template-columns: 1fr; } }
+html body #tab-chat .chat-games-col .card { min-height: 190px; }
+html body #tab-chat .chat-stats-card { grid-row: span 1; }
+html body #tab-chat .chat-mirror-right { flex: 0 0 440px; }
+html body #tab-chat .chat-mirror-right .chat-mirror-frame { height: clamp(380px, calc(100vh - 250px), 760px); border-radius: 0 0 14px 14px; margin-top: 0; }
+html body #tab-chat .chat-mirror-head { padding: 12px 14px; margin: 0; background: var(--bg-card); border: 1px solid var(--divider); border-bottom: none; border-radius: 14px 14px 0 0; flex-wrap: nowrap; }
+html body #tab-chat .chat-mirror-head .section-title { white-space: nowrap; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+html body #tab-chat .chat-mirror-head .section-title::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.cm-wrap { position: relative; }
+.cm-btn { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 9px; border: 1px solid var(--divider); background: var(--bg-app); color: var(--text-primary); font-size: 13px; font-weight: 600; cursor: pointer; }
+.cm-btn svg { width: 16px; height: 16px; }
+.cm-btn svg:last-child { width: 14px; height: 14px; opacity: .6; transition: transform .15s; }
+.cm-btn:hover, .cm-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.cm-btn[aria-expanded="true"] svg:last-child { transform: rotate(180deg); }
+.cm-menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 60; width: 300px; padding: 6px; border-radius: 14px; background: var(--bg-card2, var(--bg-card)); border: 1px solid var(--divider); box-shadow: 0 18px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; gap: 2px; }
+.cm-menu[hidden] { display: none; }
+.cm-item { display: flex; align-items: center; gap: 12px; width: 100%; height: auto; padding: 10px 12px; border: none; border-radius: 10px; background: none; color: var(--text-primary); text-align: left; cursor: pointer; font-family: inherit; }
+.cm-item:hover { background: var(--bg-hover); color: var(--text-primary); border: none; }
+.cm-item[aria-expanded="true"] { background: var(--accent-soft); color: var(--text-primary); border: none; }
+.cm-item > svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+.cm-item span { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.cm-item b { font-size: 13.5px; font-weight: 600; }
+.cm-item small { font-size: 11.5px; color: var(--text-secondary); }
+.cm-item .dot { margin-left: auto; }
+.cm-sep { height: 1px; background: var(--divider); margin: 4px 8px; }
+/* фильтр платформ: одна плашка с цветными метками */
+html body #tab-chat .chat-filter { display: inline-flex; gap: 2px; padding: 3px; margin: 0 0 10px; border-radius: 10px; background: var(--bg-card); border: 1px solid var(--divider); }
+html body #tab-chat .chat-filter button { height: 26px; padding: 0 12px; border: none; border-radius: 7px; background: none; font-size: 12px; font-weight: 600; }
+html body #tab-chat .chat-filter button.on { background: var(--accent); color: var(--on-accent); }
+html body #tab-chat .chat-form-area { position: absolute; top: 0; right: 0; width: min(560px, 62%); z-index: 30; flex: none; }
+html body #tab-chat .chat-form-area .card { background: var(--bg-card2, var(--bg-card)); box-shadow: 0 18px 40px rgba(0,0,0,.35); }
+html body #tab-chat .chat-games-col { grid-auto-rows: 1fr; }
+html body #tab-chat .chat-games-col .card { display: flex; flex-direction: column; }
+html body #tab-chat .chat-games-col { grid-auto-rows: auto; }
+html body #tab-chat .chat-games-col .card { min-height: 150px; }
+html body #tab-chat .chat-filter { display: flex; width: 100%; box-sizing: border-box; margin: 0; border-radius: 0; border-bottom: none; border-top: none; padding: 0 8px 10px; background: var(--bg-card); }
+html body #tab-chat .chat-filter button { flex: 1; }
+html body #tab-chat .chat-mirror-head { margin-bottom: 0; }

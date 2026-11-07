@@ -915,13 +915,16 @@
           <div class="chat-mirror-head">
             <h2 class="section-title">Чат сейчас</h2>
             <div class="chat-head-actions">
-              <button class="chat-pill chat-detach-btn" id="btnChatDetach" type="button" title="Отделить чат в отдельное окно" aria-pressed="false">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="6" width="13" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M14 4h6v6M20 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span class="chat-obs-btn-label" id="chatDetachLabel">Отделить чат</span>
-              </button>
-              <button class="chat-pill" data-pop="popStream" type="button" aria-expanded="false" title="Чат на экране стрима: источник «Браузер»"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span>На стрим</span><i class="dot dot-g"></i></button>
-              <button class="chat-pill" data-pop="popDock" type="button" aria-expanded="false" title="Чат внутри OBS, только для тебя: док-панель"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M15 4v16"/></svg><span>Только мне</span><i class="dot dot-y"></i></button>
-              <button class="chat-pill chat-pill-ico" data-pop="chatDisplayPanel" type="button" aria-expanded="false" title="Как выглядит чат: значки, смайлы, подсветка"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+              <div class="cm-wrap">
+                <button class="cm-btn" id="chatMenuBtn" type="button" aria-expanded="false" aria-haspopup="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>Меню чата</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+                <div class="cm-menu" id="chatMenu" hidden>
+                  <button class="chat-pill cm-item" data-pop="popStream" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span><b>Чат на стрим</b><small>Зрители видят · источник «Браузер»</small></span><i class="dot dot-g"></i></button>
+                  <button class="chat-pill cm-item" data-pop="popDock" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M14 4v16"/></svg><span><b>Чат только мне</b><small>Док-панель внутри OBS</small></span><i class="dot dot-y"></i></button>
+                  <button class="chat-pill cm-item" data-pop="chatDisplayPanel" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span><b>Как выглядит чат</b><small>Значки, смайлы, подсветка</small></span></button>
+                  <div class="cm-sep"></div>
+                  <button class="cm-item" id="btnChatDetach" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="13" rx="2"/><path d="M14 4h6v6M20 4l-8 8"/></svg><span><b id="chatDetachLabel">Отделить чат</b><small>Отдельное окно поверх других</small></span></button>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -4147,6 +4150,7 @@
 <script src="overvoice-admin.js?v=18"></script>
 <script src="navsort.js?v=1"></script>
 <script src="alertlevels.js?v=1"></script>
+<script src="chatmenu.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>
 </body>
 </html>
