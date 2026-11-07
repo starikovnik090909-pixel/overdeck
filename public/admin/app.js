@@ -1276,6 +1276,7 @@
       const data = JSON.parse(event.data);
       if (data.type === 'status') {
         if (window.ui3SelfCheck) window.ui3SelfCheck(data.selfCheck);
+        if (window.qolStatus) window.qolStatus(data);
         setSidebarStatus(data.overlayOnline);
         setAuthSummary(data.twitch);
         setOauthUI(data.twitch.oauth);
@@ -1933,6 +1934,17 @@
       } catch (e) { showLayoutMessage('Сетевая ошибка при обращении к серверу.', 'error'); }
     }, 120);
   }
+
+  // Готовые макеты сцены (qol.js): применяют положение/видимость, чат не трогают
+  window.__sceneApi = {
+    ids: () => widgetDefs.map((w) => w.id),
+    get: () => JSON.parse(JSON.stringify(layoutState)),
+    defaults: () => JSON.parse(JSON.stringify(defaultsState)),
+    set(next) {
+      Object.keys(next).forEach((id) => { if (layoutState[id]) layoutState[id] = Object.assign({}, layoutState[id], next[id]); });
+      renderWidgetList(); renderPreviewWidgets(); updateFieldsFromSelected(); scheduleLayoutSave();
+    },
+  };
 
   /* --- Стиль оформления виджетов в OBS: выбор сразу применяется на оверлее --- */
   const ostyleList = document.getElementById('ostyleList');

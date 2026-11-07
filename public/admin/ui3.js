@@ -103,6 +103,13 @@
         const t = h.textContent.replace(/\s+/g, ' ').trim();
         if (t && t.length < 60) out.push({ tab, title: t, sub: name, el: h });
       });
+      const seen = new Set();
+      $$('label, .toggle-row-label, .ui3-row .l span, .field-label', sec).forEach((h) => {
+        if (h.closest('.dev-hidden, .dev-shown[hidden]') || h.querySelector('input[type=file]')) return;
+        const t = (h.childNodes.length > 1 && h.querySelector('input') ? h.textContent : h.textContent).replace(/\s+/g, ' ').trim();
+        if (!t || t.length < 3 || t.length > 70 || seen.has(t)) return;
+        seen.add(t); out.push({ tab, title: t, sub: name + ' · настройка', el: h });
+      });
     });
     return out;
   }

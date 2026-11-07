@@ -1149,6 +1149,7 @@ app.use(netGuard.middleware(() => config)); // доступ только с эт
 const keyBundle = require('./keyBundle');
 const selfCheck = require('./selfCheck');
 const backupAuto = require('./backupAuto');
+const history = require('./history');
 function restartAfterKey(res, extra) {
   const auto = !!process.env.OVERDECK_LAUNCHER;
   res.json(Object.assign({ success: true, restart: auto ? 'auto' : 'manual' }, extra || {}));
@@ -1175,6 +1176,26 @@ app.post('/api/key/import', express.json({ limit: '600mb' }), (req, res) => {
     console.log('[Ключ] Файл авторизации применён: записано файлов — ' + r.written + (r.backup ? ', старые данные сохранены в ' + r.backup : ''));
     restartAfterKey(res, r);
   } catch (e) { res.status(400).json({ success: false, error: e.message, needPassword: !!e.needPassword }); }
+});
+app.get('/api/backup/download', (req, res) => {
+  try {
+    const r = keyBundle.create({ password: '', includeMedia: false, appVersion: require('./package.json').version });
+    const d = new Date();
+    const name = 'overdeck-settings-' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '-' + String(d.getHours()).padStart(2, '0') + String(d.getMinutes()).padStart(2, '0') + '.overdeckkey';
+    res.set({ 'Content-Type': 'application/octet-stream', 'Content-Disposition': 'attachment; filename="' + name + '"' });
+    res.send(r.text);
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.get('/api/history', (req, res) => res.json({ list: history.list(), now: Date.now() }));
+app.post('/api/history/snapshot', (req, res) => { try { history.snapshot(require('./package.json').version, true); res.json({ success: true, list: history.list() }); } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
+app.post('/api/history/restore', express.json({ limit: '10kb' }), (req, res) => {
+  try {
+    history.snapshot(require('./package.json').version, true); // «до отката» — чтобы откат тоже можно было отменить
+    const inner = keyBundle.open(history.read((req.body || {}).name), '');
+    const r = keyBundle.apply(inner);
+    console.log('[История] откат применён: файлов ' + r.written);
+    restartAfterKey(res, r);
+  } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 app.get('/api/backup/auto', (req, res) => res.json({ list: backupAuto.list() }));
 app.post('/api/backup/auto', (req, res) => { try { res.json({ success: true, ...backupAuto.run(require('./package.json').version), list: backupAuto.list() }); } catch (e) { res.status(500).json({ success: false, error: e.message }); } });
@@ -2963,5 +2984,6 @@ server.listen(port, netGuard.listenHost(config), () => {
   console.log(`Панель управления: http://localhost:${port}/admin`);
   console.log('Остановить сервер — закрой это окно или нажми Ctrl+C.\n');
   backupAuto.start(require('./package.json').version);
+  history.start(require('./package.json').version);
   selfCheck.start(port, () => { if (adminClients.size > 0) broadcastAdminStatus(); });
 });
