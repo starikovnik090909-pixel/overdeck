@@ -3069,7 +3069,7 @@
 
     <section class="tab-section" id="tab-admin-settings">
       <h1 class="tab-title">Настройки админки</h1>
-      <p class="tab-description">Свои цветовые темы оформления ЭТОЙ панели управления (не путать с «Темой ивента» — та про алерты на стриме). Пока выбрана «Starikov» — работает обычный переключатель светлая/тёмная (солнце/луна) в углу; своя тема задаёт фон/текст/акцент полностью сама, поэтому на время её активности переключатель прячется — он бы просто ничего не менял.</p>
+      <p class="tab-description">Ключ авторизации и режим разработчика. Цветовые темы панели — во вкладке «Стиль».</p>
 
       <div class="card" id="keyCard" style="max-width:700px;">
         <h2 class="section-title">Ключ авторизации</h2>
@@ -3108,6 +3108,7 @@
         <div class="form-message" id="devMsg"></div>
       </div>
 
+      <div hidden aria-hidden="true">
       <div class="card" style="max-width:700px;">
         <h2 class="section-title">Темы</h2>
         <div id="adminThemeList"></div>
@@ -3142,6 +3143,7 @@
           <button class="btn btn-secondary" id="btnAdminThemeCancel" type="button">Отмена</button>
         </div>
         <div class="form-message" id="adminThemeMessage"></div>
+      </div>
       </div>
     </section>
 
