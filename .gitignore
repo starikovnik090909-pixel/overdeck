@@ -151,3 +151,4 @@ boss_data.json
 boss_data.json.tmp
 auction_bridge.json
 auction_bridge.json.tmp
+themes/custom-*.json*

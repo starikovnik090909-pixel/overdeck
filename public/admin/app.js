@@ -1618,6 +1618,37 @@
     themeBgAlphaValue.textContent = themeBgAlpha.value + '%';
     themeFontSizeMainValue.textContent = themeFontSizeMain.value + 'px';
     themeFontSizeTextValue.textContent = themeFontSizeText.value + 'px';
+    const rgb = hexToRgbArray(themeBgPanel.value);
+    const prev = document.getElementById('stPrev');
+    if (prev) { const c = `rgba(${rgb.join(',')},${Math.max(0.35, themeBgAlpha.value / 100)})`; prev.style.background = `linear-gradient(${c},${c}), #0d1111`; }
+    const mini = document.getElementById('stMini');
+    if (mini) {
+      { const c = `rgba(${rgb.join(',')},${themeBgAlpha.value / 100})`; mini.style.background = `linear-gradient(${c},${c}), #0d1111`; }
+      mini.style.color = themeTextMain.value;
+      mini.style.fontFamily = `'${themeFontText.value}', sans-serif`;
+      mini.firstElementChild.style.fontFamily = `'${themeFontMain.value}', sans-serif`;
+      mini.firstElementChild.style.color = themeAccent.value;
+      mini.lastElementChild.style.background = themeAccent.value;
+    }
+    [['hexAccent', themeAccent], ['hexText', themeTextMain], ['hexBg', themeBgPanel]].forEach(([id, el]) => {
+      const n = document.getElementById(id); if (n) n.textContent = el.value.toUpperCase();
+    });
+    renderFontChips();
+  }
+
+  function renderFontChips() {
+    const box = document.getElementById('stFontChips');
+    const cbox = document.getElementById('stCustomFonts');
+    if (!box) return;
+    const mk = (name) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'st-chip' + (themeFontMain.value === name ? ' on' : '');
+      b.textContent = name; b.style.fontFamily = `'${name}', sans-serif`;
+      b.onclick = () => { themeFontMain.value = name; themeFontText.value = name; updatePreview(); };
+      return b;
+    };
+    box.innerHTML = ''; FONT_LIST.slice(0, 10).forEach((n) => box.appendChild(mk(n)));
+    cbox.innerHTML = ''; [...customFontsById.keys()].forEach((n) => cbox.appendChild(mk(n)));
   }
 
   let lastLoadedTheme = null;
@@ -1661,6 +1692,33 @@
     themePresetMessage.className = 'form-message' + (kind ? ' ' + kind : '');
   }
 
+  function renderThemeGrid(list, selected) {
+    const grid = document.getElementById('stThemeGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    list.forEach((t) => {
+      const p = t.params || {}, c = p.colors || {}, f = p.fonts || {};
+      const rgb = hexToRgbArray(c.panelBg || '#141419');
+      const el = document.createElement('div');
+      el.className = 'st-th' + (t.id === selected ? ' on' : '');
+      el.tabIndex = 0;
+      el.innerHTML = `<div class="pv" style="background:linear-gradient(rgba(${rgb.join(',')},${Math.max(0.6, p.opacity || 0.6)}),rgba(${rgb.join(',')},${Math.max(0.6, p.opacity || 0.6)})),#0d1111;color:${c.text || '#fff'};font-family:'${f.heading || 'Inter'}',sans-serif"><b style="color:${c.accent || '#fff'}">Aa 123</b><i style="background:${c.accent || '#fff'}"></i></div><div class="nm"></div>`;
+      el.querySelector('.nm').textContent = t.name;
+      if (t.custom) {
+        const d = document.createElement('button');
+        d.className = 'del'; d.type = 'button'; d.textContent = '×'; d.title = 'Убрать тему';
+        d.onclick = async (e) => {
+          e.stopPropagation();
+          const { ok } = await postJSON(`/api/themes/${t.id}/delete`, {});
+          if (ok) loadThemePresets();
+        };
+        el.appendChild(d);
+      }
+      el.onclick = () => { themePresetSelect.value = t.id; themePresetSelect.dispatchEvent(new Event('change')); };
+      grid.appendChild(el);
+    });
+  }
+
   async function loadThemePresets() {
     try {
       const res = await fetch('/api/themes');
@@ -1673,6 +1731,7 @@
         themePresetSelect.appendChild(opt);
       });
       if (data.selected) themePresetSelect.value = data.selected;
+      renderThemeGrid(data.themes || [], data.selected);
     } catch (e) {
       showThemePresetMessage('Не удалось загрузить список тем.', 'error');
     }
@@ -1688,6 +1747,8 @@
       if (ok && data.success) {
         applyThemeToForm(data.theme); // подставляем новые значения в поля выше — оверлей уже обновлён сервером
         showThemePresetMessage(`Тема «${themePresetSelect.selectedOptions[0].textContent}» применена.`, 'success');
+        document.querySelectorAll('#stThemeGrid .st-th').forEach((n) => n.classList.remove('on'));
+        loadThemePresets();
       } else {
         showThemePresetMessage((data && data.error) || 'Не удалось применить тему.', 'error');
       }
@@ -1696,6 +1757,23 @@
     }
   });
 
+
+  const btnSaveCustomTheme = document.getElementById('btnSaveCustomTheme');
+  btnSaveCustomTheme.addEventListener('click', async () => {
+    const msg = document.getElementById('customThemeMessage');
+    const name = document.getElementById('customThemeName').value.trim();
+    if (!name) { msg.textContent = 'Введи название темы.'; msg.className = 'form-message error'; return; }
+    const { ok, data } = await postJSON('/api/themes/custom', {
+      name, accent: themeAccent.value, textMain: themeTextMain.value, bgPanel: themeBgPanel.value,
+      alpha: Number(themeBgAlpha.value) / 100, fontMain: themeFontMain.value, fontText: themeFontText.value,
+      sizeMain: Number(themeFontSizeMain.value), sizeText: Number(themeFontSizeText.value),
+    });
+    if (ok && data.success) {
+      msg.textContent = `Тема «${name}» добавлена в список.`; msg.className = 'form-message success';
+      document.getElementById('customThemeName').value = '';
+      loadThemePresets();
+    } else { msg.textContent = (data && data.error) || 'Не удалось сохранить тему.'; msg.className = 'form-message error'; }
+  });
 
   btnThemeSave.addEventListener('click', async () => {
     const body = {

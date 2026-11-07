@@ -541,94 +541,57 @@
     </section>
 
     <section class="tab-section" id="tab-settings">
-      <div class="page-head"><div><h1 class="tab-title">Стиль</h1><p class="tab-description">Цвета, шрифты и размеры для всех виджетов. Изменения сразу видны в оверлее и сохраняются сами.</p></div>
-        <div class="page-actions"><span class="ui3-saved" id="themeSaved"></span><a class="btn btn-secondary" href="/overlay.html" target="_blank" rel="noopener">Открыть оверлей</a></div></div>
+      <div class="page-head"><div><h1 class="tab-title">Стиль</h1><p class="tab-description">Текст, готовые темы и своя тема для всех виджетов оверлея.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="themeSaved"></span><span class="form-message st-msg" id="themeFormMessage"></span>
+          <a class="btn btn-secondary btn-sm" href="/overlay.html" target="_blank" rel="noopener">Оверлей</a>
+          <button class="btn btn-secondary btn-sm" id="btnThemeReset" type="button">Сбросить</button>
+          <button class="btn btn-primary btn-sm" id="btnThemeSave" type="button">Сохранить</button></div></div>
 
-      <div class="settings-columns">
-        <div class="settings-col">
-          <div class="card">
-            <h2 class="section-title">Цвета</h2>
-            <div class="color-grid">
-              <div class="color-field">
-                <label for="themeAccent">Акцентный цвет</label>
-                <input type="color" id="themeAccent">
-              </div>
-              <div class="color-field">
-                <label for="themeTextMain">Цвет текста</label>
-                <input type="color" id="themeTextMain">
-              </div>
-              <div class="color-field">
-                <label for="themeBgPanel">Фон панелей</label>
-                <input type="color" id="themeBgPanel">
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2 class="section-title">Прозрачность фона панелей</h2>
-            <div class="slider-row">
-              <input type="range" id="themeBgAlpha" min="0" max="100" value="55">
-              <span class="slider-value" id="themeBgAlphaValue">55%</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h2 class="section-title">Темы</h2>
-            <div class="field">
-              <label for="themePresetSelect">Готовая тема</label>
-              <select id="themePresetSelect"></select>
-            </div>
-            <p class="card-hint">Применяется сразу — подставляет цвета, прозрачность, шрифты и размеры текста. Если после этого поменять что-то вручную выше — сама тема не сбросится, изменится только то поле, что тронул.</p>
-            <div class="form-message" id="themePresetMessage"></div>
-          </div>
-        </div>
-
-        <div class="settings-col">
-          <div class="card">
-            <h2 class="section-title">Шрифты</h2>
-            <div class="field">
-              <label for="themeFontMain">Основной шрифт (заголовки, цифры)</label>
-              <select id="themeFontMain"></select>
-            </div>
-            <div class="field">
-              <label for="themeFontText">Шрифт текста (имена, подписи)</label>
-              <select id="themeFontText"></select>
-            </div>
-            <div class="field">
-              <button class="btn btn-secondary" id="btnAddFont" type="button">Добавить свой шрифт</button>
-              <input type="file" id="fontUploadInput" accept=".ttf,.otf,.woff,.woff2" multiple style="display:none;">
-              <p class="card-hint after-button">.ttf, .otf, .woff, .woff2 — можно выбрать сразу несколько файлов. Появятся в списках выше сразу после загрузки.</p>
-            </div>
-            <div class="form-message" id="fontUploadMessage"></div>
+      <div class="st-cols">
+        <!-- 1. ТЕКСТ -->
+        <div class="st-col">
+          <h2 class="st-h">Текст</h2>
+          <div class="st-prev" id="stPrev">
             <div class="font-preview" id="fontPreviewMain">Пример заголовка 123</div>
-            <div class="font-preview font-preview-text" id="fontPreviewText">Пример текста и подписей</div>
+            <div class="font-preview font-preview-text" id="fontPreviewText">Пример текста и подписей — Starikov</div>
           </div>
+          <div class="st-sub">Заголовки и цифры</div>
+          <select id="themeFontMain" class="st-sel"></select>
+          <div class="slider-row st-sl"><span class="st-lbl">Размер</span><input type="range" id="themeFontSizeMain" min="10" max="32" value="16"><span class="slider-value" id="themeFontSizeMainValue">16px</span></div>
+          <div class="st-sub">Имена и подписи</div>
+          <select id="themeFontText" class="st-sel"></select>
+          <div class="slider-row st-sl"><span class="st-lbl">Размер</span><input type="range" id="themeFontSizeText" min="10" max="32" value="14"><span class="slider-value" id="themeFontSizeTextValue">14px</span></div>
+          <div class="st-sub">Быстрый выбор</div>
+          <div class="st-chips" id="stFontChips"></div>
+        </div>
 
-          <div class="card">
-            <h2 class="section-title">Размер текста</h2>
-            <div class="field">
-              <label>Основной текст (заголовки, счётчики)</label>
-              <div class="slider-row">
-                <input type="range" id="themeFontSizeMain" min="10" max="32" value="16">
-                <span class="slider-value" id="themeFontSizeMainValue">16px</span>
-              </div>
-            </div>
-            <div class="field">
-              <label>Дополнительный текст (имена, подписи)</label>
-              <div class="slider-row">
-                <input type="range" id="themeFontSizeText" min="10" max="32" value="14">
-                <span class="slider-value" id="themeFontSizeTextValue">14px</span>
-              </div>
-            </div>
+        <!-- 2. ТЕМА -->
+        <div class="st-col">
+          <h2 class="st-h">Тема</h2>
+          <div class="st-themes" id="stThemeGrid"></div>
+          <select id="themePresetSelect" hidden></select>
+          <div class="form-message" id="themePresetMessage"></div>
+        </div>
+
+        <!-- 3. КАСТОМ ТЕМА -->
+        <div class="st-col">
+          <h2 class="st-h">Кастом тема</h2>
+          <div class="st-pal">
+            <label class="st-sw"><input type="color" id="themeAccent"><span>Акцент</span><i id="hexAccent"></i></label>
+            <label class="st-sw"><input type="color" id="themeTextMain"><span>Текст</span><i id="hexText"></i></label>
+            <label class="st-sw"><input type="color" id="themeBgPanel"><span>Панели</span><i id="hexBg"></i></label>
           </div>
+          <div class="slider-row st-sl"><span class="st-lbl">Прозрачность</span><input type="range" id="themeBgAlpha" min="0" max="100" value="55"><span class="slider-value" id="themeBgAlphaValue">55%</span></div>
+          <div class="st-mini" id="stMini"><b>Заголовок</b><span>Подпись · 12:34</span><em></em></div>
+          <div class="st-row"><input type="text" id="customThemeName" class="st-inp" maxlength="32" placeholder="Название темы"><button class="btn btn-primary btn-sm" id="btnSaveCustomTheme" type="button">В темы</button></div>
+          <div class="form-message" id="customThemeMessage"></div>
+          <div class="st-sub st-sub-gap">Свои шрифты</div>
+          <div class="st-row"><button class="btn btn-secondary btn-sm" id="btnAddFont" type="button">Загрузить шрифт</button><span class="st-hint">.ttf .otf .woff .woff2</span></div>
+          <input type="file" id="fontUploadInput" accept=".ttf,.otf,.woff,.woff2" multiple style="display:none;">
+          <div class="st-chips" id="stCustomFonts"></div>
+          <div class="form-message" id="fontUploadMessage"></div>
         </div>
       </div>
-
-      <div class="actions">
-        <button class="btn btn-primary" id="btnThemeSave" type="button">Сохранить</button>
-        <button class="btn btn-secondary" id="btnThemeReset" type="button">Сбросить</button>
-      </div>
-      <div class="form-message" id="themeFormMessage"></div>
     </section>
 
     <section class="tab-section" id="tab-voice">

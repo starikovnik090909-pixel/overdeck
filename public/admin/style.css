@@ -2376,3 +2376,45 @@ html, body {
 #daForm .da-rule input{width:96px}#daForm .da-rule select{min-width:200px;max-width:100%}
 #daForm .da-rule-empty{font-size:12px;opacity:.65}
 #daForm .da-rule-add{align-self:flex-start}
+
+/* ===== Вкладка «Стиль»: 3 равные колонки без прокрутки (1920×1080) ===== */
+#tab-settings.active { display: flex; flex-direction: column; height: calc(100vh - 170px); min-height: 0; }
+.btn-sm { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; line-height: 1; }
+#tab-settings .page-actions { display: flex; align-items: center; gap: 8px; }
+.st-msg { margin: 0 6px 0 0; min-height: 0; font-size: 12px; }
+.st-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; flex: 1; min-height: 0; }
+.st-col { background: var(--bg-card); border: 1px solid var(--divider); border-radius: var(--radius); padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow: hidden; }
+.st-h { font-family: 'Unbounded', system-ui, sans-serif; font-weight: 600; font-size: 15px; margin: 0 0 4px; }
+.st-sub { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); margin-top: 6px; }
+.st-sub-gap { margin-top: 14px; }
+.st-sel { width: 100%; height: 34px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--divider); background: var(--bg-app); color: var(--text-primary); font-size: 13px; }
+.st-sl { gap: 10px; }
+.st-lbl { font-size: 12px; color: var(--text-secondary); min-width: 84px; }
+.st-prev { background: var(--bg-app); border: 1px solid var(--divider); border-radius: 12px; padding: 12px; }
+.st-prev .font-preview { margin: 0; padding: 8px 6px; border: none; background: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.st-chip { height: 28px; padding: 0 11px; border-radius: 14px; border: 1px solid var(--divider); background: var(--bg-app); color: var(--text-primary); font-size: 13px; cursor: pointer; }
+.st-chip:hover { border-color: var(--accent); }
+.st-chip.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.st-themes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; overflow: auto; align-content: start; padding: 2px; scrollbar-width: thin; }
+.st-th { position: relative; border: 1px solid var(--divider); border-radius: 12px; padding: 10px; cursor: pointer; background: var(--bg-app); text-align: left; color: var(--text-primary); display: flex; flex-direction: column; gap: 8px; }
+.st-th:hover { border-color: var(--accent); }
+.st-th.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.st-th .pv { height: 54px; border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(128,128,128,.25); overflow: hidden; }
+.st-th .pv b { font-size: 13px; line-height: 1; }
+.st-th .pv i { display: block; height: 4px; border-radius: 2px; width: 60%; }
+.st-th .nm { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-th .del { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 10px; border: none; background: rgba(0,0,0,.55); color: #fff; font-size: 12px; line-height: 20px; cursor: pointer; padding: 0; }
+.st-pal { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.st-sw { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+.st-sw input[type=color] { width: 100%; height: 40px; padding: 0; border: 1px solid var(--divider); border-radius: 10px; background: none; cursor: pointer; }
+.st-sw input[type=color]::-webkit-color-swatch-wrapper { padding: 0; }
+.st-sw input[type=color]::-webkit-color-swatch { border: none; border-radius: 9px; }
+.st-sw i { font-style: normal; font-size: 11px; font-family: ui-monospace, Consolas, monospace; color: var(--text-primary); }
+.st-mini { border-radius: 12px; padding: 12px 14px; border: 1px solid var(--divider); display: flex; flex-direction: column; gap: 4px; position: relative; overflow: hidden; margin-top: 4px; }
+.st-mini b { font-size: 15px; } .st-mini span { font-size: 12px; opacity: .85; }
+.st-mini em { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.st-row { display: flex; gap: 8px; align-items: center; }
+.st-inp { flex: 1; min-width: 0; height: 30px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--divider); background: var(--bg-app); color: var(--text-primary); font-size: 13px; }
+.st-hint { font-size: 11px; color: var(--text-secondary); }
+#tab-settings .form-message { margin: 0; min-height: 0; font-size: 12px; }

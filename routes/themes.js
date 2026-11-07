@@ -24,6 +24,33 @@ app.get('/api/themes', (req, res) => {
   res.json({ themes: list, selected: list.some((t) => t.id === sel) ? sel : 'default' });
 });
 
+app.post('/api/themes/custom', (req, res) => {
+  const b = req.body || {};
+  const name = String(b.name || '').trim().slice(0, 32);
+  const hex = (v) => /^#[0-9a-fA-F]{6}$/.test(String(v || ''));
+  if (!name || !hex(b.accent) || !hex(b.textMain) || !hex(b.bgPanel)) return res.status(400).json({ success: false, error: 'Нужно название и три цвета.' });
+  const font = (v, d) => String(v || d).replace(/[^\w \-.а-яА-ЯёЁ]/g, '').slice(0, 60) || d;
+  const num = (v, a, z, d) => { const n = Number(v); return Number.isFinite(n) ? Math.min(z, Math.max(a, n)) : d; };
+  const id = 'custom-' + Date.now().toString(36);
+  const preset = { name, custom: true, preview: '', params: {
+    colors: { panelBg: b.bgPanel, accent: b.accent, text: b.textMain },
+    opacity: num(b.alpha, 0, 1, 0.55),
+    fonts: { heading: font(b.fontMain, 'Unbounded'), text: font(b.fontText, 'Inter') },
+    sizes: { headingText: num(b.sizeMain, 10, 32, 16), bodyText: num(b.sizeText, 10, 32, 14) },
+  } };
+  require('fs').writeFileSync(require('path').join(__dirname, '..', 'themes', id + '.json'), JSON.stringify(preset, null, 2));
+  res.json({ success: true, id });
+});
+
+app.post('/api/themes/:id/delete', (req, res) => {
+  const t = themes.getTheme(req.params.id);
+  if (!t || !/^custom-[a-z0-9]+$/.test(req.params.id)) return res.status(400).json({ success: false, error: 'Удалять можно только свои темы.' });
+  const f = require('path').join(__dirname, '..', 'themes', req.params.id + '.json');
+  require('fs').renameSync(f, f + '.deleted');
+  if (config.selectedTheme === req.params.id) config.selectedTheme = 'default';
+  res.json({ success: true });
+});
+
 app.post('/api/themes/apply', (req, res) => {
   const { themeId } = req.body || {};
   const preset = themes.getTheme(themeId);
