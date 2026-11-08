@@ -464,6 +464,7 @@ class IntroOverlay : Control
     [DllImport("winmm.dll")] static extern uint timeEndPeriod(uint ms);
     Stopwatch sw;
     Bitmap backdrop;
+    System.Media.SoundPlayer sound;
     volatile bool done, running, pending;
     bool period;
     public event EventHandler Finished;
@@ -481,6 +482,13 @@ class IntroOverlay : Control
         }
         catch { backdrop = null; }
         try { timeBeginPeriod(1); period = true; } catch { }
+        // тихий звук запуска (вшит в exe): кручение «O» и мягкие тона; если не получилось — просто без звука
+        try
+        {
+            System.IO.Stream ss = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("intro.wav");
+            if (ss != null) { sound = new System.Media.SoundPlayer(ss); sound.Play(); }
+        }
+        catch { sound = null; }
         sw = Stopwatch.StartNew();
         running = true;
         // кадры задаёт отдельный поток по часам Stopwatch (шаг 1 мс), а не WinForms Timer с его дрожанием ~15 мс;
@@ -525,7 +533,12 @@ class IntroOverlay : Control
         EventHandler h = Finished;
         if (h != null) h(this, EventArgs.Empty);
     }
-    protected override void OnMouseDown(MouseEventArgs e) { if (sw != null) Finish(); base.OnMouseDown(e); }
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        // клик пропускает заставку — и звук тоже
+        if (sw != null) { if (!done && sound != null) { try { sound.Stop(); } catch { } } Finish(); }
+        base.OnMouseDown(e);
+    }
     protected override void OnPaint(PaintEventArgs e)
     {
         e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
