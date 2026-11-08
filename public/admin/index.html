@@ -346,6 +346,12 @@
         </svg>
         <span>Заказ музыки</span>
       </div>
+      <div class="nav-item" data-tab="webcam">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="10" r="6" stroke-width="1.5"/><circle cx="12" cy="10" r="2.2" stroke-width="1.5"/><path d="M8 20h8M12 16v4" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <span>Умная вебка</span>
+      </div>
       <div class="nav-item" data-tab="soundpad">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" stroke-width="1.6" stroke-linecap="round"/>
@@ -3311,6 +3317,10 @@
       </div>
     </section>
 
+    <section class="tab-section" id="tab-webcam">
+      <div class="page-head"><div><h1 class="tab-title">Умная вебка</h1><p class="tab-description">Вырезает фон за тобой без зелёного экрана. Справа настройки, внизу ссылка для OBS (Источник → Браузер). Камера включается, пока вкладка открыта.</p></div></div>
+      <iframe id="wcFrame" title="Умная вебка" allow="camera" style="width:100%;height:calc(100vh - 270px);min-height:380px;border:1px solid var(--line2,#26262a);border-radius:12px;background:#0b0b0c"></iframe>
+    </section>
     <section class="tab-section" id="tab-soundpad">
       <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, чтобы послушать звук у себя. Кнопка «на стрим» играет его на стриме. Монета отмечает звук для наград за баллы, шестерёнка открывает настройки.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="spSaved"></span>
@@ -4154,6 +4164,7 @@
 <script src="tgnav.js?v=1"></script>
 <script src="sceneinspector.js?v=1"></script>
 <script src="qol.js?v=1"></script>
+<script src="webcamtab.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>
 </body>
 </html>
