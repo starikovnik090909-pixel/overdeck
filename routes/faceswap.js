@@ -34,7 +34,7 @@ function main({ app, dataDir }) {
 
   function call(method, p, body, ct) {
     return new Promise((resolve, reject) => {
-      const req = http.request({ host: '127.0.0.1', port: PORT, path: p, method, timeout: 4000,
+      const req = http.request({ host: '127.0.0.1', port: PORT, path: p, method, timeout: 10000,
         headers: body ? { 'Content-Type': ct || 'application/json', 'Content-Length': Buffer.byteLength(body) } : {} }, (r) => {
         let d = ''; r.on('data', (c) => (d += c)); r.on('end', () => { try { resolve(JSON.parse(d)); } catch (e) { resolve({}); } });
       });

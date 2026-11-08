@@ -239,6 +239,17 @@ def loop(args):
         raise
 
 
+class Srv(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def handle_error(self, request, client_address):
+        # клиент (админка, OBS) закрыл соединение — это нормально, не засоряем лог
+        et = sys.exc_info()[0]
+        if et and issubclass(et, (ConnectionError, OSError)):
+            return
+        super().handle_error(request, client_address)
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, *a):
         pass
@@ -314,7 +325,7 @@ def main():
         return
     CFG['camera'] = a.camera
     threading.Thread(target=loop, args=(a,), daemon=True).start()
-    srv = ThreadingHTTPServer(('127.0.0.1', a.port), H)
+    srv = Srv(('127.0.0.1', a.port), H)
     print('faceswap worker on 127.0.0.1:%d' % a.port, flush=True)
     srv.serve_forever()
 
