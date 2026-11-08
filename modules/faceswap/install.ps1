@@ -20,7 +20,7 @@ function St($step, $msg, $pct, $detail = '', $done = $false, $err = '') {
 function LastLine() {
   if (-not (Test-Path $logFile)) { return '' }
   $l = Get-Content $logFile -Tail 3 -ErrorAction SilentlyContinue | Where-Object { $_ -and $_.Trim() } | Select-Object -Last 1
-  if ($l) { $l = $l.Trim(); if ($l -like 'PCT:*') { $a = $l.Substring(4).Split('|'); return ('Скачано ' + $a[0] + '%: ' + $a[1]) }; return $l } else { return '' }
+  if ($l) { $l = $l.Trim(); if ($l -like 'PCT:*') { $a = $l.Substring(4).Split('|'); $nm = 'модель распознавания лица'; if ($a[1] -eq 'swap') { $nm = 'модель замены лица' }; return ('Скачано ' + $a[0] + '%: ' + $nm) }; return $l } else { return '' }
 }
 function Download($url, $dst) {
   for ($i = 1; $i -le 3; $i++) {
@@ -77,7 +77,7 @@ try {
   $c = RunLogged $py @('-c', '"import numpy,cv2,onnx,onnxruntime,mediapipe;print(onnxruntime.get_available_providers())"') 3 'Проверяю библиотеки' 46 48 $null
   if ($c -ne 0) { throw 'библиотеки не запускаются (см. install.log)' }
   # модели: 48% → 99%
-  $pm = { $pc = 48; if (Test-Path $logFile) { $l = Get-Content $logFile -Tail 20 -ErrorAction SilentlyContinue | Where-Object { $_ -like 'PCT:*' } | Select-Object -Last 1; if ($l) { $a = $l.Substring(4).Split('|'); $v = [int]$a[0]; if ($a[1] -like '*распознавания*') { $pc = 78 + [int]($v * 0.21) } else { $pc = 48 + [int]($v * 0.30) } } }; $pc }
+  $pm = { $pc = 48; if (Test-Path $logFile) { $l = Get-Content $logFile -Tail 20 -ErrorAction SilentlyContinue | Where-Object { $_ -like 'PCT:*' } | Select-Object -Last 1; if ($l) { $a = $l.Substring(4).Split('|'); $v = [int]$a[0]; if ($a[1] -eq 'arc') { $pc = 78 + [int]($v * 0.21) } else { $pc = 48 + [int]($v * 0.30) } } }; $pc }
   $c = RunLogged $py @(('"' + (Join-Path $mod 'worker.py') + '"'), '--prefetch') 4 'Скачиваю модели нейросети (~830 МБ, один раз)' 48 99 $pm
   if ($c -ne 0) { throw 'не удалось скачать модели (см. install.log)' }
   St 4 'Готово' 100 '' $true

@@ -11,6 +11,11 @@ Overdeck · мод «Замена лица». Локальный движок: �
             POST /config (json: swap, mirror, camera, blend, quality)
 """
 import argparse, json, os, sys, threading, time, urllib.request
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+except Exception:
+    pass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
@@ -64,7 +69,7 @@ def paste_back(frame, fake, m, size, feather=0.12):
 
 
 # ---------- модели ----------
-def download(url, dst, label):
+def download(url, dst, label, tag='x'):
     if os.path.exists(dst) and os.path.getsize(dst) > 1000000:
         return
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -86,18 +91,18 @@ def download(url, dst, label):
                     pc = int(got * 100 / total)
                     if pc != PRINT['last']:
                         PRINT['last'] = pc
-                        print('PCT:%d|%s' % (pc, label), flush=True)
+                        print('PCT:%d|%s' % (pc, tag), flush=True)
     os.replace(tmp, dst)
 
 
 def ensure_models(models):
     swapper = os.path.join(models, 'inswapper_128.onnx')
     arc = os.path.join(models, 'w600k_r50.onnx')
-    download(SWAPPER_URL, swapper, 'модель замены лица (≈550 МБ, один раз)')
+    download(SWAPPER_URL, swapper, 'модель замены лица (~550 МБ, один раз)', 'swap')
     if not os.path.exists(arc):
         import zipfile, io
         zp = os.path.join(models, 'buffalo_l.zip')
-        download(BUFFALO_URL, zp, 'модель распознавания лица (≈280 МБ, один раз)')
+        download(BUFFALO_URL, zp, 'модель распознавания лица (~280 МБ, один раз)', 'arc')
         with zipfile.ZipFile(zp) as z:
             with z.open('w600k_r50.onnx') as s, open(arc, 'wb') as d:
                 d.write(s.read())
