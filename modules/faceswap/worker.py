@@ -27,7 +27,7 @@ ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
                 [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)
 
 ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'source': False, 'provider': '',
-      'progress': 0.0, 'error': ''}
+      'progress': 0.0, 'error': '', 'timing': ''}
 CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80}
 LOCK = threading.Lock()
 PRINT = {'on': False, 'last': -1}
@@ -53,19 +53,61 @@ def crop(img, kps, size):
     return cv2.warpAffine(img, m, (size, size), borderValue=0.0), m
 
 
-def paste_back(frame, fake, m, size, feather=0.12):
-    """Вставка 128x128 результата обратно в кадр с мягкой маской."""
+OVAL = [10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365, 379, 378, 400, 377, 152, 148,
+        176, 149, 150, 136, 172, 58, 132, 93, 234, 127, 162, 21, 54, 103, 67, 109]
+
+
+def match_color(fake, target, mask):
+    """Подгоняет цвет и контраст результата под лицо в кадре (по LAB, только внутри маски)."""
+    f = cv2.cvtColor(fake, cv2.COLOR_BGR2LAB).astype(np.float32)
+    t = cv2.cvtColor(target, cv2.COLOR_BGR2LAB).astype(np.float32)
+    w = mask > 0.5
+    if w.sum() < 50:
+        return fake
+    for c in range(3):
+        fm, fs = f[:, :, c][w].mean(), f[:, :, c][w].std() + 1e-3
+        tm, ts = t[:, :, c][w].mean(), t[:, :, c][w].std() + 1e-3
+        k = min(1.4, max(0.7, ts / fs))
+        f[:, :, c] = (f[:, :, c] - fm) * k + tm
+    out = cv2.cvtColor(np.clip(f, 0, 255).astype(np.uint8), cv2.COLOR_LAB2BGR)
+    return out
+
+
+def paste_back(frame, fake, m, size, oval=None, feather=0.12):
+    """Вставка 128x128 результата в кадр. Граница — по контуру лица (если дан oval), считается только в окне вокруг лица."""
     im = cv2.invertAffineTransform(m)
     h, w = frame.shape[:2]
-    fake_full = cv2.warpAffine(fake, im, (w, h), borderValue=0.0)
-    mask = np.zeros((size, size), np.float32)
+    if oval is not None and len(oval) > 2:
+        x0 = max(0, int(oval[:, 0].min()) - 12); x1 = min(w, int(oval[:, 0].max()) + 12)
+        y0 = max(0, int(oval[:, 1].min()) - 12); y1 = min(h, int(oval[:, 1].max()) + 12)
+    else:
+        x0, y0, x1, y1 = 0, 0, w, h
+    if x1 - x0 < 8 or y1 - y0 < 8:
+        return frame
+    rw, rh = x1 - x0, y1 - y0
+    im2 = im.copy(); im2[0, 2] -= x0; im2[1, 2] -= y0
+    fake_roi = cv2.warpAffine(fake, im2, (rw, rh), flags=cv2.INTER_CUBIC, borderValue=0.0)
+    # маска квадрата 128x128 с мягким краем (чтобы не было чёрной каймы)
+    cm = np.zeros((size, size), np.float32)
     b = max(2, int(size * feather))
-    mask[b:size - b, b:size - b] = 1.0
+    cm[b:size - b, b:size - b] = 1.0
     k = (b * 2) | 1
-    mask = cv2.GaussianBlur(mask, (k, k), 0)
-    mask_full = cv2.warpAffine(mask, im, (w, h), borderValue=0.0)[:, :, None]
-    out = frame.astype(np.float32) * (1 - mask_full) + fake_full.astype(np.float32) * mask_full
-    return out.astype(np.uint8)
+    cm = cv2.GaussianBlur(cm, (k, k), 0)
+    mask = cv2.warpAffine(cm, im2, (rw, rh), borderValue=0.0)
+    if oval is not None and len(oval) > 2:
+        hull = np.zeros((rh, rw), np.uint8)
+        pts = (oval - np.array([x0, y0], np.float32)).astype(np.int32)
+        cv2.fillConvexPoly(hull, cv2.convexHull(pts), 255)
+        fw = max(8, int(max(oval[:, 0].max() - oval[:, 0].min(), 1)))
+        er = max(1, int(fw * 0.035))
+        hull = cv2.erode(hull, np.ones((er, er), np.uint8))
+        bl = (int(fw * 0.07) | 1)
+        hull = cv2.GaussianBlur(hull, (bl, bl), 0).astype(np.float32) / 255.0
+        mask = mask * hull
+    mask = mask[:, :, None]
+    roi = frame[y0:y1, x0:x1].astype(np.float32)
+    frame[y0:y1, x0:x1] = (roi * (1 - mask) + fake_roi.astype(np.float32) * mask).astype(np.uint8)
+    return frame
 
 
 # ---------- модели ----------
@@ -131,8 +173,16 @@ class Engine:
         sw, arc = ensure_models(models)
         prov, name = providers()
         set_state(provider=name, msg='Загружаю модели…')
-        self.sw = ort.InferenceSession(sw, providers=prov)
-        self.arc = ort.InferenceSession(arc, providers=prov)
+        so = ort.SessionOptions()
+        so.log_severity_level = 3
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        if name == 'Dml':
+            so.enable_mem_pattern = False   # требование DirectML
+            so.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+        self.sw = ort.InferenceSession(sw, sess_options=so, providers=prov)
+        self.arc = ort.InferenceSession(arc, sess_options=so, providers=prov)
+        self.kprev = None
+        self.t = {'mesh': 0.0, 'swap': 0.0, 'paste': 0.0}
         self.emap = numpy_helper.to_array(onnx.load(sw).graph.initializer[-1])
         self.mesh = mp.solutions.face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1,
                                                     refine_landmarks=True, min_detection_confidence=0.5,
@@ -142,22 +192,25 @@ class Engine:
         self.latent = None
 
     @staticmethod
-    def kps_from(res, w, h):
+    def pts_from(res, w, h):
         if not res.multi_face_landmarks:
             return None
         lm = res.multi_face_landmarks[0].landmark
-        P = lambda i: (lm[i].x * w, lm[i].y * h)
-        eyes = sorted([P(468), P(473)], key=lambda p: p[0])
-        mouth = sorted([P(61), P(291)], key=lambda p: p[0])
-        return np.array([eyes[0], eyes[1], P(1), mouth[0], mouth[1]], np.float32)
+        return np.array([(p.x * w, p.y * h) for p in lm[:478]], np.float32)
+
+    @staticmethod
+    def kps_of(pts):
+        eyes = sorted([pts[468], pts[473]], key=lambda p: p[0])
+        mouth = sorted([pts[61], pts[291]], key=lambda p: p[0])
+        return np.array([eyes[0], eyes[1], pts[1], mouth[0], mouth[1]], np.float32)
 
     def set_source(self, img_bgr):
         h, w = img_bgr.shape[:2]
         res = self.mesh_img.process(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
-        kps = self.kps_from(res, w, h)
-        if kps is None:
+        pts = self.pts_from(res, w, h)
+        if pts is None:
             return False
-        aimg, _ = crop(img_bgr, kps, 112)
+        aimg, _ = crop(img_bgr, self.kps_of(pts), 112)
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (112, 112), (127.5, 127.5, 127.5), swapRB=True)
         emb = self.arc.run(None, {self.arc.get_inputs()[0].name: blob})[0][0]
         emb = emb / np.linalg.norm(emb)
@@ -165,29 +218,65 @@ class Engine:
         self.latent = (lat / np.linalg.norm(lat)).astype(np.float32)
         return True
 
+    def _ema(self, key, v):
+        self.t[key] = self.t[key] * 0.9 + v * 0.1 if self.t[key] else v
+
     def process(self, frame, blend=1.0):
         h, w = frame.shape[:2]
-        res = self.mesh.process(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        kps = self.kps_from(res, w, h)
-        if kps is None:
+        sc = 640.0 / max(h, w)
+        small = cv2.resize(frame, (int(w * sc), int(h * sc)), interpolation=cv2.INTER_AREA) if sc < 1 else frame
+        t0 = time.time()
+        res = self.mesh.process(cv2.cvtColor(small, cv2.COLOR_BGR2RGB))
+        self._ema('mesh', (time.time() - t0) * 1000)
+        pts = self.pts_from(res, w, h)
+        if pts is None:
+            self.kprev = None
             return frame, False
         if self.latent is None:
             return frame, True
+        kps = self.kps_of(pts)
+        if self.kprev is not None:   # сглаживаем дрожь: при малом движении — сильнее
+            ed = max(1.0, float(np.linalg.norm(kps[1] - kps[0])))
+            d = float(np.mean(np.linalg.norm(kps - self.kprev, axis=1))) / ed
+            a = min(1.0, max(0.3, d * 6.0))
+            kps = self.kprev * (1 - a) + kps * a
+        self.kprev = kps
+        t1 = time.time()
         aimg, m = crop(frame, kps, 128)
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255, (128, 128), (0, 0, 0), swapRB=True)
         pred = self.sw.run(None, {'target': blob, 'source': self.latent})[0][0]
         fake = np.clip(255 * pred.transpose(1, 2, 0), 0, 255).astype(np.uint8)[:, :, ::-1]
+        fake = np.ascontiguousarray(fake)
+        self._ema('swap', (time.time() - t1) * 1000)
+        t2 = time.time()
+        cmask = np.zeros((128, 128), np.float32)
+        cv2.ellipse(cmask, (64, 70), (42, 52), 0, 0, 360, 1.0, -1)
+        fake = match_color(fake, aimg, cmask)
         if blend < 1.0:
             fake = cv2.addWeighted(fake, blend, aimg, 1 - blend, 0)
-        return paste_back(frame, np.ascontiguousarray(fake), m, 128), True
+        out = paste_back(frame, fake, m, 128, pts[OVAL])
+        self._ema('paste', (time.time() - t2) * 1000)
+        return out, True
 
 
 # ---------- цикл камеры ----------
-def open_cam(idx):
-    cap = cv2.VideoCapture(int(idx), cv2.CAP_DSHOW if os.name == 'nt' else 0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-    return cap
+class Cam(threading.Thread):
+    """Читает камеру в отдельном потоке и держит только самый свежий кадр (без накопления задержки)."""
+    def __init__(self, idx):
+        threading.Thread.__init__(self); self.daemon = True
+        self.idx = int(idx); self.frame = None; self.n = 0; self.stop = False; self.ok = True
+        self.start()
+
+    def run(self):
+        cap = cv2.VideoCapture(self.idx, cv2.CAP_DSHOW if os.name == 'nt' else 0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280); cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        while not self.stop:
+            ok, f = cap.read()
+            if not ok:
+                self.ok = False; time.sleep(0.1); continue
+            self.ok = True; self.frame = f; self.n += 1
+        cap.release()
 
 
 def demo_frame(t):
@@ -204,22 +293,24 @@ def loop(args):
             eng = Engine(args.models)
             if args.source and os.path.exists(args.source):
                 SRC_BYTES['data'] = open(args.source, 'rb').read()
-        cap = None if args.demo else open_cam(CFG['camera'])
+        cam = None if args.demo else Cam(CFG['camera'])
         cam_now = CFG['camera']
         set_state(state='run', msg='Работает', progress=1.0)
-        n, t0 = 0, time.time()
+        n, t0, seen = 0, time.time(), -1
         while True:
             if SRC_BYTES['data'] is not None and eng:
                 img = cv2.imdecode(np.frombuffer(SRC_BYTES['data'], np.uint8), cv2.IMREAD_COLOR)
                 SRC_BYTES['data'] = None
                 ok = img is not None and eng.set_source(img)
                 set_state(source=bool(ok), msg='Работает' if ok else 'На фото не нашёл лицо — возьми другое')
-            if cap is not None:
+            if cam is not None:
                 if CFG['camera'] != cam_now:
-                    cap.release(); cap = open_cam(CFG['camera']); cam_now = CFG['camera']
-                ok, frame = cap.read()
-                if not ok:
-                    set_state(msg='Нет кадра с камеры'); time.sleep(0.2); continue
+                    cam.stop = True; cam = Cam(CFG['camera']); cam_now = CFG['camera']; seen = -1
+                if cam.frame is None or cam.n == seen:
+                    if not cam.ok:
+                        set_state(msg='Нет кадра с камеры')
+                    time.sleep(0.004); continue
+                seen = cam.n; frame = cam.frame.copy()
             else:
                 frame = demo_frame(time.time()); time.sleep(0.03)
             if CFG['mirror']:
@@ -229,7 +320,10 @@ def loop(args):
                 frame, face = eng.process(frame, float(CFG['blend']))
             n += 1
             if time.time() - t0 >= 1.0:
-                set_state(fps=round(n / (time.time() - t0), 1)); n, t0 = 0, time.time()
+                tm = ''
+                if eng:
+                    tm = 'лицо %d мс · замена %d мс · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], eng.t['paste'])
+                set_state(fps=round(n / (time.time() - t0), 1), timing=tm); n, t0 = 0, time.time()
             set_state(face=face)
             okj, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, int(CFG['quality'])])
             if okj:

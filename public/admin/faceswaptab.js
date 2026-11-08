@@ -30,7 +30,7 @@
       if (w.state === 'download') { msg = w.msg; barw.style.display = 'block'; bar.style.width = Math.round((w.progress || 0) * 100) + '%'; }
       else if (w.state === 'error' || s.error) msg = 'Ошибка: ' + (w.error || s.error);
       else if (!s.hasSource) msg = 'Выбери фото лица, которое подставлять';
-      else msg = (w.msg || 'Запуск…') + (w.fps ? ' · ' + w.fps + ' FPS' : '') + (w.provider ? ' · ' + w.provider : '') + (w.face ? '' : ' · лица в кадре нет');
+      else { if (w.timing) sub = w.timing; msg = (w.msg || 'Запуск…') + (w.fps ? ' · ' + w.fps + ' FPS' : '') + (w.provider ? ' · ' + w.provider : '') + (w.face ? '' : ' · лица в кадре нет'); }
     }
     $('fsSt').textContent = msg; $('fsSub').textContent = sub; $('fsSub').style.whiteSpace = 'pre-line'; barw.classList.toggle('busy', busy);
     $('fsLog').textContent = (s.error || (w && w.state === 'error')) ? (s.log || []).join('\n') : '';
