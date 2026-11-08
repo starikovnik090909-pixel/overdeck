@@ -156,5 +156,7 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   const mix = m.parsePlaylist('<script>var ytInitialData = ' + JSON.stringify({ a: [{ playlistPanelVideoRenderer: { videoId: 'M1M1M1M1M1M', title: { simpleText: 'Микс 1' }, shortBylineText: { runs: [{ text: 'К' }] }, lengthText: { simpleText: '2:00' } } }] }) + ';</script>');
   ok(mix.tracks.length === 1 && mix.tracks[0].seconds === 120, 'разбор микса YouTube');
 
+  fresh(); m.update({ cooldown: 0 }); await m.onChat(msg('!муз own a', { login: 'starlkov', name: 'starlkov' })); await m.onChat(msg('!муз own b', { login: 'starlkov', name: 'starlkov' })); const ownSkipQ = m.state().queue.length; await m.onChat(msg("!скип", { login: "starlkov", name: "starlkov" })); ok(ownSkipQ === 1 && m.state().queue.length === 0, 'владелец пропускает трек !скип без роли модератора');
+
   console.log('music.test: ' + n + ' проверок ок');
 })().catch((e) => { console.error(e); process.exit(1); });

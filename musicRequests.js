@@ -462,7 +462,7 @@ async function onChat(m) {
   const reply = async (t) => { if (cfg.reply) await say(t); };
   const name = m.name || m.login || '';
   if (words(cfg.skipCommands).includes(cmd)) {
-    if (!(roles.broadcaster || roles.mod)) return true;
+    if (!(roles.broadcaster || roles.mod || owner)) return true;
     if (!current) return true;
     const t = current.title; skip(); await reply(`⏭ Пропущено: ${t}`); return true;
   }
