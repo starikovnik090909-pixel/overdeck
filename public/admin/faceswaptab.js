@@ -63,3 +63,8 @@
   new MutationObserver(sync).observe(nav, { attributes: true, attributeFilter: ['class'] });
   sync();
 })();
+(function () { // открытие вкладки из лаунчера по ссылке /admin#faceswap
+  if (location.hash !== '#faceswap') return;
+  var go = function () { var n = document.querySelector('.nav-item[data-tab="faceswap"]'); if (n) n.click(); };
+  setTimeout(go, 600); setTimeout(go, 1800);
+})();

@@ -101,6 +101,10 @@ class ModTile : Control
             {
                 g.DrawLines(p, new PointF[] { new PointF(c.X - 14, c.Y), new PointF(c.X - 8, c.Y), new PointF(c.X - 4, c.Y - 9), new PointF(c.X + 2, c.Y + 9), new PointF(c.X + 6, c.Y - 3), new PointF(c.X + 9, c.Y), new PointF(c.X + 14, c.Y) });
             }
+            else if (Kind == 4)
+            {
+                g.DrawEllipse(p, c.X - 15, c.Y - 11, 17, 17); g.DrawEllipse(p, c.X - 2, c.Y - 5, 17, 17);
+            }
             else if (Kind == 2)
             {
                 g.DrawLines(p, new PointF[] { new PointF(c.X, c.Y - 13), new PointF(c.X - 11, c.Y - 8), new PointF(c.X - 11, c.Y + 1), new PointF(c.X, c.Y + 13), new PointF(c.X + 11, c.Y + 1), new PointF(c.X + 11, c.Y - 8), new PointF(c.X, c.Y - 13) });
@@ -222,7 +226,7 @@ class ModSheet : Panel
     public bool IsOpen { get { return Visible && opening; } }
 }
 
-class ModInfo { public string Name, Sub; public bool Soon, Real; public int Kind; }
+class ModInfo { public string Name, Sub; public bool Soon, Real; public int Kind; public Func<bool> Inst; public Action Open; }
 
 // сама страница
 class ModsPage : Panel
@@ -242,7 +246,6 @@ class ModsPage : Panel
         mods.Add(new ModInfo { Name = "Овервойс", Sub = "Нейроголос", Real = true, Kind = 0 });
         mods.Add(new ModInfo { Name = "Саундпад", Sub = "", Soon = true, Kind = 1 });
         mods.Add(new ModInfo { Name = "Аукцион", Sub = "", Soon = true, Kind = 2 });
-        mods.Add(new ModInfo { Name = "Ещё мод", Sub = "", Soon = true, Kind = 3 });
 
         FancyButton back = new FancyButton(); back.Text = "‹  Назад"; back.Size = new Size(100, 34); back.Location = new Point(24, 22);
         back.Font = new Font("Segoe UI Semibold", 9.5f); back.Click += delegate { Sheet.Close(); goBack(); };
@@ -274,7 +277,11 @@ class ModsPage : Panel
         };
     }
 
+    static bool SafeInst(Func<bool> f) { try { return f(); } catch { return false; } }
+
     // вызывается при открытии страницы и при смене вкладки
+    public void AddMod(ModInfo m) { mods.Insert(1, m); }
+
     public void Rebuild()
     {
         foreach (ModTile x in tiles) { Controls.Remove(x); x.Dispose(); }
@@ -282,7 +289,7 @@ class ModsPage : Panel
         bool inst = false; try { inst = isInstalled(); } catch { }
         bool lib = seg.Index == 1;
         List<ModInfo> show = new List<ModInfo>();
-        foreach (ModInfo m in mods) { if (lib || (m.Real && inst)) show.Add(m); }
+        foreach (ModInfo m in mods) { bool mi = m.Inst != null ? SafeInst(m.Inst) : (m.Real && inst); if (lib || mi) show.Add(m); }
         lblSect.Text = (lib ? "ДОСТУПНО" : "УСТАНОВЛЕНО") + "  ·  " + show.Count;
         lblHint.Visible = !lib && show.Count == 0;
         lblHint.Text = "Здесь появятся твои моды. Новые — во вкладке «Библиотека».";
@@ -290,12 +297,13 @@ class ModsPage : Panel
         foreach (ModInfo m in show)
         {
             ModTile tile = new ModTile();
-            tile.Title = m.Name; tile.Soon = m.Soon; tile.Kind = m.Kind; tile.Installed = m.Real && inst;
-            tile.Sub = m.Soon ? "" : (m.Real && inst && !lib ? "установлен" : m.Sub);
-            tile.Badge = m.Soon ? "Скоро" : (lib && inst ? "Установлен" : "");
+            bool mInst = m.Inst != null ? SafeInst(m.Inst) : (m.Real && inst);
+            tile.Title = m.Name; tile.Soon = m.Soon; tile.Kind = m.Kind; tile.Installed = m.Real && mInst;
+            tile.Sub = m.Soon ? "" : (m.Real && mInst && !lib ? "установлен" : m.Sub);
+            tile.Badge = m.Soon ? "Скоро" : (lib && mInst ? "Установлен" : "");
             tile.Location = new Point(26 + (i % 4) * 166, 108 + (i / 4) * 166);
             tile.Reveal = 0;
-            if (!m.Soon) tile.Click += delegate { openMod(); };
+            if (!m.Soon) { ModInfo mm = m; tile.Click += delegate { if (mm.Open != null) mm.Open(); else openMod(); }; }
             Controls.Add(tile); tiles.Add(tile);
             i++;
         }
