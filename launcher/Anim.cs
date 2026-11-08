@@ -21,7 +21,7 @@ static class Brand
     public static readonly Color Ac = Color.FromArgb(43, 196, 180);
     public static GraphicsPath PathO, PathWord;
     public static float RestUnits;            // ширина «verdeck» в единицах шрифта
-    public const float OAdv = 646f, Gap = 42f; // продвижение «O» и зазор до остальных букв
+    public const float OAdv = 646f, Gap = 118f; // продвижение «O» и зазор до остальных букв
     static bool inited;
 
     const string GlyphO =
@@ -92,7 +92,8 @@ static class Brand
         + "86 L3206 -478 L3216 -473 L3235 -462 L3254 -450 Z M3469 -178 L3469 0 L3343 0 L3343 -700 L3469 -700 L3469 -340 L"
         + "3669 -508 L3863 -508 L3659 -337 L3910 0 L3754 0 L3563 -257 Z";
     public const float WordAdv = 3873;
-    public const float Track = 34f; // добавка между буквами «verdeck», единицы шрифта (чтобы буквы не слипались)
+    // зазоры между краями букв v-e, e-r, r-d, d-e, e-c, c-k (единицы шрифта), выставлены вручную; O-v = 75 задаётся через Gap
+    static readonly float[] LetterGaps = new float[] { 72f, 130f, -5f, 114f, 83f, 88f };
 
     public static bool Init()
     {
@@ -101,7 +102,7 @@ static class Brand
         try
         {
             PathO = Parse(GlyphO);
-            PathWord = Spread(GlyphWord, Track, out RestUnits);
+            PathWord = Spread(GlyphWord, LetterGaps, out RestUnits);
             return true;
         }
         catch (Exception ex)
@@ -113,7 +114,7 @@ static class Brand
     }
 
     // «verdeck» с равномерной добавкой между буквами: контуры делятся на буквы (внутренние контуры — дырки — остаются в своей букве)
-    static GraphicsPath Spread(string d, float extra, out float total)
+    static GraphicsPath Spread(string d, float[] gaps, out float total)
     {
         List<GraphicsPath> figs = new List<GraphicsPath>();
         foreach (string part in d.Split('M'))
@@ -132,13 +133,18 @@ static class Brand
             letters[at].Add(f);
         }
         GraphicsPath res = new GraphicsPath(FillMode.Winding);
+        float prevRight = 0f, lastShift = 0f;
         for (int i = 0; i < letters.Count; i++)
+        {
+            float shift = i == 0 ? 0f : prevRight + gaps[i - 1] - outer[i].Left;
+            prevRight = outer[i].Right + shift; lastShift = shift;
             foreach (GraphicsPath f in letters[i])
             {
-                using (Matrix m = new Matrix()) { m.Translate(i * extra, 0); f.Transform(m); }
+                using (Matrix m = new Matrix()) { m.Translate(shift, 0); f.Transform(m); }
                 res.AddPath(f, false);
             }
-        total = WordAdv + (letters.Count - 1) * extra;
+        }
+        total = WordAdv + lastShift;
         return res;
     }
 
