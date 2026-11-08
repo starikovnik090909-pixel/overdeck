@@ -55,12 +55,19 @@ function main({ app, dataDir }) {
     if (st.demo) args.push('--demo');
     worker = spawn(py, args, { cwd: MOD, windowsHide: true });
     worker.stdout.on('data', (d) => addLog(d));
-    worker.stderr.on('data', (d) => { lastErr = String(d).split('\n').filter(Boolean).slice(-1)[0] || lastErr; addLog(d); });
-    worker.on('exit', () => { worker = null; });
+    worker.stderr.on('data', (d) => addLog(d));   // предупреждения MediaPipe и т.п. — не ошибки, только в журнал
+    const me = worker;
+    me.on('exit', (code) => {
+      if (worker === me) worker = null;
+      if (code && !me.__stopped) {
+        const bad = log.slice().reverse().join('\n').split('\n').find((l) => /(Error|Exception)\b/.test(l));
+        lastErr = (bad || ('Движок завершился с кодом ' + code)).trim();
+      }
+    });
     worker.on('error', (e) => { lastErr = e.message; worker = null; });
     return true;
   }
-  function stop() { if (worker) { try { worker.kill(); } catch (e) {} worker = null; } }
+  function stop() { if (worker) { worker.__stopped = true; try { worker.kill(); } catch (e) {} worker = null; } }
   process.on('exit', stop);
 
   app.get('/api/faceswap/state', async (req, res) => {
