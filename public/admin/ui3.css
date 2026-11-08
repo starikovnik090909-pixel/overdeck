@@ -1323,3 +1323,4 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 #tab-faceswap .fs-sub:empty{display:none}
 #tab-faceswap .fs-bar.busy i{background-image:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);background-size:60px 100%;background-repeat:no-repeat;animation:fsb 1.2s linear infinite}
 @keyframes fsb{from{background-position:-60px 0}to{background-position:220px 0}}
+#tab-faceswap [hidden]{display:none !important}
