@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Умная вебка — Overdeck</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--bg:#0b0b0c;--card:#141416;--line:#26262a;--fg:#f2f2f2;--mut:#8a8a90;--accent:#2BC4B4}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:transparent;color:var(--fg);font:13px system-ui,Segoe UI,sans-serif;overflow:hidden}
+body.ui{background:var(--bg)}
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+body.ui #stage{right:300px;background:repeating-conic-gradient(#1b1b1e 0 25%,#141416 0 50%) 0 0/24px 24px}
+canvas{max-width:100%;max-height:100%}
+#panel{position:fixed;top:0;right:0;bottom:0;width:300px;background:var(--card);border-left:1px solid var(--line);padding:14px;display:none;flex-direction:column;gap:9px;overflow:auto}
+body.ui #panel{display:flex}
+h1{font-size:13px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}h1 b{color:var(--accent)}
+label{display:flex;flex-direction:column;gap:3px;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+label span em{float:right;font-style:normal;color:var(--fg)}
+select,input[type=color],button{background:#0e0e10;color:var(--fg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;font:inherit}
+input[type=range]{accent-color:var(--accent)}button{cursor:pointer}button:hover{border-color:var(--accent)}
+.row{display:flex;gap:6px}.row>*{flex:1}
+#msg{color:var(--mut);font-size:12px;min-height:30px}#msg.err{color:#ff6b6b}
+.url{font-size:11px;color:var(--mut);word-break:break-all;background:#0e0e10;border:1px solid var(--line);border-radius:7px;padding:6px 8px;user-select:all}
+</style></head><body class="ui">
+<div id="stage"><canvas id="out"></canvas></div>
+<aside id="panel">
+<h1>Умная <b>вебка</b></h1>
+<div id="msg">Запуск…</div>
+<label>Камера<select id="cam"></select></label>
+<label>Фон<select id="mode">
+<option value="transparent">Прозрачный (для OBS)</option><option value="blur">Размытие</option>
+<option value="color">Цвет</option><option value="image">Своя картинка</option></select></label>
+<label id="lColor">Цвет фона<input type="color" id="color" value="#2BC4B4"></label>
+<div class="row" id="lImg" style="display:none"><button id="pick">Выбрать картинку…</button><input id="file" type="file" accept="image/*" hidden></div>
+<label><span>Сила размытия <em id="vBlur"></em></span><input type="range" id="blur" min="2" max="40" value="16"></label>
+<label><span>Порог (что считать человеком) <em id="vThr"></em></span><input type="range" id="thr" min="10" max="90" value="50"></label>
+<label><span>Мягкость края <em id="vSoft"></em></span><input type="range" id="soft" min="0" max="40" value="12"></label>
+<label><span>Сглаживание (меньше дрожи) <em id="vSm"></em></span><input type="range" id="sm" min="0" max="90" value="55"></label>
+<label><span>Сжать контур <em id="vShr"></em></span><input type="range" id="shr" min="0" max="6" value="0"></label>
+<div class="row"><button id="mirror">Зеркало: выкл</button><button id="fps">FPS: —</button></div>
+<div style="color:var(--mut);font-size:11px">Ссылка для OBS (Источник → Браузер, 1280×720, без управления):</div>
+<div class="url" id="url"></div>
+<button id="copy">Скопировать ссылку</button>
+</aside>
+<script type="module">
+import {ImageSegmenter,FilesetResolver} from './vendor/vision_bundle.mjs';
+const $=id=>document.getElementById(id);
+const q=new URLSearchParams(location.search);
+const OBS=q.get('obs')==='1';
+if(OBS)document.body.classList.remove('ui');
+const DEF={mode:'transparent',color:'#2BC4B4',blur:16,thr:50,soft:12,sm:55,shr:0,mirror:0,cam:''};
+let S=Object.assign({},DEF);
+try{Object.assign(S,JSON.parse(localStorage.getItem('webcam')||'{}'))}catch(e){}
+for(const k of Object.keys(DEF)){if(q.has(k))S[k]=typeof DEF[k]==='number'?+q.get(k):q.get(k)}
+const save=()=>{try{localStorage.setItem('webcam',JSON.stringify(S))}catch(e){}
+ const u=new URLSearchParams({obs:1});for(const k of['mode','color','blur','thr','soft','sm','shr','mirror'])u.set(k,S[k]);
+ $('url').textContent=location.origin+location.pathname+'?'+u}
+const msg=(t,e)=>{$('msg').textContent=t;$('msg').className=e?'err':''};
+const bind=(id,k,fmt)=>{const el=$(id);el.value=S[k];const f=()=>{S[k]=el.type==='range'?+el.value:el.value;if(fmt)$('v'+id[0].toUpperCase()+id.slice(1)).textContent=fmt(S[k]);save();ui()};el.oninput=f;f()};
+function ui(){$('lColor').style.display=S.mode==='color'?'':'none';$('lImg').style.display=S.mode==='image'?'':'none';$('mirror').textContent='Зеркало: '+(S.mirror?'вкл':'выкл')}
+$('mode').value=S.mode;$('mode').onchange=()=>{S.mode=$('mode').value;save();ui()};
+bind('color','color');bind('blur','blur',v=>v+'px');bind('thr','thr',v=>v+'%');bind('soft','soft',v=>v);bind('sm','sm',v=>v+'%');bind('shr','shr',v=>v);
+$('mirror').onclick=()=>{S.mirror=S.mirror?0:1;save();ui()};
+$('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('url').textContent);$('copy').textContent='Скопировано'};
+let bg=null;$('pick').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();im.onload=()=>bg=im;im.src=URL.createObjectURL(f)};
+save();ui();
+
+const out=$('out'),ctx=out.getContext('2d');
+const vid=document.createElement('video');vid.muted=true;vid.playsInline=true;
+const mask=document.createElement('canvas'),mctx=mask.getContext('2d');
+const fg=document.createElement('canvas'),fctx=fg.getContext('2d');
+const bl=document.createElement('canvas'),bctx=bl.getContext('2d');
+let seg,stream,smooth=null,frames=0,lastT=performance.now(),lastVT=-1;
+
+async function listCams(){try{const d=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind==='videoinput');
+ $('cam').innerHTML=d.map((x,i)=>`<option value="${x.deviceId}">${x.label||'Камера '+(i+1)}</option>`).join('');
+ if(S.cam&&d.some(x=>x.deviceId===S.cam))$('cam').value=S.cam}catch(e){}}
+async function startCam(){
+ if(stream)stream.getTracks().forEach(t=>t.stop());
+ const c={video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:false};
+ if(S.cam)c.video.deviceId={exact:S.cam};
+ try{stream=await navigator.mediaDevices.getUserMedia(c)}catch(e){
+  if(S.cam){S.cam='';return startCam()}
+  throw e}
+ vid.srcObject=stream;await vid.play();
+ out.width=fg.width=bl.width=vid.videoWidth;out.height=fg.height=bl.height=vid.videoHeight;smooth=null;
+ await listCams();
+}
+$('cam').onchange=async()=>{S.cam=$('cam').value;save();try{await startCam()}catch(e){msg('Камера: '+e.message,1)}};
+
+function process(res){
+ const m=res.confidenceMasks[0];const w=m.width,h=m.height;const f=m.getAsFloat32Array();
+ if(mask.width!==w){mask.width=w;mask.height=h}
+ if(!smooth||smooth.length!==f.length)smooth=new Float32Array(f);
+ const a=S.sm/100,thr=S.thr/100,soft=Math.max(.001,S.soft/100);
+ const img=mctx.createImageData(w,h),d=img.data;
+ for(let i=0;i<f.length;i++){
+  const v=smooth[i]=smooth[i]*a+f[i]*(1-a);
+  let t=(v-(thr-soft))/(2*soft);t=t<0?0:t>1?1:t;t=t*t*(3-2*t);
+  const o=i*4;d[o]=d[o+1]=d[o+2]=255;d[o+3]=t*255;
+ }
+ mctx.putImageData(img,0,0);m.close();
+}
+function draw(){
+ const W=out.width,H=out.height;ctx.clearRect(0,0,W,H);
+ ctx.save();if(S.mirror){ctx.translate(W,0);ctx.scale(-1,1)}
+ // фон
+ if(S.mode==='color'){ctx.fillStyle=S.color;ctx.fillRect(0,0,W,H)}
+ else if(S.mode==='blur'){ctx.filter=`blur(${S.blur}px)`;ctx.drawImage(vid,-S.blur*2,-S.blur*2,W+S.blur*4,H+S.blur*4);ctx.filter='none'}
+ else if(S.mode==='image'&&bg){const r=Math.max(W/bg.width,H/bg.height);const bw=bg.width*r,bh=bg.height*r;ctx.drawImage(bg,(W-bw)/2,(H-bh)/2,bw,bh)}
+ // человек = кадр * маска
+ fctx.globalCompositeOperation='copy';fctx.filter='none';fctx.drawImage(vid,0,0,W,H);
+ fctx.globalCompositeOperation='destination-in';
+ if(S.shr>0)fctx.filter=`blur(${S.shr}px) contrast(2)`;
+ fctx.drawImage(mask,0,0,W,H);fctx.filter='none';fctx.globalCompositeOperation='source-over';
+ ctx.drawImage(fg,0,0);ctx.restore();
+}
+function loop(){
+ requestAnimationFrame(loop);
+ if(!seg||vid.readyState<2||vid.currentTime===lastVT)return;lastVT=vid.currentTime;
+ try{seg.segmentForVideo(vid,performance.now(),r=>{process(r)})}catch(e){msg('Ошибка: '+e.message,1);return}
+ draw();frames++;const n=performance.now();
+ if(n-lastT>1000){$('fps').textContent='FPS: '+Math.round(frames*1000/(n-lastT));frames=0;lastT=n}
+}
+(async()=>{
+ try{
+  msg('Загружаю модель…');
+  const fs=await FilesetResolver.forVisionTasks('./vendor/wasm');
+  const mk=d=>ImageSegmenter.createFromOptions(fs,{baseOptions:{modelAssetPath:'./vendor/seg.tflite',delegate:d},runningMode:'VIDEO',outputConfidenceMasks:true,outputCategoryMask:false});
+  try{seg=await mk('GPU')}catch(e){seg=await mk('CPU')}
+  msg('Просим камеру…');await startCam();
+  msg('Работает. Прозрачный фон — в OBS поставь ссылку ниже.');
+  window.__webcamReady=true;loop();
+ }catch(e){msg((e.name==='NotAllowedError'?'Нет доступа к камере. Разреши её в браузере.':'Ошибка: '+(e.message||e)),1);console.error(e)}
+})();
+</script></body></html>
