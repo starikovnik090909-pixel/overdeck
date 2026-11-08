@@ -50,12 +50,21 @@ try {
     Download 'https://www.python.org/ftp/python/3.11.9/python-3.11.9-embed-amd64.zip' $zip
     Expand-Archive $zip -DestinationPath $rt -Force
     Remove-Item $zip
-    $pth = Get-ChildItem $rt -Filter 'python*._pth' | Select-Object -First 1
-    (Get-Content $pth.FullName) -replace '#import site', 'import site' | Set-Content $pth.FullName
+  }
+  # включаем site-packages (без этого pip не видит пакеты)
+  $pth = Get-ChildItem $rt -Filter 'python*._pth' | Select-Object -First 1
+  if ($pth) { (Get-Content $pth.FullName) -replace '#import site', 'import site' | Set-Content $pth.FullName }
+  # pip ставим, только если его ещё нет (повторный запуск после сбоя)
+  $ErrorActionPreference = 'Continue'
+  $null = & $py -m pip --version 2>&1
+  $hasPip = ($LASTEXITCODE -eq 0)
+  $ErrorActionPreference = 'Stop'
+  if (-not $hasPip) {
     St 1 'Ставлю pip' 8
-    Download 'https://bootstrap.pypa.io/get-pip.py' (Join-Path $rt 'get-pip.py')
-    $c = RunLogged $py @('get-pip.py', '--no-warn-script-location') 1 'Ставлю pip' 8 12 $null
-    if ($c -ne 0) { throw 'не удалось поставить pip' }
+    $gp = Join-Path $rt 'get-pip.py'
+    Download 'https://bootstrap.pypa.io/get-pip.py' $gp
+    $c = RunLogged $py @(('"' + $gp + '"'), '--no-warn-script-location') 1 'Ставлю pip' 8 12 $null
+    if ($c -ne 0) { throw 'не удалось поставить pip (см. install.log)' }
   }
   # библиотеки: 12% → 45%
   $pk = { $n = 0; if (Test-Path $logFile) { $n = @(Select-String -Path $logFile -Pattern '^(Collecting|Downloading|Installing collected)' -ErrorAction SilentlyContinue).Count }; [Math]::Min(45, 12 + $n * 2) }
@@ -66,7 +75,7 @@ try {
   if ($c -ne 0) { throw 'библиотеки не запускаются (см. install.log)' }
   # модели: 48% → 99%
   $pm = { $pc = 48; if (Test-Path $logFile) { $l = Get-Content $logFile -Tail 20 -ErrorAction SilentlyContinue | Where-Object { $_ -like 'PCT:*' } | Select-Object -Last 1; if ($l) { $a = $l.Substring(4).Split('|'); $v = [int]$a[0]; if ($a[1] -like '*распознавания*') { $pc = 78 + [int]($v * 0.21) } else { $pc = 48 + [int]($v * 0.30) } } }; $pc }
-  $c = RunLogged $py @((Join-Path $mod 'worker.py'), '--prefetch') 4 'Скачиваю модели нейросети (~830 МБ, один раз)' 48 99 $pm
+  $c = RunLogged $py @(('"' + (Join-Path $mod 'worker.py') + '"'), '--prefetch') 4 'Скачиваю модели нейросети (~830 МБ, один раз)' 48 99 $pm
   if ($c -ne 0) { throw 'не удалось скачать модели (см. install.log)' }
   St 4 'Готово' 100 '' $true
 } catch {
