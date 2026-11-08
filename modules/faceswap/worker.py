@@ -25,6 +25,7 @@ ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'so
       'progress': 0.0, 'error': ''}
 CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80}
 LOCK = threading.Lock()
+PRINT = {'on': False, 'last': -1}
 LAST = {'jpg': None, 'n': 0}
 SRC_BYTES = {'data': None}
 
@@ -81,6 +82,11 @@ def download(url, dst, label):
             got += len(b)
             if total:
                 set_state(progress=got / total)
+                if PRINT['on']:
+                    pc = int(got * 100 / total)
+                    if pc != PRINT['last']:
+                        PRINT['last'] = pc
+                        print('PCT:%d|%s' % (pc, label), flush=True)
     os.replace(tmp, dst)
 
 
@@ -294,7 +300,13 @@ def main():
     ap.add_argument('--source', default='')
     ap.add_argument('--camera', type=int, default=0)
     ap.add_argument('--demo', action='store_true')
+    ap.add_argument('--prefetch', action='store_true', help='только скачать модели и выйти')
     a = ap.parse_args()
+    if a.prefetch:
+        PRINT['on'] = True
+        ensure_models(a.models)
+        print('PREFETCH_OK', flush=True)
+        return
     CFG['camera'] = a.camera
     threading.Thread(target=loop, args=(a,), daemon=True).start()
     srv = ThreadingHTTPServer(('127.0.0.1', a.port), H)

@@ -544,8 +544,16 @@ class Launcher : Form
 
         modsPage = new ModsPage(delegate { SlideTo(false); }, delegate { return modsForm != null && modsForm.IsInstalled(); }, delegate { OpenModSheet(); });
         modsPage.AddMod(new ModInfo { Name = "Замена лица", Sub = "Дипфейк", Real = true, Kind = 4,
-            Inst = delegate { return Directory.Exists(Path.Combine(root, "modules", "faceswap", "runtime")); },
-            Open = delegate { try { Process.Start(AdminUrl(port) + "#faceswap"); } catch { } } });
+            Inst = delegate { try { string sp = Path.Combine(root, "modules", "faceswap", "install_status.json"); return File.Exists(sp) && FaceInstallForm.IsDone(File.ReadAllText(sp)); } catch { return false; } },
+            Open = delegate
+            {
+                bool ok = false;
+                try { string sp = Path.Combine(root, "modules", "faceswap", "install_status.json"); ok = File.Exists(sp) && FaceInstallForm.IsDone(File.ReadAllText(sp)); } catch { }
+                if (ok) { try { Process.Start(AdminUrl(port) + "#faceswap"); } catch { } return; }
+                FaceInstallForm f = new FaceInstallForm(root, delegate { try { Process.Start(AdminUrl(port) + "#faceswap"); } catch { } });
+                f.ShowDialog(this);
+                if (modsPage != null) modsPage.Rebuild();
+            } });
         modsPage.Location = new Point(700, 0);
         Controls.Add(modsPage);
 

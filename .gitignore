@@ -157,3 +157,5 @@ modules/faceswap/runtime/
 modules/faceswap/models/
 faceswap_settings.json
 faceswap_source.jpg
+modules/faceswap/install_status.json
+modules/faceswap/install.log*

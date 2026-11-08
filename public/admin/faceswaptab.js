@@ -10,8 +10,20 @@
     st = s; var w = s.worker || {}, set = s.settings || {};
     var main = $('fsMain'), bar = $('fsBarI'), barw = bar.parentNode, msg = '';
     barw.style.display = 'none';
-    if (s.installing) { msg = 'Устанавливаю мод… это несколько минут'; main.textContent = 'Идёт установка…'; main.disabled = true; }
-    else if (!s.installed) { msg = 'Мод не установлен (скачает Python и библиотеки, ~1 ГБ)'; main.textContent = 'Установить мод'; main.disabled = false; }
+    var inst = s.install, sub = '', busy = false;
+    $('fsCancel').hidden = true;
+    if (inst && inst.running) {
+      msg = 'Шаг ' + inst.step + ' из ' + inst.total + ': ' + inst.msg;
+      barw.style.display = 'block'; bar.style.width = Math.max(2, inst.pct) + '%'; busy = true;
+      var m = Math.floor(inst.elapsed / 60), sc = inst.elapsed % 60;
+      sub = inst.pct + '% · прошло ' + m + ':' + (sc < 10 ? '0' : '') + sc + (inst.detail ? '\n' + inst.detail : '');
+      main.textContent = 'Идёт установка…'; main.disabled = true; $('fsCancel').hidden = false;
+    }
+    else if (!s.installed && inst && inst.error) {
+      msg = 'Установка не удалась: ' + inst.error; sub = 'Подробности в файле modules/faceswap/install.log. Проверь интернет и повтори.';
+      main.textContent = 'Повторить установку'; main.disabled = false;
+    }
+    else if (!s.installed) { msg = 'Мод не установлен'; sub = 'Установка скачает Python, библиотеки и модели (около 1,2 ГБ), это 5–15 минут. Можно закрыть вкладку, установка продолжится.'; main.textContent = 'Установить мод'; main.disabled = false; }
     else if (!s.running) { msg = 'Выключено'; main.textContent = 'Включить замену'; main.disabled = false; }
     else {
       main.textContent = 'Выключить'; main.disabled = false;
@@ -20,8 +32,8 @@
       else if (!s.hasSource) msg = 'Выбери фото лица, которое подставлять';
       else msg = (w.msg || 'Запуск…') + (w.fps ? ' · ' + w.fps + ' FPS' : '') + (w.provider ? ' · ' + w.provider : '') + (w.face ? '' : ' · лица в кадре нет');
     }
-    $('fsSt').textContent = msg;
-    $('fsLog').textContent = (s.installing || s.error || (w && w.state === 'error')) ? (s.log || []).join('\n') : '';
+    $('fsSt').textContent = msg; $('fsSub').textContent = sub; $('fsSub').style.whiteSpace = 'pre-line'; barw.classList.toggle('busy', busy);
+    $('fsLog').textContent = (s.error || (w && w.state === 'error')) ? (s.log || []).join('\n') : '';
     var run = s.running && w.state === 'run';
     $('fsPrev').style.display = run ? 'block' : 'none'; $('fsPh').style.display = run ? 'none' : 'block';
     if (run && !$('fsPrev').getAttribute('src')) $('fsPrev').src = '/api/faceswap/stream?t=' + Date.now();
@@ -49,6 +61,7 @@
     var p = !st.installed ? post('install') : st.running ? post('stop') : post('start');
     p.then(function (r) { if (r && r.success === false) $('fsSt').textContent = r.error; poll(); });
   };
+  $('fsCancel').onclick = function () { post('install/cancel').then(poll); };
   $('fsPick').onclick = function () { $('fsFile').click(); };
   $('fsFile').onchange = function () {
     var f = this.files[0]; if (!f) return; var fd = new FormData(); fd.append('photo', f);
@@ -59,7 +72,7 @@
     if (navigator.clipboard) navigator.clipboard.writeText(u).catch(function () {});
     $('fsObs').textContent = '✓ Скопировано: ' + u; setTimeout(function () { $('fsObs').textContent = '🔗 Ссылка для OBS'; }, 3500);
   };
-  function sync() { var on = nav.classList.contains('active'); clearInterval(timer); timer = null; if (on) { poll(); timer = setInterval(poll, 1500); } }
+  function sync() { var on = nav.classList.contains('active'); clearInterval(timer); timer = null; if (on) { poll(); timer = setInterval(poll, 1000); } }
   new MutationObserver(sync).observe(nav, { attributes: true, attributeFilter: ['class'] });
   sync();
 })();
