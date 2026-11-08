@@ -30,6 +30,7 @@ function Download($url, $dst) {
 # запускает процесс, пишет вывод в лог, пока ждёт — обновляет статус; возвращает код выхода
 function RunLogged($exe, $argList, $step, $msg, $p0, $p1, $pctFn) {
   $p = Start-Process -FilePath $exe -ArgumentList $argList -NoNewWindow -PassThru -RedirectStandardOutput $logFile -RedirectStandardError ($logFile + '.err') -WorkingDirectory $mod
+  $null = $p.Handle   # без этого PowerShell 5.1 теряет код выхода процесса
   while (-not $p.HasExited) {
     $pc = $p0
     if ($pctFn) { $pc = & $pctFn }
@@ -38,7 +39,9 @@ function RunLogged($exe, $argList, $step, $msg, $p0, $p1, $pctFn) {
   }
   $p.WaitForExit()
   if (Test-Path ($logFile + '.err')) { Get-Content ($logFile + '.err') -ErrorAction SilentlyContinue | Add-Content $logFile }
-  return $p.ExitCode
+  $code = $p.ExitCode
+  if ($null -eq $code) { $code = 0 }
+  return [int]$code
 }
 
 try {
