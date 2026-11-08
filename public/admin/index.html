@@ -352,6 +352,12 @@
         </svg>
         <span>Умная вебка</span>
       </div>
+      <div class="nav-item" data-tab="faceswap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="10" r="5" stroke-width="1.5"/><circle cx="15.5" cy="14" r="5" stroke-width="1.5"/><path d="M7.4 9.5h.01M10.6 9.5h.01" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>Замена лица</span>
+      </div>
       <div class="nav-item" data-tab="soundpad">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 10v4M8 7v10M12 4v16M16 8v8M20 11v2" stroke-width="1.6" stroke-linecap="round"/>
@@ -3321,6 +3327,24 @@
       <div class="page-head"><div><h1 class="tab-title">Умная вебка</h1><p class="tab-description">Вырезает фон за тобой без зелёного экрана. Справа настройки, внизу ссылка для OBS (Источник → Браузер). Камера включается, пока вкладка открыта.</p></div></div>
       <iframe id="wcFrame" title="Умная вебка" allow="camera" style="width:100%;height:calc(100vh - 270px);min-height:380px;border:1px solid var(--line2,#26262a);border-radius:12px;background:#0b0b0c"></iframe>
     </section>
+    <section class="tab-section" id="tab-faceswap">
+      <div class="page-head"><div><h1 class="tab-title">Замена лица</h1><p class="tab-description">Твоё лицо в кадре заменяется на лицо с выбранного фото. Всё считается на твоём ПК. Нужна видеокарта, на процессоре будет медленно.</p></div>
+        <div class="page-actions"><button class="btn btn-secondary" type="button" id="fsObs">🔗 Ссылка для OBS</button></div></div>
+      <div class="fs-grid">
+        <div class="fs-view"><img id="fsPrev" alt=""><div class="fs-ph" id="fsPh">Включи замену, чтобы увидеть картинку</div></div>
+        <div class="fs-side">
+          <div class="fs-st" id="fsSt">Проверяю…</div>
+          <div class="fs-bar"><i id="fsBarI"></i></div>
+          <button class="btn btn-primary" type="button" id="fsMain">Установить мод</button>
+          <div class="fs-photo"><div class="fs-th" id="fsTh"></div><div><button class="btn btn-secondary btn-sm" type="button" id="fsPick">Выбрать фото лица…</button><small>Чьё лицо подставлять. Фото анфас, хороший свет.</small></div><input type="file" id="fsFile" accept="image/*" hidden></div>
+          <label class="fs-chk"><input type="checkbox" id="fsConsent"> <span>Это моё лицо или человек разрешил его использовать. Выдавать себя за другого и обманывать зрителей нельзя.</span></label>
+          <label class="fs-row"><span>Сила замены <b id="fsBlendV">100%</b></span><input type="range" id="fsBlend" min="30" max="100" value="100"></label>
+          <div class="fs-two"><label class="fs-chk"><input type="checkbox" id="fsMirror"> <span>Зеркало</span></label><label class="fs-chk"><input type="checkbox" id="fsAuto"> <span>Запускать с Overdeck</span></label></div>
+          <label class="fs-row"><span>Номер камеры</span><input type="number" id="fsCam" min="0" max="9" value="0"></label>
+          <pre class="fs-log" id="fsLog"></pre>
+        </div>
+      </div>
+    </section>
     <section class="tab-section" id="tab-soundpad">
       <div class="page-head"><div><h1 class="tab-title">Саундпад</h1><p class="tab-description">Нажми на плитку, чтобы послушать звук у себя. Кнопка «на стрим» играет его на стриме. Монета отмечает звук для наград за баллы, шестерёнка открывает настройки.</p></div>
         <div class="page-actions"><span class="ui3-saved" id="spSaved"></span>
@@ -4165,6 +4189,7 @@
 <script src="sceneinspector.js?v=1"></script>
 <script src="qol.js?v=1"></script>
 <script src="webcamtab.js?v=1"></script>
+<script src="faceswaptab.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>
 </body>
 </html>

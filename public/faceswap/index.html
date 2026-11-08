@@ -1,0 +1,6 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Замена лица — OBS</title>
+<style>html,body{margin:0;height:100%;background:transparent;overflow:hidden}img{width:100%;height:100%;object-fit:contain;display:block}</style></head>
+<body><img id="v" alt=""><script>
+var v=document.getElementById('v');function go(){v.src='/api/faceswap/stream?t='+Date.now()}
+v.onerror=function(){setTimeout(go,2000)};go();
+</script></body></html>

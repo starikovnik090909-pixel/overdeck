@@ -151,3 +151,9 @@ boss_data.json
 boss_data.json.tmp
 auction_bridge.json
 auction_bridge.json.tmp
+
+# Мод «Замена лица»: окружение, модели и личное фото
+modules/faceswap/runtime/
+modules/faceswap/models/
+faceswap_settings.json
+faceswap_source.jpg

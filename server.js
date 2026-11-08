@@ -1451,6 +1451,7 @@ soonData.init(async () => {
   return { title: info.title || '', game: info.game_name || '', login: config.channel || '', art };
 });
 require('./routes/soon').main({ soonData, app });
+require('./routes/faceswap').main({ app });
 musicReward.init({ getToken: (force) => ensureUserToken(force), getBroadcasterId: () => resolvedBroadcasterId, getClientId: () => config.twitch.clientId });
 music.init({ say: (t) => chatBot.say(t), onOrder: () => { streamCounters.music += 1; }, onSettings: (st) => { musicReward.sync(st).catch(() => {}); } });
 // награда для заказа музыки включается и выключается вместе с заказом; сверяем при старте и раз в несколько минут
