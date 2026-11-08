@@ -74,7 +74,7 @@ try {
   $c = RunLogged $py @('-m', 'pip', 'install', '--progress-bar', 'off', '--no-warn-script-location', '--upgrade', 'numpy', 'opencv-python', 'onnx', 'onnxruntime-directml', 'mediapipe==0.10.14') 2 'Ставлю библиотеки (несколько минут)' 12 45 $pk
   if ($c -ne 0) { throw 'pip не справился (см. install.log)' }
   St 3 'Проверяю библиотеки' 46
-  $c = RunLogged $py @('-c', 'import numpy,cv2,onnx,onnxruntime,mediapipe;print(onnxruntime.get_available_providers())') 3 'Проверяю библиотеки' 46 48 $null
+  $c = RunLogged $py @('-c', '"import numpy,cv2,onnx,onnxruntime,mediapipe;print(onnxruntime.get_available_providers())"') 3 'Проверяю библиотеки' 46 48 $null
   if ($c -ne 0) { throw 'библиотеки не запускаются (см. install.log)' }
   # модели: 48% → 99%
   $pm = { $pc = 48; if (Test-Path $logFile) { $l = Get-Content $logFile -Tail 20 -ErrorAction SilentlyContinue | Where-Object { $_ -like 'PCT:*' } | Select-Object -Last 1; if ($l) { $a = $l.Substring(4).Split('|'); $v = [int]$a[0]; if ($a[1] -like '*распознавания*') { $pc = 78 + [int]($v * 0.21) } else { $pc = 48 + [int]($v * 0.30) } } }; $pc }
