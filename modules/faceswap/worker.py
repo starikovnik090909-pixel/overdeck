@@ -22,13 +22,17 @@ import numpy as np
 import cv2
 
 SWAPPER_URL = 'https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/inswapper_128.onnx'
+GFPGAN_URL = 'https://huggingface.co/facefusion/models-3.0.0/resolve/main/gfpgan_1.4.onnx'
+FFHQ512 = np.array([[192.98138, 239.94708], [318.90277, 240.1936], [256.63416, 314.01935],
+                    [201.26117, 371.41043], [313.08905, 371.15118]], dtype=np.float32)
 BUFFALO_URL = 'https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip'
 ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
                 [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)
 
 ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'source': False, 'provider': '',
-      'progress': 0.0, 'error': '', 'timing': ''}
-CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80}
+      'progress': 0.0, 'error': '', 'timing': '', 'enh': '', 'out': ''}
+CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80,
+       'enhance': False, 'enh': 0.8, 'window': False, 'vcam': False}
 LOCK = threading.Lock()
 PRINT = {'on': False, 'last': -1}
 LAST = {'jpg': None, 'n': 0}
@@ -41,15 +45,15 @@ def set_state(**k):
 
 
 # ---------- геометрия (чистая математика, проверяется тестом без моделей) ----------
-def align_matrix(kps, size):
-    """Матрица 2x3: 5 точек лица -> эталон ArcFace для квадрата size×size."""
-    dst = ARC * (size / 112.0)
+def align_matrix(kps, size, tpl=None):
+    """Матрица 2x3: 5 точек лица -> эталон (ArcFace по умолчанию) для квадрата size×size."""
+    dst = (ARC * (size / 112.0)) if tpl is None else tpl
     m, _ = cv2.estimateAffinePartial2D(np.asarray(kps, np.float32), dst, method=cv2.LMEDS)
     return m
 
 
-def crop(img, kps, size):
-    m = align_matrix(kps, size)
+def crop(img, kps, size, tpl=None):
+    m = align_matrix(kps, size, tpl)
     return cv2.warpAffine(img, m, (size, size), borderValue=0.0), m
 
 
@@ -111,12 +115,15 @@ def paste_back(frame, fake, m, size, oval=None, feather=0.12):
 
 
 # ---------- модели ----------
-def download(url, dst, label, tag='x'):
+def download(url, dst, label, tag='x', side=False):
     if os.path.exists(dst) and os.path.getsize(dst) > 1000000:
         return
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     tmp = dst + '.part'
-    set_state(state='download', msg='Скачиваю: ' + label, progress=0.0)
+    if side:
+        set_state(enh='Скачиваю улучшение лица… 0%')
+    else:
+        set_state(state='download', msg='Скачиваю: ' + label, progress=0.0)
     req = urllib.request.Request(url, headers={'User-Agent': 'Overdeck'})
     with urllib.request.urlopen(req, timeout=60) as r, open(tmp, 'wb') as f:
         total = int(r.headers.get('Content-Length') or 0)
@@ -128,7 +135,10 @@ def download(url, dst, label, tag='x'):
             f.write(b)
             got += len(b)
             if total:
-                set_state(progress=got / total)
+                if side:
+                    set_state(enh='Скачиваю улучшение лица… %d%%' % int(got * 100 / total))
+                else:
+                    set_state(progress=got / total)
                 if PRINT['on']:
                     pc = int(got * 100 / total)
                     if pc != PRINT['last']:
@@ -182,7 +192,7 @@ class Engine:
         self.sw = ort.InferenceSession(sw, sess_options=so, providers=prov)
         self.arc = ort.InferenceSession(arc, sess_options=so, providers=prov)
         self.kprev = None
-        self.t = {'mesh': 0.0, 'swap': 0.0, 'paste': 0.0}
+        self.t = {'mesh': 0.0, 'swap': 0.0, 'paste': 0.0, 'enh': 0.0}
         self.emap = numpy_helper.to_array(onnx.load(sw).graph.initializer[-1])
         self.mesh = mp.solutions.face_mesh.FaceMesh(static_image_mode=False, max_num_faces=1,
                                                     refine_landmarks=True, min_detection_confidence=0.5,
@@ -190,6 +200,44 @@ class Engine:
         self.mesh_img = mp.solutions.face_mesh.FaceMesh(static_image_mode=True, max_num_faces=1,
                                                         refine_landmarks=True, min_detection_confidence=0.5)
         self.latent = None
+        self.models = models
+        self.ort, self.so, self.prov = ort, so, prov
+        self.gf = None
+        self.gf_busy = False
+        self.t['enh'] = 0.0
+
+    def load_enh(self):
+        """Фоновая загрузка GFPGAN: не блокирует видео, пока качается."""
+        if self.gf is not None or self.gf_busy:
+            return
+        self.gf_busy = True
+
+        def run():
+            try:
+                dst = os.path.join(self.models, 'gfpgan_1.4.onnx')
+                download(GFPGAN_URL, dst, 'улучшение лица', 'enh', side=True)
+                set_state(enh='Готовлю улучшение лица…')
+                self.gf = self.ort.InferenceSession(dst, sess_options=self.so, providers=self.prov)
+                set_state(enh='')
+            except Exception as e:  # noqa
+                set_state(enh='Улучшение лица не загрузилось: %s' % e)
+                CFG['enhance'] = False
+            finally:
+                self.gf_busy = False
+        threading.Thread(target=run, daemon=True).start()
+
+    def enhance(self, frame, kps, oval, strength):
+        """GFPGAN по уже вставленному лицу: возвращает чёткие поры, глаза, зубы. Вставка — по контуру лица."""
+        t = time.time()
+        aimg, m = crop(frame, kps, 512, FFHQ512)
+        blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (512, 512), (127.5, 127.5, 127.5), swapRB=True)
+        out = self.gf.run(None, {self.gf.get_inputs()[0].name: blob})[0][0]
+        img = np.clip((out.transpose(1, 2, 0) + 1.0) * 127.5, 0, 255).astype(np.uint8)[:, :, ::-1]
+        img = np.ascontiguousarray(img)
+        img = cv2.addWeighted(img, strength, aimg, 1 - strength, 0)
+        res = paste_back(frame, img, m, 512, oval, feather=0.1)
+        self._ema('enh', (time.time() - t) * 1000)
+        return res
 
     @staticmethod
     def pts_from(res, w, h):
@@ -256,6 +304,15 @@ class Engine:
             fake = cv2.addWeighted(fake, blend, aimg, 1 - blend, 0)
         out = paste_back(frame, fake, m, 128, pts[OVAL])
         self._ema('paste', (time.time() - t2) * 1000)
+        if CFG['enhance']:
+            if self.gf is None:
+                self.load_enh()
+            else:
+                try:
+                    out = self.enhance(out, kps, pts[OVAL], float(CFG['enh']))
+                except Exception as e:  # noqa
+                    set_state(enh='Улучшение лица отключено: %s' % e)
+                    CFG['enhance'] = False
         return out, True
 
 
@@ -279,6 +336,99 @@ class Cam(threading.Thread):
         cap.release()
 
 
+class Out:
+    """Вывод на ПК: окно (его берёт OBS через «Захват окна») и виртуальная камера (OBS Virtual Camera)."""
+    WIN = 'Overdeck - Zamena litsa'
+
+    def __init__(self):
+        self.win = False
+        self.cam = None
+        self.cam_sz = None
+        self.installing = False
+        self.fail = ''
+
+    def _msg(self):
+        if not CFG['window'] and not CFG['vcam'] and not self.installing:
+            self.fail = ''
+        parts = []
+        if self.win:
+            parts.append('окно на ПК открыто')
+        if self.cam is not None:
+            parts.append('виртуальная камера: ' + str(getattr(self.cam, 'device', 'OBS Virtual Camera')))
+        if self.fail:
+            parts.append(self.fail)
+        set_state(out=' · '.join(parts))
+
+    def _install_vcam(self):
+        if self.installing:
+            return
+        self.installing = True
+        set_state(out='Ставлю библиотеку виртуальной камеры…')
+
+        def run():
+            import subprocess
+            try:
+                r = subprocess.run([sys.executable, '-m', 'pip', 'install', '--disable-pip-version-check',
+                                    'pyvirtualcam'], capture_output=True, timeout=300)
+                if r.returncode != 0:
+                    self.fail = 'не удалось поставить pyvirtualcam'; CFG['vcam'] = False
+                import importlib; importlib.invalidate_caches()
+            except Exception as e:  # noqa
+                self.fail = 'не удалось поставить pyvirtualcam: %s' % e; CFG['vcam'] = False
+            self.installing = False
+        threading.Thread(target=run, daemon=True).start()
+
+    def show(self, frame):
+        # --- окно ---
+        if CFG['window']:
+            try:
+                cv2.imshow(self.WIN, frame)
+                cv2.waitKey(1)
+                self.win = True
+                if cv2.getWindowProperty(self.WIN, cv2.WND_PROP_VISIBLE) < 1:   # закрыли крестиком
+                    CFG['window'] = False
+            except Exception as e:  # noqa
+                CFG['window'] = False; self.fail = 'окно: %s' % e
+        if self.win and not CFG['window']:
+            try:
+                cv2.destroyWindow(self.WIN); cv2.waitKey(1)
+            except Exception:
+                pass
+            self.win = False
+        # --- виртуальная камера ---
+        if CFG['vcam']:
+            if self.cam is None and not self.installing:
+                try:
+                    import pyvirtualcam
+                    h, w = 720, 1280
+                    self.cam = pyvirtualcam.Camera(width=w, height=h, fps=30, fmt=pyvirtualcam.PixelFormat.BGR)
+                    self.cam_sz = (w, h); self.fail = ''
+                except ImportError:
+                    self._install_vcam()
+                except Exception as e:  # noqa
+                    self.cam = None
+                    self.fail = 'виртуальная камера недоступна: поставь OBS Studio и один раз нажми в нём «Запустить виртуальную камеру» (%s)' % str(e)[:80]
+                    CFG['vcam'] = False
+            if self.cam is not None:
+                try:
+                    f = frame if frame.shape[1] == self.cam_sz[0] and frame.shape[0] == self.cam_sz[1] else \
+                        cv2.resize(frame, self.cam_sz, interpolation=cv2.INTER_AREA)
+                    self.cam.send(np.ascontiguousarray(f))
+                except Exception as e:  # noqa
+                    self.fail = 'виртуальная камера: %s' % str(e)[:80]
+                    self.close_cam(); CFG['vcam'] = False
+        elif self.cam is not None:
+            self.close_cam()
+        self._msg()
+
+    def close_cam(self):
+        try:
+            self.cam.close()
+        except Exception:
+            pass
+        self.cam = None
+
+
 def demo_frame(t):
     img = np.full((720, 1280, 3), 18, np.uint8)
     cv2.putText(img, 'DEMO: engine without models', (330, 330), cv2.FONT_HERSHEY_SIMPLEX, 1.4, (180, 196, 43), 3)
@@ -297,6 +447,7 @@ def loop(args):
         cam_now = CFG['camera']
         set_state(state='run', msg='Работает', progress=1.0)
         n, t0, seen = 0, time.time(), -1
+        out = Out()
         while True:
             if SRC_BYTES['data'] is not None and eng:
                 img = cv2.imdecode(np.frombuffer(SRC_BYTES['data'], np.uint8), cv2.IMREAD_COLOR)
@@ -323,8 +474,12 @@ def loop(args):
                 tm = ''
                 if eng:
                     tm = 'лицо %d мс · замена %d мс · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], eng.t['paste'])
+                    if CFG['enhance'] and eng.gf is not None:
+                        tm += ' · улучшение %d мс' % eng.t['enh']
                 set_state(fps=round(n / (time.time() - t0), 1), timing=tm); n, t0 = 0, time.time()
             set_state(face=face)
+            if CFG['window'] or CFG['vcam'] or out.win or out.cam is not None:
+                out.show(frame)
             okj, buf = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, int(CFG['quality'])])
             if okj:
                 LAST['jpg'] = buf.tobytes(); LAST['n'] += 1
@@ -410,6 +565,7 @@ def main():
     ap.add_argument('--source', default='')
     ap.add_argument('--camera', type=int, default=0)
     ap.add_argument('--demo', action='store_true')
+    ap.add_argument('--cfg', default='', help='json с настройками при старте')
     ap.add_argument('--prefetch', action='store_true', help='только скачать модели и выйти')
     a = ap.parse_args()
     if a.prefetch:
@@ -418,6 +574,13 @@ def main():
         print('PREFETCH_OK', flush=True)
         return
     CFG['camera'] = a.camera
+    if a.cfg:
+        try:
+            for k, v in json.loads(a.cfg).items():
+                if k in CFG:
+                    CFG[k] = type(CFG[k])(v) if not isinstance(CFG[k], bool) else bool(v)
+        except Exception:
+            pass
     threading.Thread(target=loop, args=(a,), daemon=True).start()
     srv = Srv(('127.0.0.1', a.port), H)
     print('faceswap worker on 127.0.0.1:%d' % a.port, flush=True)

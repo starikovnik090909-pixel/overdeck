@@ -33,6 +33,9 @@
       else { if (w.timing) sub = w.timing; msg = (w.msg || 'Запуск…') + (w.fps ? ' · ' + w.fps + ' FPS' : '') + (w.provider ? ' · ' + w.provider : '') + (w.face ? '' : ' · лица в кадре нет'); }
     }
     $('fsSt').textContent = msg; $('fsSub').textContent = sub; $('fsSub').style.whiteSpace = 'pre-line'; barw.classList.toggle('busy', busy);
+    $('fsEnhRow').style.display = set.enhance ? '' : 'none';
+    var o = [w.enh, w.out].filter(Boolean).join(' · ');
+    if (o) $('fsOut').textContent = o;
     $('fsLog').textContent = (s.error || (w && w.state === 'error')) ? (s.log || []).join('\n') : '';
     var run = s.running && w.state === 'run';
     $('fsPrev').style.display = run ? 'block' : 'none'; $('fsPh').style.display = run ? 'none' : 'block';
@@ -43,6 +46,8 @@
     if (!saving) {
       $('fsMirror').checked = !!set.mirror; $('fsAuto').checked = !!set.autostart;
       var b = Math.round((set.blend == null ? 1 : set.blend) * 100); $('fsBlend').value = b; $('fsBlendV').textContent = b + '%';
+      $('fsEnh').checked = !!set.enhance; $('fsWin').checked = !!set.window; $('fsVcam').checked = !!set.vcam;
+      var e = Math.round((set.enh == null ? 0.8 : set.enh) * 100); $('fsEnhS').value = e; $('fsEnhV').textContent = e + '%';
       if (document.activeElement !== $('fsCam')) $('fsCam').value = set.camera || 0;
     }
   }
@@ -51,11 +56,12 @@
     clearTimeout(saving);
     saving = setTimeout(function () {
       saving = null;
-      post('settings', { consent: $('fsConsent').checked, mirror: $('fsMirror').checked, autostart: $('fsAuto').checked, blend: +$('fsBlend').value / 100, camera: +$('fsCam').value || 0 });
+      post('settings', { consent: $('fsConsent').checked, mirror: $('fsMirror').checked, autostart: $('fsAuto').checked, blend: +$('fsBlend').value / 100, enhance: $('fsEnh').checked, enh: +$('fsEnhS').value / 100, window: $('fsWin').checked, vcam: $('fsVcam').checked, camera: +$('fsCam').value || 0 });
     }, 250);
   }
-  ['fsConsent', 'fsMirror', 'fsAuto', 'fsCam'].forEach(function (i) { $(i).addEventListener('change', save); });
+  ['fsConsent', 'fsMirror', 'fsAuto', 'fsCam', 'fsEnh', 'fsWin', 'fsVcam'].forEach(function (i) { $(i).addEventListener('change', save); });
   $('fsBlend').addEventListener('input', function () { $('fsBlendV').textContent = this.value + '%'; save(); });
+  $('fsEnhS').addEventListener('input', function () { $('fsEnhV').textContent = this.value + '%'; save(); });
   $('fsMain').onclick = function () {
     if (!st) return;
     var p = !st.installed ? post('install') : st.running ? post('stop') : post('start');

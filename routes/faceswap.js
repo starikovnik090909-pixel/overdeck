@@ -43,6 +43,9 @@ function main({ app, dataDir }) {
     });
   }
 
+  const cfgOf = (st) => ({ swap: st.swap !== false, mirror: !!st.mirror, blend: st.blend == null ? 1 : +st.blend, camera: st.camera || 0,
+    enhance: !!st.enhance, enh: st.enh == null ? 0.8 : +st.enh, window: !!st.window, vcam: !!st.vcam });
+
   function start() {
     if (worker) return true;
     const py = pythonPath();
@@ -53,6 +56,7 @@ function main({ app, dataDir }) {
     const st = read();
     if (st.camera != null) args.push('--camera', String(st.camera));
     if (st.demo) args.push('--demo');
+    args.push('--cfg', JSON.stringify(cfgOf(st)));
     worker = spawn(py, args, { cwd: MOD, windowsHide: true });
     worker.stdout.on('data', (d) => addLog(d));
     worker.stderr.on('data', (d) => addLog(d));   // предупреждения MediaPipe и т.п. — не ошибки, только в журнал
@@ -81,8 +85,7 @@ function main({ app, dataDir }) {
   app.post('/api/faceswap/settings', (req, res) => {
     const st = Object.assign(read(), req.body || {});
     write(st);
-    if (worker && req.body) call('POST', '/config', JSON.stringify({
-      swap: st.swap !== false, mirror: !!st.mirror, blend: st.blend == null ? 1 : +st.blend, camera: st.camera || 0 })).catch(() => {});
+    if (worker && req.body) call('POST', '/config', JSON.stringify(cfgOf(st))).catch(() => {});
     res.json({ success: true, settings: st });
   });
 
