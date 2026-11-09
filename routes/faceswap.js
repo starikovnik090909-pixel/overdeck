@@ -14,7 +14,11 @@ const RT_PY = isWin ? path.join(MOD, 'runtime', 'python.exe') : path.join(MOD, '
 function main({ app, dataDir }) {
   const dir = dataDir || path.join(__dirname, '..');
   const SETTINGS = path.join(dir, 'faceswap_settings.json');
-  const SOURCE = path.join(dir, 'faceswap_source.jpg');
+  const SOURCE = path.join(dir, 'faceswap_source.jpg');        // старый путь: одно фото (переносится в папку)
+  const SRC_DIR = path.join(dir, 'faceswap_sources');
+  const MAX_PHOTOS = 12;
+  const photos = () => { try { return fs.readdirSync(SRC_DIR).filter((f) => /^p\d+\.jpg$/.test(f)).sort(); } catch (e) { return []; } };
+  try { fs.mkdirSync(SRC_DIR, { recursive: true }); if (fs.existsSync(SOURCE) && !photos().length) fs.copyFileSync(SOURCE, path.join(SRC_DIR, 'p1.jpg')); } catch (e) { /* без фото */ }
   let worker = null, log = [], lastErr = '';
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 12 * 1024 * 1024 } });
 
@@ -44,7 +48,7 @@ function main({ app, dataDir }) {
   }
 
   const cfgOf = (st) => ({ swap: st.swap !== false, mirror: !!st.mirror, blend: st.blend == null ? 1 : +st.blend, camera: st.camera || 0,
-    model: st.model === 'fast' ? 'fast' : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth,
+    model: ['fast', 'hyper', 'hyper_b', 'hyper_c'].includes(st.model) ? st.model : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth,
     enhance: !!st.enhance, enh: st.enh == null ? 0.8 : +st.enh, window: !!st.window, vcam: !!st.vcam });
 
   function start() {
@@ -53,7 +57,7 @@ function main({ app, dataDir }) {
     if (!py) return false;
     lastErr = '';
     const args = [path.join(MOD, 'worker.py'), '--port', String(PORT), '--models', path.join(MOD, 'models')];
-    if (fs.existsSync(SOURCE)) args.push('--source', SOURCE);
+    if (photos().length) args.push('--sources', SRC_DIR);
     const st = read();
     if (st.camera != null) args.push('--camera', String(st.camera));
     if (st.demo) args.push('--demo');
@@ -80,7 +84,7 @@ function main({ app, dataDir }) {
     let w = null;
     if (worker) { try { w = await call('GET', '/status'); } catch (e) { w = { state: 'start', msg: 'Запускаю движок…' }; } }
     res.json({ success: true, installed: installed(), install: readInstall(), running: !!worker,
-      consent: !!st.consent, hasSource: fs.existsSync(SOURCE), settings: st, worker: w, error: lastErr, log: log.slice(-12) });
+      consent: !!st.consent, hasSource: photos().length > 0, photos: photos().length, settings: st, worker: w, error: lastErr, log: log.slice(-12) });
   });
 
   app.post('/api/faceswap/settings', (req, res) => {
@@ -90,13 +94,30 @@ function main({ app, dataDir }) {
     res.json({ success: true, settings: st });
   });
 
-  app.post('/api/faceswap/source', upload.single('photo'), (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, error: 'Нет файла' });
-    fs.writeFileSync(SOURCE, req.file.buffer);
-    if (worker) call('POST', '/source', req.file.buffer, 'application/octet-stream').catch(() => {});
-    res.json({ success: true });
+  const reload = () => { if (worker) call('POST', '/reload', '{}').catch(() => {}); };
+  app.post('/api/faceswap/source', upload.array('photo', MAX_PHOTOS), (req, res) => {
+    const files = req.files || [];
+    if (!files.length) return res.status(400).json({ success: false, error: 'Нет файла' });
+    let n = photos().reduce((m, f) => Math.max(m, parseInt(f.slice(1), 10) || 0), 0), added = 0;
+    for (const f of files) {
+      if (photos().length >= MAX_PHOTOS) break;
+      fs.writeFileSync(path.join(SRC_DIR, 'p' + (++n) + '.jpg'), f.buffer); added++;
+    }
+    reload();
+    res.json({ success: true, added, total: photos().length, max: MAX_PHOTOS });
   });
-  app.get('/api/faceswap/source.jpg', (req, res) => (fs.existsSync(SOURCE) ? res.sendFile(SOURCE) : res.status(404).end()));
+  app.get('/api/faceswap/sources', (req, res) => res.json({ success: true, items: photos().map((f) => f.slice(1, -4)), max: MAX_PHOTOS }));
+  app.get('/api/faceswap/source/:id.jpg', (req, res) => {
+    const f = path.join(SRC_DIR, 'p' + String(req.params.id).replace(/\D/g, '') + '.jpg');
+    fs.existsSync(f) ? res.sendFile(f) : res.status(404).end();
+  });
+  app.post('/api/faceswap/source/:id/delete', (req, res) => {
+    const f = path.join(SRC_DIR, 'p' + String(req.params.id).replace(/\D/g, '') + '.jpg');
+    try { fs.unlinkSync(f); } catch (e) { /* уже нет */ }
+    try { if (!photos().length && fs.existsSync(SOURCE)) fs.unlinkSync(SOURCE); } catch (e) { /* ok */ }
+    reload(); res.json({ success: true, total: photos().length });
+  });
+  app.get('/api/faceswap/source.jpg', (req, res) => { const p = photos()[0]; p ? res.sendFile(path.join(SRC_DIR, p)) : res.status(404).end(); });
 
   app.post('/api/faceswap/start', (req, res) => {
     if (!read().consent) return res.status(400).json({ success: false, error: 'Сначала подтверди условия: лицо своё или с разрешения человека.' });

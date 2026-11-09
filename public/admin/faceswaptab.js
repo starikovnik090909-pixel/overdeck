@@ -41,7 +41,8 @@
     $('fsPrev').style.display = run ? 'block' : 'none'; $('fsPh').style.display = run ? 'none' : 'block';
     if (run && !$('fsPrev').getAttribute('src')) $('fsPrev').src = '/api/faceswap/stream?t=' + Date.now();
     if (!run) $('fsPrev').removeAttribute('src');
-    if (s.hasSource && !$('fsTh').dataset.v) { $('fsTh').style.backgroundImage = 'url(/api/faceswap/source.jpg?t=' + Date.now() + ')'; $('fsTh').dataset.v = 1; }
+    if (phN !== (s.photos || 0)) { phN = s.photos || 0; renderPhotos(); }
+    if (w && w.src_total) $('fsPhN').textContent = 'Использовано фото с лицом: ' + w.src_used + ' из ' + w.src_total + '. Чем больше фото (до 12, разные ракурсы и выражения), тем больше похоже.';
     if (document.activeElement !== $('fsConsent')) $('fsConsent').checked = !!s.consent;
     if (!saving) {
       $('fsMirror').checked = !!set.mirror; $('fsAuto').checked = !!set.autostart;
@@ -70,10 +71,25 @@
     p.then(function (r) { if (r && r.success === false) $('fsSt').textContent = r.error; poll(); });
   };
   $('fsCancel').onclick = function () { post('install/cancel').then(poll); };
+  var phN = -1;
+  function renderPhotos() {
+    api('sources').then(function (r) {
+      var box = $('fsThs'); box.innerHTML = '';
+      (r.items || []).forEach(function (id) {
+        var d = document.createElement('div'); d.className = 'fs-th'; d.style.backgroundImage = 'url(/api/faceswap/source/' + id + '.jpg?t=' + Date.now() + ')';
+        var x = document.createElement('button'); x.type = 'button'; x.textContent = '×'; x.title = 'Убрать фото';
+        x.onclick = function () { post('source/' + id + '/delete').then(function () { phN = -1; poll(); }); };
+        d.appendChild(x); box.appendChild(d);
+      });
+      $('fsPick').hidden = (r.items || []).length >= (r.max || 12);
+    });
+  }
   $('fsPick').onclick = function () { $('fsFile').click(); };
   $('fsFile').onchange = function () {
-    var f = this.files[0]; if (!f) return; var fd = new FormData(); fd.append('photo', f);
-    api('source', { method: 'POST', body: fd }).then(function () { $('fsTh').dataset.v = ''; poll(); });
+    var fl = this.files; if (!fl || !fl.length) return; var fd = new FormData();
+    for (var i = 0; i < fl.length; i++) fd.append('photo', fl[i]);
+    this.value = '';
+    api('source', { method: 'POST', body: fd }).then(function () { phN = -1; poll(); });
   };
   $('fsObs').onclick = function () {
     var u = location.origin + '/faceswap/';

@@ -6,8 +6,8 @@ Overdeck · мод «Замена лица». Локальный движок: �
 Лицо находит MediaPipe (без сборки C++), замену делает inswapper_128 через onnxruntime
 (на видеокарте NVIDIA — CUDA/DirectML, иначе процессор).
 
-Запуск:  python worker.py --port 5177 --models ./models [--source face.jpg] [--demo]
-Управление: GET /status, GET /stream, GET /snapshot.jpg, POST /source (байты картинки),
+Запуск:  python worker.py --port 5177 --models ./models [--sources папка_с_фото] [--demo]
+Управление: GET /status, GET /stream, GET /snapshot.jpg, POST /reload (перечитать фото из --sources),
             POST /config (json: swap, mirror, camera, blend, quality)
 """
 import argparse, json, os, sys, threading, time, urllib.request
@@ -25,7 +25,8 @@ SWAPPER_URL = 'https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/i
 GFPGAN_URL = 'https://huggingface.co/facefusion/models-3.0.0/resolve/main/gfpgan_1.4.onnx'
 FFHQ512 = np.array([[192.98138, 239.94708], [318.90277, 240.1936], [256.63416, 314.01935],
                     [201.26117, 371.41043], [313.08905, 371.15118]], dtype=np.float32)
-HYPER_URL = 'https://huggingface.co/facefusion/models-3.3.0/resolve/main/hyperswap_1a_256.onnx'
+HYPER = {'hyper': '1a', 'hyper_b': '1b', 'hyper_c': '1c'}   # варианты HyperSwap: у каждого чуть свой характер
+HYPER_URL = 'https://huggingface.co/facefusion/models-3.3.0/resolve/main/hyperswap_%s_256.onnx'
 ARC128 = np.array([[0.36167656, 0.40387734], [0.63696719, 0.40235469], [0.50019687, 0.56044219],
                    [0.38710391, 0.72160547], [0.61507734, 0.72034453]], dtype=np.float32)   # эталон HyperSwap
 LIPS_IN = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95]
@@ -34,14 +35,14 @@ ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
                 [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)
 
 ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'source': False, 'provider': '',
-      'progress': 0.0, 'error': '', 'timing': '', 'enh': '', 'out': ''}
+      'progress': 0.0, 'error': '', 'timing': '', 'enh': '', 'out': '', 'src_used': 0, 'src_total': 0}
 CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80,
        'enhance': False, 'enh': 0.8, 'window': False, 'vcam': False,
        'model': 'hyper', 'mouth': 0.9}
 LOCK = threading.Lock()
 PRINT = {'on': False, 'last': -1}
 LAST = {'jpg': None, 'n': 0}
-SRC_BYTES = {'data': None}
+SRC = {'dir': '', 'reload': False}   # папка с фото лица; reload — перечитать
 
 
 def set_state(**k):
@@ -211,7 +212,7 @@ class Engine:
         self.ort, self.so, self.prov = ort, so, prov
         self.gf = None
         self.gf_busy = False
-        self.hy = None
+        self.hys = {}
         self.hy_busy = False
         self.emb = None
         self.t['enh'] = 0.0
@@ -236,18 +237,19 @@ class Engine:
                 self.gf_busy = False
         threading.Thread(target=run, daemon=True).start()
 
-    def load_hyper(self):
+    def load_hyper(self, key):
         """Фоновая загрузка HyperSwap 256: чётче и лучше держит мимику, пока качается — работает быстрая модель."""
-        if self.hy is not None or self.hy_busy:
+        if key in self.hys or self.hy_busy:
             return
         self.hy_busy = True
+        ver = HYPER.get(key, '1a')
 
         def run():
             try:
-                dst = os.path.join(self.models, 'hyperswap_1a_256.onnx')
-                download(HYPER_URL, dst, 'модель HyperSwap (~400 МБ, один раз)', 'hyper', side=True)
+                dst = os.path.join(self.models, 'hyperswap_%s_256.onnx' % ver)
+                download(HYPER_URL % ver, dst, 'модель HyperSwap %s (~400 МБ, один раз)' % ver, 'hyper', side=True)
                 set_state(enh='Готовлю HyperSwap…')
-                self.hy = self.ort.InferenceSession(dst, sess_options=self.so, providers=self.prov)
+                self.hys[key] = self.ort.InferenceSession(dst, sess_options=self.so, providers=self.prov)
                 set_state(enh='')
             except Exception as e:  # noqa
                 set_state(enh='HyperSwap не загрузился, работает быстрая модель: %s' % e)
@@ -299,20 +301,29 @@ class Engine:
         mouth = sorted([pts[61], pts[291]], key=lambda p: p[0])
         return np.array([eyes[0], eyes[1], pts[1], mouth[0], mouth[1]], np.float32)
 
-    def set_source(self, img_bgr):
+    def embed(self, img_bgr):
+        """Эмбеддинг (512) лица на одном фото или None, если лица нет."""
         h, w = img_bgr.shape[:2]
         res = self.mesh_img.process(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB))
         pts = self.pts_from(res, w, h)
         if pts is None:
-            return False
+            return None
         aimg, _ = crop(img_bgr, self.kps_of(pts), 112)
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (112, 112), (127.5, 127.5, 127.5), swapRB=True)
         emb = self.arc.run(None, {self.arc.get_inputs()[0].name: blob})[0][0]
+        return emb / np.linalg.norm(emb)
+
+    def set_sources(self, imgs):
+        """Несколько фото одного человека: усредняем эмбеддинги — чем больше фото, тем стабильнее похожесть. Возвращает, сколько фото подошло."""
+        embs = [e for e in (self.embed(i) for i in imgs) if e is not None]
+        if not embs:
+            return 0
+        emb = np.mean(embs, axis=0)
         emb = emb / np.linalg.norm(emb)
         self.emb = emb.reshape(1, -1).astype(np.float32)
         lat = emb.reshape(1, -1) @ self.emap
         self.latent = (lat / np.linalg.norm(lat)).astype(np.float32)
-        return True
+        return len(embs)
 
     def _ema(self, key, v):
         self.t[key] = self.t[key] * 0.9 + v * 0.1 if self.t[key] else v
@@ -339,16 +350,17 @@ class Engine:
         self.kprev = kps
         t1 = time.time()
         orig = frame.copy() if CFG['mouth'] > 0.02 else None
-        use_hy = CFG['model'] == 'hyper'
-        if use_hy and self.hy is None:
-            self.load_hyper()
+        mk = CFG['model']
+        use_hy = mk in HYPER
+        if use_hy and mk not in self.hys:
+            self.load_hyper(mk)
             use_hy = False
         omask = None
         if use_hy:
             S = 256
             aimg, m = crop(frame, kps, S, ARC128 * S)
             blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (S, S), (127.5, 127.5, 127.5), swapRB=True)
-            o = self.hy.run(None, {'source': self.emb, 'target': blob})
+            o = self.hys[mk].run(None, {'source': self.emb, 'target': blob})
             fake = np.clip((o[0][0].transpose(1, 2, 0) + 1.0) * 127.5, 0, 255).astype(np.uint8)[:, :, ::-1]
             fake = np.ascontiguousarray(fake)
             # маску модели (o[1]) не используем: она с «дырами» на глазах и носу, через них просвечивает старое лицо
@@ -511,19 +523,28 @@ def loop(args):
     try:
         if not args.demo:
             eng = Engine(args.models)
-            if args.source and os.path.exists(args.source):
-                SRC_BYTES['data'] = open(args.source, 'rb').read()
+            SRC['dir'] = args.sources
+            SRC['reload'] = bool(args.sources)
         cam = None if args.demo else Cam(CFG['camera'])
         cam_now = CFG['camera']
         set_state(state='run', msg='Работает', progress=1.0)
         n, t0, seen = 0, time.time(), -1
         out = Out()
         while True:
-            if SRC_BYTES['data'] is not None and eng:
-                img = cv2.imdecode(np.frombuffer(SRC_BYTES['data'], np.uint8), cv2.IMREAD_COLOR)
-                SRC_BYTES['data'] = None
-                ok = img is not None and eng.set_source(img)
-                set_state(source=bool(ok), msg='Работает' if ok else 'На фото не нашёл лицо — возьми другое')
+            if SRC['reload'] and eng:
+                SRC['reload'] = False
+                imgs = []
+                try:
+                    for fn in sorted(os.listdir(SRC['dir'])):
+                        if fn.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                            im = cv2.imdecode(np.fromfile(os.path.join(SRC['dir'], fn), np.uint8), cv2.IMREAD_COLOR)
+                            if im is not None:
+                                imgs.append(im)
+                except OSError:
+                    pass
+                used = eng.set_sources(imgs) if imgs else 0
+                set_state(source=used > 0, src_used=used, src_total=len(imgs),
+                          msg='Работает' if used else ('На фото не нашёл лицо — возьми другое' if imgs else 'Добавь фото лица'))
             if cam is not None:
                 if CFG['camera'] != cam_now:
                     cam.stop = True; cam = Cam(CFG['camera']); cam_now = CFG['camera']; seen = -1
@@ -543,7 +564,7 @@ def loop(args):
             if time.time() - t0 >= 1.0:
                 tm = ''
                 if eng:
-                    tm = 'лицо %d мс · замена %d мс (%s) · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], 'HyperSwap' if (CFG['model'] == 'hyper' and eng.hy is not None) else 'быстрая', eng.t['paste'])
+                    tm = 'лицо %d мс · замена %d мс (%s) · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], 'HyperSwap' if CFG['model'] in eng.hys else 'быстрая', eng.t['paste'])
                     if CFG['enhance'] and eng.gf is not None:
                         tm += ' · улучшение %d мс' % eng.t['enh']
                 set_state(fps=round(n / (time.time() - t0), 1), timing=tm); n, t0 = 0, time.time()
@@ -613,8 +634,8 @@ class H(BaseHTTPRequestHandler):
         n = int(self.headers.get('Content-Length') or 0)
         body = self.rfile.read(n) if n else b''
         p = self.path.split('?')[0]
-        if p == '/source':
-            SRC_BYTES['data'] = body; set_state(source=False, msg='Читаю фото…')
+        if p == '/reload':
+            SRC['reload'] = True; set_state(source=False, msg='Читаю фото…')
             return self._json({'ok': True})
         if p == '/config':
             try:
@@ -632,7 +653,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--port', type=int, default=5177)
     ap.add_argument('--models', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models'))
-    ap.add_argument('--source', default='')
+    ap.add_argument('--sources', default='', help='папка с фото лица')
     ap.add_argument('--camera', type=int, default=0)
     ap.add_argument('--demo', action='store_true')
     ap.add_argument('--cfg', default='', help='json с настройками при старте')
