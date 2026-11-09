@@ -5,9 +5,9 @@
 Расширение Twitch «Chat Avatars Starikov» («Расширение») показывает зрителям канала Starlkov их пиксельных героев, уровни, топ игроков и сцену с героями. Автор расширения — Starlkov («мы»).
 
 ## Какие данные используются
-1. **Данные публичного чата Twitch.** Сервер стримера получает от Twitch сообщения чата и сохраняет для каждого участника: имя пользователя и отображаемое имя, числовой идентификатор Twitch (user ID), цвет ника, опыт и уровень, выбранного и открытых героев, время последней активности и отметки подписчика, VIP и модератора. Тексты сообщений в профиле не сохраняются.
+1. **Данные публичного чата Twitch.** Сервер стримера получает от Twitch сообщения чата и сохраняет для каждого участника: имя пользователя и отображаемое имя, числовой идентификатор Twitch (user ID), цвет ника, опыт и уровень, полученные награды и достижения, число побед и поражений в дуэлях, выбранного и открытых героев, время последней активности и отметки подписчика, VIP и модератора. Тексты сообщений в профиле не сохраняются.
 2. **Идентификатор зрителя в Расширении.** Если вы нажали «Поделиться ID» и разрешили это в Twitch, Расширение получает ваш числовой идентификатор Twitch. Он нужен только для того, чтобы показать вам ваш профиль. Если вы не разрешили, Расширение работает без вашего профиля.
-3. **Локальное хранилище браузера.** Расширение запоминает на вашем устройстве только один параметр: свёрнута ли панель.
+3. **Локальное хранилище браузера.** Расширение запоминает на вашем устройстве только настройки интерфейса: свёрнута ли панель, выбранный фон сцены, список наград (чтобы быстрее показывать) и какие герои вы уже видели. Это не личные данные и никуда не отправляется.
 
 ## Чего мы не делаем
 - Не собираем ваше имя, адрес электронной почты, IP-адрес, платёжные данные и другие персональные данные через Расширение.
@@ -37,9 +37,9 @@ Effective date: October 12, 2026
 The Twitch extension "Chat Avatars Starikov" (the "Extension") shows viewers of the Starlkov channel their pixel heroes, levels, a leaderboard and a scene of chat heroes. The Extension is operated by Starlkov ("we").
 
 ## Data we use
-1. **Public Twitch chat data.** The streamer's server receives chat messages from Twitch and stores, per chatter: login and display name, numeric Twitch user ID, name color, experience and level, selected and unlocked heroes, last-activity time, and subscriber/VIP/moderator flags. Message text is not stored in the profile.
+1. **Public Twitch chat data.** The streamer's server receives chat messages from Twitch and stores, per chatter: login and display name, numeric Twitch user ID, name color, experience and level, earned awards and achievements, duel win/loss counts, selected and unlocked heroes, last-activity time, and subscriber/VIP/moderator flags. Message text is not stored in the profile.
 2. **Viewer identity in the Extension.** If you click "Share ID" and allow it in Twitch, the Extension receives your numeric Twitch user ID. It is used only to show you your own profile. If you do not allow it, the Extension works without your profile.
-3. **Browser local storage.** The Extension stores one setting on your device: whether the panel is collapsed.
+3. **Browser local storage.** The Extension stores only interface settings on your device: whether the panel is collapsed, the chosen scene background, a cached awards list (for faster display) and which heroes you have already seen. This is not personal data and is never sent anywhere.
 
 ## What we do not do
 - We do not collect your real name, email, IP address, payment data or other personal data through the Extension.
