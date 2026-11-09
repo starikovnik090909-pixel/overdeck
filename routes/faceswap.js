@@ -48,7 +48,7 @@ function main({ app, dataDir }) {
   }
 
   const cfgOf = (st) => ({ swap: st.swap !== false, mirror: !!st.mirror, blend: st.blend == null ? 1 : +st.blend, camera: st.camera || 0,
-    model: ['fast', 'hyper', 'hyper_b', 'hyper_c'].includes(st.model) ? st.model : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth,
+    model: ['fast', 'hyper', 'hyper_b', 'hyper_c'].includes(st.model) ? st.model : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth, bright: st.bright == null ? 0 : +st.bright, compare: !!st.compare,
     enhance: !!st.enhance, enh: st.enh == null ? 0.8 : +st.enh, window: !!st.window, vcam: !!st.vcam });
 
   function start() {

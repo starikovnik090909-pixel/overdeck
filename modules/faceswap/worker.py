@@ -38,7 +38,7 @@ ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'so
       'progress': 0.0, 'error': '', 'timing': '', 'enh': '', 'out': '', 'src_used': 0, 'src_total': 0}
 CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80,
        'enhance': False, 'enh': 0.8, 'window': False, 'vcam': False,
-       'model': 'hyper', 'mouth': 0.9}
+       'model': 'hyper', 'mouth': 0.9, 'bright': 0.0, 'compare': False}
 LOCK = threading.Lock()
 PRINT = {'on': False, 'last': -1}
 LAST = {'jpg': None, 'n': 0}
@@ -577,9 +577,15 @@ def loop(args):
                 frame = demo_frame(time.time()); time.sleep(0.03)
             if CFG['mirror']:
                 frame = cv2.flip(frame, 1)
+            if CFG['bright'] > 0.01:   # тёмная комната: подтягиваем кадр, иначе модели нечего видеть
+                g = 1.0 - 0.55 * float(CFG['bright'])
+                frame = cv2.LUT(frame, (255.0 * (np.arange(256) / 255.0) ** g).astype(np.uint8))
             face = False
+            before = frame.copy() if CFG['compare'] else None
             if eng and CFG['swap']:
                 frame, face = eng.process(frame, float(CFG['blend']))
+            if before is not None:   # слева кадр без замены, справа с заменой
+                frame = np.hstack([before, frame])
             n += 1
             if time.time() - t0 >= 1.0:
                 tm = ''
