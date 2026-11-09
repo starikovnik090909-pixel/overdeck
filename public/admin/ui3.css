@@ -1325,3 +1325,4 @@ details.ui3-more-in > p { margin: 6px 0 0; }
 @keyframes fsb{from{background-position:-60px 0}to{background-position:220px 0}}
 #tab-faceswap [hidden]{display:none !important}
 #tab-faceswap .fs-hint{display:block;font-size:11px;line-height:1.35;color:var(--text-muted,#8a8a90)}
+#tab-faceswap .fs-row select{background:#141416;border:1px solid #26262a;border-radius:8px;color:inherit;padding:7px 8px;font:inherit}

@@ -44,6 +44,7 @@ function main({ app, dataDir }) {
   }
 
   const cfgOf = (st) => ({ swap: st.swap !== false, mirror: !!st.mirror, blend: st.blend == null ? 1 : +st.blend, camera: st.camera || 0,
+    model: st.model === 'fast' ? 'fast' : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth,
     enhance: !!st.enhance, enh: st.enh == null ? 0.8 : +st.enh, window: !!st.window, vcam: !!st.vcam });
 
   function start() {

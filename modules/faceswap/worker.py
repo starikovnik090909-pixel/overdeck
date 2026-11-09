@@ -25,6 +25,8 @@ SWAPPER_URL = 'https://huggingface.co/ezioruan/inswapper_128.onnx/resolve/main/i
 GFPGAN_URL = 'https://huggingface.co/facefusion/models-3.0.0/resolve/main/gfpgan_1.4.onnx'
 FFHQ512 = np.array([[192.98138, 239.94708], [318.90277, 240.1936], [256.63416, 314.01935],
                     [201.26117, 371.41043], [313.08905, 371.15118]], dtype=np.float32)
+HYPER_URL = 'https://huggingface.co/facefusion/models-3.3.0/resolve/main/hyperswap_1a_256.onnx'
+LIPS_IN = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95]
 BUFFALO_URL = 'https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip'
 ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
                 [41.5493, 92.3655], [70.7299, 92.2041]], dtype=np.float32)
@@ -32,7 +34,8 @@ ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
 ST = {'state': 'start', 'msg': 'Запуск…', 'fps': 0.0, 'face': False, 'source': False, 'provider': '',
       'progress': 0.0, 'error': '', 'timing': '', 'enh': '', 'out': ''}
 CFG = {'swap': True, 'mirror': False, 'camera': 0, 'blend': 1.0, 'quality': 80,
-       'enhance': False, 'enh': 0.8, 'window': False, 'vcam': False}
+       'enhance': False, 'enh': 0.8, 'window': False, 'vcam': False,
+       'model': 'hyper', 'mouth': 0.9}
 LOCK = threading.Lock()
 PRINT = {'on': False, 'last': -1}
 LAST = {'jpg': None, 'n': 0}
@@ -77,7 +80,7 @@ def match_color(fake, target, mask):
     return out
 
 
-def paste_back(frame, fake, m, size, oval=None, feather=0.12):
+def paste_back(frame, fake, m, size, oval=None, feather=0.12, omask=None):
     """Вставка 128x128 результата в кадр. Граница — по контуру лица (если дан oval), считается только в окне вокруг лица."""
     im = cv2.invertAffineTransform(m)
     h, w = frame.shape[:2]
@@ -97,6 +100,8 @@ def paste_back(frame, fake, m, size, oval=None, feather=0.12):
     cm[b:size - b, b:size - b] = 1.0
     k = (b * 2) | 1
     cm = cv2.GaussianBlur(cm, (k, k), 0)
+    if omask is not None:   # маска самой модели: не рисует поверх рук, микрофона и т.п.
+        cm = cm * omask
     mask = cv2.warpAffine(cm, im2, (rw, rh), borderValue=0.0)
     if oval is not None and len(oval) > 2:
         hull = np.zeros((rh, rw), np.uint8)
@@ -121,7 +126,7 @@ def download(url, dst, label, tag='x', side=False):
     os.makedirs(os.path.dirname(dst), exist_ok=True)
     tmp = dst + '.part'
     if side:
-        set_state(enh='Скачиваю улучшение лица… 0%')
+        set_state(enh='Скачиваю %s… 0%%' % label)
     else:
         set_state(state='download', msg='Скачиваю: ' + label, progress=0.0)
     req = urllib.request.Request(url, headers={'User-Agent': 'Overdeck'})
@@ -136,7 +141,7 @@ def download(url, dst, label, tag='x', side=False):
             got += len(b)
             if total:
                 if side:
-                    set_state(enh='Скачиваю улучшение лица… %d%%' % int(got * 100 / total))
+                    set_state(enh='Скачиваю %s… %d%%' % (label, int(got * 100 / total)))
                 else:
                     set_state(progress=got / total)
                 if PRINT['on']:
@@ -204,6 +209,9 @@ class Engine:
         self.ort, self.so, self.prov = ort, so, prov
         self.gf = None
         self.gf_busy = False
+        self.hy = None
+        self.hy_busy = False
+        self.emb = None
         self.t['enh'] = 0.0
 
     def load_enh(self):
@@ -215,7 +223,7 @@ class Engine:
         def run():
             try:
                 dst = os.path.join(self.models, 'gfpgan_1.4.onnx')
-                download(GFPGAN_URL, dst, 'улучшение лица', 'enh', side=True)
+                download(GFPGAN_URL, dst, 'улучшение лица (~340 МБ)', 'enh', side=True)
                 set_state(enh='Готовлю улучшение лица…')
                 self.gf = self.ort.InferenceSession(dst, sess_options=self.so, providers=self.prov)
                 set_state(enh='')
@@ -225,6 +233,43 @@ class Engine:
             finally:
                 self.gf_busy = False
         threading.Thread(target=run, daemon=True).start()
+
+    def load_hyper(self):
+        """Фоновая загрузка HyperSwap 256: чётче и лучше держит мимику, пока качается — работает быстрая модель."""
+        if self.hy is not None or self.hy_busy:
+            return
+        self.hy_busy = True
+
+        def run():
+            try:
+                dst = os.path.join(self.models, 'hyperswap_1a_256.onnx')
+                download(HYPER_URL, dst, 'модель HyperSwap (~400 МБ, один раз)', 'hyper', side=True)
+                set_state(enh='Готовлю HyperSwap…')
+                self.hy = self.ort.InferenceSession(dst, sess_options=self.so, providers=self.prov)
+                set_state(enh='')
+            except Exception as e:  # noqa
+                set_state(enh='HyperSwap не загрузился, работает быстрая модель: %s' % e)
+                CFG['model'] = 'fast'
+            finally:
+                self.hy_busy = False
+        threading.Thread(target=run, daemon=True).start()
+
+    @staticmethod
+    def mouth_mask(pts, shape):
+        """Внутренняя часть рта (там, где видны зубы и язык): вставляем её из кадра, чтобы рот открывался как у тебя."""
+        h, w = shape[:2]
+        poly = pts[LIPS_IN].astype(np.int32)
+        x0, y0 = poly.min(0) - 20; x1, y1 = poly.max(0) + 20
+        x0, y0, x1, y1 = max(0, x0), max(0, y0), min(w, x1), min(h, y1)
+        if x1 - x0 < 6 or y1 - y0 < 6:
+            return None
+        mk = np.zeros((y1 - y0, x1 - x0), np.uint8)
+        cv2.fillPoly(mk, [poly - np.array([x0, y0], np.int32)], 255)
+        wd = max(4, int(np.ptp(poly[:, 0]) * 0.06))
+        mk = cv2.erode(mk, np.ones((wd, wd), np.uint8))   # губы остаются от нового лица
+        b = (wd * 2) | 1
+        mk = cv2.GaussianBlur(mk, (b, b), 0).astype(np.float32) / 255.0
+        return x0, y0, x1, y1, mk
 
     def enhance(self, frame, kps, oval, strength):
         """GFPGAN по уже вставленному лицу: возвращает чёткие поры, глаза, зубы. Вставка — по контуру лица."""
@@ -262,6 +307,7 @@ class Engine:
         blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (112, 112), (127.5, 127.5, 127.5), swapRB=True)
         emb = self.arc.run(None, {self.arc.get_inputs()[0].name: blob})[0][0]
         emb = emb / np.linalg.norm(emb)
+        self.emb = emb.reshape(1, -1).astype(np.float32)
         lat = emb.reshape(1, -1) @ self.emap
         self.latent = (lat / np.linalg.norm(lat)).astype(np.float32)
         return True
@@ -286,23 +332,46 @@ class Engine:
         if self.kprev is not None:   # сглаживаем дрожь: при малом движении — сильнее
             ed = max(1.0, float(np.linalg.norm(kps[1] - kps[0])))
             d = float(np.mean(np.linalg.norm(kps - self.kprev, axis=1))) / ed
-            a = min(1.0, max(0.3, d * 6.0))
+            a = min(1.0, max(0.5, d * 8.0))
             kps = self.kprev * (1 - a) + kps * a
         self.kprev = kps
         t1 = time.time()
-        aimg, m = crop(frame, kps, 128)
-        blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255, (128, 128), (0, 0, 0), swapRB=True)
-        pred = self.sw.run(None, {'target': blob, 'source': self.latent})[0][0]
-        fake = np.clip(255 * pred.transpose(1, 2, 0), 0, 255).astype(np.uint8)[:, :, ::-1]
-        fake = np.ascontiguousarray(fake)
+        orig = frame.copy() if CFG['mouth'] > 0.02 else None
+        use_hy = CFG['model'] == 'hyper'
+        if use_hy and self.hy is None:
+            self.load_hyper()
+            use_hy = False
+        omask = None
+        if use_hy:
+            S = 256
+            aimg, m = crop(frame, kps, S)
+            blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (S, S), (127.5, 127.5, 127.5), swapRB=True)
+            o = self.hy.run(None, {'source': self.emb, 'target': blob})
+            fake = np.clip((o[0][0].transpose(1, 2, 0) + 1.0) * 127.5, 0, 255).astype(np.uint8)[:, :, ::-1]
+            fake = np.ascontiguousarray(fake)
+            if len(o) > 1:
+                omask = cv2.GaussianBlur(np.clip(o[1][0][0], 0, 1).astype(np.float32), (9, 9), 0)
+        else:
+            S = 128
+            aimg, m = crop(frame, kps, S)
+            blob = cv2.dnn.blobFromImage(aimg, 1.0 / 255, (S, S), (0, 0, 0), swapRB=True)
+            pred = self.sw.run(None, {'target': blob, 'source': self.latent})[0][0]
+            fake = np.clip(255 * pred.transpose(1, 2, 0), 0, 255).astype(np.uint8)[:, :, ::-1]
+            fake = np.ascontiguousarray(fake)
         self._ema('swap', (time.time() - t1) * 1000)
         t2 = time.time()
-        cmask = np.zeros((128, 128), np.float32)
-        cv2.ellipse(cmask, (64, 70), (42, 52), 0, 0, 360, 1.0, -1)
+        cmask = np.zeros((S, S), np.float32)
+        cv2.ellipse(cmask, (S // 2, int(S * 0.55)), (int(S * 0.33), int(S * 0.41)), 0, 0, 360, 1.0, -1)
         fake = match_color(fake, aimg, cmask)
         if blend < 1.0:
             fake = cv2.addWeighted(fake, blend, aimg, 1 - blend, 0)
-        out = paste_back(frame, fake, m, 128, pts[OVAL])
+        out = paste_back(frame, fake, m, S, pts[OVAL], omask=omask)
+        if orig is not None:   # рот открывается как у тебя: внутренность рта берём из кадра
+            mm = self.mouth_mask(pts, out.shape)
+            if mm is not None:
+                x0, y0, x1, y1, mk = mm
+                k = (mk * float(CFG['mouth']))[:, :, None]
+                out[y0:y1, x0:x1] = (out[y0:y1, x0:x1] * (1 - k) + orig[y0:y1, x0:x1] * k).astype(np.uint8)
         self._ema('paste', (time.time() - t2) * 1000)
         if CFG['enhance']:
             if self.gf is None:
@@ -473,7 +542,7 @@ def loop(args):
             if time.time() - t0 >= 1.0:
                 tm = ''
                 if eng:
-                    tm = 'лицо %d мс · замена %d мс · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], eng.t['paste'])
+                    tm = 'лицо %d мс · замена %d мс (%s) · вставка %d мс' % (eng.t['mesh'], eng.t['swap'], 'HyperSwap' if (CFG['model'] == 'hyper' and eng.hy is not None) else 'быстрая', eng.t['paste'])
                     if CFG['enhance'] and eng.gf is not None:
                         tm += ' · улучшение %d мс' % eng.t['enh']
                 set_state(fps=round(n / (time.time() - t0), 1), timing=tm); n, t0 = 0, time.time()

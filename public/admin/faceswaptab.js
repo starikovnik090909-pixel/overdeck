@@ -46,6 +46,7 @@
     if (!saving) {
       $('fsMirror').checked = !!set.mirror; $('fsAuto').checked = !!set.autostart;
       var b = Math.round((set.blend == null ? 1 : set.blend) * 100); $('fsBlend').value = b; $('fsBlendV').textContent = b + '%';
+      $('fsModel').value = set.model === 'fast' ? 'fast' : 'hyper'; var mo = Math.round((set.mouth == null ? 0.9 : set.mouth) * 100); $('fsMouth').value = mo; $('fsMouthV').textContent = mo + '%';
       $('fsEnh').checked = !!set.enhance; $('fsWin').checked = !!set.window; $('fsVcam').checked = !!set.vcam;
       var e = Math.round((set.enh == null ? 0.8 : set.enh) * 100); $('fsEnhS').value = e; $('fsEnhV').textContent = e + '%';
       if (document.activeElement !== $('fsCam')) $('fsCam').value = set.camera || 0;
@@ -56,11 +57,12 @@
     clearTimeout(saving);
     saving = setTimeout(function () {
       saving = null;
-      post('settings', { consent: $('fsConsent').checked, mirror: $('fsMirror').checked, autostart: $('fsAuto').checked, blend: +$('fsBlend').value / 100, enhance: $('fsEnh').checked, enh: +$('fsEnhS').value / 100, window: $('fsWin').checked, vcam: $('fsVcam').checked, camera: +$('fsCam').value || 0 });
+      post('settings', { consent: $('fsConsent').checked, mirror: $('fsMirror').checked, autostart: $('fsAuto').checked, blend: +$('fsBlend').value / 100, model: $('fsModel').value, mouth: +$('fsMouth').value / 100, enhance: $('fsEnh').checked, enh: +$('fsEnhS').value / 100, window: $('fsWin').checked, vcam: $('fsVcam').checked, camera: +$('fsCam').value || 0 });
     }, 250);
   }
-  ['fsConsent', 'fsMirror', 'fsAuto', 'fsCam', 'fsEnh', 'fsWin', 'fsVcam'].forEach(function (i) { $(i).addEventListener('change', save); });
+  ['fsConsent', 'fsMirror', 'fsAuto', 'fsCam', 'fsEnh', 'fsWin', 'fsVcam', 'fsModel'].forEach(function (i) { $(i).addEventListener('change', save); });
   $('fsBlend').addEventListener('input', function () { $('fsBlendV').textContent = this.value + '%'; save(); });
+  $('fsMouth').addEventListener('input', function () { $('fsMouthV').textContent = this.value + '%'; save(); });
   $('fsEnhS').addEventListener('input', function () { $('fsEnhV').textContent = this.value + '%'; save(); });
   $('fsMain').onclick = function () {
     if (!st) return;
