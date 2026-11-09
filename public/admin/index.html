@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Unbounded:wght@600;700&family=Roboto:wght@400;600;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600;700&family=Rubik:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Playfair+Display:wght@400;600;700&family=Poppins:wght@400;600;700&family=Bebas+Neue&family=Comfortaa:wght@400;600;700&family=Press+Start+2P&family=Nunito:wght@400;600;700&family=Manrope:wght@400;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css?v=139">
 <link rel="stylesheet" href="skin.css?v=2">
-<link rel="stylesheet" href="ui3.css?v=64">
+<link rel="stylesheet" href="ui3.css?v=65">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
@@ -338,6 +338,13 @@
           <path d="m8.8 12.6 8.4-5.2-6.4 8.9" stroke-width="1.5" stroke-linejoin="round"/>
         </svg>
         <span>Телеграм</span>
+      </div>
+      <div class="nav-item" data-tab="discord">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7.5 7.5c3-1 6-1 9 0 1.6 2.4 2.6 5 3 8-1.3 1-2.6 1.6-4 2l-1-1.7M16.5 7.5l-.4-1M7.5 7.5l.4-1M4.5 15.5c.4-3 1.4-5.6 3-8 -.1 0 0 0 0 0M7.9 16.3l-1 1.7c-1.4-.4-2.7-1-4-2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9.3" cy="12.2" r="1.2"/><circle cx="14.7" cy="12.2" r="1.2"/>
+        </svg>
+        <span>Discord</span>
       </div>
       <div class="nav-item" data-tab="music">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1223,6 +1230,50 @@
           <p class="tg-hint" id="tgLast"></p>
         </div>
       </div>
+    </section>
+
+    <section class="tab-section" id="tab-discord">
+      <div class="page-head"><div><h1 class="tab-title">Discord</h1><p class="tab-description">Анонс стрима и события (донаты, рейды, подписки) приходят в канал твоего сервера. По желанию бот отвечает на команды /status, /donors и /points.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="dcSaved"></span><label class="tg-sw"><input type="checkbox" id="dcEnabled"><i></i><span>Писать в Discord</span></label></div></div>
+
+      <div class="card ui3-card">
+        <h3 class="dc-h">1 · Вебхук (анонсы и события)</h3>
+        <ol class="tg-steps"><li>В Discord открой настройки нужного канала: <b>Интеграции → Вебхуки → Новый вебхук</b>.</li><li>Нажми <b>«Копировать URL вебхука»</b> и вставь ниже.</li></ol>
+        <div class="tg-fields">
+          <div class="field"><label>Ссылка вебхука <span class="tg-hint" id="dcHookHint"></span></label><input type="password" id="dcHook" autocomplete="off" placeholder="https://discord.com/api/webhooks/…"></div>
+          <div class="field"><label>Имя отправителя (необязательно)</label><input type="text" id="dcName" autocomplete="off" placeholder="как в настройках вебхука"></div>
+          <div class="field"><label>Кого упомянуть в анонсе</label><select id="dcMention" class="ui3-select"><option value="none">Никого</option><option value="here">@here (кто онлайн)</option><option value="everyone">@everyone (все)</option></select></div>
+          <div class="field"><label>Ролью (ID роли, необязательно)</label><input type="text" id="dcRole" autocomplete="off" placeholder="напр. 123456789012345678"></div>
+        </div>
+        <div class="field"><label>Текст анонса <span class="tg-hint">можно {channel} {title} {game} {url}, оформление Discord: **жирный**</span></label><textarea id="dcTpl" rows="3"></textarea></div>
+        <div class="tg-row"><button class="btn btn-secondary" id="dcTest" type="button">Тестовый анонс</button><button class="btn btn-secondary" id="dcTestEnd" type="button">Пример итога</button><button class="btn btn-ghost btn-sm" id="dcClearHook" type="button">Удалить вебхук</button></div>
+      </div>
+
+      <div class="card ui3-card">
+        <h3 class="dc-h">Что публиковать</h3>
+        <div class="dc-ev">
+          <label class="tg-sw"><input type="checkbox" id="dcAnn"><i></i><span>Анонс при старте стрима</span></label>
+          <label class="tg-sw"><input type="checkbox" id="dcEvDon"><i></i><span>Донаты</span></label>
+          <label class="tg-sw"><input type="checkbox" id="dcEvRaid"><i></i><span>Рейды</span></label>
+          <label class="tg-sw"><input type="checkbox" id="dcEvSub"><i></i><span>Подписки</span></label>
+          <label class="tg-sw"><input type="checkbox" id="dcEvFol"><i></i><span>Новые фолловеры</span></label>
+          <label class="tg-sw"><input type="checkbox" id="dcEvEnd"><i></i><span>Итог после стрима</span></label>
+        </div>
+        <div class="field dc-min"><label>Донаты от (₽) <span class="tg-hint">меньшие суммы не публикуем, 0 = все</span></label><input type="number" id="dcMin" min="0" step="10" value="0"></div>
+      </div>
+
+      <div class="card ui3-card">
+        <div class="dc-bothead"><h3 class="dc-h">2 · Бот с командами (по желанию)</h3><label class="tg-sw"><input type="checkbox" id="dcBotOn"><i></i><span>Включить бота</span></label><span class="tg-pill" id="dcBotPill" hidden></span></div>
+        <ol class="tg-steps"><li>Открой <b>discord.com/developers/applications</b> → <b>New Application</b> → вкладка <b>Bot</b> → <b>Reset Token</b>, скопируй токен.</li><li>Вставь токен ниже и нажми «Проверить»: появится ссылка, по ней добавь бота на свой сервер.</li><li>Включи бота. Команды <code>/status</code>, <code>/donors</code>, <code>/points</code> появятся в Discord.</li></ol>
+        <div class="tg-fields">
+          <div class="field"><label>Токен бота <span class="tg-hint" id="dcTokHint"></span></label><input type="password" id="dcTok" autocomplete="off" placeholder="токен из вкладки Bot"></div>
+          <div class="field"><label>ID сервера (необязательно) <span class="tg-hint">с ним команды появляются сразу</span></label><input type="text" id="dcGuild" autocomplete="off" placeholder="правый клик на сервер → Копировать ID"></div>
+        </div>
+        <div class="tg-row"><button class="btn btn-secondary" id="dcCheck" type="button">Проверить</button><a class="btn btn-primary" id="dcInvite" href="#" target="_blank" rel="noopener noreferrer" hidden>Добавить бота на сервер</a><button class="btn btn-ghost btn-sm" id="dcClearTok" type="button">Удалить токен</button></div>
+        <p class="tg-hint">Режим разработчика в Discord: Настройки → Расширенные → включи, тогда появится «Копировать ID».</p>
+      </div>
+      <div class="form-message" id="dcMsg"></div>
+      <div class="tg-hint" id="dcLast"></div>
     </section>
 
     <section class="tab-section" id="tab-chronicles">
@@ -4176,6 +4227,7 @@
 <script src="themepick.js?v=2"></script>
 <script src="chronicles.js?v=20"></script>
 <script src="telegram.js?v=5"></script>
+<script src="discord.js?v=1"></script>
 
 <div class="ex-amb-ov" id="exAmbOv" hidden><div class="ex-amb" role="dialog" aria-modal="true" aria-label="Фоновый эмбиент">
   <div class="ex-amb-h"><h3>Фоновый эмбиент</h3><button type="button" class="ex-amb-x" id="exAmbX" aria-label="Закрыть">×</button></div>
