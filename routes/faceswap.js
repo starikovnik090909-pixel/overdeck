@@ -51,8 +51,22 @@ function main({ app, dataDir }) {
     model: ['fast', 'hyper', 'hyper_b', 'hyper_c'].includes(st.model) ? st.model : 'hyper', mouth: st.mouth == null ? 0.9 : +st.mouth, bright: st.bright == null ? 0 : +st.bright, compare: !!st.compare,
     enhance: !!st.enhance, enh: st.enh == null ? 0.8 : +st.enh, window: !!st.window, vcam: !!st.vcam });
 
+  /** Прошлый движок мог остаться жить после перезапуска приложения (на Windows два процесса могут слушать один порт).
+   *  Он держит старый код, старое фото и камеру, поэтому обновления «не действуют». Перед запуском добиваем всё, что слушает наш порт. */
+  function killStale() {
+    if (!isWin) return;
+    try {
+      const out = require('child_process').execFileSync('netstat', ['-ano', '-p', 'tcp'], { timeout: 4000, windowsHide: true }).toString();
+      const pids = new Set();
+      out.split(/\r?\n/).forEach((l) => { const m = l.match(new RegExp('^\\s*TCP\\s+\\S+:' + PORT + '\\s+\\S+\\s+LISTENING\\s+(\\d+)', 'i')); if (m) pids.add(m[1]); });
+      pids.forEach((pid) => { try { require('child_process').execFileSync('taskkill', ['/PID', pid, '/T', '/F'], { timeout: 4000, windowsHide: true }); } catch (e) { /* уже нет */ } });
+    } catch (e) { /* netstat недоступен: не страшно */ }
+  }
+  killStale();
+
   function start() {
     if (worker) return true;
+    killStale();
     const py = pythonPath();
     if (!py) return false;
     lastErr = '';

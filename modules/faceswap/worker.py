@@ -607,6 +607,7 @@ def loop(args):
 
 class Srv(ThreadingHTTPServer):
     daemon_threads = True
+    allow_reuse_address = False   # на Windows иначе второй процесс молча садится на тот же порт
 
     def handle_error(self, request, client_address):
         # клиент (админка, OBS) закрыл соединение — это нормально, не засоряем лог
