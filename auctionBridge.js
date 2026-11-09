@@ -10,7 +10,8 @@ const MAX_LOG = 60;
 const DEFAULTS = {
   token: '',                 // личный токен PointAuc (pointauc.com/settings → «Personal Token»); наружу не отдаётся
   rewardTitle: 'Аукцион', rewardCost: 100, rewardId: '',
-  subBonus: 130, vipBonus: 400, perLevel: 10, levelCap: 500,   // levelCap — максимум бонуса за уровни (500 = 50 уровень)
+  subBonus: 130, vipBonus: 400,
+  perLevel: 10, levelStep: 5, levelCap: 500,   // уровень N стоит perLevel + levelStep × (N − 1), но не больше levelCap: 1-й — 10, 2-й — 15, 3-й — 20 … 99-й — 500
   chatReply: true,
 };
 const num = (v, lo, hi, d) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, Math.round(n))) : d; };
@@ -24,6 +25,7 @@ function clean(s, prev) {
   if (s.subBonus !== undefined) o.subBonus = num(s.subBonus, 0, 1000000, prev.subBonus);
   if (s.vipBonus !== undefined) o.vipBonus = num(s.vipBonus, 0, 1000000, prev.vipBonus);
   if (s.perLevel !== undefined) o.perLevel = num(s.perLevel, 0, 100000, prev.perLevel);
+  if (s.levelStep !== undefined) o.levelStep = num(s.levelStep, 0, 100000, prev.levelStep);
   if (s.levelCap !== undefined) o.levelCap = num(s.levelCap, 0, 10000000, prev.levelCap);
   if (typeof s.chatReply === 'boolean') o.chatReply = s.chatReply;
   return o;
@@ -48,11 +50,14 @@ function createAuctionBridge(deps = {}) {
   function save() { if (!file) return; try { fs.writeFileSync(file + '.tmp', JSON.stringify({ settings, session, last, log })); fs.renameSync(file + '.tmp', file); } catch (e) { console.warn('[Аукцион] Не удалось сохранить:', e.message); } }
   function note(e) { log.unshift({ at: now(), ...e }); if (log.length > MAX_LOG) log.length = MAX_LOG; }
 
-  /** Взнос зрителя: подписка + VIP + уровень × perLevel (не больше levelCap). */
+  /** Цена уровня в аукционе: 1-й — perLevel, каждый следующий дороже на levelStep, потолок levelCap (уровень 0 — 0). */
+  const levelValue = (level) => (level >= 1 ? Math.min(settings.levelCap, settings.perLevel + settings.levelStep * (level - 1)) : 0);
+
+  /** Взнос зрителя: подписка + VIP + цена уровня (см. levelValue). */
   function compute(p) {
     const flags = (p && p.flags) || {}, level = Math.max(0, (p && p.level) | 0);
     const sub = flags.sub === true, vip = flags.vip === true;
-    const levelBonus = Math.min(settings.levelCap, level * settings.perLevel);
+    const levelBonus = levelValue(level);
     const subPart = sub ? settings.subBonus : 0, vipPart = vip ? settings.vipBonus : 0;
     return { sub, vip, level, subPart, vipPart, levelBonus, total: subPart + vipPart + levelBonus };
   }
@@ -87,7 +92,9 @@ function createAuctionBridge(deps = {}) {
   }
 
   return {
-    compute, onRedeem,
+    compute, onRedeem, levelValue,
+    /** Правило цены уровня для расширения Twitch: [первый уровень, шаг, потолок]; null — взнос не настроен (нет токена PointAuc), расширение ничего не показывает. */
+    levelRule: () => (settings.token ? [settings.perLevel, settings.levelStep, settings.levelCap] : null),
     getSettings: () => ({ ...settings, token: undefined, hasToken: !!settings.token, tokenPreview: settings.token ? '…' + settings.token.slice(-4) : '' }),
     setSettings(s) { settings = clean(s || {}, settings); save(); },
     setRewardId(id) { settings.rewardId = String(id || ''); save(); },

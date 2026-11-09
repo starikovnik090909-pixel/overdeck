@@ -46,15 +46,27 @@
   }
 
   /* ---------- данные ---------- */
+  /* босс: идущий бой {n,k,t0,track,d} или итог {n,k,w,mv} (30 с) */
+  function parseBoss(b) {
+    if (!b || typeof b !== 'object' || typeof b.n !== 'string') return null;
+    var r = { n: b.n.slice(0, 40), k: /^[a-z0-9_-]{1,40}$/i.test(String(b.k || '')) ? String(b.k) : '' };
+    if (Array.isArray(b.track) && Array.isArray(b.d)) { r.t0 = num(b.t0, 0); r.track = b.track.slice(0, 40).map(function (x) { return Math.max(0, num(x, 0)); }); r.d = b.d.slice(0, 3).map(function (x) { return Math.max(0, num(x, 0)); }); if (r.track.length < 2 || r.d.length < 3) return null; }
+    else r.w = b.w ? 1 : 0, r.mv = typeof b.mv === 'string' ? b.mv.slice(0, 30) : '';
+    return r;
+  }
+  /* цена уровня в PointAuc: [база, шаг, потолок] → уровень N стоит min(потолок, база + шаг·(N−1)) ₽ */
+  function parsePa(a) { if (!Array.isArray(a) || a.length < 3) return null; var r = [num(a[0], 0), num(a[1], 0), num(a[2], 0)]; return r[0] > 0 && r[2] > 0 ? r : null; }
+  function paValue(pa, lvl) { return lvl >= 1 ? Math.min(pa[2], pa[0] + pa[1] * (lvl - 1)) : 0; }
+  var DUEL_TIERS = [1, 5, 15, 50, 100];
   function parseSnapshot(o) {
     if (!o || o.v !== 1 || !Array.isArray(o.p) || !Array.isArray(o.st) || !Array.isArray(o.tp)) return null;
     var P = {};
     o.p.forEach(function (a) {
       if (!Array.isArray(a) || typeof a[0] !== 'string') return;
-      P[a[0]] = { login: a[0], name: String(a[1] || a[0]), hero: String(a[2] || ''), level: num(a[3], 0), xp: num(a[4], 0), need: num(a[5], 0), maxed: !!a[6], color: safeColor(a[7]), uid: String(a[8] || ''), total: num(a[9], 0), rank: num(a[10], 0), mult: num(a[11], 1), awards: Array.isArray(a[12]) ? a[12].filter(function (x) { return typeof x === 'string' && /^a[0-9a-z]{1,8}$/.test(x); }).slice(0, 12) : [], mask: /^[0-9a-f]*$/.test(String(a[13] || '')) ? String(a[13] || '') : '' };
+      P[a[0]] = { login: a[0], name: String(a[1] || a[0]), hero: String(a[2] || ''), level: num(a[3], 0), xp: num(a[4], 0), need: num(a[5], 0), maxed: !!a[6], color: safeColor(a[7]), uid: String(a[8] || ''), total: num(a[9], 0), rank: num(a[10], 0), mult: num(a[11], 1), awards: Array.isArray(a[12]) ? a[12].filter(function (x) { return typeof x === 'string' && /^a[0-9a-z]{1,8}$/.test(x); }).slice(0, 12) : [], mask: /^[0-9a-f]*$/.test(String(a[13] || '')) ? String(a[13] || '') : '', duels: Math.max(0, Math.min(99999, num(a[14], 0))) };
     });
     var has = function (l) { return typeof l === 'string' && P[l]; };
-    return { t: num(o.t, Date.now()), live: !!o.live, hv: String(o.hv || ''), hn: num(o.hn, 0), cc: /^![^\s]{1,31}$/.test(String(o.cc || '')) ? String(o.cc) : '', players: P, stage: o.st.filter(has), top: o.tp.filter(has), receivedAt: Date.now() };
+    return { t: num(o.t, Date.now()), live: !!o.live, hv: String(o.hv || ''), hn: num(o.hn, 0), cc: /^![^\s]{1,31}$/.test(String(o.cc || '')) ? String(o.cc) : '', players: P, stage: o.st.filter(has), top: o.tp.filter(has), boss: parseBoss(o.bs), pa: parsePa(o.pa), receivedAt: Date.now() };
   }
   /* каталог наград: { v:1, k:'aw', a:[[id,название,описание,иконка]] } — приходит отдельным сообщением, запоминается в браузере до следующего */
   var awardCat = {};
@@ -288,6 +300,16 @@
       el('span', null, 'Всего опыта'), el('span', null, String(p.total)),
       el('span', null, 'Бонус опыта'), el('span', null, p.mult > 1 ? '×' + p.mult : 'нет'));
     card.append(av, nick, sub, xp, facts);
+    var nextT = 0; DUEL_TIERS.forEach(function (t) { if (!nextT && p.duels < t) nextT = t; });
+    var dl = el('div', 'facts duel');
+    dl.append(el('span', null, 'Победы в дуэлях'), el('span', null, nextT ? p.duels + ' / ' + nextT : String(p.duels) + ' ★'));
+    card.appendChild(dl);
+    if (snap.pa && p.level >= 1) {
+      var pv = el('div', 'facts pa');
+      pv.append(el('span', null, 'Ценность уровня (аукцион)'), el('span', null, paValue(snap.pa, p.level) + ' ₽'));
+      if (!p.maxed && paValue(snap.pa, p.level + 1) > paValue(snap.pa, p.level)) pv.append(el('span', 'muted small', 'Следующий уровень'), el('span', 'muted small', paValue(snap.pa, p.level + 1) + ' ₽'));
+      card.appendChild(pv);
+    }
     var md = medals(p); if (md) card.appendChild(md);
     card.appendChild(bgControls()); applyBg();
     root.appendChild(card);
@@ -368,7 +390,29 @@
     Array.prototype.forEach.call(document.querySelectorAll('.view'), function (v) { v.classList.toggle('active', v.id === 'view-' + name); });
     renderAll();
   }
+  /* ---------- босс ---------- */
+  function renderBoss() {
+    var box = $('boss'); if (!box) return;
+    var b = snap && !demo ? snap.boss : null;
+    if (!b || (b.track && !bossTrackAlive(b))) { box.hidden = true; box.replaceChildren(); return; }
+    box.hidden = false; box.replaceChildren();
+    var h = heroes[b.k], th = el('span', 'bossthumb'); if (h) th.appendChild(sprite(b.k, 'idle', h.d[0], fitZoom(h, 36, 36)));
+    var info = el('div', 'bossinfo'); info.appendChild(el('div', 'bossname', 'Босс: ' + b.n));
+    if (b.track) {
+      var tr = el('div', 'bosshp'), f = el('div', 'bosshp-fill'); f.style.width = bossPct(b) + '%'; tr.appendChild(f); f.id = 'bossFill'; info.appendChild(tr);
+      var me0 = me(); if (me0 && snap.stage.indexOf(me0.login) >= 0) info.appendChild(el('div', 'muted small', 'Ваш герой участвует в бою!'));
+    } else info.appendChild(el('div', b.w ? 'bossres win' : 'bossres lose', (b.w ? 'Босс повержен!' : 'Босс победил.') + (b.mv ? ' MVP: ' + b.mv : '')));
+    box.append(th, info);
+  }
+  function bossElapsed(b) { return Math.max(0, (snap.t - b.t0) + (Date.now() - snap.receivedAt)); }
+  function bossTrackAlive(b) { return bossElapsed(b) < b.d[0] + (b.track.length - 1) * b.d[1] + b.d[2]; }
+  function bossPct(b) {
+    var e = bossElapsed(b) - b.d[0], i = e <= 0 ? 0 : Math.min(b.track.length - 1, Math.floor(e / b.d[1]) + 1);
+    return Math.max(0, Math.min(100, b.track[i] / Math.max(1, b.track[0]) * 100));
+  }
   function renderFoot() {
+    var live = snap && snap.live && !demo && (Date.now() - snap.receivedAt) < 180000;   // пока идут настоящие данные — демо-кнопки не нужны (остаются для проверяющих и когда стрима нет)
+    $('demoBtn').hidden = !!live; if (live) $('spamBtn').hidden = true;
     var f = $('foot');
     if (!snap) { f.textContent = 'Ждём данные от стримера…'; return; }
     var age = Math.max(0, Math.round((Date.now() - snap.receivedAt) / 1000));
@@ -378,7 +422,7 @@
   function renderAll() {
     if (tab === 'profile') renderProfile(); else if (tab === 'awards') renderAwards(); else renderTop();
     if ($('panel').hidden) { $('scene').hidden = true; } else { $('scene').hidden = false; startScene(); }
-    renderFoot();
+    renderFoot(); renderBoss();
   }
   function setCollapsed(c) { $('panel').hidden = c; $('pill').hidden = !c; $('scene').hidden = c; store('collapsed', c ? '1' : '0'); renderAll(); }
 
@@ -480,7 +524,7 @@
       ext.onAuthorized(function () { viewerId = (ext.viewer && ext.viewer.id) ? String(ext.viewer.id) : ''; renderAll(); });
       ext.listen('broadcast', onMessage);
     }
-    setInterval(renderFoot, 5000);
+    setInterval(renderFoot, 5000); setInterval(renderBoss, 1000);
     renderAll();
   }
   init();

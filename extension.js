@@ -51,7 +51,8 @@ const cut = (s, n) => { const a = [...String(s || '')]; return a.length > n ? a.
 /**
  * Снимок для расширения. Формат (v1), массивы вместо объектов — чтобы уложиться в размер:
  *   { v:1, t:<мс>, live:<0|1>, p:[ игрок… ], st:[ логины на сцене… ], tp:[ логины топа по порядку… ] }
- * игрок = [ login, name, hero, level, xp, xpNeed, maxed(0|1), color, uid, totalXp, rank, mult, [id наград…], маска доступных героев ]
+ * игрок = [ login, name, hero, level, xp, xpNeed, maxed(0|1), color, uid, totalXp, rank, mult, [id наград…], маска доступных героев, победы в дуэлях ]
+ * (версия 0.0.3) bs — босс: идущий бой { n, k, t0, track:[hp…], d:[мс] } или итог { n, k, w, mv }; pa — цена уровня в аукционе PointAuc [первый, шаг, потолок], если взнос настроен
  * маска: группы по 6 hex-символов (24 бита), бит i — можно ли взять героя i из списка id героев по алфавиту; hv — отпечаток этого списка (heroHash), hn — сколько героев, cc — команда выбора героя в чате (например «!герой»)
  * Каталог наград (названия, описания, иконки) идёт отдельным сообщением { v:1, k:'aw', a:[[id,название,описание,иконка]] } — см. buildCatalog в awards.js.
  * Игроков в p ровно столько, сколько нужно сцене и топу (без повторов). Если не влезает в maxBytes — сначала сокращается топ, затем сцена.
@@ -66,10 +67,11 @@ function buildSnapshot(pixelHeroes, opts = {}) {
   const stage = pixelHeroes.getRoster();                        // кто сейчас на сцене
   const heroIds = Array.isArray(opts.heroIds) ? opts.heroIds : [];
   const awardsOf = typeof opts.awardsOf === 'function' ? (l) => opts.awardsOf(l).slice(0, 12) : () => [];
+  const duelWinsOf = typeof opts.duelWinsOf === 'function' ? (l) => Math.max(0, Math.min(99999, Math.floor(Number(opts.duelWinsOf(l)) || 0))) : () => 0;
   const row = (login) => {
     const p = byLogin.get(login) || pixelHeroes.getProfile(login);
     if (!p) return null;
-    return [p.login, cut(p.name, 20), p.hero || '', p.level, p.xp, p.xpNeed || 0, p.maxed ? 1 : 0, p.color || '', p.uid || '', p.totalXp, rank.get(p.login) || 0, p.multiplier || 1, awardsOf(p.login), heroIds.length ? packFlags(pixelHeroes.usableFlags(p.login, heroIds)) : ''];
+    return [p.login, cut(p.name, 20), p.hero || '', p.level, p.xp, p.xpNeed || 0, p.maxed ? 1 : 0, p.color || '', p.uid || '', p.totalXp, rank.get(p.login) || 0, p.multiplier || 1, awardsOf(p.login), heroIds.length ? packFlags(pixelHeroes.usableFlags(p.login, heroIds)) : '', duelWinsOf(p.login)];
   };
   let stLogins = stage.map((r) => r.login);
   let tpLogins = allTop.slice(0, topSize).map((x) => x.login);
@@ -77,7 +79,7 @@ function buildSnapshot(pixelHeroes, opts = {}) {
     const logins = [...new Set([...stLogins, ...tpLogins])];
     const p = logins.map(row).filter(Boolean);
     const have = new Set(p.map((r) => r[0]));
-    return { v: 1, t: now, live: opts.live ? 1 : 0, hv: heroIds.length ? heroHash(heroIds) : '', hn: heroIds.length, cc: typeof opts.chooseCommand === 'string' ? opts.chooseCommand.slice(0, 32) : '', p, st: stLogins.filter((l) => have.has(l)), tp: tpLogins.filter((l) => have.has(l)) };
+    return { v: 1, t: now, live: opts.live ? 1 : 0, hv: heroIds.length ? heroHash(heroIds) : '', hn: heroIds.length, cc: typeof opts.chooseCommand === 'string' ? opts.chooseCommand.slice(0, 32) : '', p, st: stLogins.filter((l) => have.has(l)), tp: tpLogins.filter((l) => have.has(l)), ...(opts.boss ? { bs: opts.boss } : {}), ...(Array.isArray(opts.pa) ? { pa: opts.pa } : {}) };
   };
   let snap = make(), json = JSON.stringify(snap);
   let trimmedTop = 0, trimmedStage = 0;
@@ -155,7 +157,7 @@ function createExtension(deps) {
 
   const heroIdsSorted = () => (deps.pixelHeroes && typeof deps.pixelHeroes.list === 'function' ? deps.pixelHeroes.list().map((h) => h.id).sort() : []);
   function currentSnapshot() {
-    return buildSnapshot(deps.pixelHeroes, { topSize: cfg.topSize, maxBytes: cfg.maxBytes, live: deps.isLive ? deps.isLive() : false, now: now(), awardsOf: deps.awards ? (l) => deps.awards.awardsOf(l) : null, heroIds: heroIdsSorted(), chooseCommand: deps.getChooseCommand ? deps.getChooseCommand() : '' });
+    return buildSnapshot(deps.pixelHeroes, { topSize: cfg.topSize, maxBytes: cfg.maxBytes, live: deps.isLive ? deps.isLive() : false, now: now(), awardsOf: deps.awards ? (l) => deps.awards.awardsOf(l) : null, heroIds: heroIdsSorted(), chooseCommand: deps.getChooseCommand ? deps.getChooseCommand() : '', duelWinsOf: deps.duelWinsOf || null, boss: deps.getBoss ? deps.getBoss() : null, pa: deps.getPa ? deps.getPa() : null });
   }
 
   /** Отправка одного сообщения в Twitch. Возвращает { ok, status?, error? }. */

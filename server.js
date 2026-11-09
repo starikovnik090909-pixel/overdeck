@@ -66,7 +66,7 @@ const awardsModule = require('./awards');
 const pixelHeroes = pixelHeroesModule.createState(undefined, { onLevel: (l, lv) => achievements.onLevel(l, lv), onJoin: (l) => achievements.add('streams', l, 1), file: pixelHeroesModule.SETTINGS_FILE, profilesFile: pixelHeroesModule.PROFILES_FILE, isLive: () => streamIsLive || !twitch.hasCredentials(config) });
 // Расширение Twitch (кнопка сбоку плеера): шлёт в Twitch снимок сцены и топа. Подробнее — extension.js и README §99.
 const awards = awardsModule.createAwards({ recentLogins: (ms) => pixelHeroes.recentLogins(ms), hasProfile: (l) => pixelHeroes.hasProfile(l) });
-const twitchExt = twitchExtensionModule.createExtension({ pixelHeroes, awards, getChooseCommand: () => { try { const c = avatarCommands.getState().commands.find((x) => x.action === 'choose' && x.enabled); return c && c.names[0] ? c.names[0] : ''; } catch (e) { return ''; } }, getOwnerId: () => (config.twitchAuth && config.twitchAuth.userId) || '', isLive: () => streamIsLive });
+const twitchExt = twitchExtensionModule.createExtension({ pixelHeroes, awards, getChooseCommand: () => { try { const c = avatarCommands.getState().commands.find((x) => x.action === 'choose' && x.enabled); return c && c.names[0] ? c.names[0] : ''; } catch (e) { return ''; } }, getOwnerId: () => (config.twitchAuth && config.twitchAuth.userId) || '', isLive: () => streamIsLive, duelWinsOf: (l) => { try { return duelProgress.statsOf(l).wins; } catch (e) { return 0; } }, getBoss: () => { try { return bosses.liveInfo(); } catch (e) { return null; } }, getPa: () => { try { return auctionBridge.levelRule(); } catch (e) { return null; } } });
 const predictions = require('./predictions');
 const polls = require('./polls');
 const eventTheme = require('./eventTheme');

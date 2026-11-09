@@ -38,6 +38,8 @@ function createBosses(deps = {}) {
   const knownPack = deps.knownPack || null;
   let settings = { ...SETTINGS_DEFAULT }, bosses = defaultBosses(), log = [];
   let busyUntil = 0, nextAt = 0, current = null, seq = 0;
+  let live = null, recent = null;                           // для расширения Twitch: идущий бой (ход здоровья босса) и итог последнего боя (виден ещё 30 с)
+  const RECENT_MS = 30000;
 
   try { const raw = JSON.parse(fs.readFileSync(file, 'utf8')); if (raw.settings) settings = { ...settings, ...cleanSettings(raw.settings) };
     if (Array.isArray(raw.bosses) && raw.bosses.length) { const ok = raw.bosses.map((b) => validBoss(b, null)).filter((r) => r.ok).map((r) => r.boss); if (ok.length) bosses = ok; }
@@ -60,9 +62,11 @@ function createBosses(deps = {}) {
     const names = Object.fromEntries(list.map((h) => [h.login, h.name]));
     const event = { id: ++seq, boss: { id: def.id, name: def.name, pack: def.pack, hp: res.boss.hp, scale: res.boss.scale, abilities: res.boss.abilities }, heroes: res.heroes, names, rounds: res.rounds, won: res.won, mvp: res.mvp, lastHit: res.lastHit, timing: { ...TIMING, totalMs: total } };
     current = { id: event.id, boss: def.name, heroes: list.length, hp: res.boss.hp, until: busyUntil };
+    live = { n: def.name, k: def.pack, t0: now(), until: busyUntil, track: [res.boss.hp, ...res.rounds.map((r) => r.bossHp)].slice(0, 40), d: [TIMING.runInMs, TIMING.roundMs, TIMING.endMs] };
+    recent = null;
     const announce = `👹 Появляется босс «${def.name}»! Здоровье ${res.boss.hp}, героев в бою: ${list.length}.`;
     function finish() {                                      // вызывается, когда бой на оверлее закончился
-      current = null; const rewards = [];
+      current = null; live = null; const rewards = [];
       if (res.won) {
         if (deps.onKill) { try { deps.onKill(list.map((h) => h.login)); } catch (e) { /* достижения не должны ломать бой */ } }
         const down = new Set(res.downed);
@@ -70,6 +74,7 @@ function createBosses(deps = {}) {
       }
       const entry = { at: now(), boss: def.name, heroes: list.length, won: res.won, rounds: res.rounds.length, mvp: res.mvp ? (names[res.mvp] || res.mvp) : '', who: String(who || 'admin'), xpTotal: rewards.reduce((a, r) => a + r.xp, 0) };
       log = [entry, ...log].slice(0, MAX_LOG); save();
+      recent = { n: def.name, k: def.pack, w: res.won ? 1 : 0, mv: entry.mvp, until: now() + RECENT_MS };
       const text = res.won ? `🏆 Босс «${def.name}» повержен! MVP: ${entry.mvp || '—'}${res.lastHit ? `, добил: ${names[res.lastHit] || res.lastHit}` : ''}. Участники получили опыт.` : `☠ Босс «${def.name}» победил героев и ушёл. Попробуйте снова!`;
       return { text, entry, rewards };
     }
@@ -79,6 +84,13 @@ function createBosses(deps = {}) {
   return {
     summon, MAX_HEROES, TIMING,
     isBusy: () => now() < busyUntil,
+    /** Для снимка расширения Twitch: идущий бой { n, k, t0, track:[hp…], d:[вход, раунд, финал мс] }, затем 30 с итог { n, k, w, mv }; иначе null. */
+    liveInfo() {
+      const t = now();
+      if (live && t < live.until) return { n: live.n, k: live.k, t0: live.t0, track: live.track.slice(), d: live.d.slice() };
+      if (recent && t < recent.until) return { n: recent.n, k: recent.k, w: recent.w, mv: recent.mv };
+      return null;
+    },
     getState: () => ({ settings: { ...settings }, bosses: bosses.map((b) => ({ ...b })), log: log.slice(), current: current && now() < current.until ? { ...current } : null, nextInMs: settings.random && nextAt ? Math.max(0, nextAt - now()) : null, abilities: ABILITIES, defaults: BOSS_DEFAULT, maxHeroes: MAX_HEROES }),
     setSettings(p) { settings = { ...settings, ...cleanSettings({ ...settings, ...(p || {}) }) }; if (settings.maxMinutes < settings.minMinutes) settings.maxMinutes = settings.minMinutes; if (settings.random) scheduleNext(); else nextAt = 0; save(); return { ...settings }; },
     saveBoss(b) { const v = validBoss(b, knownPack); if (!v.ok) return v; const i = bosses.findIndex((x) => x.id === v.boss.id); if (i >= 0) bosses[i] = v.boss; else { if (bosses.length >= MAX_BOSSES) return { ok: false, error: 'Слишком много боссов (максимум ' + MAX_BOSSES + ').' }; bosses.push(v.boss); } save(); return { ok: true, boss: v.boss }; },
