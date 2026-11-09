@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Overdeck",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Overdeck в браузере: «Сейчас играет», авто-сбор баллов канала Twitch, смайлы 7TV/BTTV/FFZ, панель смайлов и 1080p (бета).",
   "permissions": [
     "storage",
@@ -11,14 +11,11 @@
     "http://localhost/*",
     "http://127.0.0.1/*",
     "https://*.twitch.tv/*",
-    "https://gql.twitch.tv/*",
     "https://usher.ttvnw.net/*",
     "https://7tv.io/*",
     "https://cdn.7tv.app/*",
     "https://api.betterttv.net/*",
     "https://cdn.betterttv.net/*",
-    "https://api.frankerfacez.com/*",
-    "https://cdn.frankerfacez.com/*",
     "https://*.frankerfacez.com/*"
   ],
   "background": {

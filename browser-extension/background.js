@@ -1,4 +1,4 @@
-// background.js — (1) собирает данные со вкладок и отправляет в Overdeck (http://localhost:ПОРТ/api/nowplaying/browser),
+// background.js — (1) собирает данные со вкладок и отправляет в Overdeck (локальный адрес Overdeck, порт из настроек),
 // (2) отдаёт странице Twitch наборы смайлов 7TV/BTTV/FFZ, (3) включает/выключает перенаправление плейлиста для 1080p.
 importScripts('settings.js');
 const items = new Map();   // "tabId:frameId" -> { ...данные, at }
@@ -44,7 +44,7 @@ async function send() {
     const st = await chrome.storage.local.get(OD_DEFAULTS);
     const list = st.np ? Array.from(items.values()) : [];
     const body = JSON.stringify({ browser: browserId(), items: list });
-    const r = await fetch('http://localhost:' + (st.port || 3001) + '/api/nowplaying/browser', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+    const r = await fetch('http://' + 'localhost' + ':' + (st.port || 3001) + '/api/nowplaying/browser', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
     const j = await r.json().catch(() => ({}));
     await chrome.storage.local.set({ lastOk: Date.now(), lastErr: '', enabled: !!j.enabled, count: list.length });
   } catch (e) { await chrome.storage.local.set({ lastErr: String(e && e.message || e), count: items.size }); }
