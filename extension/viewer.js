@@ -54,7 +54,7 @@
     else r.w = b.w ? 1 : 0, r.mv = typeof b.mv === 'string' ? b.mv.slice(0, 30) : '';
     return r;
   }
-  /* цена уровня в PointAuc: [база, шаг, потолок] → уровень N стоит min(потолок, база + шаг·(N−1)) ₽ */
+  /* баллы за уровень: [база, шаг, потолок] → уровень N стоит min(потолок, база + шаг·(N−1)) ₽ */
   function parsePa(a) { if (!Array.isArray(a) || a.length < 3) return null; var r = [num(a[0], 0), num(a[1], 0), num(a[2], 0)]; return r[0] > 0 && r[2] > 0 ? r : null; }
   function paValue(pa, lvl) { return lvl >= 1 ? Math.min(pa[2], pa[0] + pa[1] * (lvl - 1)) : 0; }
   var DUEL_TIERS = [1, 5, 15, 50, 100];
