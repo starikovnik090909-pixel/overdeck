@@ -5,9 +5,9 @@ html, body { margin: 0; height: 100%; background: transparent; font: 13px/1.4 sy
 .panel, .pill { pointer-events: auto; }
 .panel { position: fixed; right: 12px; top: 50%; transform: translateY(-50%); width: min(340px, 52vw); height: min(500px, 94vh); display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 34px rgba(0, 0, 0, 0.6); overflow: hidden; }
 .panel[hidden], .pill[hidden] { display: none; }
-.pill { position: fixed; right: 10px; top: 24%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.78); color: #2BC4B4; border: 1.5px solid #2BC4B4; border-radius: 10px; cursor: pointer; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.55); opacity: 0.85; transition: opacity .15s, transform .15s, background .15s; }
-.pill:hover { opacity: 1; transform: scale(1.06); background: #000; }
-.pill svg { width: 22px; height: 22px; display: block; }
+.pill { position: fixed; right: 10px; top: 24%; width: 56px; height: 56px; padding: 0; display: flex; align-items: center; justify-content: center; background: transparent; border: 0; cursor: pointer; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.6)); opacity: 0.92; transition: opacity .15s, transform .15s; }
+.pill:hover { opacity: 1; transform: scale(1.07); }
+.pill svg { width: 100%; height: 100%; display: block; }
 .head { display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 0 8px; border-bottom: 1px solid var(--line); }
 .tabs { display: flex; gap: 2px; }
 .tab { padding: 8px 12px; background: none; border: 0; border-bottom: 2px solid transparent; color: var(--muted); font: 700 13px system-ui, sans-serif; cursor: pointer; }
