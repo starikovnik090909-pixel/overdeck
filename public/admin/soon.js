@@ -14,6 +14,7 @@
     ['Фиолетовый', '#8b5cf6', '#c084fc', '#08040f'], ['Розовый', '#ec4899', '#ff8ad0', '#0d0309'],
   ];
   let cur = null, t = 0;
+  const lighten = (h) => '#' + [1, 3, 5].map((i) => { const v = parseInt(h.slice(i, i + 2), 16); return Math.round(v + (255 - v) * 0.6).toString(16).padStart(2, '0'); }).join('');
 
   function flash(msg) { const e = $('#soonSaved'); e.textContent = msg; setTimeout(() => { e.textContent = ''; }, 1500); }
   function say(msg, bad) { const e = $('#soonMsg'); e.textContent = msg; e.className = 'form-message' + (bad ? ' error' : msg ? ' success' : ''); }
@@ -47,7 +48,7 @@
   PAL.forEach((p) => {
     const b = document.createElement('button'); b.type = 'button'; b.title = p[0]; b.dataset.a = p[1]; b.dataset.b = p[2]; b.dataset.c = p[3];
     b.style.background = 'linear-gradient(135deg,' + p[1] + ',' + p[2] + ')';
-    b.addEventListener('click', () => { $('[data-s="accent"]').value = p[1]; $('[data-s="accent2"]').value = p[2]; $('[data-s="bg"]').value = p[3]; save(); });
+    b.addEventListener('click', () => { $('[data-s="accent"]').value = p[1]; $('[data-s="accent2"]').value = p[2]; $('[data-s="bg"]').value = p[3]; $('[data-s="ember1"]').value = p[2]; $('[data-s="cardColor"]').value = p[2]; $('[data-s="ember2"]').value = lighten(p[2]); save(); });
     pal.appendChild(b);
   });
 

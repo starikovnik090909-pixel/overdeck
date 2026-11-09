@@ -25,13 +25,34 @@
     style.setProperty('--glow', rgba(s.accent2, 0.5));
     style.setProperty('--chatline', rgba(s.accent, 0.55));
     style.setProperty('--chat-w', s.chatWidth + 'px');
-    stage.dataset.layout = s.layout;
+    const blur = s.layout === 'blurcol', isCol = s.layout === 'column' || blur;
+    stage.dataset.layout = blur ? 'column' : s.layout; stage.classList.toggle('blur', blur);
     let left = s.chat === 'left' ? s.chatWidth + 120 : 100, right = s.chat === 'right' ? 1920 - 60 - s.chatWidth - 40 : 1860;
     const colSide = s.chat === 'left' ? 'r' : 'l'; // обложка стоит с противоположной от чата стороны
-    if (s.layout === 'column') { if (colSide === 'l') left = Math.max(left, 580); else right = Math.min(right, 1920 - 480 - 40); }
+    if (isCol) { if (colSide === 'l') left = Math.max(left, 580); else right = Math.min(right, 1920 - 480 - 40); }
     style.setProperty('--tx-left', left + 'px'); style.setProperty('--tx-w', Math.max(400, right - left) + 'px');
+    style.setProperty('--card-glow', rgba(s.cardColor || s.accent2, 0.5));
+    const pz = $('poster'), isPoster = s.layout === 'poster';
+    if (isPoster) { // карточка 3:4; если места под текст мало, уменьшаем её
+      const pm = 100; let H = 760, W;
+      for (;;) {
+        W = Math.round(H * 0.75);
+        if (colSide === 'l') { left = pm + W + 90; } else { right = Math.min(right, 1920 - pm - W - 90); }
+        if (right - left >= 640 || H <= 420) break;
+        H -= 20; left = s.chat === 'left' ? s.chatWidth + 120 : 100; right = s.chat === 'right' ? 1920 - 60 - s.chatWidth - 40 : 1860;
+      }
+      pz.style.width = W + 'px'; pz.style.height = H + 'px'; pz.style.top = Math.round((1080 - H) / 2) + 'px';
+      pz.style.left = colSide === 'l' ? pm + 'px' : 'auto'; pz.style.right = colSide === 'r' ? pm + 'px' : 'auto';
+      const pu = ch.art ? ch.art.replace(/\d+x\d+(?=\.\w+$)/, '600x800') : '';
+      pz.classList.toggle('noart', !pu);
+      if (pz.dataset.u !== pu) { pz.dataset.u = pu; pz.style.backgroundImage = pu ? 'url("' + pu + '")' : ''; }
+      style.setProperty('--tx-left', left + 'px'); style.setProperty('--tx-w', Math.max(400, right - left) + 'px');
+    }
     ['colp', 'edge'].forEach((id) => { $(id).className = id + ' ' + colSide; });
-    const art = $('colart'), au = (ch.art && s.layout === 'column') ? ch.art : '';
+    const cp = $('colpost'), cu = (blur && ch.art) ? ch.art.replace(/\d+x\d+(?=\.\w+$)/, '600x800') : '';
+    cp.classList.toggle('noart', blur && !cu);
+    if (cp.dataset.u !== cu) { cp.dataset.u = cu; cp.style.backgroundImage = cu ? 'url("' + cu + '")' : ''; }
+    const art = $('colart'), au = (ch.art && isCol) ? ch.art : '';
     if (art.dataset.u !== au) { art.dataset.u = au; art.style.backgroundImage = au ? 'url("' + au + '")' : 'none'; }
     $('base').style.background = 'radial-gradient(ellipse at 40% 130%,' + mix(s.bg, s.accent, 0.55) + ' 0,' + mix(s.bg, s.accent, 0.18) + ' 45%,' + s.bg + ' 100%)';
     const img = $('bgimg'), dim = $('dim');
@@ -50,11 +71,12 @@
     tick();
   }
 
+  const isCol0 = (s) => s.layout === 'column' || s.layout === 'blurcol' || s.layout === 'poster';
   /** Длинное название категории уменьшаем, пока оно не поместится в строку. */
   function fitName(s) {
     const c = $('cat'), tx = $('tx'); if (c.hidden) return;
     c.style.whiteSpace = 'nowrap';
-    let size = s.layout === 'column' ? 104 : 150; c.style.fontSize = size + 'px';
+    let size = isCol0(s) ? 104 : 150; c.style.fontSize = size + 'px';
     const max = tx.clientWidth || 1160;
     while (c.scrollWidth > max && size > 76) { size -= 4; c.style.fontSize = size + 'px'; }
     if (c.scrollWidth > max) { c.style.whiteSpace = 'normal'; c.style.fontSize = '72px'; } // совсем длинное название: в две строки
@@ -103,7 +125,7 @@
     while (emb.length < want) emb.push({ x: Math.random() * 1920, y: Math.random() * 1080, v: 0.6 + Math.random() * 1.8, r: 1 + Math.random() * 3.2, s: Math.random() * 6 });
     if (emb.length > want) emb.length = want;
     cx.clearRect(0, 0, 1920, 1080);
-    const c1 = S.settings.accent2, c2 = mix(S.settings.accent2, '#ffffff', 0.6);
+    const c1 = S.settings.ember1 || S.settings.accent2, c2 = S.settings.ember2 || mix(S.settings.accent2, '#ffffff', 0.6);
     emb.forEach((p) => {
       p.y -= p.v; p.x += Math.sin(t / 700 + p.s) * 0.7;
       if (p.y < -10) { p.y = 1090; p.x = Math.random() * 1920; }

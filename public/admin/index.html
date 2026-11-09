@@ -3670,8 +3670,8 @@
             </div>
             <div class="ex-col ex-opts soon-opts"><h4 class="ex-h">Настройки <span class="ui3-saved" id="soonSaved"></span></h4>
               <div class="soon-g"><b>Вид экрана</b>
-                <div class="chr-seg" id="soonLayout"><button type="button" data-v="embers">Угли</button><button type="button" data-v="column">Колонка с обложкой</button></div>
-                <p class="ex-sm">«Колонка» показывает обложку категории с Twitch сбоку на всю высоту.</p>
+                <div class="chr-seg" id="soonLayout"><button type="button" data-v="embers">Угли</button><button type="button" data-v="column">Колонка с обложкой</button><button type="button" data-v="poster">Постер 3:4</button><button type="button" data-v="blurcol">Колонка с размытием</button></div>
+                <p class="ex-sm">«Колонка» показывает обложку категории с Twitch сбоку на всю высоту, обрезая её. «Постер 3:4» и «Колонка с размытием» показывают обложку целиком, без обрезки.</p>
               </div>
               <div class="soon-g"><b>Тексты</b>
                 <label class="tg-sw"><input type="checkbox" data-s="showKicker"><i></i><span>Надпись сверху</span></label><input type="text" data-s="kicker" maxlength="60">
@@ -3688,6 +3688,7 @@
               <div class="soon-g"><b>Цвета</b>
                 <div class="soon-pal" id="soonPal"></div>
                 <div class="soon-row soon-col"><label>Основной <input type="color" data-s="accent"></label><label>Свечение и искры <input type="color" data-s="accent2"></label><label>Фон <input type="color" data-s="bg"></label><label>Текст <input type="color" data-s="text"></label></div>
+                <div class="soon-row soon-col"><label>Искры <input type="color" data-s="ember1"></label><label>Искры светлые <input type="color" data-s="ember2"></label><label>Свечение карточки <input type="color" data-s="cardColor"></label></div>
               </div>
               <div class="soon-g"><b>Фон и эффекты</b>
                 <div class="ex-actions"><label class="btn btn-secondary soon-up">Загрузить картинку или гиф<input type="file" id="soonFile" accept=".png,.jpg,.jpeg,.webp,.gif" hidden></label><button class="btn btn-ghost btn-sm" type="button" id="soonBgDel" hidden>Убрать фон</button></div>

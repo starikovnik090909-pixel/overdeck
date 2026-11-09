@@ -14,15 +14,16 @@ const DEFAULTS = {
   showTimer: true, timerMode: 'minutes', minutes: 10, clock: '20:00', timerLabel: 'ДО ЭФИРА', timerEndText: 'НАЧИНАЕМ',
   showFooter: true, footer: '',                                         // пусто — «ИМЯ КАНАЛА · OVERDECK»
   accent: '#e5484d', accent2: '#ff6a3c', bg: '#0b0305', text: '#ffffff',
+  ember1: '#ff6a3c', ember2: '#ffc3b1', cardColor: '#ff6a3c',          // цвета искр (основной и светлый) и свечение карточки категории
   gradientTitle: true, glow: true, embers: true, emberCount: 110,
-  layout: 'embers',                                                     // вид: embers («Угли») или column («Колонка» с обложкой категории)
+  layout: 'embers',                                                     // вид: embers («Угли»), column («Колонка»), poster («Постер 3:4»), blurcol («Колонка с размытым фоном»)
   chat: 'right', chatBorder: true, chatWidth: 520,
   bgImage: '', bgDim: 35, bgBlur: 0,
 };
-const ENUM = { timerMode: ['minutes', 'clock'], chat: ['right', 'left', 'off'], layout: ['embers', 'column'] };
+const ENUM = { timerMode: ['minutes', 'clock'], chat: ['right', 'left', 'off'], layout: ['embers', 'column', 'poster', 'blurcol'] };
 const BOOL = ['showKicker', 'showCategory', 'showTitle', 'showTimer', 'showFooter', 'gradientTitle', 'glow', 'embers', 'chatBorder'];
 const STR = { kicker: 60, categoryLabel: 30, categoryText: 80, titleText: 140, timerLabel: 30, timerEndText: 30, footer: 60 };
-const COLOR = ['accent', 'accent2', 'bg', 'text'];
+const COLOR = ['accent', 'accent2', 'bg', 'text', 'ember1', 'ember2', 'cardColor'];
 const NUM = { minutes: [1, 600], emberCount: [0, 300], chatWidth: [300, 800], bgDim: [0, 90], bgBlur: [0, 30] };
 
 let cfg = JSON.parse(JSON.stringify(DEFAULTS));
@@ -56,7 +57,7 @@ function update(b) {
   const bg = cfg.bgImage; // фон меняется только загрузкой/удалением, не общим сохранением
   cfg = sanitize(b, cfg); cfg.bgImage = bg; save(); return getSettings();
 }
-function resetColors() { ['accent', 'accent2', 'bg', 'text'].forEach((k) => { cfg[k] = DEFAULTS[k]; }); save(); return getSettings(); }
+function resetColors() { ['accent', 'accent2', 'bg', 'text', 'ember1', 'ember2', 'cardColor'].forEach((k) => { cfg[k] = DEFAULTS[k]; }); save(); return getSettings(); }
 
 function startTimer(minutes) {
   const m = Number(minutes) > 0 ? Math.min(600, Number(minutes)) : cfg.minutes;
