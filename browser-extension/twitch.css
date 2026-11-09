@@ -1,9 +1,10 @@
 .od-emote{display:inline-block;vertical-align:middle;height:28px;width:auto;margin:-5px 1px}
 .od-emote-wrap{position:relative;display:inline-block;vertical-align:middle}
 .od-emote-wrap .od-zw{position:absolute;left:0;top:0;height:100%;width:100%;object-fit:contain;margin:0}
-#od-pick-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;opacity:.8}
-#od-pick-btn:hover{background:rgba(255,255,255,.12);opacity:1}
-#od-pick-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#od-pick-btn{display:inline-flex;align-items:center;justify-content:center;flex:none;width:30px;height:30px;margin:0 2px;border:1px solid rgba(43,196,180,.35);border-radius:7px;background:#0b0b0c;color:#2BC4B4;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+#od-pick-btn:hover,#od-pick-btn[aria-expanded=true]{background:#2BC4B4;color:#0b0b0c;border-color:#2BC4B4}
+#od-pick-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#od-pick-btn svg .f{fill:currentColor}
 #od-pick{position:fixed;z-index:99999;width:340px;height:380px;background:#0b0b0c;color:#f2f2f2;border:1px solid #2a2a2e;border-radius:10px;display:flex;flex-direction:column;font:13px system-ui,Segoe UI,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.5)}
 #od-pick[hidden]{display:none}
 #od-pick .odp-h{display:flex;gap:6px;padding:8px;border-bottom:1px solid #1d1d20;align-items:center}

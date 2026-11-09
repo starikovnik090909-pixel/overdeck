@@ -81,7 +81,7 @@
 
   // ---------- панель смайлов ----------
   let pick = null, tab = 'ALL', q = '';
-  const ICON = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1 1.4 2.2 2 3.5 2s2.5-.6 3.5-2M9 9.5h.01M15 9.5h.01"/></svg>';
+  const ICON = '<svg viewBox="0 0 24 24"><path class="f" d="M12 4.5 20 8.5 12 12.5 4 8.5z"/><path d="m4 12.5 8 4 8-4M4 16.5l8 4 8-4"/></svg>';
   function input() { return document.querySelector('[data-a-target="chat-input"]'); }
   function insert(name) {
     const el = input(); if (!el) return;
@@ -117,8 +117,8 @@
   }
   function togglePicker(btn) {
     if (!pick) buildPicker();
-    if (!pick.hidden) { pick.hidden = true; return; }
-    fetchSets(); drawGrid(); pick.hidden = false;
+    if (!pick.hidden) { pick.hidden = true; btn.removeAttribute('aria-expanded'); return; }
+    fetchSets(); drawGrid(); pick.hidden = false; btn.setAttribute('aria-expanded', 'true');
     const r = btn.getBoundingClientRect(), w = 340, h = 380;
     pick.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
     pick.style.top = Math.max(8, r.top - h - 8) + 'px';
@@ -128,12 +128,18 @@
     const has = document.getElementById('od-pick-btn');
     if (!S.picker) { if (has) has.remove(); return; }
     if (has && has.isConnected) return;
+    const btn = document.createElement('button'); btn.id = 'od-pick-btn'; btn.type = 'button'; btn.title = 'Смайлы Overdeck (7TV, BTTV, FFZ)'; btn.setAttribute('aria-label', 'Смайлы Overdeck'); btn.innerHTML = ICON;
+    btn.addEventListener('click', () => togglePicker(btn));
+    const nat = document.querySelector('.chat-input [data-a-target="emote-picker-button"]');
+    if (nat) {
+      let host = nat; while (host.parentElement && host.parentElement.children.length === 1 && !host.parentElement.matches('.chat-input')) host = host.parentElement;
+      host.parentElement.insertBefore(btn, host);
+      return;
+    }
     const row = document.querySelector('.chat-input .chat-input__buttons-container, .chat-input [data-test-selector="chat-input-buttons-container"]');
     if (!row) return;
-    const left = row.firstElementChild || row;
-    const b = document.createElement('button'); b.id = 'od-pick-btn'; b.type = 'button'; b.title = 'Смайлы Overdeck (7TV, BTTV, FFZ)'; b.setAttribute('aria-label', 'Смайлы Overdeck'); b.innerHTML = ICON;
-    b.addEventListener('click', () => togglePicker(b));
-    left.insertBefore(b, left.firstChild);
+    const last = row.lastElementChild || row;
+    last.insertBefore(btn, last.firstChild);
   }
   setInterval(ensureButton, 1500);
   load(() => { fetchSets(); ensureButton(); });

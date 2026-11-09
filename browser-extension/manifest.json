@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Overdeck",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Overdeck в браузере: «Сейчас играет», авто-сбор баллов канала Twitch, смайлы 7TV/BTTV/FFZ, панель смайлов и 1080p (бета).",
   "permissions": [
     "storage",
