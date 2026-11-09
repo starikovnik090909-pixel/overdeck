@@ -26,6 +26,8 @@ GFPGAN_URL = 'https://huggingface.co/facefusion/models-3.0.0/resolve/main/gfpgan
 FFHQ512 = np.array([[192.98138, 239.94708], [318.90277, 240.1936], [256.63416, 314.01935],
                     [201.26117, 371.41043], [313.08905, 371.15118]], dtype=np.float32)
 HYPER_URL = 'https://huggingface.co/facefusion/models-3.3.0/resolve/main/hyperswap_1a_256.onnx'
+ARC128 = np.array([[0.36167656, 0.40387734], [0.63696719, 0.40235469], [0.50019687, 0.56044219],
+                   [0.38710391, 0.72160547], [0.61507734, 0.72034453]], dtype=np.float32)   # эталон HyperSwap
 LIPS_IN = [78, 191, 80, 81, 82, 13, 312, 311, 310, 415, 308, 324, 318, 402, 317, 14, 87, 178, 88, 95]
 BUFFALO_URL = 'https://github.com/deepinsight/insightface/releases/download/v0.7/buffalo_l.zip'
 ARC = np.array([[38.2946, 51.6963], [73.5318, 51.5014], [56.0252, 71.7366],
@@ -344,13 +346,12 @@ class Engine:
         omask = None
         if use_hy:
             S = 256
-            aimg, m = crop(frame, kps, S)
+            aimg, m = crop(frame, kps, S, ARC128 * S)
             blob = cv2.dnn.blobFromImage(aimg, 1.0 / 127.5, (S, S), (127.5, 127.5, 127.5), swapRB=True)
             o = self.hy.run(None, {'source': self.emb, 'target': blob})
             fake = np.clip((o[0][0].transpose(1, 2, 0) + 1.0) * 127.5, 0, 255).astype(np.uint8)[:, :, ::-1]
             fake = np.ascontiguousarray(fake)
-            if len(o) > 1:
-                omask = cv2.GaussianBlur(np.clip(o[1][0][0], 0, 1).astype(np.float32), (9, 9), 0)
+            # маску модели (o[1]) не используем: она с «дырами» на глазах и носу, через них просвечивает старое лицо
         else:
             S = 128
             aimg, m = crop(frame, kps, S)
