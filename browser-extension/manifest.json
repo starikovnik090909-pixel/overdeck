@@ -1,14 +1,25 @@
 {
   "manifest_version": 3,
-  "name": "Overdeck — Сейчас играет",
-  "version": "1.0.0",
-  "description": "Передаёт в Overdeck, что играет на вкладках браузера (видео и аудио на любом сайте): название, время, длительность, обложка.",
+  "name": "Overdeck",
+  "version": "1.1.0",
+  "description": "Overdeck в браузере: «Сейчас играет», авто-сбор баллов канала Twitch, смайлы 7TV/BTTV/FFZ, панель смайлов и 1080p (бета).",
   "permissions": [
-    "storage"
+    "storage",
+    "declarativeNetRequest"
   ],
   "host_permissions": [
     "http://localhost/*",
-    "http://127.0.0.1/*"
+    "http://127.0.0.1/*",
+    "https://*.twitch.tv/*",
+    "https://gql.twitch.tv/*",
+    "https://usher.ttvnw.net/*",
+    "https://7tv.io/*",
+    "https://cdn.7tv.app/*",
+    "https://api.betterttv.net/*",
+    "https://cdn.betterttv.net/*",
+    "https://api.frankerfacez.com/*",
+    "https://cdn.frankerfacez.com/*",
+    "https://*.frankerfacez.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -23,10 +34,25 @@
       ],
       "all_frames": true,
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.twitch.tv/*",
+        "https://twitch.tv/*",
+        "https://m.twitch.tv/*"
+      ],
+      "js": [
+        "twitch.js"
+      ],
+      "css": [
+        "twitch.css"
+      ],
+      "all_frames": true,
+      "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_title": "Overdeck — Сейчас играет",
+    "default_title": "Overdeck",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icon16.png",

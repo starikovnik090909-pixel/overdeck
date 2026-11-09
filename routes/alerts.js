@@ -4,7 +4,7 @@
 function main(ctx) {
   const { fs, path, app } = ctx;
 app.get('/api/alert-sounds', (req, res) => {
-  const dir = path.join(__dirname, 'public', 'alert-sounds');
+  const dir = path.join(__dirname, '..', 'public', 'alert-sounds');
   let manifest = [];
   try { manifest = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')); } catch (e) { manifest = []; }
   const known = new Set(manifest.map((m) => m.file));
@@ -59,9 +59,9 @@ app.post('/api/nowplaying/browser', express.json({ limit: '200kb' }), (req, res)
   try { nowPlaying.setBrowser(req.body || {}); res.json({ success: true, enabled: !!config.eventAlerts.nowplaying.enabled }); } catch (e) { res.status(400).json({ success: false, error: e.message }); }
 });
 // кнопка «Установить расширение» в админке: открывает страницу расширений браузера и папку с расширением (Windows). Магазин — если задан extensionStoreUrl в config.json.
-app.get('/api/nowplaying/extension', (req, res) => { res.json({ success: true, dir: path.join(__dirname, 'browser-extension'), store: /^https:\/\//.test(String(config.nowplayingExtensionStoreUrl || '')) ? config.nowplayingExtensionStoreUrl : '' }); });
+app.get('/api/nowplaying/extension', (req, res) => { res.json({ success: true, dir: path.join(__dirname, '..', 'browser-extension'), store: /^https:\/\//.test(String(config.nowplayingExtensionStoreUrl || '')) ? config.nowplayingExtensionStoreUrl : '' }); });
 app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (req, res) => {
-  const dir = path.join(__dirname, 'browser-extension');
+  const dir = path.join(__dirname, '..', 'browser-extension');
   const b = String((req.body && req.body.browser) || '');
   const BR = { chrome: ['chrome', 'chrome://extensions'], edge: ['msedge', 'edge://extensions'], yandex: [path.join(process.env.LOCALAPPDATA || '', 'Yandex', 'YandexBrowser', 'Application', 'browser.exe'), 'browser://extensions/'] };
   if (b === 'yandex' && process.platform === 'win32' && !require('fs').existsSync(BR.yandex[0])) BR.yandex[0] = 'browser';   // нестандартная установка: пробуем через PATH
@@ -74,6 +74,33 @@ app.post('/api/nowplaying/extension/install', express.json({ limit: '5kb' }), (r
     if (what !== 'folder' && BR[b]) { try { require('child_process').spawn('cmd.exe', ['/c', 'start', '', BR[b][0], BR[b][1]], { detached: true, stdio: 'ignore', windowsHide: true }).unref(); opened = true; } catch (e) { /* откроют сами */ } }
   }
   res.json({ success: true, dir, opened, page: BR[b] ? BR[b][1] : 'chrome://extensions' });
+});
+// скачивание расширения одним архивом (папка overdeck-extension внутри) и сведения для окна «Расширение» в админке
+function extFiles(dir, rel) {
+  const out = [];
+  for (const f of fs.readdirSync(path.join(dir, rel || ''), { withFileTypes: true })) {
+    if (f.name.startsWith('.')) continue;
+    const r = rel ? rel + '/' + f.name : f.name;
+    if (f.isDirectory()) out.push(...extFiles(dir, r)); else out.push(r);
+  }
+  return out;
+}
+app.get('/api/extension/info', (req, res) => {
+  const dir = path.join(__dirname, '..', 'browser-extension');
+  let version = '';
+  try { version = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).version; } catch (e) { /* без версии */ }
+  res.json({ success: true, version, dir });
+});
+app.get('/api/extension.zip', (req, res) => {
+  try {
+    const dir = path.join(__dirname, '..', 'browser-extension');
+    const entries = extFiles(dir).map((f) => ({ name: 'overdeck-extension/' + f, data: fs.readFileSync(path.join(dir, f)) }));
+    const zip = require('../tools/build-extension').makeZip(entries);
+    res.set('Content-Type', 'application/zip'); res.set('Content-Disposition', 'attachment; filename="overdeck-extension.zip"'); res.set('Cache-Control', 'no-store'); res.send(zip);
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+app.get('/api/extension/relay.js', (req, res) => {
+  try { res.set('Content-Type', 'text/plain; charset=utf-8'); res.send(fs.readFileSync(path.join(__dirname, '..', 'browser-extension', 'relay', 'worker.js'), 'utf8')); } catch (e) { res.status(404).end(); }
 });
 app.get('/api/nowplaying', (req, res) => { res.json({ success: true, ...nowPlayingPayload() }); });
 app.get('/api/nowplaying/cover', (req, res) => {

@@ -9465,6 +9465,7 @@
             <li>Выбери папку с расширением. Лучше выбрать вручную: в окне выбора папки перейди в папку Overdeck и выбери <b>browser-extension</b> (не вставляй путь, если не сработало). Путь для справки:</li></ol>
           <div class="toggle-row-extra" style="margin:0 0 8px"><input type="text" readonly data-a="extdir" style="flex:1;min-width:0" value="…"><button class="btn-tiny" type="button" data-a="extcopy">Копировать</button><button class="btn-tiny" type="button" data-a="extfolder">Открыть папку</button></div>
           <div class="actions" style="margin:0"><select data-a="extbr" style="max-width:150px"><option value="chrome">Google Chrome</option><option value="edge">Microsoft Edge</option><option value="yandex">Яндекс Браузер</option><option value="other">Другой браузер</option></select><button class="btn btn-primary" type="button" data-a="extinstall">Открыть страницу расширений</button></div>
+          <div class="actions" style="margin:8px 0 0"><button class="btn-tiny" type="button" data-a="extmore">Скачать архив и все функции расширения ›</button></div>
           <p class="card-hint" style="margin:8px 0 0">Если страница не открылась, вставь адрес в адресную строку сам: Яндекс — browser://extensions/, Opera — opera://extensions, Brave — brave://extensions. Расширение ставится один раз, потом статус выше станет «подключено».</p></div></div>` : ''}
         <div class="actions"><button class="btn btn-primary" type="button" data-a="test">Тест алерта</button><button class="btn btn-secondary" type="button" data-a="skip">Пропустить текущий</button></div>
         <p class="card-hint" style="margin:8px 0 0">Тест и предпросмотр используют сохранённые настройки. Внешний вид (тема, рамка, свет, шрифт, звуки, время на экране) общий с разделом «Донат».</p></div></div>
@@ -9532,6 +9533,7 @@
       refreshExt(); setInterval(refreshExt, 2500);
       let extDir = '';
       fetch('/api/nowplaying/extension').then((r) => r.json()).then((d) => { extDir = d.dir || ''; $('[data-a="extdir"]').value = extDir; if (d.store) { const bt = btn('extinstall'); bt.textContent = 'Открыть магазин расширений'; bt.dataset.store = d.store; } }).catch(() => {});
+      btn('extmore').addEventListener('click', () => { if (window.openExtModal) window.openExtModal(); });
       btn('extcopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(extDir); } catch (e) { $('[data-a="extdir"]').select(); } btn('extcopy').textContent = 'Скопировано'; setTimeout(() => { btn('extcopy').textContent = 'Копировать'; }, 1500); });
       btn('extfolder').addEventListener('click', async () => { let d = {}; try { d = await api('/api/nowplaying/extension/install', { what: 'folder' }); } catch (e) { d = {}; } if (!d.dir && !extDir) say('Не удалось открыть папку', 'error'); else if (!d.opened && window.navigator.platform && !/win/i.test(window.navigator.platform)) say('Путь к папке скопируй из поля выше.'); });
       btn('extinstall').addEventListener('click', async () => {
