@@ -5,4 +5,4 @@ set -e
 REF="${REF:?укажи путь к build/.NETFramework/v4.5 из пакета Microsoft.NETFramework.ReferenceAssemblies.net45}"
 cd "$(dirname "$0")/.."
 mcs -nologo -noconfig -nostdlib -target:winexe -win32icon:launcher/icon.ico -resource:launcher/icon.ico,icon.ico -resource:launcher/logo.png,logo.png -resource:launcher/intro.wav,intro.wav -out:Overdeck.exe \
-  -r:$REF/mscorlib.dll -r:$REF/System.dll -r:$REF/System.Core.dll -r:$REF/System.Windows.Forms.dll -r:$REF/System.Drawing.dll -r:$REF/System.IO.Compression.dll -r:$REF/System.IO.Compression.FileSystem.dll launcher/Overdeck.cs launcher/Anim.cs launcher/ModsUi.cs launcher/FaceInstallUi.cs
+  -r:$REF/mscorlib.dll -r:$REF/System.dll -r:$REF/System.Core.dll -r:$REF/System.Windows.Forms.dll -r:$REF/System.Drawing.dll -r:$REF/System.IO.Compression.dll -r:$REF/System.IO.Compression.FileSystem.dll launcher/Overdeck.cs launcher/Anim.cs launcher/ModsUi.cs launcher/FaceInstallUi.cs launcher/DflUi.cs

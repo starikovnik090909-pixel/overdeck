@@ -159,3 +159,4 @@ faceswap_settings.json
 faceswap_source.jpg
 modules/faceswap/install_status.json
 modules/faceswap/install.log*
+modules/deepfacelive/path.txt

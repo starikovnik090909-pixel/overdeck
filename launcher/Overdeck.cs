@@ -554,6 +554,15 @@ class Launcher : Form
                 f.ShowDialog(this);
                 if (modsPage != null) modsPage.Rebuild();
             } });
+        modsPage.AddMod(new ModInfo { Name = "DeepFaceLive", Sub = "Лучшее качество", Real = true, Kind = 4,
+            Inst = delegate { try { return DflForm.IsInstalled(root); } catch { return false; } },
+            Open = delegate
+            {
+                bool ok = false; try { ok = DflForm.IsInstalled(root); } catch { }
+                if (ok) { try { DflForm.Launch(root); } catch { } return; }
+                new DflForm(root).ShowDialog(this);
+                if (modsPage != null) modsPage.Rebuild();
+            } });
         modsPage.Location = new Point(700, 0);
         Controls.Add(modsPage);
 
