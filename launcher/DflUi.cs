@@ -8,6 +8,8 @@ using System.Windows.Forms;
 class DflForm : Form
 {
     public const string Page = "https://github.com/iperov/DeepFaceLive";
+    public const string Mega = "https://mega.nz/folder/m10iELBK#Y0H6BflF9C4k_clYofC7yA";      // папка со сборками на Mega (ссылка из README проекта)
+    public const string Yandex = "https://disk.yandex.ru/d/7i5XTKIKVg5UUg";
     string cfg; Label lblTitle, lblInfo; FancyButton b1, b2, b3, bClose;
 
     public static string Dir(string root) { return Path.Combine(root, "modules", "deepfacelive"); }
@@ -113,9 +115,9 @@ class DflForm : Form
         if (!ok)
         {
             lblInfo.Text = "DeepFaceLive: отдельная программа для замены лица в реальном времени. Она работает на обученных моделях и даёт лучшее качество: рот, подмигивание и язык получаются как у настоящего видео.\n\n" +
-                "1. Нажми «Страница загрузки» и скачай сборку для Windows (DirectX12 подходит любой видеокарте, NVIDIA быстрее только на NVIDIA). Ссылки на Mega и Яндекс лежат на странице проекта.\n" +
+                "1. Нажми «Скачать (Mega)»: откроется папка со сборками. Выбери файл со словом NVIDIA (для видеокарт NVIDIA быстрее) или DirectX12 (для любой видеокарты) и скачай. Если Mega капризничает, есть кнопка «Яндекс».\n" +
                 "2. Распакуй архив в любую папку.\n3. Нажми «Указать папку» и выбери её. Если запуск не найдётся сам, выбери файл DeepFaceLive.bat вручную.\n\nПроект закрыт автором, но сборки работают.";
-            b1.Text = "Страница загрузки"; b2.Text = "Указать папку…"; b3.Visible = false;
+            b1.Text = "Скачать (Mega)"; b2.Text = "Указать папку…"; b3.Text = "Яндекс"; b3.Visible = true;
         }
         else
         {
@@ -129,7 +131,7 @@ class DflForm : Form
     void OnB1(object s, EventArgs e)
     {
         string root = (string)Tag;
-        if (!IsInstalled(root)) { try { Process.Start(Page); } catch { } return; }
+        if (!IsInstalled(root)) { try { Process.Start(Mega); } catch { } return; }
         try { Launch(root); Close(); } catch (Exception ex) { MessageBox.Show(this, ex.Message, "DeepFaceLive"); }
     }
     void OnB2(object s, EventArgs e)
@@ -143,5 +145,10 @@ class DflForm : Form
         }
         catch { }
     }
-    void OnB3(object s, EventArgs e) { PickFolder((string)Tag); }
+    void OnB3(object s, EventArgs e)
+    {
+        string root = (string)Tag;
+        if (!IsInstalled(root)) { try { Process.Start(Yandex); } catch { } return; }
+        PickFolder(root);
+    }
 }
