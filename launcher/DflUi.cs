@@ -11,17 +11,39 @@ class DflForm : Form
     string cfg; Label lblTitle, lblInfo; FancyButton b1, b2, b3, bClose;
 
     public static string Dir(string root) { return Path.Combine(root, "modules", "deepfacelive"); }
-    public static string FindExe(string folder)
+    // Ищем запускной файл: сам файл, либо в папке (до 3 уровней вглубь). Приоритет: DeepFaceLive.bat, DeepFaceLive.exe, любой .bat с «live» в имени, любой .bat.
+    public static string FindExe(string path)
     {
         try
         {
-            if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return "";
-            foreach (string n in new string[] { "DeepFaceLive.bat", "DeepFaceLive.exe" }) { string p = Path.Combine(folder, n); if (File.Exists(p)) return p; }
-            foreach (string sub in Directory.GetDirectories(folder))   // распаковали на уровень глубже
-                foreach (string n in new string[] { "DeepFaceLive.bat", "DeepFaceLive.exe" }) { string p = Path.Combine(sub, n); if (File.Exists(p)) return p; }
+            if (string.IsNullOrEmpty(path)) return "";
+            if (File.Exists(path)) return path;
+            if (!Directory.Exists(path)) return "";
+            string best = ""; int bestScore = 0;
+            Scan(path, 0, ref best, ref bestScore);
+            return best;
         }
         catch { }
         return "";
+    }
+    static void Scan(string dir, int depth, ref string best, ref int bestScore)
+    {
+        try
+        {
+            foreach (string f in Directory.GetFiles(dir))
+            {
+                string n = Path.GetFileName(f).ToLowerInvariant(); int sc = 0;
+                if (n == "deepfacelive.bat") sc = 100;
+                else if (n == "deepfacelive.exe") sc = 90;
+                else if (n.EndsWith(".bat") && n.Contains("live")) sc = 60;
+                else if (n.EndsWith(".bat") && n.Contains("deep")) sc = 50;
+                else if (n.EndsWith(".exe") && n.Contains("deepfacelive")) sc = 40;
+                sc = sc > 0 ? sc - depth : 0;
+                if (sc > bestScore) { bestScore = sc; best = f; }
+            }
+            if (depth < 3) foreach (string sub in Directory.GetDirectories(dir)) Scan(sub, depth + 1, ref best, ref bestScore);
+        }
+        catch { }
     }
     public static string SavedFolder(string root)
     {
@@ -62,14 +84,26 @@ class DflForm : Form
 
     void PickFolder(string root)
     {
+        string chosen = "";
         using (FolderBrowserDialog d = new FolderBrowserDialog())
         {
-            d.Description = "Папка, куда распакован DeepFaceLive (в ней лежит DeepFaceLive.bat)";
+            d.Description = "Папка, куда распакован DeepFaceLive. Не получится найти запуск сам — потом можно выбрать файл вручную.";
             if (d.ShowDialog(this) != DialogResult.OK) return;
-            if (FindExe(d.SelectedPath) == "") { MessageBox.Show(this, "В этой папке нет DeepFaceLive.bat. Выбери папку, куда распаковала сборка.", "DeepFaceLive", MessageBoxButtons.OK, MessageBoxIcon.Information); return; }
-            try { Directory.CreateDirectory(Dir(root)); File.WriteAllText(cfg, d.SelectedPath); } catch { }
-            Refresh2(root);
+            chosen = d.SelectedPath;
         }
+        if (FindExe(chosen) == "")
+        {
+            DialogResult r = MessageBox.Show(this, "В этой папке не нашёл файл запуска DeepFaceLive (DeepFaceLive.bat). Возможно, архив ещё не распакован или лежит глубже.\n\nВыбрать запускной файл (.bat или .exe) вручную?", "DeepFaceLive", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (r != DialogResult.Yes) return;
+            using (OpenFileDialog f = new OpenFileDialog())
+            {
+                f.Title = "Файл запуска DeepFaceLive"; f.Filter = "Запуск (*.bat;*.exe)|*.bat;*.exe|Все файлы|*.*"; f.InitialDirectory = chosen;
+                if (f.ShowDialog(this) != DialogResult.OK) return;
+                chosen = f.FileName;
+            }
+        }
+        try { Directory.CreateDirectory(Dir(root)); File.WriteAllText(cfg, chosen); } catch { }
+        Refresh2(root);
     }
 
     void Refresh2(string root)
@@ -80,7 +114,7 @@ class DflForm : Form
         {
             lblInfo.Text = "DeepFaceLive: отдельная программа для замены лица в реальном времени. Она работает на обученных моделях и даёт лучшее качество: рот, подмигивание и язык получаются как у настоящего видео.\n\n" +
                 "1. Нажми «Страница загрузки» и скачай сборку для Windows (DirectX12 подходит любой видеокарте, NVIDIA быстрее только на NVIDIA). Ссылки на Mega и Яндекс лежат на странице проекта.\n" +
-                "2. Распакуй архив в любую папку.\n3. Нажми «Указать папку» и выбери её.\n\nПроект закрыт автором, но сборки работают.";
+                "2. Распакуй архив в любую папку.\n3. Нажми «Указать папку» и выбери её. Если запуск не найдётся сам, выбери файл DeepFaceLive.bat вручную.\n\nПроект закрыт автором, но сборки работают.";
             b1.Text = "Страница загрузки"; b2.Text = "Указать папку…"; b3.Visible = false;
         }
         else
