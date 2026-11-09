@@ -282,7 +282,7 @@
       card.appendChild(back);
     }
     var av = el('div', 'avatarbox');
-    if (h) av.appendChild(sprite(p.hero, 'idle', h.d[0], fitZoom(h, 128, 150))); else av.appendChild(el('span', 'muted small', 'Героя ещё нет'));
+    if (h) av.appendChild(sprite(p.hero, 'idle', h.d[0], fitZoom(h, 96, 120))); else av.appendChild(el('span', 'muted small', 'Героя ещё нет'));
     if (mine && p.login === mine.login && maskOk()) {                       // круглая кнопка с глазом: мои аватары (мигает, если открылся новый)
       var nw = newHeroes(p), eye = el('button', 'eye' + (Object.keys(nw).length ? ' blink' : '')); eye.type = 'button';
       eye.innerHTML = EYE; eye.title = Object.keys(nw).length ? 'Мои аватары — есть новый!' : 'Мои аватары'; eye.setAttribute('aria-label', eye.title);
@@ -299,17 +299,10 @@
     facts.append(el('span', null, 'Место в топе'), el('span', null, p.rank > 0 ? '#' + p.rank : '—'),
       el('span', null, 'Всего опыта'), el('span', null, String(p.total)),
       el('span', null, 'Бонус опыта'), el('span', null, p.mult > 1 ? '×' + p.mult : 'нет'));
-    card.append(av, nick, sub, xp, facts);
     var nextT = 0; DUEL_TIERS.forEach(function (t) { if (!nextT && p.duels < t) nextT = t; });
-    var dl = el('div', 'facts duel');
-    dl.append(el('span', null, 'Победы в дуэлях'), el('span', null, nextT ? p.duels + ' / ' + nextT : String(p.duels) + ' ★'));
-    card.appendChild(dl);
-    if (snap.pa && p.level >= 1) {
-      var pv = el('div', 'facts pa');
-      pv.append(el('span', null, 'Баллы за уровень'), el('span', null, paValue(snap.pa, p.level) + ' ₽'));
-      if (!p.maxed && paValue(snap.pa, p.level + 1) > paValue(snap.pa, p.level)) pv.append(el('span', 'muted small', 'Следующий уровень'), el('span', 'muted small', paValue(snap.pa, p.level + 1) + ' ₽'));
-      card.appendChild(pv);
-    }
+    facts.append(el('span', null, 'Победы в дуэлях'), el('span', null, nextT ? p.duels + ' / ' + nextT : String(p.duels) + ' ★'));
+    if (snap.pa && p.level >= 1) facts.append(el('span', null, 'Баллы за уровень'), el('span', null, paValue(snap.pa, p.level) + ' ₽' + (!p.maxed && paValue(snap.pa, p.level + 1) > paValue(snap.pa, p.level) ? ' → ' + paValue(snap.pa, p.level + 1) : '')));
+    card.append(av, nick, sub, xp, facts);
     var md = medals(p); if (md) card.appendChild(md);
     card.appendChild(bgControls()); applyBg();
     root.appendChild(card);
@@ -396,7 +389,7 @@
     var b = snap && !demo ? snap.boss : null;
     if (!b || (b.track && !bossTrackAlive(b))) { box.hidden = true; box.replaceChildren(); return; }
     box.hidden = false; box.replaceChildren();
-    var h = heroes[b.k], th = el('span', 'bossthumb'); if (h) th.appendChild(sprite(b.k, 'idle', h.d[0], fitZoom(h, 36, 36)));
+    var h = heroes[b.k], th = el('span', 'bossthumb'); if (h) th.appendChild(sprite(b.k, 'idle', h.d[0], fitZoom(h, 56, 56)));
     var info = el('div', 'bossinfo'); info.appendChild(el('div', 'bossname', 'Босс: ' + b.n));
     if (b.track) {
       var tr = el('div', 'bosshp'), f = el('div', 'bosshp-fill'); f.style.width = bossPct(b) + '%'; tr.appendChild(f); f.id = 'bossFill'; info.appendChild(tr);

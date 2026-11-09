@@ -33,7 +33,7 @@ html, body { margin: 0; height: 100%; background: transparent; font: 13px/1.4 sy
 
 /* профиль */
 .card { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.avatarbox { width: 100%; height: 150px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; background: var(--card); border-radius: 8px; }
+.avatarbox { width: 100%; height: 116px; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; background: var(--card); border-radius: 8px; }
 .nick { font-size: 18px; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lvl { display: inline-block; padding: 1px 7px; border-radius: 4px; background: var(--gold); color: #1b1b2f; font-size: 11px; font-weight: 900; }
 .row { display: flex; align-items: center; gap: 8px; }
@@ -147,7 +147,7 @@ html, body { margin: 0; height: 100%; background: transparent; font: 13px/1.4 sy
 
 .boss{display:flex;gap:10px;align-items:center;margin:6px 10px 0;padding:8px 10px;border:1px solid #2BC4B4;border-radius:10px;background:rgba(0,0,0,.55)}
 .boss[hidden]{display:none}
-.bossthumb{width:36px;height:36px;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bossthumb{width:52px;height:52px;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .bossinfo{flex:1;min-width:0}
 .bossname{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bosshp{height:8px;border-radius:4px;background:#222;margin-top:4px;overflow:hidden}
