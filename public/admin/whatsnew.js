@@ -5,6 +5,8 @@
 (function () {
   'use strict';
   window.WHATSNEW = { items: [
+    { id: '4.3.2-faceswap-light', tab: 'faceswap', title: 'Замена лица: свет как в кадре',
+      text: 'Новое лицо больше не выглядит наклеенной фотографией: освещение и цвет берутся с твоего лица, край вставки стал мягче.' },
     { id: '4.3.1-faceswap-photos', tab: 'faceswap', title: 'Замена лица: несколько фото и DeepFaceLive',
       text: 'Можно добавить до 12 фото лица: чем больше, тем больше похоже (одного достаточно). Исправлено двойное лицо у HyperSwap, добавлены варианты B и C. В лаунчере появился мод DeepFaceLive.' },
     { id: '4.3.0-faceswap-hyper', tab: 'faceswap', title: 'Замена лица: мимика и рот',
