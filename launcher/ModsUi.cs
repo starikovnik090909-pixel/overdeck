@@ -244,8 +244,6 @@ class ModsPage : Panel
         SetStyle(ControlStyles.SupportsTransparentBackColor, true); BackColor = Color.Transparent; DoubleBuffered = true;
         Size = new Size(700, 428);
         mods.Add(new ModInfo { Name = "Овервойс", Sub = "Нейроголос", Real = true, Kind = 0 });
-        mods.Add(new ModInfo { Name = "Саундпад", Sub = "", Soon = true, Kind = 1 });
-        mods.Add(new ModInfo { Name = "Аукцион", Sub = "", Soon = true, Kind = 2 });
 
         FancyButton back = new FancyButton(); back.Text = "‹  Назад"; back.Size = new Size(100, 34); back.Location = new Point(24, 22);
         back.Font = new Font("Segoe UI Semibold", 9.5f); back.Click += delegate { Sheet.Close(); goBack(); };
