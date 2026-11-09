@@ -83,6 +83,26 @@ def match_color(fake, target, mask):
     return out
 
 
+def relight(fake, target, mask, sigma_k=0.1):
+    """Освещение и цвет берём у лица в кадре, детали (глаза, кожа, зубы) — у нового лица.
+    Низкие частоты нового лица заменяем низкими частотами исходного: пропадает вид «наклеенной фотографии»,
+    тень и свет ложатся по настоящему лицу, даже если в комнате темно."""
+    size = fake.shape[0]
+    k = (int(size * sigma_k) * 2) | 1
+    m = cv2.GaussianBlur(mask.astype(np.float32), (k, k), 0) + 1e-4
+    f = cv2.cvtColor(fake, cv2.COLOR_BGR2LAB).astype(np.float32)
+    t = cv2.cvtColor(target, cv2.COLOR_BGR2LAB).astype(np.float32)
+
+    def lp(x):
+        return cv2.GaussianBlur(x * mask, (k, k), 0) / m
+    out = f.copy()
+    lf, lt = lp(f[:, :, 0]), lp(t[:, :, 0])
+    out[:, :, 0] = f[:, :, 0] * np.clip((lt + 4.0) / (lf + 4.0), 0.25, 3.0)    # яркость: множителем, контраст деталей сохраняется
+    for c in (1, 2):
+        out[:, :, c] = f[:, :, c] - lp(f[:, :, c]) + lp(t[:, :, c])             # цвет кожи: как в кадре
+    return cv2.cvtColor(np.clip(out, 0, 255).astype(np.uint8), cv2.COLOR_LAB2BGR)
+
+
 def paste_back(frame, fake, m, size, oval=None, feather=0.12, omask=None):
     """Вставка 128x128 результата в кадр. Граница — по контуру лица (если дан oval), считается только в окне вокруг лица."""
     im = cv2.invertAffineTransform(m)
@@ -111,9 +131,9 @@ def paste_back(frame, fake, m, size, oval=None, feather=0.12, omask=None):
         pts = (oval - np.array([x0, y0], np.float32)).astype(np.int32)
         cv2.fillConvexPoly(hull, cv2.convexHull(pts), 255)
         fw = max(8, int(max(oval[:, 0].max() - oval[:, 0].min(), 1)))
-        er = max(1, int(fw * 0.035))
+        er = max(1, int(fw * 0.05))
         hull = cv2.erode(hull, np.ones((er, er), np.uint8))
-        bl = (int(fw * 0.07) | 1)
+        bl = (int(fw * 0.11) | 1)
         hull = cv2.GaussianBlur(hull, (bl, bl), 0).astype(np.float32) / 255.0
         mask = mask * hull
     mask = mask[:, :, None]
@@ -375,7 +395,7 @@ class Engine:
         t2 = time.time()
         cmask = np.zeros((S, S), np.float32)
         cv2.ellipse(cmask, (S // 2, int(S * 0.55)), (int(S * 0.33), int(S * 0.41)), 0, 0, 360, 1.0, -1)
-        fake = match_color(fake, aimg, cmask)
+        fake = relight(fake, aimg, cmask)
         if blend < 1.0:
             fake = cv2.addWeighted(fake, blend, aimg, 1 - blend, 0)
         out = paste_back(frame, fake, m, S, pts[OVAL], omask=omask)
