@@ -306,7 +306,7 @@
     card.appendChild(dl);
     if (snap.pa && p.level >= 1) {
       var pv = el('div', 'facts pa');
-      pv.append(el('span', null, 'Ценность уровня (аукцион)'), el('span', null, paValue(snap.pa, p.level) + ' ₽'));
+      pv.append(el('span', null, 'Баллы за уровень'), el('span', null, paValue(snap.pa, p.level) + ' ₽'));
       if (!p.maxed && paValue(snap.pa, p.level + 1) > paValue(snap.pa, p.level)) pv.append(el('span', 'muted small', 'Следующий уровень'), el('span', 'muted small', paValue(snap.pa, p.level + 1) + ' ₽'));
       card.appendChild(pv);
     }
