@@ -65,12 +65,12 @@ const msg = (message, extra) => Object.assign({ login: 'viewer', name: 'Viewer',
   fresh(); m.update({ pointsOn: false, pointsReward: 'R' }); ok(await m.onPoints({ name: 'P', login: 'p', reward: 'R', input: 'x' }) === 'off' && !m.state().current, 'баллы выключены');
 
   // --- донаты ---
-  fresh(); m.update({ donateOn: true, donateMinRub: 50, donatePrioRub: 200, cooldown: 0, perUser: 1 });
+  fresh(); m.update({ donateOn: true, donateMinRub: 50, cooldown: 0, perUser: 1 });
   ok(!(await m.onDonation({ username: 'D', message: 'Дора', rub: 10 })), 'мало для заказа');
   ok(!(await m.onDonation({ username: 'D', message: '', rub: 500 })), 'без текста заказа нет');
   m.update({ donateOn: false }); await m.onChat(msg('!муз first', { login: 'a', name: 'A' })); await m.onChat(msg('!муз second', { login: 'b', name: 'B' })); m.update({ donateOn: true });
-  await m.onDonation({ username: 'D1', message: '!муз Дора', rub: 100 }); ok(m.state().queue.map((q) => q.by).join() === 'D1,B', 'обычный донат встаёт выше чата');
-  await m.onDonation({ username: 'D2', message: 'Дора', rub: 300 }); ok(m.state().queue[0].by === 'D2', 'крупный донат — вне очереди');
+  await m.onDonation({ username: 'D1', message: '!муз Дора', rub: 100 }); ok(m.state().queue.map((q) => q.by).join() === 'B,D1', 'донат встаёт в конец очереди, без приоритета');
+  await m.onDonation({ username: 'D2', message: 'Дора', rub: 300 }); ok(m.state().queue.map((q) => q.by).join() === 'B,D1,D2', 'крупный донат тоже без приоритета');
   await m.onDonation({ username: 'D2', message: 'ещё', rub: 300 }); ok(m.state().queue.filter((q) => q.by === 'D2').length === 2, 'донат снимает лимит заказов от зрителя');
 
   // --- сохранение очереди и история ---

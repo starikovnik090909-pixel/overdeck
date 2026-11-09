@@ -24,7 +24,7 @@ const DEFAULTS = {
   showUser: true,                   // писать, кто заказал
   accent: '#e5484d',
   pointsOn: false, pointsReward: '', // заказ за баллы канала: название награды (с полем «ввод текста»)
-  donateOn: false, donateMinRub: 50, donatePrioRub: 200, donateBypass: true, // заказ донатом: от какой суммы, от какой — вне очереди, снимать ли лимиты
+  donateOn: false, donateMinRub: 50, donateBypass: true, // заказ донатом: от какой суммы, снимать ли лимиты
   proxy: '',                        // HTTP-прокси для поиска на YouTube, например http://127.0.0.1:10809
   blWords: '',                      // чёрный список слов (через запятую или с новой строки)
   blTracks: [],                     // чёрный список треков [{id, title}]
@@ -34,7 +34,7 @@ const DEFAULTS = {
   dislikeCommands: 'диз, dislike',  // убрать играющий трек из плейлиста
 };
 const BOOL = ['enabled', 'chatOn', 'reply', 'showVideo', 'autoShow', 'showUser', 'pointsOn', 'donateOn', 'donateBypass', 'plOn', 'plShuffle'];
-const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13], skinTheme: [0, 3], donateMinRub: [1, 100000], donatePrioRub: [0, 100000] };
+const NUM = { maxQueue: [1, 100], perUser: [1, 20], cooldown: [0, 600], maxMinutes: [1, 60], volume: [0, 100], skin: [1, 13], skinTheme: [0, 3], donateMinRub: [1, 100000] };
 const ENUM = { who: ['everyone', 'sub', 'vip', 'mod'], view: ['clip', 'player'], line: ['top', 'bottom', 'off'] };
 
 let cfg = Object.assign({}, DEFAULTS);
@@ -86,7 +86,7 @@ function load() {
   const st = readJson('music_state.json');
   if (st) {
     const ok = (t) => t && t.id && t.title;
-    queue = (Array.isArray(st.queue) ? st.queue : []).filter(ok).map((t) => Object.assign({ prio: 0 }, t));
+    queue = (Array.isArray(st.queue) ? st.queue : []).filter(ok).map((t) => Object.assign({}, t, { prio: 0 }));
     current = ok(st.current) ? st.current : null;
     seq = Math.max(Number(st.seq) || 0, current ? current.uid : 0, ...queue.map((q) => q.uid || 0));
   }
@@ -228,12 +228,8 @@ function startNext() {
   changed();
   return current;
 }
-/** Куда встать в очереди: после последнего заказа с таким же или более высоким приоритетом. */
-function insert(item) {
-  let at = 0;
-  queue.forEach((q, i) => { if ((q.prio || 0) >= item.prio) at = i + 1; });
-  queue.splice(at, 0, item);
-}
+/** Приоритетов нет: любой заказ (чат, баллы, донат) встаёт в конец очереди. */
+function insert(item) { queue.push(item); }
 function enqueue(item) { try { onOrder(item); } catch (e) { /* счётчик не должен ломать очередь */ } if (!current) { queue.push(item); startNext(); } else { insert(item); changed(); } return item; }
 /** YouTube не дал проиграть ролик (возрастное ограничение, запрет встраивания, удалён): пробуем следующую версию из поиска, иначе говорим об этом в чат. */
 async function playFailed(uid, code) {
@@ -492,7 +488,7 @@ async function onPoints(e) {
   if (!cfg.pointsReward) return false;
   if (String(e.reward || '').trim().toLowerCase() !== cfg.pointsReward.trim().toLowerCase()) return false;
   if (!cfg.enabled || !cfg.pointsOn) { if (cfg.reply) await say(`@${e.name || e.login}, заказ музыки за баллы сейчас отключён.`); return 'off'; }
-  await place({ query: e.input, name: e.name || e.login, login: e.login, source: 'points', prio: 1, free: true });
+  await place({ query: e.input, name: e.name || e.login, login: e.login, source: 'points', prio: 0, free: true });
   return true;
 }
 /** Донат: текст сообщения — название песни (можно с «!муз» в начале). */
@@ -504,8 +500,7 @@ async function onDonation(d) {
   const mm = q.match(/^!(\S+)\s*(.*)$/s);
   if (mm && words(cfg.commands).includes(mm[1].toLowerCase())) q = mm[2].trim();
   if (!q) return false;
-  const top = cfg.donatePrioRub > 0 && rub >= cfg.donatePrioRub;
-  await place({ query: q, name: d.username, login: d.username, source: 'donate', prio: top ? 2 : 1, free: !!cfg.donateBypass });
+  await place({ query: q, name: d.username, login: d.username, source: 'donate', prio: 0, free: !!cfg.donateBypass });
   return true;
 }
 
