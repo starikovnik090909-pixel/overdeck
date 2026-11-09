@@ -34,29 +34,35 @@ input[type=range]{accent-color:var(--accent)}button{cursor:pointer}button:hover{
 <label><span>Мягкость края <em id="vSoft"></em></span><input type="range" id="soft" min="0" max="40" value="12"></label>
 <label><span>Сглаживание (меньше дрожи) <em id="vSm"></em></span><input type="range" id="sm" min="0" max="90" value="55"></label>
 <label><span>Сжать контур <em id="vShr"></em></span><input type="range" id="shr" min="0" max="6" value="0"></label>
+<label>Эффекты на лице<select id="fx">
+<option value="off">Выкл</option><option value="red">Красные глаза</option><option value="fire">Горящие глаза</option>
+<option value="veins">Вены вампира</option><option value="vamp">Вампир (глаза + вены)</option><option value="bar">Чёрная полоса (аноним)</option></select></label>
+<label id="lFxi"><span>Сила эффекта <em id="vFxi"></em></span><input type="range" id="fxi" min="10" max="100" value="70"></label>
+<label id="lFxc">Цвет глаз/огня<input type="color" id="fxc" value="#ff1a1a"></label>
 <div class="row"><button id="mirror">Зеркало: выкл</button><button id="fps">FPS: —</button></div>
 <div style="color:var(--mut);font-size:11px">Ссылка для OBS (Источник → Браузер, 1280×720, без управления):</div>
 <div class="url" id="url"></div>
 <button id="copy">Скопировать ссылку</button>
 </aside>
 <script type="module">
-import {ImageSegmenter,FilesetResolver} from './vendor/vision_bundle.mjs';
+import {ImageSegmenter,FaceLandmarker,FilesetResolver} from './vendor/vision_bundle.mjs';
 const $=id=>document.getElementById(id);
 const q=new URLSearchParams(location.search);
 const OBS=q.get('obs')==='1';
+let fl=null,flP=null,pts=null,lost=0,parts=[],veinSet=null;
 if(OBS)document.body.classList.remove('ui');
-const DEF={mode:'transparent',color:'#2BC4B4',blur:16,thr:50,soft:12,sm:55,shr:0,mirror:0,cam:''};
+const DEF={mode:'transparent',color:'#2BC4B4',blur:16,thr:50,soft:12,sm:55,shr:0,mirror:0,cam:'',fx:'off',fxi:70,fxc:'#ff1a1a'};
 let S=Object.assign({},DEF);
 try{Object.assign(S,JSON.parse(localStorage.getItem('webcam')||'{}'))}catch(e){}
 for(const k of Object.keys(DEF)){if(q.has(k))S[k]=typeof DEF[k]==='number'?+q.get(k):q.get(k)}
 const save=()=>{try{localStorage.setItem('webcam',JSON.stringify(S))}catch(e){}
- const u=new URLSearchParams({obs:1});for(const k of['mode','color','blur','thr','soft','sm','shr','mirror'])u.set(k,S[k]);
+ const u=new URLSearchParams({obs:1});for(const k of['mode','color','blur','thr','soft','sm','shr','mirror','fx','fxi','fxc'])u.set(k,S[k]);
  $('url').textContent=location.origin+location.pathname+'?'+u}
 const msg=(t,e)=>{$('msg').textContent=t;$('msg').className=e?'err':''};
 const bind=(id,k,fmt)=>{const el=$(id);el.value=S[k];const f=()=>{S[k]=el.type==='range'?+el.value:el.value;if(fmt)$('v'+id[0].toUpperCase()+id.slice(1)).textContent=fmt(S[k]);save();ui()};el.oninput=f;f()};
-function ui(){$('lColor').style.display=S.mode==='color'?'':'none';$('lImg').style.display=S.mode==='image'?'':'none';$('mirror').textContent='Зеркало: '+(S.mirror?'вкл':'выкл')}
+function ui(){$('lFxi').style.display=$('lFxc').style.display=S.fx==='off'||S.fx==='bar'?'none':'';if(S.fx!=='off')ensureFace();$('lColor').style.display=S.mode==='color'?'':'none';$('lImg').style.display=S.mode==='image'?'':'none';$('mirror').textContent='Зеркало: '+(S.mirror?'вкл':'выкл')}
 $('mode').value=S.mode;$('mode').onchange=()=>{S.mode=$('mode').value;save();ui()};
-bind('color','color');bind('blur','blur',v=>v+'px');bind('thr','thr',v=>v+'%');bind('soft','soft',v=>v);bind('sm','sm',v=>v+'%');bind('shr','shr',v=>v);
+$('fx').value=S.fx;$('fx').onchange=()=>{S.fx=$('fx').value;save();ui()};bind('fxi','fxi',v=>v+'%');bind('fxc','fxc');bind('color','color');bind('blur','blur',v=>v+'px');bind('thr','thr',v=>v+'%');bind('soft','soft',v=>v);bind('sm','sm',v=>v+'%');bind('shr','shr',v=>v);
 $('mirror').onclick=()=>{S.mirror=S.mirror?0:1;save();ui()};
 $('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText($('url').textContent);$('copy').textContent='Скопировано'};
 let bg=null;$('pick').onclick=()=>$('file').click();
@@ -111,13 +117,94 @@ function draw(){
  fctx.globalCompositeOperation='destination-in';
  if(S.shr>0)fctx.filter=`blur(${S.shr}px) contrast(2)`;
  fctx.drawImage(mask,0,0,W,H);fctx.filter='none';fctx.globalCompositeOperation='source-over';
- ctx.drawImage(fg,0,0);ctx.restore();
+ ctx.drawImage(fg,0,0);fxDraw(performance.now());ctx.restore();
 }
+
+// ===== эффекты на лице =====
+function ensureFace(){if(fl||flP)return flP;flP=(async()=>{const fs=await FilesetResolver.forVisionTasks('./vendor/wasm');
+ const mk=d=>FaceLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:'./vendor/face_landmarker.task',delegate:d},runningMode:'VIDEO',numFaces:1});
+ try{fl=await mk('GPU')}catch(e){fl=await mk('CPU')}})().catch(e=>{msg('Эффекты: '+(e.message||e),1);flP=null});return flP}
+const EYE_R=[33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246],EYE_L=[362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398];
+const OVAL=[10,338,297,332,284,251,389,356,454,323,361,288,397,365,379,378,400,377,152,148,176,149,150,136,172,58,132,93,234,127,162,21,54,103,67,109];
+function track(){
+ if(!fl||S.fx==='off'){pts=null;return}
+ let r;try{r=fl.detectForVideo(vid,performance.now())}catch(e){return}
+ const L=r&&r.faceLandmarks&&r.faceLandmarks[0];const W=out.width,H=out.height;
+ if(!L){if(++lost>6)pts=null;return}
+ lost=0;const k=.55;
+ if(!pts||pts.length!==L.length)pts=L.map(p=>({x:p.x*W,y:p.y*H}));
+ else L.forEach((p,i)=>{pts[i].x+=(p.x*W-pts[i].x)*k;pts[i].y+=(p.y*H-pts[i].y)*k});
+}
+function rng(sd){return()=>(sd=(sd*1664525+1013904223)>>>0)/4294967296}
+function mkVeins(){const R=rng(7),out=[];
+ const roots=[[.62,.02,.1],[-.62,.02,.1],[.95,-.25,-.3],[-.95,-.25,.3],[.4,.3,.5],[-.4,.3,-.5],[.85,.65,.7],[-.85,.65,-.7],[0,-.15,0],[.55,-.55,.15],[-.55,-.55,-.15],[.45,.8,.4],[-.45,.8,-.4]];
+ function grow(x,y,a,len,w,depth){const seg=[];const n=Math.round(len*18);
+  for(let i=0;i<n;i++){seg.push([x,y,w*(1-i/n*.8)]);a+=(R()-.5)*.45;x+=Math.cos(a)*.035;y+=Math.sin(a)*.035;
+   if(depth<2&&i>4&&R()<.07)grow(x,y,a+(R()<.5?-1:1)*(.5+R()*.5),len*.55,w*.6,depth+1)}
+  out.push(seg)}
+ roots.forEach(([x,y,a0])=>{const n=2+(R()*2|0);for(let j=0;j<n;j++)grow(x,y,a0+(R()-.5)*2.4+(y>0?Math.PI/2:-Math.PI/2)*.6,.35+R()*.4,1,0)});
+ return out}
+function frame(){ // локальная система лица
+ const a=pts[468],b=pts[473];if(!a||!b)return null;
+ const ex=b.x-a.x,ey=b.y-a.y,D=Math.hypot(ex,ey)||1;
+ return{ax:a.x,ay:a.y,bx:b.x,by:b.y,cx:(a.x+b.x)/2,cy:(a.y+b.y)/2,ux:ex/D,uy:ey/D,D}}
+function irisR(c){let s=0;for(let i=1;i<=4;i++)s+=Math.hypot(pts[c+i].x-pts[c].x,pts[c+i].y-pts[c].y);return s/4}
+function poly(ids){ctx.beginPath();ids.forEach((i,k)=>k?ctx.lineTo(pts[i].x,pts[i].y):ctx.moveTo(pts[i].x,pts[i].y));ctx.closePath()}
+function eyes(F,t,fire){
+ const I=S.fxi/100,col=S.fxc;
+ [[468,EYE_R],[473,EYE_L]].forEach(([c,E])=>{
+  const p=pts[c],r=irisR(c);
+  // свечение
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  const g=ctx.createRadialGradient(p.x,p.y,r*.3,p.x,p.y,r*(fire?4.5:3));
+  g.addColorStop(0,col+(fire?'cc':'99'));g.addColorStop(1,col+'00');ctx.globalAlpha=I;ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(p.x,p.y,r*(fire?4.5:3),0,7);ctx.fill();ctx.restore();
+  // радужка внутри века
+  ctx.save();poly(E);ctx.clip();
+  const fl2=fire?(.85+.15*Math.sin(t/60+c)):1;
+  const g2=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,r*1.25);
+  g2.addColorStop(0,fire?'#fff6c0':col);g2.addColorStop(.45,col);g2.addColorStop(1,'#300');
+  ctx.globalAlpha=Math.min(1,.35+I*.75)*fl2;ctx.fillStyle=g2;ctx.beginPath();ctx.arc(p.x,p.y,r*1.18,0,7);ctx.fill();
+  ctx.globalAlpha=.85*I;ctx.fillStyle='#120000';ctx.beginPath();ctx.ellipse(p.x,p.y,r*.16,r*.55,0,0,7);ctx.fill();
+  ctx.restore();
+  if(fire)for(let i=0;i<Math.ceil(I*3);i++)parts.push({x:p.x+(Math.random()-.5)*r*1.6,y:p.y+(Math.random()-.5)*r,vx:(Math.random()-.5)*.8,vy:-(1.2+Math.random()*2.4)*F.D/90,life:1,s:F.D*(.05+Math.random()*.07)});
+ })}
+function flames(F){
+ ctx.save();ctx.globalCompositeOperation='lighter';
+ parts=parts.filter(q=>q.life>0);
+ for(const q of parts){q.x+=q.vx+Math.sin(q.life*9+q.x)*.5;q.y+=q.vy;q.life-=.045;
+  const rr=q.s*(.5+q.life);const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,rr);
+  g.addColorStop(0,`rgba(255,${180*q.life+60|0},${60*q.life|0},${.7*q.life*S.fxi/100})`);g.addColorStop(1,'rgba(255,40,0,0)');
+  ctx.fillStyle=g;ctx.beginPath();ctx.arc(q.x,q.y,rr,0,7);ctx.fill()}
+ ctx.restore()}
+function veins(F,t){
+ if(!veinSet)veinSet=mkVeins();
+ const I=S.fxi/100,pulse=.8+.2*Math.sin(t/420);
+ ctx.save();poly(OVAL);ctx.clip();
+ ctx.globalCompositeOperation='multiply';ctx.lineCap='round';ctx.lineJoin='round';
+ const px=(x,y)=>[F.cx+(x*F.ux-y*F.uy)*F.D,F.cy+(x*F.uy+y*F.ux)*F.D];
+ for(const pass of[0,1])for(const sg of veinSet){
+  ctx.beginPath();sg.forEach(([x,y],i)=>{const[X,Y]=px(x,y);i?ctx.lineTo(X,Y):ctx.moveTo(X,Y)});
+  const w=sg[0][2];
+  if(pass===0){ctx.strokeStyle=`rgba(70,10,60,${.5*I*pulse})`;ctx.lineWidth=F.D*.04*w}
+  else{ctx.strokeStyle=`rgba(140,30,90,${.85*I*pulse})`;ctx.lineWidth=F.D*.018*w}
+  ctx.stroke()}
+ ctx.restore()}
+function bar(F){
+ const h=F.D*.5,w=F.D*2.5,ang=Math.atan2(F.uy,F.ux);
+ ctx.save();ctx.translate(F.cx,F.cy);ctx.rotate(ang);ctx.fillStyle='#000';
+ ctx.fillRect(-w/2,-h/2,w,h);ctx.restore()}
+function fxDraw(t){
+ if(S.fx==='off'||!pts)return;const F=frame();if(!F)return;
+ if(S.fx==='veins'||S.fx==='vamp')veins(F,t);
+ if(S.fx==='red'||S.fx==='vamp')eyes(F,t,false);
+ if(S.fx==='fire'){eyes(F,t,true);flames(F)}
+ if(S.fx==='bar')bar(F)}
 function loop(){
  requestAnimationFrame(loop);
  if(!seg||vid.readyState<2||vid.currentTime===lastVT)return;lastVT=vid.currentTime;
  try{seg.segmentForVideo(vid,performance.now(),r=>{process(r)})}catch(e){msg('Ошибка: '+e.message,1);return}
- draw();frames++;const n=performance.now();
+ track();draw();frames++;const n=performance.now();
  if(n-lastT>1000){$('fps').textContent='FPS: '+Math.round(frames*1000/(n-lastT));frames=0;lastT=n}
 }
 (async()=>{
