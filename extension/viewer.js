@@ -90,8 +90,29 @@
     return s;
   }
   function fmtDate(sec) { try { return new Date(sec * 1000).toLocaleDateString('ru-RU'); } catch (e) { return ''; } }
+  /* награды-«лесенки»: «Ветеран I · Бывалый» … «Ветеран V · Легенда» — одна иконка на всю лесенку, показывается текущая ступень */
+  var ROMAN = { I: 0, II: 1, III: 2, IV: 3, V: 4 };
+  function tierInfo(id) { var m = awardCat[id], r = m && /^(.{1,40}?) (I|II|III|IV|V) · (.+)$/.exec(m.title || ''); return r ? { track: r[1], tier: ROMAN[r[2]], name: r[3] } : null; }
+  /** Список «предметов»: лесенка = {track, ids:[по ступеням], cur: индекс текущей ступени}, одиночная награда = {id}. have — набор полученных id */
+  function awardItems(have) {
+    var items = [], byTrack = {};
+    Object.keys(awardCat).forEach(function (id) {
+      var t = tierInfo(id);
+      if (!t) { items.push({ id: id, ids: [id], cur: 0 }); return; }
+      var it = byTrack[t.track]; if (!it) { it = byTrack[t.track] = { track: t.track, ids: [], cur: 0 }; items.push(it); }
+      it.ids[t.tier] = id;
+    });
+    items.forEach(function (it) {
+      it.ids = it.ids.filter(Boolean);                       // на случай пропущенной ступени
+      it.cur = 0; it.ids.forEach(function (id, i) { if (have[id]) it.cur = i; });
+      it.owned = it.ids.some(function (id) { return have[id]; });
+      it.id = it.ids[it.cur];
+    });
+    return items;
+  }
+  function ownedSet(list) { var o = {}; (list || []).forEach(function (id) { o[id] = true; }); return o; }
   function medals(p) {
-    var ids = (p.awards || []).filter(function (id) { return awardCat[id]; });
+    var ids = awardItems(ownedSet(p.awards)).filter(function (it) { return it.owned; }).map(function (it) { return it.id; });
     var box = el('div', 'medals-box');
     if (ids.length) {
       var wrap = el('div', 'medals'), info = el('div', 'medal-info muted small', 'Нажмите на медаль, чтобы прочитать описание');
@@ -116,25 +137,40 @@
   var selAward = null;
   function renderAwards() {
     var root = $('view-awards'); root.replaceChildren();
-    var ids = Object.keys(awardCat);
-    if (!ids.length) { root.appendChild(el('p', 'muted center', 'Наград пока нет. Когда стример создаст события с наградами, они появятся здесь.')); return; }
-    ids.sort(function (a, b) { return (awardCat[b].open ? 1 : 0) - (awardCat[a].open ? 1 : 0); });
-    var mine = me(), have = {}; if (mine) mine.awards.forEach(function (id) { have[id] = true; });
-    var got = ids.filter(function (id) { return have[id]; }).length;
-    root.appendChild(el('div', 'awhead', mine ? 'Награды: у вас ' + got + ' из ' + ids.length : 'Все награды (' + ids.length + ')'));
+    var allIds = Object.keys(awardCat);
+    if (!allIds.length) { root.appendChild(el('p', 'muted center', 'Наград пока нет. Когда стример создаст события с наградами, они появятся здесь.')); return; }
+    var mine = me(), have = ownedSet(mine ? mine.awards : []);
+    var items = awardItems(have);
+    items.sort(function (a, b) { return (awardCat[b.id].open ? 1 : 0) - (awardCat[a.id].open ? 1 : 0); });
+    var got = items.filter(function (it) { return it.owned; }).length;
+    root.appendChild(el('div', 'awhead', mine ? 'Награды: у вас ' + got + ' из ' + items.length : 'Все награды (' + items.length + ')'));
     var grid = el('div', 'awgrid');
-    ids.forEach(function (id) {
-      var m = awardCat[id], b = el('button', 'awbtn' + (have[id] ? ' owned' : '') + (m.open ? '' : ' closed') + (selAward === id ? ' sel' : '')); b.type = 'button';
-      b.setAttribute('aria-label', m.title + (have[id] ? ', получена' : '') + (m.open ? ', можно получить' : ', закрыта'));
+    items.forEach(function (it) {
+      var id = it.id, m = awardCat[id], isSel = selAward && it.ids.indexOf(selAward) >= 0;
+      var b = el('button', 'awbtn' + (it.owned ? ' owned' : '') + (m.open ? '' : ' closed') + (isSel ? ' sel' : '')); b.type = 'button';
+      b.setAttribute('aria-label', m.title + (it.owned ? ', получена' : '') + (m.open ? ', можно получить' : ', закрыта'));
       b.appendChild(medalIcon(m, 36));
+      if (it.ids.length > 1) b.appendChild(el('span', 'awtier', (it.owned ? it.cur + 1 : 0) + '/' + it.ids.length));
       if (!m.open) b.appendChild(el('span', 'awlock', '🔒'));
-      b.addEventListener('click', function () { selAward = selAward === id ? null : id; renderAwards(); });
+      b.addEventListener('click', function () { selAward = isSel ? null : id; renderAwards(); });
       grid.appendChild(b);
     });
     root.appendChild(grid);
+    var selItem = selAward && items.filter(function (it) { return it.ids.indexOf(selAward) >= 0; })[0];
     var m2 = selAward && awardCat[selAward];
-    if (!m2) { root.appendChild(el('p', 'muted small center', 'Нажмите на награду, чтобы узнать, как её получить.')); return; }
+    if (!m2 || !selItem) { root.appendChild(el('p', 'muted small center', 'Нажмите на награду, чтобы узнать, как её получить.')); return; }
     var d = el('div', 'awdetail');
+    if (selItem.ids.length > 1) {                              // ступени лесенки: переключатель I–V, иконка в списке всегда показывает текущую
+      var lad = el('div', 'awladder');
+      selItem.ids.forEach(function (sid, i) {
+        var sb = el('button', 'awstep' + (sid === selAward ? ' sel' : '') + (have[sid] ? ' owned' : '')); sb.type = 'button';
+        sb.textContent = String(i + 1); sb.setAttribute('aria-label', 'Ступень ' + (i + 1) + (have[sid] ? ', получена' : ''));
+        sb.addEventListener('click', function () { selAward = sid; renderAwards(); });
+        lad.appendChild(sb);
+      });
+      d.appendChild(lad);
+      var big = medalIcon(m2, 56); big.classList.add('awbig'); d.appendChild(big);
+    }
     d.appendChild(el('div', 'awtitle', m2.title));
     if (m2.desc) d.appendChild(el('div', 'awdesc', m2.desc));
     d.appendChild(el('div', 'awhow', 'Как получить: ' + (m2.howTo || 'условия не указаны')));

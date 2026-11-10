@@ -154,3 +154,10 @@ html, body { margin: 0; height: 100%; background: transparent; font: 13px/1.4 sy
 .bosshp-fill{height:100%;background:#e5484d;transition:width .9s linear}
 .bossres{font-size:12px;margin-top:2px}.bossres.win{color:#2BC4B4}.bossres.lose{color:#e5484d}
 .facts.duel,.facts.pa{margin-top:6px}
+
+.awtier{position:absolute;right:2px;bottom:1px;font:700 9px system-ui;color:#ffd34d;background:rgba(0,0,0,.65);border-radius:4px;padding:0 3px;line-height:13px}
+.awbtn{position:relative}
+.awladder{display:flex;gap:6px;justify-content:center;margin-bottom:6px}
+.awstep{width:26px;height:26px;border-radius:50%;border:1px solid #3a3a46;background:#1f1f27;color:#a0a0ad;font:700 12px system-ui;cursor:pointer}
+.awstep.owned{border-color:#ffd34d;color:#ffd34d}.awstep.sel{background:#ffd34d;color:#17171c;border-color:#ffd34d}
+.awbig{display:flex;justify-content:center;margin:2px 0 6px}
