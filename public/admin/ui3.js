@@ -333,6 +333,7 @@
       $('#orPass').placeholder = s.hasPassword ? '•••••• (сохранён)' : 'пароль OBS (если задан)';
     };
     const top = $('#topObsRefresh'); if (top) top.addEventListener('click', () => { const pp = $('#testMenuPop'); if (pp) pp.hidden = true; run(null); });
+    const hb = $('#orHelpBtn'); if (hb) hb.addEventListener('click', () => { const h = $('#orHelp'); h.hidden = !h.hidden; hb.setAttribute('aria-expanded', String(!h.hidden)); });
     const home = $('#homeObsRefresh'); if (home) home.addEventListener('click', () => run(home));
     const now = $('#orNow'); if (now) now.addEventListener('click', () => run(now));
     const sv = $('#orSave'); if (sv) sv.addEventListener('click', async () => {
