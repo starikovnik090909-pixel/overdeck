@@ -332,6 +332,7 @@
       $('#orOn').checked = !!s.enabled; $('#orMin').value = s.intervalMin; $('#orPort').value = s.port; $('#orFilter').value = s.filter;
       $('#orPass').placeholder = s.hasPassword ? '•••••• (сохранён)' : 'пароль OBS (если задан)';
     };
+    const top = $('#topObsRefresh'); if (top) top.addEventListener('click', () => { const pp = $('#testMenuPop'); if (pp) pp.hidden = true; run(null); });
     const home = $('#homeObsRefresh'); if (home) home.addEventListener('click', () => run(home));
     const now = $('#orNow'); if (now) now.addEventListener('click', () => run(now));
     const sv = $('#orSave'); if (sv) sv.addEventListener('click', async () => {
