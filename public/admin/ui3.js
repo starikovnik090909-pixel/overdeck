@@ -315,6 +315,32 @@
   const all = $('#homeTestAll');
   if (all) all.addEventListener('click', async () => { for (const k of ['donation', 'follow', 'sub', 'raid']) { await TESTS[k](); await new Promise((r) => setTimeout(r, 400)); } toast('Отправлены тесты: донат, фоллов, подписка, рейд'); });
 
+  /* ---------- обновление источников в OBS (obs-websocket) ---------- */
+  (function () {
+    const J = (u, b) => fetch(u, b == null ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json().catch(() => ({}))).catch(() => ({ success: false, error: 'Сервер не отвечает' }));
+    const msg = $('#orMsg');
+    const say = (t) => { if (msg) msg.textContent = t; };
+    const run = async (btn) => {
+      if (btn) btn.disabled = true; say('Обновляю…');
+      const r = await J('/api/obs-refresh/now', {});
+      if (btn) btn.disabled = false;
+      const t = r.success ? (r.count ? 'Обновлено источников: ' + r.count : 'Подходящих источников не найдено') : (r.error || 'Не удалось');
+      say(t); toast(t, !r.success);
+    };
+    const fill = async () => {
+      if (!$('#orOn')) return; const s = await J('/api/obs-refresh'); if (!s.success) return;
+      $('#orOn').checked = !!s.enabled; $('#orMin').value = s.intervalMin; $('#orPort').value = s.port; $('#orFilter').value = s.filter;
+      $('#orPass').placeholder = s.hasPassword ? '•••••• (сохранён)' : 'пароль OBS (если задан)';
+    };
+    const home = $('#homeObsRefresh'); if (home) home.addEventListener('click', () => run(home));
+    const now = $('#orNow'); if (now) now.addEventListener('click', () => run(now));
+    const sv = $('#orSave'); if (sv) sv.addEventListener('click', async () => {
+      const r = await J('/api/obs-refresh/settings', { enabled: $('#orOn').checked, intervalMin: Number($('#orMin').value) || 10, port: Number($('#orPort').value) || 4455, filter: $('#orFilter').value, password: $('#orPass').value });
+      $('#orPass').value = ''; say(r.success ? 'Сохранено' : 'Не удалось сохранить'); fill();
+    });
+    fill();
+  })();
+
   // обновление при переключении на вкладку и раз в 5 секунд, пока она открыта
   $$('.nav-item[data-tab="home"], .nav-item[data-tab="obs"]').forEach((n) => n.addEventListener('click', () => setTimeout(loadHome, 0)));
   setInterval(() => { if (!document.hidden && (isActive('home') || isActive('obs'))) loadHome(); }, 5000);

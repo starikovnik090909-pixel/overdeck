@@ -1465,6 +1465,10 @@ soonData.init(async () => {
   return { title: info.title || '', game: info.game_name || '', login: config.channel || '', art };
 });
 require('./routes/soon').main({ soonData, app });
+
+const obsRefresh = require('./obsRefresh');
+obsRefresh.init({ defaultFilter: 'localhost:' + (config.port || 3001) });
+require('./routes/obsRefresh').main({ obsRefresh, app });
 require('./routes/faceswap').main({ app });
 musicReward.init({ getToken: (force) => ensureUserToken(force), getBroadcasterId: () => resolvedBroadcasterId, getClientId: () => config.twitch.clientId });
 music.init({ say: (t) => chatBot.say(t), onOrder: () => { streamCounters.music += 1; }, onSettings: (st) => { musicReward.sync(st).catch(() => {}); } });

@@ -456,7 +456,7 @@
 
     <section class="tab-section active" id="tab-home">
       <div class="page-head"><div><h1 class="tab-title" id="homeHello">Главная</h1><p class="tab-description" id="homeSub">Загружаем сводку…</p></div>
-        <div class="page-actions"><a class="btn btn-secondary" href="/overlay.html" target="_blank" rel="noopener">Открыть оверлей</a><button class="btn btn-primary" id="homeTestAll" type="button">Проверить алерты тестом</button></div></div>
+        <div class="page-actions"><a class="btn btn-secondary" href="/overlay.html" target="_blank" rel="noopener">Открыть оверлей</a><button class="btn btn-secondary" id="homeObsRefresh" type="button" title="Обновить браузерные источники в OBS">Обновить источники в OBS</button><button class="btn btn-primary" id="homeTestAll" type="button">Проверить алерты тестом</button></div></div>
       <div class="ui3-stats" id="homeStats"></div>
       <div class="ui3-grid home-grid">
         <div class="card ui3-card" id="homeChecklist"></div>
@@ -472,6 +472,12 @@
       <div class="page-head"><div><h1 class="tab-title">Ссылки для OBS</h1><p class="tab-description">Каждая функция — свой источник «Браузер» в OBS. Выбери категорию и источник, скопируй ссылку.</p></div></div>
             <div class="ui3-obs" id="obsBox"></div>
       <p class="card-hint" style="margin-top:12px">Статус «Открыт в OBS» появляется, когда виджет подключился к Overdeck из источника «Браузер» в OBS.</p>
+      <div class="card" id="obsRefCard" style="margin-top:14px;max-width:640px"><h3 style="margin:0 0 6px">Автообновление источников</h3>
+        <p class="card-hint" style="margin:0 0 10px">Overdeck сам обновляет браузерные источники в OBS (с очисткой кэша): по таймеру и кнопкой «Обновить источники в OBS» на главной. В OBS: Инструменты → Настройки WebSocket-сервера → включить.</p>
+        <label style="display:flex;gap:8px;align-items:center;margin-bottom:8px"><input type="checkbox" id="orOn"> Обновлять по таймеру</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><input type="number" id="orMin" min="1" max="240" style="width:80px" aria-label="Минут"> <span class="card-hint" style="margin:0">мин · порт</span> <input type="number" id="orPort" min="1" max="65535" style="width:90px" aria-label="Порт OBS"> <input type="password" id="orPass" placeholder="пароль OBS (если задан)" autocomplete="off" style="width:200px"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="text" id="orFilter" placeholder="адрес содержит (пусто — все браузерные)" style="flex:1;min-width:0"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button class="btn btn-primary" id="orSave" type="button">Сохранить</button><button class="btn btn-secondary" id="orNow" type="button">Обновить сейчас</button><span class="card-hint" id="orMsg" style="margin:0"></span></div></div>
     </section>
 
     <section class="tab-section" id="tab-auth">
