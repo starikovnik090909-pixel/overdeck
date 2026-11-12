@@ -7,7 +7,7 @@
   var wrap = $('wrap'), pl = $('pl');
   var posTick = 0, skinNo = 0, skinTh = -1, playing = true, card = null, dim = [640, 200], info = { title: '', by: '', cover: '', dur: 0 }, curT = 0;
   var lines = [$('lnTop'), $('lnBot')];
-  var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0;
+  var player = null, ready = false, loadedUid = 0, last = null, vol = -1, textKey = '', fake = 0, firstLoad = true;
   if (preview) document.body.classList.add('pv');
 
   function fit() {
@@ -52,7 +52,14 @@
     if (card) MusicSkins.fill(card, { title: info.title, by: info.by, cover: info.cover, cur: curT, dur: info.dur, playing: playing });
     if (preview || !ready) return;
     if (!cur) { if (loadedUid) { try { player.stopVideo(); } catch (e) {} loadedUid = 0; } return; }
-    if (loadedUid !== cur.uid) { loadedUid = cur.uid; try { player.loadVideoById(cur.id); } catch (e) {} }
+    if (loadedUid !== cur.uid) {
+      loadedUid = cur.uid;
+      // страницу перезагрузил OBS (обновление источника): продолжаем трек с сохранённого места, а не с начала
+      var start = 0, ps0 = st.pos;
+      if (firstLoad && ps0 && ps0.uid === cur.uid && ps0.t > 1 && (!ps0.d || ps0.t < ps0.d - 2)) start = ps0.t;
+      firstLoad = false;
+      try { player.loadVideoById({ videoId: cur.id, startSeconds: start }); } catch (e) {}
+    }
     if (vol !== s.volume) { vol = s.volume; try { player.setVolume(s.volume); } catch (e) {} }
     try {
       var ps = player.getPlayerState();
@@ -89,5 +96,14 @@
     };
     var sc = document.createElement('script'); sc.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(sc);
   }
+  // источник закрывается (смена сцены, обновление): ставим на паузу и сохраняем точное время
+  addEventListener('pagehide', function () {
+    if (preview || !ready || !last || !last.current) return;
+    try {
+      var t = player.getCurrentTime(), d = player.getDuration() || 0;
+      navigator.sendBeacon('/api/music/progress', new Blob([JSON.stringify({ uid: last.current.uid, t: t, d: d })], { type: 'application/json' }));
+      player.pauseVideo();
+    } catch (e) { /* страница уже закрывается */ }
+  });
   poll();
 })();
