@@ -352,7 +352,7 @@ async function raidExtras(data, force) {
 function fireEventAlert(kind, data, force) {
   const cfg = config.eventAlerts[kind];
   if (!cfg) return false;
-  if (!force && (kind === 'raid' || kind === 'follow' || kind === 'sub')) { try { discordIntegration.onEvent(kind, data); } catch (e) { /* Discord необязателен */ } }
+  if (!force && (kind === 'raid' || kind === 'follow' || kind === 'sub')) { try { discordIntegration.onEvent(kind, data); } catch (e) { /* Discord необязателен */ } try { vkIntegration.onEvent(kind, data); } catch (e) { /* ВК необязателен */ } }
   if (!force && (kind === 'follow' || kind === 'sub') && !(data && data.type === 'resub')) telegramAnnounce.noteEvent(kind, data); // счётчики для итога стрима в Телеграм
   if (!force && kind === 'follow' && data) { try { gazetteService.journal.noteEvent({ type: 'follow', username: data.username }); } catch (e) { /* журнал необязателен */ } }
   if (kind === 'raid' && data && data.avatar === undefined && cfg.style !== 'plain') {
@@ -639,9 +639,9 @@ async function pollCategoryOnce() {
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
     if (streamIsLive && fakeStream.isActive()) { fakeStream.stop(); broadcast(); console.log('[Фейк-режим] Начался настоящий стрим — фейк-режим выключен.'); } // фейк-данные не должны попасть в эфир
     if (streamIsLive && !wasLive && config.autoRecord && !replayActive) { if (streamStatusKnown) resetStreamSession('автозапись при начале стрима'); else startNewRecording('автозапись при запуске во время стрима'); } // стрим только что начался — история для воспроизведения пишется заново
-    if (streamIsLive && !wasLive && streamStatusKnown) { telegramAnnounce.onStreamStart(); try { discordIntegration.onStreamStart(); } catch (e) { /* Discord необязателен */ } }
+    if (streamIsLive && !wasLive && streamStatusKnown) { telegramAnnounce.onStreamStart(); try { discordIntegration.onStreamStart(); } catch (e) { /* Discord необязателен */ } try { vkIntegration.onStreamStart(); } catch (e) { /* ВК необязателен */ } }
     if (streamIsLive && !wasLive && streamStatusKnown) { try { gazetteService.journal.reset(); } catch (e) { /* журнал необязателен */ } } // новый стрим — новый выпуск, даже если автозапись истории выключена
-    if (!streamIsLive && wasLive) { telegramAnnounce.onStreamEnd(); try { discordIntegration.onStreamEnd(); } catch (e) { /* Discord необязателен */ } } // сервер, запущенный посреди стрима, повторно не анонсирует
+    if (!streamIsLive && wasLive) { telegramAnnounce.onStreamEnd(); try { discordIntegration.onStreamEnd(); } catch (e) { /* Discord необязателен */ } try { vkIntegration.onStreamEnd(); } catch (e) { /* ВК необязателен */ } } // сервер, запущенный посреди стрима, повторно не анонсирует
     telegramAnnounce.noteLive(streamIsLive);
     streamStatusKnown = true;
     if (streamIsLive !== wasLive) broadcastAdminStatus(); // статус в шапке админки обновится сразу, не дожидаясь следующего периодического тика
@@ -721,6 +721,14 @@ discordIntegration.init({
   },
   getTopDonors: (n) => donorLeaderboard.getTop('allTime', n),
   getTopPoints: (n) => pointsLeaderboard.getTop('allTime', n),
+});
+const vkIntegration = require('./vkIntegration');
+vkIntegration.init({
+  channel: () => config.channel,
+  getInfo: async (opts) => {
+    const info = resolvedBroadcasterId && twitch.hasCredentials(config) ? await twitch.fetchStreamInfo(config, resolvedBroadcasterId) : null;
+    return { channel: config.channel, info };
+  },
 });
 const chrPublish = require('./chrPublish');
 chrPublish.init(chronicles);
@@ -1451,6 +1459,7 @@ require('./routes/team').part3({ teamData, teamPresets, app, validSide, broadcas
 const { chroniclesUpload } = require('./routes/chronicles').upload({ path, express, multer, chronicles, app });
 require('./routes/telegram').main({ chronicles, telegramAnnounce, app });
 require('./routes/discord').main({ discordIntegration, app });
+require('./routes/vk').main({ vkIntegration, app });
 require('./routes/gazette').main({ gazetteService, app });
 let soonArt = { id: '', url: null };
 soonData.init(async () => {
@@ -2971,6 +2980,7 @@ function handleDonation(donation) {
   try { music.onDonation({ username: record.username, message: record.message || '', rub: currency.toRub(record.amount, record.currency).rub }).catch((er) => console.warn('[Музыка]', er.message)); } catch (e) { /* музыка необязательна */ }
   try { telegramAnnounce.noteEvent('donation', { rub: currency.toRub(record.amount, record.currency).rub }); } catch (e) { /* счётчик необязателен */ }
   try { discordIntegration.onDonation(record, currency.toRub(record.amount, record.currency).rub); } catch (e) { /* Discord необязателен */ }
+  try { vkIntegration.onDonation(record, currency.toRub(record.amount, record.currency).rub); } catch (e) { /* ВК необязателен */ }
   donorLeaderboard.addDonation(record);
   handleTimelineWeightedEvent({ type: 'donation', username: record.username, meta: { amount: record.amount, currency: record.currency, amountRub: currency.toRub(record.amount, record.currency).rub, message: record.message || '' } }); // зелёный прямоугольник с суммой на таймлайне
   broadcastDonation(record);

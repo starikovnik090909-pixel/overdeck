@@ -162,5 +162,6 @@ modules/faceswap/install.log*
 modules/deepfacelive/path.txt
 
 discord.json
+vk.json
 obs_refresh.json
 notify_settings.json

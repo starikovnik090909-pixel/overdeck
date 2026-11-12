@@ -1,12 +1,12 @@
 {
   "name": "twitch-overlay-v2",
-  "version": "4.5.0",
+  "version": "4.6.0",
   "description": "Twitch-оверлей для OBS: активность, таймлайн, коробка эмодзи, облако слов, категории",
   "main": "server.js",
   "engines": { "node": ">=18" },
   "scripts": {
     "start": "node server.js",
-    "test": "node tests/run.js && node tests/gazette.test.js && node tests/soon.test.js && node tests/music.test.js && node tests/alertlook.test.js && node tests/soundpad.test.js && node tests/mods.test.js && node tests/chrmedia.test.js && node tests/shoutouts.test.js && node tests/obsrefresh.test.js && node tests/notify.test.js"
+    "test": "node tests/run.js && node tests/gazette.test.js && node tests/soon.test.js && node tests/music.test.js && node tests/alertlook.test.js && node tests/soundpad.test.js && node tests/mods.test.js && node tests/chrmedia.test.js && node tests/shoutouts.test.js && node tests/obsrefresh.test.js && node tests/notify.test.js && node tests/vk.test.js"
   },
   "dependencies": {
     "tmi.js": "^1.8.5",

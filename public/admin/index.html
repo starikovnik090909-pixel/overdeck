@@ -396,6 +396,13 @@
         </svg>
         <span>Discord</span>
       </div>
+      <div class="nav-item" data-tab="vk">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3.5" y="5" width="17" height="14" rx="3.5" stroke-width="1.5"/>
+          <path d="M7.5 9.5c.4 3 2 5 4.2 5.2v-3.2c1.2.2 1.9 1.5 2.5 3.2h1.9c-.5-1.8-1.4-3-2.3-3.6.9-.6 1.8-1.8 2-3.1h-1.8c-.4 1.3-1.2 2.2-2.3 2.5V9.5h-1.7v3.1" stroke-width="1.3" stroke-linejoin="round"/>
+        </svg>
+        <span>ВКонтакте</span>
+      </div>
       <div class="nav-group">Оформление</div><div class="nav-item" data-tab="widgets">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="4" y="4" width="7" height="7" rx="1.5" stroke-width="1.5"/>
@@ -1287,6 +1294,40 @@
       </div>
       <div class="form-message" id="dcMsg"></div>
       <div class="tg-hint" id="dcLast"></div>
+    </section>
+
+    <section class="tab-section" id="tab-vk">
+      <div class="page-head"><div><h1 class="tab-title">ВКонтакте</h1><p class="tab-description">Анонс стрима постом на стене сообщества и сообщением в беседу. Донаты, рейды, подписки и итог эфира приходят в беседу.</p></div>
+        <div class="page-actions"><span class="ui3-saved" id="vkSaved"></span><label class="tg-sw"><input type="checkbox" id="vkEnabled"><i></i><span>Писать во ВК</span></label></div></div>
+
+      <div class="card ui3-card">
+        <h3 class="dc-h">Подключение</h3>
+        <ol class="tg-steps"><li>В сообществе: <b>Управление → Работа с API → Ключи доступа → Создать ключ</b>. Отметь права <b>«Стена»</b> и <b>«Сообщения сообщества»</b>.</li><li>Для беседы: <b>Управление → Сообщения</b> включи, добавь сообщество в беседу и сделай администратором.</li><li>Вставь ключ и ID сообщества (число из адреса <code>vk.com/club123456789</code>) и нажми «Проверить».</li></ol>
+        <div class="tg-fields">
+          <div class="field"><label>Ключ доступа <span class="tg-hint" id="vkTokHint"></span></label><input type="password" id="vkTok" autocomplete="off" placeholder="ключ сообщества"></div>
+          <div class="field"><label>ID сообщества</label><input type="text" id="vkGroup" autocomplete="off" placeholder="например 123456789"></div>
+          <div class="field"><label>Номер беседы <span class="tg-hint">1, 2, 3… пусто = без беседы</span></label><input type="text" id="vkChat" autocomplete="off" placeholder="например 1"></div>
+        </div>
+        <div class="dc-ev"><label class="tg-sw"><input type="checkbox" id="vkWall"><i></i><span>Анонс постом на стену</span></label></div>
+        <div class="field"><label>Текст анонса <span class="tg-hint">можно {channel} {title} {game} {url}</span></label><textarea id="vkTpl" rows="3"></textarea></div>
+        <div class="tg-row"><button class="btn btn-secondary" id="vkCheck" type="button">Проверить</button><button class="btn btn-secondary" id="vkTest" type="button">Тестовый анонс</button><button class="btn btn-secondary" id="vkTestEnd" type="button">Пример итога</button><button class="btn btn-ghost btn-sm" id="vkClearTok" type="button">Удалить ключ</button></div>
+        <p class="tg-hint">Тестовый анонс публикуется по-настоящему: пост на стене можно потом удалить.</p>
+      </div>
+
+      <div class="card ui3-card">
+        <h3 class="dc-h">Что публиковать</h3>
+        <div class="dc-ev">
+          <label class="tg-sw"><input type="checkbox" id="vkAnn"><i></i><span>Анонс при старте стрима</span></label>
+          <label class="tg-sw"><input type="checkbox" id="vkEvDon"><i></i><span>Донаты</span></label>
+          <label class="tg-sw"><input type="checkbox" id="vkEvRaid"><i></i><span>Рейды</span></label>
+          <label class="tg-sw"><input type="checkbox" id="vkEvSub"><i></i><span>Подписки</span></label>
+          <label class="tg-sw"><input type="checkbox" id="vkEvFol"><i></i><span>Новые фолловеры</span></label>
+          <label class="tg-sw"><input type="checkbox" id="vkEvEnd"><i></i><span>Итог после стрима</span></label>
+        </div>
+        <div class="field dc-min"><label>Донаты от (₽) <span class="tg-hint">меньшие суммы не публикуем, 0 = все</span></label><input type="number" id="vkMin" min="0" step="10" value="0"></div>
+      </div>
+      <div class="form-message" id="vkMsg"></div>
+      <div class="tg-hint" id="vkLast"></div>
     </section>
 
     <section class="tab-section" id="tab-chronicles">
@@ -4241,6 +4282,7 @@
 <script src="chronicles.js?v=20"></script>
 <script src="telegram.js?v=5"></script>
 <script src="discord.js?v=1"></script>
+<script src="vk.js?v=1"></script>
 <script src="extmodal.js?v=2"></script>
 
 <div class="ex-amb-ov" id="exAmbOv" hidden><div class="ex-amb" role="dialog" aria-modal="true" aria-label="Фоновый эмбиент">
