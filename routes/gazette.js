@@ -12,7 +12,7 @@ function main(ctx) {
   });
   app.post('/api/gazette/show', (req, res) => {
     const b = req.body || {};
-    if (!['credits', 'gazette'].includes(b.format)) return res.status(400).json({ success: false, error: 'Неизвестный экран' });
+    if (!['credits', 'gazette', 'sky'].includes(b.format)) return res.status(400).json({ success: false, error: 'Неизвестный экран' });
     res.json({ success: true, ...svc.show(b.format, b.demo) });
   });
   app.post('/api/gazette/hide', (req, res) => res.json({ success: true, ...svc.hide() }));

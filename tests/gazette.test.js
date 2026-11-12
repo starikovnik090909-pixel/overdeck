@@ -182,5 +182,37 @@ t('новые события: у каждого не меньше 25 фраз', 
   assert(!Lex.T.emoteDay, 'смайлы в заголовок не идут');
 });
 
+
+// 9. «Звёздное небо»: данные выпуска, настройки, шаблоны обеих тем
+t('звёздное небо: данные и показ', () => {
+  const svc = require('../gazetteService');
+  const issue = svc.buildIssue({ demo: 'A' });
+  const K = issue.sky;
+  assert.ok(K && K.mins > 0 && Array.isArray(K.chatters) && K.chatters.length > 0 && K.chatters.length <= 7, 'планеты есть');
+  assert.ok(K.chatters.every((c, i) => i === 0 || c.n <= K.chatters[i - 1].n), 'планеты по убыванию сообщений');
+  ['subs', 'stay', 'music', 'awards', 'donors'].forEach((k) => assert.ok(Array.isArray(K.consts[k]) && K.consts[k].length <= 3, 'созвездие ' + k));
+  assert.ok(K.quotes.every((q) => q.text.split(/\s+/).length <= 6), 'фраза спутника не длиннее 6 слов');
+  assert.strictEqual(svc.normalize({ skyTheme: 'pixel' }).skyTheme, 'pixel');
+  assert.strictEqual(svc.normalize({ skyTheme: 'x' }).skyTheme, 'smooth', 'неизвестная тема — гладкая');
+  assert.strictEqual(svc.show('sky').screen.format, 'sky');
+  svc.hide();
+});
+t('звёздное небо: шаблоны обеих тем без пустых значений', () => {
+  const vm = require('vm'), fs = require('fs'), path = require('path');
+  const el = () => ({ style: {}, classList: { add() {}, remove() {} }, querySelector: () => null, getBoundingClientRect: () => ({}) });
+  const ctx = { window: {}, document: { getElementById: el }, location: { search: '' }, fetch: () => Promise.reject(new Error('no')), setInterval: () => 0, clearInterval() {}, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame() {}, innerWidth: 1280, innerHeight: 720, URLSearchParams, Math, Date, Object, String, Array, Number, JSON };
+  ctx.window = ctx; ctx.window.addEventListener = () => {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'public', 'sky.js'), 'utf8'), ctx);
+  const S = ctx.SkyScreen, svc = require('../gazetteService');
+  ['A', 'B', 'C', 'D', 'E'].forEach((d) => {
+    const issue = svc.buildIssue({ demo: d });
+    const a = S.TPL_SMOOTH(S.valsSmooth(issue)), b = S.TPL_PIXEL(S.valsPixel(issue));
+    [a, b].forEach((h) => assert.ok(!/undefined|NaN|\[object|\$\{/.test(h), 'пустое значение в шаблоне, вечер ' + d));
+    assert.ok(a.includes('sk-qt') && b.includes('sk-qt'), 'есть фраза на спутнике');
+  });
+  const empty = { startTs: 1, endTs: 2, studio: 'X', sky: { mins: 1, cats: [], peak: 0, totalChatters: 0, chatters: [], consts: {}, quotes: [] } };
+  assert.ok(!/undefined|NaN/.test(S.TPL_SMOOTH(S.valsSmooth(empty)) + S.TPL_PIXEL(S.valsPixel(empty))), 'пустой стрим не ломает экран');
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);

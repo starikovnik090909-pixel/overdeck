@@ -1,6 +1,6 @@
 {
   "name": "twitch-overlay-v2",
-  "version": "4.6.1",
+  "version": "4.7.0",
   "description": "Twitch-оверлей для OBS: активность, таймлайн, коробка эмодзи, облако слов, категории",
   "main": "server.js",
   "engines": { "node": ">=18" },
