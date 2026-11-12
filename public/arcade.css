@@ -1,0 +1,34 @@
+/* Аркада: две темы (neon / retro). Сгенерировано из макетов, стили ограничены корнями .ar-n и .ar-r */
+.ar-n *{box-sizing:border-box}
+@keyframes starfall_n{from{transform:translateY(0)}to{transform:translateY(720px)}}
+.ar-n .sf{position:absolute;left:0;top:-720px;width:100%;height:1440px;animation:starfall_n var(--sp) linear infinite}
+@keyframes blink_n{0%,49%{opacity:1}50%,100%{opacity:0}}
+.ar-n .bl{animation:blink_n 1.1s steps(1) infinite}
+@keyframes rowin_n{0%{opacity:0;transform:translateX(-40px)}100%{opacity:1;transform:translateX(0)}}
+.ar-n .row{animation:rowin_n .6s steps(5) backwards}
+@keyframes bob_n{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ar-n .boss{animation:bob_n 1.2s steps(2) infinite}
+@keyframes fill_n{from{width:0}to{width:var(--w)}}
+.ar-n .bar{animation:fill_n 2.4s steps(24) backwards;animation-delay:var(--d)}
+@keyframes flick_n{0%,100%{opacity:1}45%{opacity:1}50%{opacity:.55}55%{opacity:1}}
+.ar-n .rgb{text-shadow:3px 0 #ff2d6f,-3px 0 #19f0ff}
+@keyframes band_n{from{transform:translateY(-160px)}to{transform:translateY(760px)}}
+.ar-n .band{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(180deg,rgba(140,200,255,0),rgba(140,200,255,.07),rgba(140,200,255,0));animation:band_n 7s linear infinite}
+.ar-r *{box-sizing:border-box}
+@keyframes starfall_r{from{transform:translateY(0)}to{transform:translateY(720px)}}
+.ar-r .sf{position:absolute;left:0;top:-720px;width:100%;height:1440px;animation:starfall_r var(--sp) linear infinite}
+@keyframes blink_r{0%,49%{opacity:1}50%,100%{opacity:0}}
+.ar-r .bl{animation:blink_r 1.1s steps(1) infinite}
+@keyframes rowin_r{0%{opacity:0;transform:translateX(-40px)}100%{opacity:1;transform:translateX(0)}}
+.ar-r .row{animation:rowin_r .6s steps(5) backwards}
+@keyframes bob_r{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.ar-r .boss{animation:bob_r 1.2s steps(2) infinite}
+@keyframes fill_r{from{width:0}to{width:var(--w)}}
+.ar-r .bar{animation:fill_r 2.4s steps(24) backwards;animation-delay:var(--d)}
+@keyframes flick_r{0%,100%{opacity:1}45%{opacity:1}50%{opacity:.55}55%{opacity:1}}
+.ar-r .rgb{text-shadow:3px 0 #d9432f,-3px 0 #6fcf97}
+@keyframes band_r{from{transform:translateY(-160px)}to{transform:translateY(760px)}}
+.ar-r .band{position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(180deg,rgba(255,200,130,0),rgba(255,200,130,.08),rgba(255,200,130,0));animation:band_r 7s linear infinite}
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+#ar-stage{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;opacity:0;transition:opacity 1.2s ease;background:#000}
+#ar-stage.on{opacity:1}

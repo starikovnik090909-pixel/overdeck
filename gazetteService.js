@@ -26,6 +26,7 @@ const DEFAULTS = {
   creditsTitleSound: 'chord', // звук заголовка: chord | soft | echo
   creditsSfx: true,       // мягкие звуки сцены: печать, удары заголовка, свуш, тики счётчиков
   skyTheme: 'smooth',     // «Звёздное небо»: smooth (гладкая) | pixel (пиксельная)
+  arcadeTheme: 'neon',    // «Аркада»: neon (неон) | retro (ретро-цвета)
   onair: { bug: false, ticker: true, plate: true, intervalMin: 15, plateSec: 20 },
 };
 
@@ -98,6 +99,7 @@ function normalize(raw) {
     creditsCovers: ['static', 'deck', 'flip'].includes(raw.creditsCovers) ? raw.creditsCovers : d.creditsCovers,
     creditsSfx: typeof raw.creditsSfx === 'boolean' ? raw.creditsSfx : d.creditsSfx,
     skyTheme: ['smooth', 'pixel'].includes(raw.skyTheme) ? raw.skyTheme : d.skyTheme,
+    arcadeTheme: ['neon', 'retro'].includes(raw.arcadeTheme) ? raw.arcadeTheme : d.arcadeTheme,
     onair: {
       bug: typeof o.bug === 'boolean' ? o.bug : d.onair.bug,
       ticker: typeof o.ticker === 'boolean' ? o.ticker : d.onair.ticker,
@@ -141,7 +143,7 @@ function state() {
   return { screen: { ...screen }, pulse: { ...pulse }, settings: getSettings(), studio: studio() };
 }
 function show(format, demoId) {
-  if (!['credits', 'gazette', 'sky'].includes(format)) return state();
+  if (!['credits', 'gazette', 'sky', 'arcade'].includes(format)) return state();
   screen = { format, rev: screen.rev + 1, demo: demo.ids.includes(demoId) ? demoId : null };
   if (!screen.demo) commitPicks(); // выпуск показан — его фразы больше не повторяем
   return state();
@@ -187,6 +189,7 @@ function buildIssue(opts) {
   const gamesByTime = (S.games || []).slice().sort((a, b) => a.from - b.from);
   mainGame = g && gamesByTime.length ? (gamesByTime.slice().sort((a, b) => b.from - a.from)[0].name) : '';
   const mg = (S.games || []).length ? longestGame(S) : '';
+  const sky = buildSky(S, roster, demoId);
   const issue = {
     demo: demoId, studio: name, seed,
     startTs: S.startTs, endTs: S.endTs,
@@ -199,7 +202,8 @@ function buildIssue(opts) {
     game: mg || mainGame || '', art: art && (!mg || art.name === mg) ? art.art : '',
     roster,
     ghost: pickGhost(S),
-    sky: buildSky(S, roster, demoId),
+    sky,
+    arcade: buildArcade(S, roster, sky, demoId),
     clockOffsetMin: -new Date().getTimezoneOffset(),
   };
   cache = { key, at: now, val: issue };
@@ -259,6 +263,33 @@ function buildSky(S, roster, isDemo) {
   const step = Math.max(1, Math.floor(phrases.length / 12)), quotes = [];
   for (let i = 0; i < phrases.length && quotes.length < 12; i += step) quotes.push({ user: phrases[i].user, text: phrases[i].text });
   return { mins, cats: cats.length ? cats : ((S.games || []).slice(0, 2).map((g) => g.name)), peak, totalChatters: roster.totalChatters || 0, chatters, consts, quotes };
+}
+/** Данные «Аркады»: рекорды чата, уровни (категории), комбо (пик сообщений в минуту), цитата, три награды, итоги. */
+function buildArcade(S, roster, sky, isDemo) {
+  const rows = (roster.chatters || []).slice(0, 8).map((c) => ({ user: c.user, n: c.n }));
+  const covers = makeCovers(S, isDemo ? null : journal.gameCovers(S.endTs)).slice(0, 3);
+  const levels = covers.length ? covers.map((c) => ({ name: c.name, ms: c.ms })) : (sky.cats || []).slice(0, 3).map((n) => ({ name: n, ms: 60000 }));
+  const bins = {};
+  (S.chat || []).forEach((m) => { const k = Math.floor(m.ts / 60000); bins[k] = (bins[k] || 0) + 1; });
+  let pk = 0, pkAt = 0;
+  Object.entries(bins).forEach(([k, n]) => { if (n > pk) { pk = n; pkAt = +k * 60000; } });
+  const pad = (n) => String(n).padStart(2, '0');
+  const at = pkAt ? new Date(pkAt) : null;
+  const c = sky.consts || {};
+  const first = (a) => (a && a[0]) || null;
+  const raid = (roster.raiders || [])[0];
+  const kinds = [['dj', first(c.music)], ['donor', first(c.donors)], ['raid', raid ? { name: raid.user, sub: '' } : null], ['stay', first(c.stay)], ['sub', first(c.subs)], ['award', first(c.awards)]];
+  const badges = kinds.filter((k) => k[1]).slice(0, 3).map((k) => ({ kind: k[0], name: k[1].name }));
+  const donSum = (S.events || []).filter((e) => e.type === 'donation').reduce((a, e) => a + (+e.amount || 0), 0);
+  const secs = Math.max(0, Math.round(((S.endTs || Date.now()) - S.startTs) / 1000));
+  const d = new Date(S.endTs || Date.now());
+  return {
+    rows, levels, combo: { n: pk, at: at ? pad(at.getHours()) + ':' + pad(at.getMinutes()) : '' },
+    quotes: (sky.quotes || []).slice(0, 10), badges,
+    facts: { peak: sky.peak || 0, msgs: (S.chat || []).length, donate: Math.round(donSum) },
+    dur: Math.floor(secs / 3600) + ':' + pad(Math.floor(secs / 60) % 60) + ':' + pad(secs % 60),
+    date: d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).toUpperCase(),
+  };
 }
 function safeTitles(S, g, streamer, isDemo) {
   try {

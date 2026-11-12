@@ -70,7 +70,7 @@
       $('#exJournal').textContent = j.enabled
         ? `${j.chat} ${pl(j.chat, ['сообщение', 'сообщения', 'сообщений'])} · ${j.events} ${pl(j.events, ['событие', 'события', 'событий'])} · с начала ${j.minutes} мин`
         : 'журнал чата выключен: тексты сообщений не записываются';
-      ['credits', 'sky', 'gazette'].forEach((f) => { const n = $(`[data-now="${f}"]`, sec); const on = st.screen.format === f; n.textContent = on ? '● на экране' : ''; });
+      ['credits', 'sky', 'arcade', 'gazette'].forEach((f) => { const n = $(`[data-now="${f}"]`, sec); const on = st.screen.format === f; n.textContent = on ? '● на экране' : ''; });
     } catch (e) { /* ждём */ }
   }
   setInterval(refresh, 4000);
@@ -90,12 +90,14 @@
     F.ticker.checked = s.onair.ticker; F.plate.checked = s.onair.plate; F.bug.checked = s.onair.bug; F.int.value = s.onair.intervalMin; F.sec.value = s.onair.plateSec;
     $$('#exSpeed button', sec).forEach((b) => b.classList.toggle('on', b.dataset.v === s.creditsSpeed));
     $$('#exSkyTheme button', sec).forEach((b) => b.classList.toggle('on', b.dataset.v === (s.skyTheme || 'smooth')));
+    $$('#exArcadeTheme button', sec).forEach((b) => b.classList.toggle('on', b.dataset.v === (s.arcadeTheme || 'neon')));
     amb = s.creditsAmbient || 'off'; F.vol.value = s.creditsVolume; $('#exVolV').textContent = s.creditsVolume; F.fade.value = s.creditsFadeIn; F.sfx.checked = !!s.creditsSfx; F.sfxVol.value = s.creditsSfxVolume; $('#exSfxVolV').textContent = s.creditsSfxVolume; F.type.value = s.creditsTypeSound; F.title.value = s.creditsTitleSound; F.covers.value = s.creditsCovers; ambLabel();
   }
   function collect() {
     return {
       studioName: F.studio.value, journalEnabled: F.jr.checked, creditsSpeed: ($('#exSpeed button.on', sec) || {}).dataset ? $('#exSpeed button.on', sec).dataset.v : 'normal',
       skyTheme: ($('#exSkyTheme button.on', sec) || { dataset: { v: 'smooth' } }).dataset.v,
+      arcadeTheme: ($('#exArcadeTheme button.on', sec) || { dataset: { v: 'neon' } }).dataset.v,
       creditsHoldSec: +F.hold.value || 0, ghostChat: F.ghost.checked, wallNames: F.wall.checked,
       creditsAmbient: amb, creditsVolume: +F.vol.value, creditsFadeIn: +F.fade.value || 0, creditsSfx: F.sfx.checked, creditsSfxVolume: +F.sfxVol.value, creditsTypeSound: F.type.value, creditsTitleSound: F.title.value, creditsCovers: F.covers.value,
       onair: { ticker: F.ticker.checked, plate: F.plate.checked, bug: F.bug.checked, intervalMin: +F.int.value || 15, plateSec: +F.sec.value || 20 },
@@ -143,6 +145,7 @@
   });
   $$('#exSpeed button', sec).forEach((b) => b.addEventListener('click', () => { $$('#exSpeed button', sec).forEach((x) => x.classList.toggle('on', x === b)); save(); }));
   $$('#exSkyTheme button', sec).forEach((b) => b.addEventListener('click', () => { $$('#exSkyTheme button', sec).forEach((x) => x.classList.toggle('on', x === b)); save(); }));
+  $$('#exArcadeTheme button', sec).forEach((b) => b.addEventListener('click', () => { $$('#exArcadeTheme button', sec).forEach((x) => x.classList.toggle('on', x === b)); save(); }));
   $('#exJournalClear').addEventListener('click', async () => {
     const b = $('#exJournalClear');
     if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = 'Точно очистить?'; setTimeout(() => { b.dataset.sure = ''; b.textContent = 'Очистить журнал'; }, 3500); return; }

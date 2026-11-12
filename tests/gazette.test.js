@@ -214,5 +214,33 @@ t('звёздное небо: шаблоны обеих тем без пусты
   assert.ok(!/undefined|NaN/.test(S.TPL_SMOOTH(S.valsSmooth(empty)) + S.TPL_PIXEL(S.valsPixel(empty))), 'пустой стрим не ломает экран');
 });
 
+// 10. «Аркада»: данные, настройки, шаблоны обеих тем
+t('аркада: данные, настройки и показ', () => {
+  const svc = require('../gazetteService');
+  const A = svc.buildIssue({ demo: 'A' }).arcade;
+  assert.ok(A && A.rows.length > 0 && A.rows.length <= 8 && A.levels.length <= 3 && A.badges.length <= 3, 'данные аркады');
+  assert.ok(A.rows.every((r, i) => i === 0 || r.n <= A.rows[i - 1].n), 'рекорды по убыванию');
+  assert.strictEqual(svc.normalize({ arcadeTheme: 'retro' }).arcadeTheme, 'retro');
+  assert.strictEqual(svc.normalize({ arcadeTheme: 'x' }).arcadeTheme, 'neon', 'неизвестная тема — неон');
+  assert.strictEqual(svc.show('arcade').screen.format, 'arcade');
+  svc.hide();
+});
+t('аркада: шаблоны обеих тем без пустых значений', () => {
+  const vm = require('vm'), fs = require('fs'), path = require('path');
+  const el = () => ({ style: {}, classList: { add() {}, remove() {} }, querySelector: () => null });
+  const ctx = { window: {}, document: { getElementById: el }, location: { search: '' }, fetch: () => Promise.reject(new Error('no')), setInterval: () => 0, clearInterval() {}, setTimeout: () => 0, clearTimeout() {}, requestAnimationFrame() {}, innerWidth: 1280, innerHeight: 720, URLSearchParams };
+  ctx.window = ctx; ctx.addEventListener = () => {};
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname, '..', 'public', 'arcade.js'), 'utf8'), ctx);
+  const S = ctx.ArcadeScreen, svc = require('../gazetteService');
+  ['A', 'B', 'C', 'D', 'E'].forEach((d) => {
+    const issue = svc.buildIssue({ demo: d });
+    const a = S.TPL_NEON(S.vals(issue, 'neon', 0)), b = S.TPL_RETRO(S.vals(issue, 'retro', 3));
+    [a, b].forEach((h) => assert.ok(!/undefined|NaN|\[object|\$\{/.test(h), 'пустое значение в шаблоне, вечер ' + d));
+    assert.ok(a.includes('ar-qt') && b.includes('ar-qt'), 'есть цитата вечера');
+  });
+  const empty = { startTs: 1, endTs: 2, studio: 'X', arcade: { rows: [], levels: [], combo: { n: 0, at: '' }, quotes: [], badges: [], facts: {}, dur: '0:00:00', date: '' } };
+  assert.ok(!/undefined|NaN/.test(S.TPL_NEON(S.vals(empty, 'neon', 0)) + S.TPL_RETRO(S.vals(empty, 'retro', 0))), 'пустой стрим не ломает экран');
+});
+
 console.log(fails ? '\nПровалено: ' + fails + ' из ' + total : '✓ Вечерний выпуск: ' + total + ' проверок пройдено');
 process.exit(fails ? 1 : 0);
