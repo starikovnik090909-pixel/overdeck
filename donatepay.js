@@ -13,6 +13,7 @@
 // Формат транзакции (из документации): id, what (ник), sum (в рублях), comment,
 // status (success | wait | cancel | user = тестовый донат из кабинета), type, vars.
 
+const notifyUi = require('./notify');
 const BASE = process.env.DONATEPAY_API_BASE || 'https://donatepay.ru/api/v1';
 const POLL_MS = Number(process.env.DONATEPAY_POLL_MS) || 21000;
 const BACKOFF_MS = 45000;      // после 429 («слишком много запросов»)
@@ -127,7 +128,7 @@ async function tick() {
       return;
     }
     if (e.rate) next = BACKOFF_MS;
-    else if (++fails === MAX_FAILS_TO_WARN) console.warn('[DonatePay] Не получается обновить донаты несколько раз подряд:', e.message);
+    else if (++fails === MAX_FAILS_TO_WARN) { notifyUi.emit('dp.fail', {}); console.warn('[DonatePay] Не получается обновить донаты несколько раз подряд:', e.message); }
   }
   busy = false;
   schedule(next);

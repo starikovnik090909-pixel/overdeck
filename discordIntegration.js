@@ -4,6 +4,7 @@
 //  2) Бот (по желанию): подключается к Discord и отвечает на слэш-команды /status, /donors и /points.
 // Настройки лежат в discord.json (в .gitignore): там же вебхук и токен бота, наружу они не отдаются.
 const fs = require('fs');
+const notifyUi = require('./notify');
 const path = require('path');
 const WebSocket = require('ws');
 
@@ -106,7 +107,9 @@ async function announce(force) {
   const emb = { color: COLOR, title: clip(v.title || channel, 250), url: v.url, footer: { text: 'Overdeck' }, timestamp: new Date().toISOString() };
   if (v.game) emb.fields = [{ name: 'Категория', value: clip(v.game, 100), inline: true }];
   if (d && d.gameArt && /^https:/.test(d.gameArt)) emb.thumbnail = { url: d.gameArt };
-  await hook({ content: render(cfg.template, v) + '\n' + v.url, embeds: [emb], mention: true });
+  try { await hook({ content: render(cfg.template, v) + '\n' + v.url, embeds: [emb], mention: true }); }
+  catch (e) { notifyUi.emit('dc.fail', { reason: e.message }); throw e; }
+  notifyUi.emit('dc.sent', {});
   return { live: !!info };
 }
 

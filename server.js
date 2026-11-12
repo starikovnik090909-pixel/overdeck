@@ -1466,6 +1466,11 @@ soonData.init(async () => {
 });
 require('./routes/soon').main({ soonData, app });
 
+const notify = require('./notify');
+notify.init();
+require('./routes/notify').main({ notify, app });
+process.on('exit', () => { try { notify.stop(); } catch (e) { /* выходим */ } });
+
 const obsRefresh = require('./obsRefresh');
 obsRefresh.init({ defaultFilter: 'localhost:' + (config.port || 3001) });
 require('./routes/obsRefresh').main({ obsRefresh, app });

@@ -113,6 +113,7 @@ class NodeXMLHttpRequest {
 global.XMLHttpRequest = NodeXMLHttpRequest;
 
 const Centrifuge = require('centrifuge');
+const notifyUi = require('./notify');
 
 const AUTHORIZE_URL = 'https://www.donationalerts.com/oauth/authorize';
 const TOKEN_URL = 'https://www.donationalerts.com/oauth/token';
@@ -210,6 +211,7 @@ function mapDonation(raw) {
 
 function failAuth(onAuthError, message) {
   console.warn('[DonationAlerts]', message);
+  notifyUi.emit('da.auth', {});
   stopped = true; // явная ошибка авторизации — сами больше не переподключаемся
   disconnect();
   if (typeof onAuthError === 'function') onAuthError(message);
@@ -276,6 +278,7 @@ function openSocket() {
   centrifuge.on('disconnect', (ctx) => {
     console.warn('[DonationAlerts] Отключено от Centrifugo:', JSON.stringify(ctx));
     if (stopped) return;
+    notifyUi.emit('da.disconnect', {});
 
     if (!hasSubscribedOnce) {
       consecutiveFailures += 1;

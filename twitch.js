@@ -3,6 +3,7 @@
 // и обёртки над Twitch Helix API (App Access Token, аватарки, категории).
 
 const tmi = require('tmi.js');
+const notifyUi = require('./notify');
 
 /**
  * Подключиться к чату канала. onMessage(tags, message) вызывается на каждое
@@ -47,7 +48,7 @@ function connectChat(channel, onMessage, onConnected, onMilestone) {
     wasConnected = true;
     if (onConnected) onConnected();
   });
-  client.on('disconnected', (reason) => { console.warn('[Чат] Соединение с чатом Twitch потеряно:', reason || '', '— переподключаюсь…'); });
+  client.on('disconnected', (reason) => { console.warn('[Чат] Соединение с чатом Twitch потеряно:', reason || '', '— переподключаюсь…'); notifyUi.emit('twitch.chat_lost', {}); });
   const hardReconnect = (why) => {
     console.warn(`[Чат] ${why} — переподключаю чат.`);
     lastSeen = Date.now(); notOpenSince = 0;

@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const notify = require('./notify');
 
 const FILE = path.join(__dirname, 'obs_refresh.json');
 const DEFAULTS = { enabled: false, host: '127.0.0.1', port: 4455, password: '', intervalMin: 10, filter: 'localhost:3001' };
@@ -83,9 +84,11 @@ async function refreshNow(reason) {
       n++;
     }
     last = { at: Date.now(), ok: true, count: n, error: '', reason: reason || 'кнопка' };
+    notify.emit('obs.refreshed', { count: n }, { silent: reason === 'по таймеру' }); // таймер молчит, пока всё хорошо
     return { success: true, count: n, total: names.length };
   } catch (e) {
     last = { at: Date.now(), ok: false, count: 0, error: e.message, reason: reason || 'кнопка' };
+    notify.emit(/пароль/i.test(e.message) ? 'obs.auth' : 'obs.unreachable', {});
     return { success: false, error: e.message };
   } finally { if (cli) cli.close(); busy = false; }
 }

@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const keyBundle = require('./keyBundle');
+const notifyUi = require('./notify');
 
 const DIR = path.join(__dirname, 'backups');
 const KEEP = 7;
@@ -38,8 +39,8 @@ function start(appVersion) {
   const tick = () => {
     try {
       const today = PREFIX + stamp(new Date()) + '.overdeckkey';
-      if (!list().some((f) => f.name === today)) { const r = run(appVersion); console.log('[Автокопия] ' + r.name + ': файлов ' + r.count); }
-    } catch (e) { console.log('[Автокопия] не получилась:', e.message); }
+      if (!list().some((f) => f.name === today)) { const r = run(appVersion); console.log('[Автокопия] ' + r.name + ': файлов ' + r.count); notifyUi.emit('backup.done', { name: r.name }); }
+    } catch (e) { console.log('[Автокопия] не получилась:', e.message); notifyUi.emit('backup.fail', { reason: e.message }); }
   };
   setTimeout(tick, 60000);
   const t = setInterval(tick, 6 * 3600 * 1000);

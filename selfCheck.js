@@ -3,6 +3,7 @@
 // Проверки только читают данные и ничего не отправляют наружу (нет сообщений в Telegram, нет тестовых донатов).
 
 const fs = require('fs');
+const notifyUi = require('./notify');
 const path = require('path');
 
 const ROOT = __dirname;
@@ -116,7 +117,9 @@ async function runAll(port) {
     checked++;
     try { const m = await checkHttp(port); if (m) problems.push({ id: 'http', title: 'Сервер', text: m }); } catch (e) { /* сеть не нужна, пропускаем */ }
   }
+  const had = new Set(state.problems.map((p) => p.id + '|' + p.text));
   state = { at: Date.now(), ok: !problems.length, problems, checked };
+  problems.forEach((p) => { if (!had.has(p.id + '|' + p.text)) notifyUi.emit('self.problem', { reason: p.title + ': ' + p.text }); });
   return state;
 }
 

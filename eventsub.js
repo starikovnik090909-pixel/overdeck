@@ -11,6 +11,7 @@
 // таймлайна отдельно, в server.js.
 
 const WebSocket = require('ws');
+const notifyUi = require('./notify');
 
 const EVENTSUB_WS_URL = 'wss://eventsub.wss.twitch.tv/ws?keepalive_timeout_seconds=30';
 
@@ -163,7 +164,7 @@ function openSocket(config, broadcasterId, url, onEvent, onRaw, isReconnect) {
       if (ok) { retryAttempt = 0; return; }
       if (unauthorized) {
         authFailed = true;
-        if (Date.now() - authWarnedAt > 30 * 60 * 1000) { authWarnedAt = Date.now(); console.warn('[EventSub] Twitch не принимает токен входа (Invalid OAuth token) — баллы, сабы, рейды и фоллоу не придут. Войди через Twitch ещё раз на вкладке «Авторизация». Повторю попытку через 10 минут.'); }
+        if (Date.now() - authWarnedAt > 30 * 60 * 1000) { authWarnedAt = Date.now(); notifyUi.emit('twitch.auth', {}); console.warn('[EventSub] Twitch не принимает токен входа (Invalid OAuth token) — баллы, сабы, рейды и фоллоу не придут. Войди через Twitch ещё раз на вкладке «Авторизация». Повторю попытку через 10 минут.'); }
       }
     } else if (messageType === 'session_reconnect') {
       const reconnectUrl = msg.payload.session.reconnect_url;

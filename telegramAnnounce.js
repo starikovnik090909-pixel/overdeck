@@ -2,6 +2,7 @@
 // Анонс стрима в Telegram: когда трансляция начинается, бот пишет в канал название, категорию
 // и (по желанию) присылает скриншот с эфира. Настройки лежат в telegram.json (в .gitignore).
 const fs = require('fs');
+const notifyUi = require('./notify');
 const path = require('path');
 const pageShot = require('./pageShot');
 
@@ -325,7 +326,8 @@ async function announce() {
     cfg.posts = r.id ? [r.id] : []; cfg.post = r.id ? { id: r.id, kind: r.kind, html: r.html, url: r.url } : null; save();
     startTracking(data.info);
     console.log('[Telegram] Анонс стрима отправлен.');
-  } catch (e) { cfg.lastError = e.message; save(); console.warn('[Telegram] Анонс не отправлен:', e.message); }
+    notifyUi.emit('tg.sent', {});
+  } catch (e) { cfg.lastError = e.message; save(); console.warn('[Telegram] Анонс не отправлен:', e.message); notifyUi.emit('tg.fail', { reason: e.message }); }
 }
 
 /** Вызывается, когда стрим только что начался. */

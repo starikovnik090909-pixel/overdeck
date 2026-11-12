@@ -6,6 +6,7 @@
 // скачиваются один раз и лежат в voicesDir — см. README.
 
 const { spawn } = require('child_process');
+const notifyUi = require('./notify');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -265,6 +266,7 @@ function synthPiper(text, ttsConfig) {
 
     proc.on('error', (err) => {
       if (!warnedMissingBinary) {
+        notifyUi.emit('tts.nopiper', {});
         console.warn(`[TTS] Не удалось запустить piper ("${piperPath}"): ${err.message}\n       Убедись, что Piper установлен и доступен в PATH — инструкция в README.`);
         warnedMissingBinary = true;
       }
