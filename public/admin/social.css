@@ -1,0 +1,43 @@
+/* Вкладка «Соцсети»: три колонки и окно детальной настройки */
+.nav-item[data-tab="telegram"],.nav-item[data-tab="discord"],.nav-item[data-tab="vk"]{display:none!important}
+.nav-item[data-tab="social"]{gap:4px}
+.soc-stack{display:flex;align-items:center;flex-shrink:0;width:28px}
+.soc-stack img{width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 1.5px var(--bg-sidebar)}
+.soc-stack img+img{margin-left:-4px}
+.nav-item.active .soc-stack img{box-shadow:0 0 0 2px var(--bg-sidebar)}
+.soc-pre{display:none!important}
+#tab-social .soc-cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:stretch}
+@media (max-width:1180px){#tab-social .soc-cols{grid-template-columns:minmax(0,1fr)}}
+.soc-col{background:var(--bg-card);border:1px solid var(--divider);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.soc-bar4{height:4px}
+.soc-in{padding:20px;display:flex;flex-direction:column;gap:16px;flex:1}
+.soc-head{display:flex;align-items:center;gap:12px}
+.soc-head img{width:44px;height:44px;flex:0 0 auto}
+.soc-nm{flex:1;min-width:0}
+.soc-nm b{display:block;font-size:17px;font-weight:600}
+.soc-st{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-secondary);margin-top:3px;min-width:0}
+.soc-st i{width:7px;height:7px;border-radius:50%;background:#7b8b87;flex:0 0 auto}
+.soc-st span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.soc-col[data-ok="1"] .soc-st{color:var(--accent)}
+.soc-col[data-ok="1"] .soc-st i{background:var(--accent)}
+.soc-lbl{font-size:11px;letter-spacing:.12em;color:var(--text-secondary);font-weight:600}
+.soc-list{display:flex;flex-direction:column}
+.soc-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid var(--divider);font-size:13.5px}
+.soc-row:first-child{border-top:0}
+.soc-sw{position:relative;width:38px;height:22px;flex:0 0 auto;cursor:pointer}
+.soc-sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
+.soc-sw i{position:absolute;inset:0;border-radius:11px;background:rgba(127,127,127,.35);transition:.15s}
+.soc-sw i::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.soc-sw input:checked+i{background:var(--accent)}
+.soc-sw input:checked+i::after{transform:translateX(16px)}
+.soc-note{font-size:12px;color:var(--text-secondary);line-height:1.5}
+.soc-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.soc-btns .btn{flex:1 1 auto;justify-content:center}
+.soc-msg{font-size:12px;min-height:16px;color:var(--text-secondary)}
+.soc-msg.err{color:#e5484d}
+/* окно детальной настройки: прежний раздел поверх страницы */
+.tab-section.soc-open{display:block!important;position:fixed;z-index:900;top:28px;bottom:28px;left:50%;transform:translateX(-50%);width:min(1240px,calc(100vw - 48px));overflow:auto;background:var(--bg-app);border:1px solid var(--divider);border-radius:18px;padding:0 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.55);animation:none}
+.soc-veil{position:fixed;inset:0;z-index:899;background:rgba(0,0,0,.6);backdrop-filter:blur(3px)}
+.soc-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:16px 0;margin-bottom:8px;background:var(--bg-app);border-bottom:1px solid var(--divider)}
+.soc-top img{width:28px;height:28px}
+.soc-top b{flex:1;font-size:15px}

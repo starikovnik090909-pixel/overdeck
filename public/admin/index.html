@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="style.css?v=139">
 <link rel="stylesheet" href="skin.css?v=2">
 <link rel="stylesheet" href="ui3.css?v=66">
+<link rel="stylesheet" href="social.css?v=1">
 <link rel="stylesheet" href="extras.css?v=8">
 <link rel="stylesheet" href="music.css?v=25">
 <link rel="stylesheet" href="soundpad.css?v=5">
@@ -395,6 +396,10 @@
           <circle cx="9.3" cy="12.2" r="1.2"/><circle cx="14.7" cy="12.2" r="1.2"/>
         </svg>
         <span>Discord</span>
+      </div>
+      <div class="nav-item" data-tab="social">
+        <span class="soc-stack"><img src="assets/soc-tg.png" alt=""><img src="assets/soc-dc.png" alt=""><img src="assets/soc-vk.png" alt=""></span>
+        <span>Соцсети</span>
       </div>
       <div class="nav-item" data-tab="vk">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1328,6 +1333,11 @@
       </div>
       <div class="form-message" id="vkMsg"></div>
       <div class="tg-hint" id="vkLast"></div>
+    </section>
+
+    <section class="tab-section" id="tab-social">
+      <div class="page-head"><div><h1 class="tab-title">Соцсети</h1><p class="tab-description">Анонс стрима, донаты, рейды и итог эфира уходят в Телеграм, Discord и ВКонтакте. Здесь быстрые переключатели, всё остальное — в «Детальной настройке» каждой сети.</p></div></div>
+      <div class="soc-cols" id="socCols"></div>
     </section>
 
     <section class="tab-section" id="tab-chronicles">
@@ -4283,6 +4293,7 @@
 <script src="telegram.js?v=5"></script>
 <script src="discord.js?v=1"></script>
 <script src="vk.js?v=1"></script>
+<script src="social.js?v=1"></script>
 <script src="extmodal.js?v=2"></script>
 
 <div class="ex-amb-ov" id="exAmbOv" hidden><div class="ex-amb" role="dialog" aria-modal="true" aria-label="Фоновый эмбиент">
