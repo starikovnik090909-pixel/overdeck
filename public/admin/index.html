@@ -1307,13 +1307,13 @@
 
       <div class="card ui3-card">
         <h3 class="dc-h">Подключение</h3>
-        <ol class="tg-steps"><li>В сообществе: <b>Управление → Работа с API → Ключи доступа → Создать ключ</b>. Отметь права <b>«Стена»</b> и <b>«Сообщения сообщества»</b>.</li><li>Для беседы: <b>Управление → Сообщения</b> включи, добавь сообщество в беседу и сделай администратором.</li><li>Вставь ключ и ID сообщества (число из адреса <code>vk.com/club123456789</code>) и нажми «Проверить».</li></ol>
+        <ol class="tg-steps"><li>В сообществе: <b>Управление → Работа с API → Ключи доступа → Создать ключ</b>. Отметь права <b>«Стена»</b>, <b>«Фотографии»</b> и <b>«Сообщения сообщества»</b>.</li><li>Для беседы: <b>Управление → Сообщения</b> включи, добавь сообщество в беседу и сделай администратором.</li><li>Вставь ключ и ID сообщества (число из адреса <code>vk.com/club123456789</code>) и нажми «Проверить».</li></ol>
         <div class="tg-fields">
           <div class="field"><label>Ключ доступа <span class="tg-hint" id="vkTokHint"></span></label><input type="password" id="vkTok" autocomplete="off" placeholder="ключ сообщества"></div>
           <div class="field"><label>ID сообщества</label><input type="text" id="vkGroup" autocomplete="off" placeholder="например 123456789"></div>
           <div class="field"><label>Номер беседы <span class="tg-hint">1, 2, 3… пусто = без беседы</span></label><input type="text" id="vkChat" autocomplete="off" placeholder="например 1"></div>
         </div>
-        <div class="dc-ev"><label class="tg-sw"><input type="checkbox" id="vkWall"><i></i><span>Анонс постом на стену</span></label></div>
+        <div class="dc-ev"><label class="tg-sw"><input type="checkbox" id="vkWall"><i></i><span>Анонс постом на стену</span></label><label class="tg-sw"><input type="checkbox" id="vkPhoto"><i></i><span>Прикладывать скриншот стрима</span></label></div>
         <div class="field"><label>Текст анонса <span class="tg-hint">можно {channel} {title} {game} {url}</span></label><textarea id="vkTpl" rows="3"></textarea></div>
         <div class="tg-row"><button class="btn btn-secondary" id="vkCheck" type="button">Проверить</button><button class="btn btn-secondary" id="vkTest" type="button">Тестовый анонс</button><button class="btn btn-secondary" id="vkTestEnd" type="button">Пример итога</button><button class="btn btn-ghost btn-sm" id="vkClearTok" type="button">Удалить ключ</button></div>
         <p class="tg-hint">Тестовый анонс публикуется по-настоящему: пост на стене можно потом удалить.</p>

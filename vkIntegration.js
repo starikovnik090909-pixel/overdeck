@@ -18,6 +18,7 @@ const DEFAULTS = {
   groupId: '',               // число, без минуса
   wall: true,                // анонс постом на стену
   chat: '',                  // номер беседы (1, 2, …) или peer_id; пусто = без беседы
+  photo: true,               // прикладывать скриншот эфира к анонсу
   announce: true,
   template: '🔴 {channel} в эфире!\n{title}',
   events: { donation: true, raid: true, sub: true, follow: false, end: true },
@@ -49,7 +50,7 @@ const ready = () => !!(cfg.token && gid());
 
 const ERR = {
   5: 'ВК не принял ключ доступа. Создай новый в настройках сообщества → Работа с API.',
-  7: 'У ключа нет нужного права. Отметь «Управление сообществом», «Стена» и «Сообщения сообщества».',
+  7: 'У ключа нет нужного права. Отметь «Управление сообществом», «Стена», «Фотографии» и «Сообщения сообщества».',
   9: 'ВК просит не слать так часто, попробуй позже.',
   14: 'ВК просит ввести капчу. Попробуй позже.',
   15: 'ВК отказал в доступе: проверь права ключа и что бот добавлен в беседу.',
@@ -91,8 +92,30 @@ async function call(method, params) {
 }
 
 const rnd = () => Math.floor(Math.random() * 2147483000) + 1;
-function toChat(text) { return call('messages.send', { peer_id: peer(), random_id: rnd(), message: clip(text, 3900), disable_mentions: 1, dont_parse_links: 0 }); }
-function toWall(text) { return call('wall.post', { owner_id: -Number(gid()), from_group: 1, message: clip(text, 15000) }); } // ссылка в тексте: ВК сам делает превью, вложением её слать не нужно (ВК отвечал ошибкой 100)
+function toChat(text, att) { return call('messages.send', { peer_id: peer(), random_id: rnd(), message: clip(text, 3900), disable_mentions: 1, dont_parse_links: 0, ...(att ? { attachment: att } : {}) }); }
+function toWall(text, att) { return call('wall.post', { owner_id: -Number(gid()), from_group: 1, message: clip(text, 15000), ...(att ? { attachments: att } : {}) }); } // ссылка в тексте: ВК сам делает превью, вложением её слать не нужно (ВК отвечал ошибкой 100)
+
+// ---------- скриншот эфира ----------
+async function download(url) {
+  try {
+    const r = await fetch(url, { redirect: 'follow', signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return null;
+    const buf = Buffer.from(await r.arrayBuffer());
+    return buf.length > 2000 ? buf : null;
+  } catch (e) { return null; }
+}
+/** Загружает картинку на сервер ВК и возвращает строку-вложение photo<owner>_<id>. Любая неудача: null (анонс уйдёт без картинки). */
+async function uploadPhoto(img, forChat) {
+  try {
+    const srv = await call(forChat ? 'photos.getMessagesUploadServer' : 'photos.getWallUploadServer', forChat ? { peer_id: peer() } : { group_id: gid() });
+    if (!srv || !srv.upload_url) return null;
+    const fd = new FormData(); fd.append('photo', new Blob([img], { type: 'image/jpeg' }), 'stream.jpg');
+    const up = await (await fetch(srv.upload_url, { method: 'POST', body: fd, signal: AbortSignal.timeout(30000) })).json();
+    const saved = await call(forChat ? 'photos.saveMessagesPhoto' : 'photos.saveWallPhoto', forChat ? { photo: up.photo, server: up.server, hash: up.hash } : { group_id: gid(), photo: up.photo, server: up.server, hash: up.hash });
+    const ph = Array.isArray(saved) ? saved[0] : saved && saved.items && saved.items[0];
+    return ph && ph.id ? 'photo' + ph.owner_id + '_' + ph.id : null;
+  } catch (e) { console.warn('[VK] картинка не загрузилась:', e.message); return null; }
+}
 
 const safe = (p) => p.catch((e) => console.warn('[VK]', e.message));
 const on = () => cfg.enabled && ready();
@@ -104,12 +127,14 @@ async function announce() {
   const info = d && d.info, channel = (d && d.channel) || ext.channel();
   const v = { channel, title: info ? info.title : 'Стрим начался', game: info ? info.game_name : '', url: twitchUrl(channel) };
   const text = render(cfg.template, v) + (v.game ? '\nКатегория: ' + v.game : '') + '\n' + v.url;
+  let img = null, shot = false;
+  if (cfg.photo && info && info.thumbnail_url) img = await download(info.thumbnail_url.replace('{width}', '1280').replace('{height}', '720') + '?t=' + Date.now());
   try {
-    if (cfg.wall) await toWall(text);
-    if (peer()) await toChat(text);
+    if (cfg.wall) { const a = img ? await uploadPhoto(img, false) : null; shot = shot || !!a; await toWall(text, a); }
+    if (peer()) { const a = img ? await uploadPhoto(img, true) : null; shot = shot || !!a; await toChat(text, a); }
   } catch (e) { notifyUi.emit('vk.fail', { reason: e.message }); throw e; }
   notifyUi.emit('vk.sent', {});
-  return { live: !!info };
+  return { live: !!info, photo: shot };
 }
 
 function onStreamStart() {
@@ -184,7 +209,7 @@ function onStreamEnd() {
 // ---------- API для админки ----------
 function publicState() {
   return {
-    enabled: cfg.enabled, hasToken: !!cfg.token, tokenHint: hint(cfg.token), groupId: cfg.groupId, wall: cfg.wall, chat: cfg.chat,
+    enabled: cfg.enabled, hasToken: !!cfg.token, tokenHint: hint(cfg.token), groupId: cfg.groupId, wall: cfg.wall, chat: cfg.chat, photo: cfg.photo,
     announce: cfg.announce, template: cfg.template, defaultTemplate: DEFAULTS.template, events: { ...cfg.events }, minDonation: cfg.minDonation,
     lastSentAt: cfg.lastSentAt, lastError: cfg.lastError,
   };
@@ -205,6 +230,7 @@ function update(b) {
   }
   if (typeof b.enabled === 'boolean') cfg.enabled = b.enabled;
   if (typeof b.wall === 'boolean') cfg.wall = b.wall;
+  if (typeof b.photo === 'boolean') cfg.photo = b.photo;
   if (typeof b.announce === 'boolean') cfg.announce = b.announce;
   if (typeof b.template === 'string') cfg.template = clip(b.template, 1000) || DEFAULTS.template;
   if (b.events && typeof b.events === 'object') for (const k of Object.keys(DEFAULTS.events)) if (typeof b.events[k] === 'boolean') cfg.events[k] = b.events[k];

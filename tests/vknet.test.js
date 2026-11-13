@@ -4,7 +4,7 @@ const FILE = path.join(__dirname, '..', 'vk.json');
 const had = fs.existsSync(FILE) ? fs.readFileSync(FILE) : null;
 
 // --- заглушка сети: не-JSON ответ, ошибка ВК и успех ---
-(async () => {
+const first = (async () => {
   const vk = require('../vkIntegration');
   const realFetch = global.fetch;
   const assert = require('assert');
@@ -22,3 +22,29 @@ const had = fs.existsSync(FILE) ? fs.readFileSync(FILE) : null;
   if (had) fs.writeFileSync(FILE, had); else { try { fs.unlinkSync(FILE); } catch (e) {} }
   console.log('vk net stub: ok');
 })().catch((e) => { console.error(e); process.exit(1); });
+
+// --- скриншот эфира: загрузка на сервер ВК и вложение; сбой загрузки не ломает анонс ---
+first.then(async () => {
+  const vk = require('../vkIntegration'); const assert = require('assert');
+  const realFetch = global.fetch; const log = [];
+  vk.init({ channel: () => 'starlkov', getInfo: async () => ({ channel: 'starlkov', info: { title: 'T', game_name: 'G', thumbnail_url: 'https://img/x-{width}x{height}.jpg' } }) });
+  vk.update({ token: 'vk1.a.abcdefghijklmnopqrstuvwxyz0123', groupId: '123456789', chat: '1', wall: true, photo: true, enabled: true });
+  const ok = (o) => ({ status: 200, ok: true, text: async () => JSON.stringify(o), json: async () => o, arrayBuffer: async () => new Uint8Array(5000).buffer });
+  global.fetch = async (url, o) => {
+    const u = String(url); const m = u.split('/').pop(); log.push({ m, b: o && o.body instanceof URLSearchParams ? Object.fromEntries(o.body) : null });
+    if (u.startsWith('https://img/')) return ok({});
+    if (u.includes('upload.vk')) return ok({ server: 1, photo: 'p', hash: 'h' });
+    if (m === 'photos.getWallUploadServer' || m === 'photos.getMessagesUploadServer') return ok({ response: { upload_url: 'https://upload.vk/x' } });
+    if (m === 'photos.saveWallPhoto' || m === 'photos.saveMessagesPhoto') return ok({ response: [{ id: 7, owner_id: -123456789 }] });
+    return ok({ response: 1 });
+  };
+  const r = await vk.test(); assert.strictEqual(r.photo, true);
+  const wall = log.find((x) => x.m === 'wall.post'), msg = log.find((x) => x.m === 'messages.send');
+  assert.strictEqual(wall.b.attachments, 'photo-123456789_7'); assert.strictEqual(msg.b.attachment, 'photo-123456789_7');
+  // сбой загрузки картинки: анонс уходит без неё
+  log.length = 0;
+  global.fetch = async (url, o) => { const u = String(url), m = u.split('/').pop(); log.push({ m, b: o && o.body instanceof URLSearchParams ? Object.fromEntries(o.body) : null }); if (u.startsWith('https://img/')) return ok({}); if (m.startsWith('photos.')) return ok({ error: { error_code: 7, error_msg: 'no' } }); return ok({ response: 1 }); };
+  const r2 = await vk.test(); assert.strictEqual(r2.photo, false); assert.ok(!('attachments' in log.find((x) => x.m === 'wall.post').b));
+  global.fetch = realFetch; vk.update({ clearToken: true });
+  console.log('vk photo: ok');
+}).catch((e) => { console.error(e); process.exit(1); });
