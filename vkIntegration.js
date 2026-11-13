@@ -83,7 +83,7 @@ async function call(method, params) {
   }
   if (j && j.error) {
     const c = j.error.error_code;
-    cfg.lastError = ERR[c] || ('ВК ответил ошибкой ' + c + (j.error.error_msg ? ': ' + j.error.error_msg : ''));
+    cfg.lastError = (ERR[c] ? ERR[c] + (c === 100 && j.error.error_msg ? ' (ВК пишет: ' + j.error.error_msg + ')' : '') : ('ВК ответил ошибкой ' + c + (j.error.error_msg ? ': ' + j.error.error_msg : '')));
     save(); throw new Error(cfg.lastError);
   }
   cfg.lastSentAt = Date.now(); cfg.lastError = ''; save();
@@ -92,7 +92,7 @@ async function call(method, params) {
 
 const rnd = () => Math.floor(Math.random() * 2147483000) + 1;
 function toChat(text) { return call('messages.send', { peer_id: peer(), random_id: rnd(), message: clip(text, 3900), disable_mentions: 1, dont_parse_links: 0 }); }
-function toWall(text, link) { return call('wall.post', { owner_id: -Number(gid()), from_group: 1, message: clip(text, 15000), ...(link ? { attachments: link } : {}) }); }
+function toWall(text) { return call('wall.post', { owner_id: -Number(gid()), from_group: 1, message: clip(text, 15000) }); } // ссылка в тексте: ВК сам делает превью, вложением её слать не нужно (ВК отвечал ошибкой 100)
 
 const safe = (p) => p.catch((e) => console.warn('[VK]', e.message));
 const on = () => cfg.enabled && ready();
@@ -105,7 +105,7 @@ async function announce() {
   const v = { channel, title: info ? info.title : 'Стрим начался', game: info ? info.game_name : '', url: twitchUrl(channel) };
   const text = render(cfg.template, v) + (v.game ? '\nКатегория: ' + v.game : '') + '\n' + v.url;
   try {
-    if (cfg.wall) await toWall(text, v.url);
+    if (cfg.wall) await toWall(text);
     if (peer()) await toChat(text);
   } catch (e) { notifyUi.emit('vk.fail', { reason: e.message }); throw e; }
   notifyUi.emit('vk.sent', {});

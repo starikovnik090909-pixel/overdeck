@@ -19,7 +19,7 @@ global.fetch = async (url, o) => { const b = Object.fromEntries(new URLSearchPar
   const r = await vk.test();
   assert.strictEqual(r.live, true);
   assert.strictEqual(calls.length, 2);
-  assert.ok(calls[0].url.endsWith('wall.post')); assert.strictEqual(calls[0].b.owner_id, '-123456'); assert.strictEqual(calls[0].b.from_group, '1');
+  assert.ok(calls[0].url.endsWith('wall.post')); assert.ok(!('attachments' in calls[0].b), 'без вложения-ссылки'); assert.strictEqual(calls[0].b.owner_id, '-123456'); assert.strictEqual(calls[0].b.from_group, '1');
   assert.ok(calls[1].url.endsWith('messages.send')); assert.strictEqual(calls[1].b.peer_id, '2000000002');
   assert.ok(calls[0].b.message.includes('twitch.tv/starlkov'));
   assert.ok(!calls[0].url.includes('access_token'), 'ключ не в адресе');
