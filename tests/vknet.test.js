@@ -50,7 +50,7 @@ const second = first.then(async () => {
 }).catch((e) => { console.error(e); process.exit(1); });
 
 // --- несколько бесед и закрепление поста ---
-second.then(async () => {
+const third = second.then(async () => {
   const vk = require('../vkIntegration'); const assert = require('assert'); const realFetch = global.fetch; const log = [];
   vk.init({ channel: () => 'starlkov', getInfo: async () => ({ channel: 'starlkov', info: { title: 'T', game_name: '' } }) });
   assert.throws(() => vk.update({ chat: '1, x' }));
@@ -61,4 +61,12 @@ second.then(async () => {
   const pin = log.find((x) => x.m === 'wall.pin'); assert.ok(pin && pin.b.post_id === '55' && pin.b.owner_id === '-123456789');
   global.fetch = realFetch; vk.update({ clearToken: true });
   console.log('vk multi: ok');
+}).catch((e) => { console.error(e); process.exit(1); });
+
+third.then(async () => {
+  const vk = require('../vkIntegration'); const assert = require('assert'); const realFetch = global.fetch;
+  vk.update({ token: 'vk1.a.abcdefghijklmnopqrstuvwxyz0123', groupId: '123456789' });
+  global.fetch = async () => ({ status: 200, ok: true, text: async () => JSON.stringify({ response: { items: [{ conversation: { peer: { type: 'chat', id: 2000000003, local_id: 3 }, chat_settings: { title: 'Чат' } } }, { conversation: { peer: { type: 'user', id: 5 } } }] } }) });
+  assert.deepStrictEqual((await vk.chats()).chats, [{ id: 3, title: 'Чат' }]);
+  global.fetch = realFetch; vk.update({ clearToken: true }); console.log('vk chats: ok');
 }).catch((e) => { console.error(e); process.exit(1); });

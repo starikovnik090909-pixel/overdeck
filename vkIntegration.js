@@ -260,6 +260,18 @@ async function check() {
   return { name: g.name || ('club' + gid()) };
 }
 
+/** Беседы, в которых состоит сообщество: номер и название, чтобы не гадать с номером. */
+async function chats() {
+  if (!ready()) throw new Error('Сначала вставь ключ и ID сообщества.');
+  const r = await call('messages.getConversations', { count: 200, filter: 'all' });
+  const out = [];
+  for (const it of (r && r.items) || []) {
+    const c = it.conversation || {}, p = c.peer || {};
+    if (p.type === 'chat') out.push({ id: p.local_id || (p.id - 2000000000), title: clip((c.chat_settings && c.chat_settings.title) || 'Без названия', 60) });
+  }
+  return { chats: out.sort((a, b) => a.id - b.id) };
+}
+
 function init(extra) { ext = { ...ext, ...extra }; load(); }
 
-module.exports = { init, onStreamStart, onStreamEnd, onEvent, onDonation, publicState, update, test, testEnd, check, _summaryText: summaryText, _cfg: () => cfg };
+module.exports = { init, onStreamStart, onStreamEnd, onEvent, onDonation, publicState, update, test, testEnd, check, chats, _summaryText: summaryText, _cfg: () => cfg };

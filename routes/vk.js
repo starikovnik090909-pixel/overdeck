@@ -7,6 +7,7 @@ function main(ctx) {
   app.get('/api/vk', (req, res) => res.json({ success: true, ...vk.publicState() }));
   app.post('/api/vk', wrap((b) => vk.update(b)));
   app.post('/api/vk/test', wrap((b) => (b.end ? vk.testEnd() : vk.test())));
+  app.post('/api/vk/chats', wrap(() => vk.chats()));
   app.post('/api/vk/check', wrap(() => vk.check()));
   return {};
 }
