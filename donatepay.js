@@ -41,21 +41,27 @@ class DpError extends Error {
 
 async function api(method, params) {
   const qs = new URLSearchParams({ access_token: apiKey, ...(params || {}) });
-  let res;
+  let res, txt = '';
   try {
-    res = await fetch(`${BASE}/${method}?${qs.toString()}`, { headers: { Accept: 'application/json' } });
+    res = await fetch(`${BASE}/${method}?${qs.toString()}`, { headers: { Accept: 'application/json', 'User-Agent': 'Overdeck/1.0' }, signal: AbortSignal.timeout(15000) });
+    txt = await res.text();
   } catch (e) {
     throw new DpError('Нет связи с DonatePay: ' + e.message, false);
   }
   let json = null;
-  try { json = await res.json(); } catch (e) { /* ниже по статусу */ }
+  try { json = JSON.parse(txt); } catch (e) { /* ниже */ }
+  const retry = Number(res.headers.get('retry-after')) || 0;
   const code = Number((json && json.status) || res.status) || res.status;
-  if (res.status === 429 || code === 429) throw Object.assign(new DpError('Слишком много запросов к DonatePay', false), { rate: true });
-  if (res.status === 401 || res.status === 403 || code === 401 || code === 403) throw new DpError('DonatePay не принял API-ключ — проверь, что скопирован целиком (страница donatepay.ru/page/api).', true);
+  // Лимит «1 запрос метода в 20 секунд» сайт иногда отдаёт HTML-страницей с кодом 200: это не ошибка ключа.
+  if (res.status === 429 || code === 429 || (!json && (retry || /<html/i.test(txt)))) {
+    throw Object.assign(new DpError('Слишком много запросов к DonatePay, подожди немного', false), { rate: true, retry });
+  }
+  if (res.status === 401 || res.status === 403 || code === 401 || code === 403 || /incorrect token|invalid token|неверн\w* (токен|ключ)/i.test((json && json.message) || '')) {
+    throw new DpError('DonatePay не принял API-ключ: проверь, что он скопирован целиком (страница donatepay.ru/page/api, поле «Ваш API ключ»).', true);
+  }
   if (!res.ok || !json || (typeof json.status === 'string' && json.status !== 'success')) {
     const msg = (json && json.message) ? String(json.message) : `ответ ${res.status}`;
-    // «неверный/просроченный ключ» DonatePay сообщает по-разному — любую ошибку на /user считаем фатальной для проверки ключа
-    throw new DpError('DonatePay: ' + msg, method === 'user');
+    throw new DpError('DonatePay: ' + msg, false);
   }
   return json.data;
 }
@@ -155,15 +161,16 @@ function info() { return { connected: running, userName, userId, lastError, last
  * перестал подходить. Бросает ошибку с понятным текстом, если ключ не принят.
  */
 async function connect(key, donationCb, authErrorCb) {
-  const k = String(key || '').trim();
+  const k = String(key || '').trim().replace(/^access_token=/i, '').replace(/^bearer\s+/i, '').replace(/\s+/g, '');
   if (!k) throw new Error('Не указан API-ключ DonatePay');
   disconnect();
   apiKey = k; onDonation = donationCb; onAuthError = authErrorCb || null;
+  const withRetry = async (fn) => { try { return await fn(); } catch (e) { if (!e.rate) throw e; await new Promise((ok) => setTimeout(ok, Math.min(Math.max(e.retry || 0, 5), 25) * 1000)); return fn(); } };
   try {
-    const user = await api('user');
+    const user = await withRetry(() => api('user'));
     userName = String((user && user.name) || '');
     userId = user && user.id != null ? user.id : null;
-    const newest = list(await api('transactions', { type: 'donation', order: 'DESC', limit: 1 }));
+    const newest = list(await withRetry(() => api('transactions', { type: 'donation', order: 'DESC', limit: 1 })));
     lastId = newest.length ? Number(newest[0].id) || 0 : 0;
   } catch (e) {
     disconnect();

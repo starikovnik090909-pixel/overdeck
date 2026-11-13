@@ -42,7 +42,10 @@ async function connect(token, onDonation) {
   }
   disconnect();
 
+  token = String(token || '').trim().replace(/^bearer\s+/i, '').replace(/\s+/g, '');
+  if (!token) throw new Error('Не указан API-токен DonateX');
   client = new DonateXClient();
+  client.on('error', (e) => console.warn('[DonateX]', e && e.message)); // без слушателя ошибка роняет процесс
   client.on('DonationCreated', (raw) => {
     try {
       onDonation(mapDonation(raw));
@@ -51,7 +54,14 @@ async function connect(token, onDonation) {
     }
   });
 
-  await client.login(token);
+  try {
+    await client.login(token);
+  } catch (e) {
+    const m = String((e && e.message) || e);
+    disconnect();
+    if (/401|unauthor|403|forbidden/i.test(m)) throw new Error('DonateX не принял токен: проверь, что он скопирован целиком.');
+    throw new Error('Не удалось подключиться к DonateX: ' + m.replace(/^\[DonateX Client\] Failed to login: /, '').slice(0, 200));
+  }
   console.log('[DonateX] Подключено, слушаем донаты.');
   return true;
 }
@@ -59,8 +69,9 @@ async function connect(token, onDonation) {
 function disconnect() {
   if (client) {
     try {
-      if (typeof client.disconnect === 'function') client.disconnect();
-      else if (typeof client.logout === 'function') client.logout();
+      client.removeAllListeners('DonationCreated');
+      if (typeof client.destroy === 'function') client.destroy().catch(() => {}); // закрывает SignalR; иначе после переподключения донаты дублируются
+      else if (typeof client.disconnect === 'function') client.disconnect();
     } catch (e) {
       // соединение уже могло быть закрыто — не критично
     }
