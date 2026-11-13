@@ -416,6 +416,7 @@
     l: { shape: 'square', fill: 'slot', pal: { p: '#4be3d8', s: '#ff5555', g: '#55ff55', r: '#ffaa00' }, ic: 'col', icons: { channelpoints: 'gem', sub: 'heart', raid: 'swords' }, don: { mode: 'slot', r: 0 } },
     m: { shape: 'circle', fill: 'outline', pal: { p: '#c4c4c4', s: '#c4c4c4', g: '#c4c4c4', r: '#c4c4c4' }, ic: 'col', thin: true, glow: 0, don: { mode: 'outline', r: 0, thin: true } },
     n: { shape: 'circle', fill: 'light', ic: 'col', don: { mode: 'light', r: 0.5 } },
+    r: { shape: 'circle', fill: 'solid', pal: { p: '#8fe05a', s: '#f0a6dc', g: '#c9d6ff', r: '#e0443a' }, ic: '#10200f', border: '#f3ecd2', glow: .7, don: { mode: 'flat', r: 0.5, text: '#10200f', fill: '#8fe05a' } },
     p: { shape: 'hex', fill: 'dark', bg: '#0b0b0b', pal: { p: '#e22a22', s: '#e22a22', g: '#ff5a4d', r: '#c41e18' }, ic: 'col', glow: 1.2, icons: { raid: 'swords' }, don: { mode: 'dark', r: 0, bg: '#0b0b0b', border: '#e22a22' } },
     o: { shape: 'cyber', fill: 'solid', pal: { p: '#00f0ff', s: '#fcee0a', g: '#ff003c', r: '#ff003c' }, ic: '#0a0a0a', glow: 1.2, border: 'none', icons: { raid: 'crosshair' }, don: { mode: 'flat', r: 0, fill: '#00f08a', text: '#04140c', border: 'none' } },
   };

@@ -7,7 +7,8 @@ const path = require('path');
 
 const FILE_PATH = path.join(__dirname, 'overlay_style.json');
 const STYLES = [
-  { id: 'q', num: 17, label: 'Graphite', hint: 'графит, тонкие линии, спокойный акцент', isNew: true },
+  { id: 'r', num: 18, label: 'Лягушачье болото', hint: 'сказочно и жутковато: болото, рукописные рамки, лягушки', isNew: true },
+  { id: 'q', num: 17, label: 'Graphite', hint: 'графит, тонкие линии, спокойный акцент' },
   { id: 'default', num: 0, label: 'Классический', hint: 'как раньше' },
   { id: 'a', num: 1, label: 'Frost', hint: 'матовое стекло, Apple' },
   { id: 'b', num: 2, label: 'Razer', hint: 'скошенные углы, зелёный неон' },

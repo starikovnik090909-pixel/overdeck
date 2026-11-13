@@ -494,3 +494,53 @@ body[data-ostyle="n"] .da-layer:not(.da-plain) .da-amount { background: linear-g
 body[data-ostyle] .panel.chat-panel { padding: 10px 12px; overflow: hidden; }
 /* Светлые темы: текст чата по умолчанию светлый — переворачиваем яркость внутри iframe, цвета остаются близкими */
 body[data-ostyle="d"] .panel.chat-panel iframe, body[data-ostyle="n"] .panel.chat-panel iframe { filter: invert(1) hue-rotate(180deg); }
+
+
+/* ================= 18 · ЛЯГУШАЧЬЕ БОЛОТО: сказочно и жутковато. Болотные цвета, шрифт «капающая краска» (Rubik Wet Paint) + рукописный Neucha,
+   рамки нарисованы от руки, на плашках подтёки красной краски, а изредка из тёмного болота на одну из плашек смотрят лягушки (frog-fx.js).
+   Все рисунки (ovl-frog/*.svg) нарисованы для Overdeck, чужих изображений тут нет. ================= */
+@font-face { font-family: 'OvlWet'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/rubik-wet-paint-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlWet'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/rubik-wet-paint-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+@font-face { font-family: 'OvlNeucha'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/neucha-cyrillic-400-normal.woff2') format('woff2'); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+@font-face { font-family: 'OvlNeucha'; font-weight: 400; font-style: normal; font-display: swap; src: url('ovl-fonts/neucha-latin-400-normal.woff2') format('woff2'); unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215; }
+body[data-ostyle="r"] {
+  --font-main: 'OvlWet', 'OvlNeucha', system-ui, sans-serif; --font-text: 'OvlNeucha', system-ui, sans-serif; --o-scale: 1.08;
+  --o-r: 16px; --o-bw: 0px; --o-blur: 0px; --o-sat: 100%;
+  --o-bg: radial-gradient(ellipse 70% 60% at 12% 8%, rgba(120,170,110,.20), transparent 70%), radial-gradient(ellipse 60% 50% at 90% 95%, rgba(90,140,100,.16), transparent 70%), linear-gradient(180deg, rgba(20,38,28,.95), rgba(12,24,18,.97));
+  --o-solid: #10201a; --o-border: transparent; --o-hi: transparent; --o-shadow: 0 8px 26px rgba(0,0,0,.5);
+  --o-track: .03em; --o-case: none; --o-title: #f3ecd2; --o-title-k: 1.05; --o-title-w: 400; --o-line: rgba(243,236,210,.22); --o-track-bg: rgba(0,0,0,.4);
+  --o-chip-r: 999px; --o-chip-bg: #8fe05a; --o-chip-fg: #10200f; --o-name: #f3ecd2; --o-bar-r: 999px; --o-bar-k: .55; --o-av-r: 50%; --o-dc-r: 50%; --o-av-shadow: none;
+  --accent: #8fe05a;
+}
+/* рамка: линия, «дрожащая» от руки (SVG-фильтр #frog-wobble лежит в overlay.html) */
+body[data-ostyle="r"] .panel { border: 0; border-radius: 16px; padding: 22px 24px; overflow: hidden; }
+body[data-ostyle="r"] .panel::after { content: ''; position: absolute; inset: 5px; border: 3px solid #f3ecd2; border-radius: 15px; pointer-events: none; z-index: 3; filter: url(#frog-wobble); box-shadow: inset 0 0 0 4px rgba(111,208,74,.0), 0 0 10px rgba(243,236,210,.12); }
+/* подтёки красной краски по верхнему краю */
+body[data-ostyle="r"] .panel::before { content: ''; position: absolute; left: 8px; right: 8px; top: 1px; height: 30px; pointer-events: none; z-index: 2; opacity: .9; background: url('ovl-frog/drips.svg') left top / 480px 30px repeat-x; }
+body[data-ostyle="r"] .panel-title-row { justify-content: flex-start; gap: 10px; margin-bottom: 10px; }
+body[data-ostyle="r"] .panel-title { background: linear-gradient(180deg, #c9d6ff 0%, #f0a6dc 100%); -webkit-background-clip: text; background-clip: text; color: transparent; text-shadow: none; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.55)); letter-spacing: .04em; }
+body[data-ostyle="r"] .panel-title::after { content: ''; display: inline-block; width: 1.5em; height: 1.1em; margin-left: .5em; vertical-align: -.2em; background: url('ovl-frog/frog-mini.svg') center / contain no-repeat; -webkit-text-fill-color: initial; }
+body[data-ostyle="r"] .panel-icon, body[data-ostyle="r"] .chatter-avatar, body[data-ostyle="r"] .donor-circle, body[data-ostyle="r"] .donor-circle-inner, body[data-ostyle="r"] .ef-ic { border-radius: 50%; }
+body[data-ostyle="r"] .chatter-avatar { border: 2px solid #f3ecd2; outline: 0; }
+body[data-ostyle="r"] .chatter-row.rank-0 .chatter-avatar { border-color: #8fe05a; box-shadow: 0 0 0 3px rgba(143,224,90,.25); }
+body[data-ostyle="r"] .chatter-name, body[data-ostyle="r"] .donor-name { font-family: 'OvlNeucha', system-ui, sans-serif; color: #f3ecd2 !important; letter-spacing: .02em; }
+body[data-ostyle="r"] .chatter-bar-fill { background: linear-gradient(90deg, #2f7a34, #8fe05a); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
+body[data-ostyle="r"] .chatter-row.rank-0 .chatter-bar-fill { background: linear-gradient(90deg, #8fe05a, #d8f5a2); box-shadow: 0 0 12px rgba(143,224,90,.55); }
+body[data-ostyle="r"] .chatter-row:not(.rank-0) .chatter-count, body[data-ostyle="r"] .donor-amount { color: #c9d6ff !important; }
+body[data-ostyle="r"] .chatter-row.rank-0 .chatter-count { color: #f0a6dc; text-shadow: 0 0 10px rgba(240,166,220,.5); }
+body[data-ostyle="r"] .donor-circle { background: #1c3a26 !important; box-shadow: inset 0 0 0 2px #f3ecd2 !important; }
+body[data-ostyle="r"] .wc-poster { --wc-hero: linear-gradient(#f3ecd2, #c9d6ff); --wc-hi: #f3ecd2; --wc-acc: #8fe05a; --wc-up: #8fe05a; --wc-line: rgba(243,236,210,.3); }
+body[data-ostyle="r"] .wc-ln i { background: linear-gradient(90deg, #2f7a34, #8fe05a); }
+body[data-ostyle="r"] .ef-host { --ef-hi: #8fe05a; --ef-follow: #8fe05a; --ef-sub: #f0a6dc; --ef-gift: #c9d6ff; --ef-don: #ffd54a; --ef-raid: #e0443a; }
+body[data-ostyle="r"] .da-layer:not(.da-plain):not(.da-custom) { --da-c0: #8fe05a; }
+/* лягушки из болота (frog-fx.js): взгляд, прыжок, редкий испуг — только на ОДНОЙ плашке за раз */
+body[data-ostyle="r"] .frog-fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; border-radius: inherit; }
+body[data-ostyle="r"] .frog-fx i { position: absolute; display: block; background-repeat: no-repeat; background-position: center bottom; background-size: contain; opacity: 0; will-change: transform, opacity; }
+body[data-ostyle="r"] .frog-fx.stare i { width: 46%; max-width: 190px; aspect-ratio: 160 / 70; right: 10%; bottom: -2px; background-image: url('ovl-frog/frog-eyes.svg'); animation: frog-stare 4.6s ease-in-out forwards; }
+body[data-ostyle="r"] .frog-fx.hop i { width: 17%; max-width: 78px; aspect-ratio: 120 / 100; left: 0; bottom: 4px; background-image: url('ovl-frog/frog-open.svg'); animation: frog-hop var(--frog-d, 6s) linear forwards; }
+body[data-ostyle="r"] .frog-fx.scare { background: radial-gradient(ellipse at 50% 55%, rgba(224,68,58,0), rgba(224,68,58,.3)); animation: frog-flash .75s steps(1, end); }
+body[data-ostyle="r"] .frog-fx.scare i { width: 60%; max-width: 260px; aspect-ratio: 120 / 100; right: 8%; bottom: 0; background-image: url('ovl-frog/frog-open.svg'); animation: frog-scare .75s cubic-bezier(.1,.9,.2,1); }
+@keyframes frog-stare { 0% { opacity: 0; transform: translateY(70%); } 18% { opacity: 1; transform: translateY(8%); } 40% { transform: translateY(8%) scaleY(1); } 44% { transform: translateY(8%) scaleY(.12); } 48% { transform: translateY(8%) scaleY(1); } 70% { opacity: 1; transform: translateY(8%); } 74% { transform: translateY(8%) scaleY(.12); } 78% { transform: translateY(8%) scaleY(1); } 100% { opacity: 0; transform: translateY(80%); } }
+@keyframes frog-hop { 0% { opacity: 0; transform: translateX(-120%) translateY(0); } 6% { opacity: 1; } 12% { transform: translateX(120%) translateY(-60%); } 24% { transform: translateX(260%) translateY(0); } 36% { transform: translateX(420%) translateY(-60%); } 48% { transform: translateX(560%) translateY(0); } 60% { transform: translateX(720%) translateY(-60%); } 72% { transform: translateX(860%) translateY(0); } 90% { opacity: 1; } 100% { opacity: 0; transform: translateX(var(--frog-w, 1000%)) translateY(0); } }
+@keyframes frog-scare { 0% { opacity: 0; transform: scale(.6) translateY(30%); } 14% { opacity: 1; transform: scale(1.12); } 40% { opacity: .95; transform: scale(1.04) rotate(-2deg); } 60% { opacity: 1; transform: scale(1.1) rotate(2deg); } 100% { opacity: 0; transform: scale(1.2); } }
+@keyframes frog-flash { 0%, 20% { opacity: 1; } 10% { opacity: .3; } 100% { opacity: 0; } }
