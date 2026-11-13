@@ -16,7 +16,7 @@
     { k: 'vk', name: 'ВКонтакте', sec: 'tab-vk', api: '/api/vk', color: '#0077FF', master: 'vkEnabled', test: 'vkTest',
       tog: [['Анонс при старте стрима', 'vkAnn'], ['Анонс постом на стену', 'vkWall'], ['Донаты', 'vkEvDon'], ['Рейды', 'vkEvRaid'], ['Подписки', 'vkEvSub'], ['Итог после стрима', 'vkEvEnd']],
       note: 'Ключ сообщества, ID, номер беседы и текст анонса — в детальной настройке. События идут в беседу.',
-      info: (s) => { const ok = s.hasToken && s.groupId; return [ok, ok ? 'Сообщество ' + s.groupId + (s.chat ? ', беседа ' + s.chat : ', без беседы') : 'Ключ не подключён']; } },
+      info: (s) => { const ok = s.hasToken && s.groupId; return [ok, ok ? 'Сообщество ' + s.groupId + (s.chat ? (/[\s,;]+\d/.test(s.chat) ? ', беседы ' : ', беседа ') + s.chat : ', без беседы') : 'Ключ не подключён']; } },
   ];
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

@@ -18,6 +18,7 @@ const DEFAULTS = {
   groupId: '',               // число, без минуса
   wall: true,                // анонс постом на стену
   chat: '',                  // номер беседы (1, 2, …) или peer_id; пусто = без беседы
+  pin: false,                // закреплять анонс на стене
   photo: true,               // прикладывать скриншот эфира к анонсу
   announce: true,
   template: '🔴 {channel} в эфире!\n{title}',
@@ -45,7 +46,8 @@ function render(tpl, v) { return String(tpl || '').replace(/\{(title|game|channe
 const twitchUrl = (login) => 'https://twitch.tv/' + (login || ext.channel() || '');
 
 const gid = () => (/^\d{3,12}$/.test(String(cfg.groupId)) ? String(cfg.groupId) : '');
-const peer = () => { const n = Number(cfg.chat); if (!n) return 0; return n >= 2000000000 ? n : 2000000000 + n; };
+const peers = () => String(cfg.chat || '').split(/[\s,;]+/).map(Number).filter((n) => n > 0).map((n) => (n >= 2000000000 ? n : 2000000000 + n)).filter((n, i, a) => a.indexOf(n) === i).slice(0, 10);
+const peer = () => peers().length; // есть ли хоть одна беседа
 const ready = () => !!(cfg.token && gid());
 
 const ERR = {
@@ -92,7 +94,7 @@ async function call(method, params) {
 }
 
 const rnd = () => Math.floor(Math.random() * 2147483000) + 1;
-function toChat(text, att) { return call('messages.send', { peer_id: peer(), random_id: rnd(), message: clip(text, 3900), disable_mentions: 1, dont_parse_links: 0, ...(att ? { attachment: att } : {}) }); }
+async function toChat(text, att, only) { const list = only ? [only] : peers(); let last, err; for (const id of list) try { last = await call('messages.send', { peer_id: id, random_id: rnd(), message: clip(text, 3900), disable_mentions: 1, dont_parse_links: 0, ...(att ? { attachment: att } : {}) }); } catch (e) { err = err || e; } if (err) throw err; return last; }
 function toWall(text, att) { return call('wall.post', { owner_id: -Number(gid()), from_group: 1, message: clip(text, 15000), ...(att ? { attachments: att } : {}) }); } // ссылка в тексте: ВК сам делает превью, вложением её слать не нужно (ВК отвечал ошибкой 100)
 
 // ---------- скриншот эфира ----------
@@ -105,9 +107,9 @@ async function download(url) {
   } catch (e) { return null; }
 }
 /** Загружает картинку на сервер ВК и возвращает строку-вложение photo<owner>_<id>. Любая неудача: null (анонс уйдёт без картинки). */
-async function uploadPhoto(img, forChat) {
+async function uploadPhoto(img, forChat, pid) {
   try {
-    const srv = await call(forChat ? 'photos.getMessagesUploadServer' : 'photos.getWallUploadServer', forChat ? { peer_id: peer() } : { group_id: gid() });
+    const srv = await call(forChat ? 'photos.getMessagesUploadServer' : 'photos.getWallUploadServer', forChat ? { peer_id: pid } : { group_id: gid() });
     if (!srv || !srv.upload_url) return null;
     const fd = new FormData(); fd.append('photo', new Blob([img], { type: 'image/jpeg' }), 'stream.jpg');
     const up = await (await fetch(srv.upload_url, { method: 'POST', body: fd, signal: AbortSignal.timeout(30000) })).json();
@@ -130,8 +132,8 @@ async function announce() {
   let img = null, shot = false;
   if (cfg.photo && info && info.thumbnail_url) img = await download(info.thumbnail_url.replace('{width}', '1280').replace('{height}', '720') + '?t=' + Date.now());
   try {
-    if (cfg.wall) { const a = img ? await uploadPhoto(img, false) : null; shot = shot || !!a; await toWall(text, a); }
-    if (peer()) { const a = img ? await uploadPhoto(img, true) : null; shot = shot || !!a; await toChat(text, a); }
+    if (cfg.wall) { const a = img ? await uploadPhoto(img, false) : null; shot = shot || !!a; const w = await toWall(text, a); if (cfg.pin && w && w.post_id) await call('wall.pin', { owner_id: -Number(gid()), post_id: w.post_id }).catch(() => {}); }
+    for (const id of peers()) { const a = img ? await uploadPhoto(img, true, id) : null; shot = shot || !!a; await toChat(text, a, id); }
   } catch (e) { notifyUi.emit('vk.fail', { reason: e.message }); throw e; }
   notifyUi.emit('vk.sent', {});
   return { live: !!info, photo: shot };
@@ -209,7 +211,7 @@ function onStreamEnd() {
 // ---------- API для админки ----------
 function publicState() {
   return {
-    enabled: cfg.enabled, hasToken: !!cfg.token, tokenHint: hint(cfg.token), groupId: cfg.groupId, wall: cfg.wall, chat: cfg.chat, photo: cfg.photo,
+    enabled: cfg.enabled, hasToken: !!cfg.token, tokenHint: hint(cfg.token), groupId: cfg.groupId, wall: cfg.wall, chat: cfg.chat, photo: cfg.photo, pin: cfg.pin,
     announce: cfg.announce, template: cfg.template, defaultTemplate: DEFAULTS.template, events: { ...cfg.events }, minDonation: cfg.minDonation,
     lastSentAt: cfg.lastSentAt, lastError: cfg.lastError,
   };
@@ -225,12 +227,13 @@ function update(b) {
   }
   if (typeof b.chat === 'string') {
     const c = b.chat.trim();
-    if (c && !/^\d{1,12}$/.test(c)) throw new Error('Номер беседы: только цифры (1, 2, 3…).');
+    if (c && !/^\d{1,12}([\s,;]+\d{1,12})*$/.test(c)) throw new Error('Номера бесед: только цифры через запятую (например 1, 2, 5).');
     cfg.chat = c;
   }
   if (typeof b.enabled === 'boolean') cfg.enabled = b.enabled;
   if (typeof b.wall === 'boolean') cfg.wall = b.wall;
   if (typeof b.photo === 'boolean') cfg.photo = b.photo;
+  if (typeof b.pin === 'boolean') cfg.pin = b.pin;
   if (typeof b.announce === 'boolean') cfg.announce = b.announce;
   if (typeof b.template === 'string') cfg.template = clip(b.template, 1000) || DEFAULTS.template;
   if (b.events && typeof b.events === 'object') for (const k of Object.keys(DEFAULTS.events)) if (typeof b.events[k] === 'boolean') cfg.events[k] = b.events[k];
