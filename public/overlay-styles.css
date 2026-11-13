@@ -547,7 +547,7 @@ body[data-ostyle="r"] .frog-fx.scare i { width: 60%; max-width: 260px; aspect-ra
 
 /* иконки-лягушки по виджетам */
 body[data-ostyle="r"] .panel-title::after { content: none; }
-body[data-ostyle="r"] .panel-icon { width: 92px; height: 74px; margin: -8px 0 -14px; background: center / contain no-repeat; border-radius: 0; box-shadow: none; border: 0; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
+body[data-ostyle="r"] .panel-icon { width: 66px; height: 53px; margin: -4px 0 -8px; background: center / contain no-repeat; border-radius: 0; box-shadow: none; border: 0; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
 body[data-ostyle="r"] .panel-icon svg { display: none; }
 body[data-ostyle="r"] .panel[data-widget="timeline"] .panel-icon { background-image: url('ovl-frog/f-timeline.svg'); }
 body[data-ostyle="r"] .panel[data-widget="activity"] .panel-icon { background-image: url('ovl-frog/f-activity.svg'); }

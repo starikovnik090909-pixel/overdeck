@@ -8,7 +8,7 @@ const FILE = path.join(__dirname, '..', 'vk.json');
 const had = fs.existsSync(FILE) ? fs.readFileSync(FILE) : null;
 const calls = [];
 let reply = () => ({ response: 1 });
-global.fetch = async (url, o) => { const b = Object.fromEntries(new URLSearchParams(String(o.body))); calls.push({ url, b }); return { json: async () => reply(b) }; };
+global.fetch = async (url, o) => { const b = Object.fromEntries(new URLSearchParams(String(o.body))); calls.push({ url, b }); return { status: 200, text: async () => JSON.stringify(reply(b)) }; };
 
 (async () => {
   vk.init({ channel: () => 'starlkov', getInfo: async () => ({ channel: 'starlkov', info: { title: 'Тест', game_name: 'Doom', viewer_count: 5 } }) });
@@ -40,3 +40,4 @@ global.fetch = async (url, o) => { const b = Object.fromEntries(new URLSearchPar
   if (had) fs.writeFileSync(FILE, had); else fs.rmSync(FILE, { force: true });
   console.log('vk: ok');
 })().catch((e) => { if (had) fs.writeFileSync(FILE, had); else fs.rmSync(FILE, { force: true }); console.error(e); process.exit(1); });
+

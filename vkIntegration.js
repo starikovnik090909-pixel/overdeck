@@ -69,11 +69,18 @@ function netErr(e) {
 async function call(method, params) {
   const body = new URLSearchParams({ v: V, access_token: cfg.token });
   for (const [k, v] of Object.entries(params || {})) body.set(k, String(v));
-  let r, j;
+  let r, j, txt = '';
+  const go = async () => {
+    r = await fetch(API + method, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'Overdeck/1.0' }, body, signal: AbortSignal.timeout(12000) });
+    txt = await r.text();
+  };
   try {
-    r = await fetch(API + method, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body, signal: AbortSignal.timeout(12000) });
-    j = await r.json();
+    try { await go(); } catch (e) { await new Promise((ok) => setTimeout(ok, 800)); await go(); } // одна повторная попытка при сетевом сбое
   } catch (e) { cfg.lastError = netErr(e); save(); throw new Error(cfg.lastError); }
+  try { j = JSON.parse(txt); } catch (e) {
+    cfg.lastError = 'ВК ответил не так, как ждали (код ' + (r && r.status) + '): ' + clip(String(txt).replace(/\s+/g, ' ').trim(), 120) + '. Возможно, ВК открывается через прокси, VPN или антивирус, которые вмешиваются в запрос.';
+    save(); throw new Error(cfg.lastError);
+  }
   if (j && j.error) {
     const c = j.error.error_code;
     cfg.lastError = ERR[c] || ('ВК ответил ошибкой ' + c + (j.error.error_msg ? ': ' + j.error.error_msg : ''));
