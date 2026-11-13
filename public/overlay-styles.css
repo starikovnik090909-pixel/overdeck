@@ -544,3 +544,17 @@ body[data-ostyle="r"] .frog-fx.scare i { width: 60%; max-width: 260px; aspect-ra
 @keyframes frog-hop { 0% { opacity: 0; transform: translateX(-120%) translateY(0); } 6% { opacity: 1; } 12% { transform: translateX(120%) translateY(-60%); } 24% { transform: translateX(260%) translateY(0); } 36% { transform: translateX(420%) translateY(-60%); } 48% { transform: translateX(560%) translateY(0); } 60% { transform: translateX(720%) translateY(-60%); } 72% { transform: translateX(860%) translateY(0); } 90% { opacity: 1; } 100% { opacity: 0; transform: translateX(var(--frog-w, 1000%)) translateY(0); } }
 @keyframes frog-scare { 0% { opacity: 0; transform: scale(.6) translateY(30%); } 14% { opacity: 1; transform: scale(1.12); } 40% { opacity: .95; transform: scale(1.04) rotate(-2deg); } 60% { opacity: 1; transform: scale(1.1) rotate(2deg); } 100% { opacity: 0; transform: scale(1.2); } }
 @keyframes frog-flash { 0%, 20% { opacity: 1; } 10% { opacity: .3; } 100% { opacity: 0; } }
+
+/* иконки-лягушки по виджетам */
+body[data-ostyle="r"] .panel-title::after { content: none; }
+body[data-ostyle="r"] .panel-icon { width: 92px; height: 74px; margin: -8px 0 -14px; background: center / contain no-repeat; border-radius: 0; box-shadow: none; border: 0; filter: drop-shadow(1px 2px 0 rgba(0,0,0,.5)); }
+body[data-ostyle="r"] .panel-icon svg { display: none; }
+body[data-ostyle="r"] .panel[data-widget="timeline"] .panel-icon { background-image: url('ovl-frog/f-timeline.svg'); }
+body[data-ostyle="r"] .panel[data-widget="activity"] .panel-icon { background-image: url('ovl-frog/f-activity.svg'); }
+body[data-ostyle="r"] .panel[data-widget="emotebox"] .panel-icon { background-image: url('ovl-frog/f-emotebox.svg'); }
+body[data-ostyle="r"] .panel[data-widget="wordcloud"] .panel-icon { background-image: url('ovl-frog/f-wordcloud.svg'); }
+body[data-ostyle="r"] .panel[data-widget="donortop"] .panel-icon { background-image: url('ovl-frog/f-donortop.svg'); }
+body[data-ostyle="r"] .panel[data-widget="musicchart"] .panel-icon { background-image: url('ovl-frog/f-musicchart.svg'); }
+body[data-ostyle="r"] .panel[data-widget="pointstop"] .panel-icon { background-image: url('ovl-frog/f-pointstop.svg'); }
+body[data-ostyle="r"] .panel[data-widget="eventfeed"] .panel-icon { background-image: url('ovl-frog/f-eventfeed.svg'); }
+body[data-ostyle="r"] .panel[data-widget="chat"] .panel-icon { background-image: url('ovl-frog/f-chat.svg'); }
