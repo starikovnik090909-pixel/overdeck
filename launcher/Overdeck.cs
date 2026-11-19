@@ -350,6 +350,7 @@ class Launcher : Form
     string downloadUrl = "";
     string pendingVersion = "";
     bool autoUpdate = true;
+    bool introMute;
     bool updating;
     Toggle chkAuto;
 
@@ -536,6 +537,8 @@ class Launcher : Form
             foreach (Control c in Controls) { introReveal.Add(c); c.Visible = false; }
             introHeader = hdr;
             introOverlay = new IntroOverlay();
+            introOverlay.Muted = introMute;
+            introOverlay.MuteChanged = delegate(bool m) { introMute = m; SaveUpdateConfig(); };
             Controls.Add(introOverlay);
             introOverlay.BringToFront();
             introOverlay.Finished += delegate { FinishIntro(); };
@@ -1246,6 +1249,8 @@ class Launcher : Form
             if (m.Success) updateUrl = m.Groups[1].Value.Trim();
             Match a = Regex.Match(s, "\"autoUpdate\"\\s*:\\s*(true|false)");
             if (a.Success) autoUpdate = a.Groups[1].Value == "true";
+            Match im = Regex.Match(s, "\"introMute\"\\s*:\\s*(true|false)");
+            if (im.Success) introMute = im.Groups[1].Value == "true";
         }
         catch { }
     }
@@ -1254,7 +1259,7 @@ class Launcher : Form
     {
         try
         {
-            string json = "{\r\n  \"updateUrl\": \"" + updateUrl.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\",\r\n  \"autoUpdate\": " + (autoUpdate ? "true" : "false") + "\r\n}\r\n";
+            string json = "{\r\n  \"updateUrl\": \"" + updateUrl.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\",\r\n  \"autoUpdate\": " + (autoUpdate ? "true" : "false") + ",\r\n  \"introMute\": " + (introMute ? "true" : "false") + "\r\n}\r\n";
             File.WriteAllText(Path.Combine(root, "launcher.json"), json, new UTF8Encoding(false));
         }
         catch { }

@@ -466,8 +466,12 @@ class IntroOverlay : Control
     Bitmap backdrop;
     System.Media.SoundPlayer sound;
     volatile bool done, running, pending;
-    bool period;
+    bool period, hover;
+    // кнопка «выключить звук запуска»: состояние хранит лаунчер (launcher.json), оверлей только показывает и сообщает об изменении
+    public bool Muted;
+    public Action<bool> MuteChanged;
     public event EventHandler Finished;
+    Rectangle BtnRect() { return new Rectangle(Width - 48, 14, 34, 34); }
     public IntroOverlay()
     {
         SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.Opaque, true);
@@ -486,7 +490,7 @@ class IntroOverlay : Control
         try
         {
             System.IO.Stream ss = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("intro.wav");
-            if (ss != null) { sound = new System.Media.SoundPlayer(ss); sound.Play(); }
+            if (ss != null) { sound = new System.Media.SoundPlayer(ss); if (!Muted) sound.Play(); }
         }
         catch { sound = null; }
         sw = Stopwatch.StartNew();
@@ -533,8 +537,53 @@ class IntroOverlay : Control
         EventHandler h = Finished;
         if (h != null) h(this, EventArgs.Empty);
     }
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        bool h = BtnRect().Contains(e.Location);
+        if (h != hover) { hover = h; Cursor = h ? Cursors.Hand : Cursors.Default; }
+        base.OnMouseMove(e);
+    }
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        hover = false; Cursor = Cursors.Default;
+        base.OnMouseLeave(e);
+    }
+    void ToggleMute()
+    {
+        Muted = !Muted;
+        if (sound != null && !done) { try { if (Muted) sound.Stop(); else sound.Play(); } catch { } }
+        Action<bool> h = MuteChanged;
+        if (h != null) { try { h(Muted); } catch { } }
+    }
+    void PaintMute(Graphics g)
+    {
+        Rectangle r = BtnRect();
+        SmoothingMode old = g.SmoothingMode;
+        g.SmoothingMode = SmoothingMode.AntiAlias;
+        Color c = Color.FromArgb(hover ? 240 : 150, 255, 255, 255);
+        float cx = r.X + r.Width / 2f - 3f, cy = r.Y + r.Height / 2f;
+        using (SolidBrush b = new SolidBrush(c))
+        using (Pen p = new Pen(c, 2f))
+        {
+            p.StartCap = LineCap.Round; p.EndCap = LineCap.Round;
+            g.FillPolygon(b, new PointF[] { new PointF(cx - 8, cy - 3.5f), new PointF(cx - 4, cy - 3.5f), new PointF(cx + 2, cy - 8), new PointF(cx + 2, cy + 8), new PointF(cx - 4, cy + 3.5f), new PointF(cx - 8, cy + 3.5f) });
+            if (Muted)
+            {
+                g.DrawLine(p, cx + 6, cy - 4, cx + 13, cy + 4);
+                g.DrawLine(p, cx + 13, cy - 4, cx + 6, cy + 4);
+            }
+            else
+            {
+                g.DrawArc(p, cx + 2 - 5, cy - 5, 10, 10, -50, 100);
+                g.DrawArc(p, cx + 2 - 9, cy - 9, 18, 18, -50, 100);
+            }
+        }
+        g.SmoothingMode = old;
+    }
     protected override void OnMouseDown(MouseEventArgs e)
     {
+        // кнопка звука: переключает и НЕ пропускает заставку
+        if (BtnRect().Contains(e.Location)) { ToggleMute(); return; }
         // клик пропускает заставку — и звук тоже
         if (sw != null) { if (!done && sound != null) { try { sound.Stop(); } catch { } } Finish(); }
         base.OnMouseDown(e);
@@ -544,6 +593,7 @@ class IntroOverlay : Control
         e.Graphics.CompositingQuality = CompositingQuality.HighSpeed;
         e.Graphics.PixelOffsetMode = PixelOffsetMode.HighSpeed;
         Intro.Render(e.Graphics, Width, Height, done ? Intro.P2B : Time(), backdrop);
+        PaintMute(e.Graphics);
     }
     protected override void Dispose(bool disposing)
     {
