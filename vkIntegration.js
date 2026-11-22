@@ -142,8 +142,9 @@ async function announce() {
 function onStreamStart() {
   startTracking();
   if (!on() || !cfg.announce) return;
-  if (Date.now() - lastAnnounceAt < COOLDOWN_MS) return;
-  lastAnnounceAt = Date.now();
+  // защита от повторов хранится в файле настроек: перезапуск программы посреди стрима не должен снова слать анонс
+  if (Date.now() - Math.max(lastAnnounceAt, Number(cfg.lastAnnounceAt) || 0) < COOLDOWN_MS) return;
+  lastAnnounceAt = Date.now(); cfg.lastAnnounceAt = lastAnnounceAt; save();
   safe(announce());
 }
 

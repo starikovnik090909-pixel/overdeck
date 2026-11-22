@@ -232,6 +232,13 @@ async function fetchStreamInfo(config, broadcasterId) {
   return (data && Array.isArray(data.data) && data.data[0]) || null;
 }
 
+/** Как fetchStreamInfo, но различает «стрим не идёт» (null) и «Twitch не ответил / вернул ошибку» (undefined) — по ошибке нельзя решать, что стрим закончился. */
+async function fetchStreamInfoStrict(config, broadcasterId) {
+  const data = await helixGet(config, 'streams', new URLSearchParams({ user_id: broadcasterId }));
+  if (!data || !Array.isArray(data.data)) return undefined;
+  return data.data[0] || null;
+}
+
 async function fetchGameArt(config, gameId, w, h) {
   if (!gameId) return null;
   const data = await helixGet(config, 'games', new URLSearchParams({ id: gameId }));
@@ -382,6 +389,7 @@ module.exports = {
   fetchChannelInfo,
   fetchStreamStatus,
   fetchStreamInfo,
+  fetchStreamInfoStrict,
   fetchGameArt,
   fetchGlobalBadges,
   fetchChannelBadges,
