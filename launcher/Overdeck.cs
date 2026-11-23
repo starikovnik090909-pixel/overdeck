@@ -350,7 +350,7 @@ class Launcher : Form
     string downloadUrl = "";
     string pendingVersion = "";
     bool autoUpdate = true;
-    bool introMute;
+    bool introMute, skipIntro;
     bool updating;
     Toggle chkAuto, chkSound;
 
@@ -540,7 +540,7 @@ class Launcher : Form
         Controls.Add(hint);
 
         // --- анимация запуска: поверх окна, пока слово «Overdeck» не доедет в шапку; потом пункты проявляются по очереди ---
-        if (Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1")
+        if (Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1" && !skipIntro)
         {
             introReveal = new List<Control>();
             foreach (Control c in Controls) { introReveal.Add(c); c.Visible = false; }
@@ -600,7 +600,7 @@ class Launcher : Form
         poll = new System.Windows.Forms.Timer();
         poll.Interval = 1000;
         poll.Tick += delegate { RefreshStatus(); };
-        bool introOn = Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1";
+        bool introOn = Brand.PathO != null && Environment.GetEnvironmentVariable("OVERDECK_NOANIM") != "1" && !skipIntro;
         if (!introOn) poll.Start();
 
         // тяжёлая стартовая работа (окно модов, проверка Node, обновления) идёт после анимации, чтобы не рвать кадры
@@ -1260,6 +1260,8 @@ class Launcher : Form
             if (a.Success) autoUpdate = a.Groups[1].Value == "true";
             Match im = Regex.Match(s, "\"introMute\"\\s*:\\s*(true|false)");
             if (im.Success) introMute = im.Groups[1].Value == "true";
+            Match sk = Regex.Match(s, "\"skipIntro\"\\s*:\\s*(true|false)");
+            if (sk.Success) skipIntro = sk.Groups[1].Value == "true";
         }
         catch { }
     }
@@ -1268,7 +1270,7 @@ class Launcher : Form
     {
         try
         {
-            string json = "{\r\n  \"updateUrl\": \"" + updateUrl.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\",\r\n  \"autoUpdate\": " + (autoUpdate ? "true" : "false") + ",\r\n  \"introMute\": " + (introMute ? "true" : "false") + "\r\n}\r\n";
+            string json = "{\r\n  \"updateUrl\": \"" + updateUrl.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\",\r\n  \"autoUpdate\": " + (autoUpdate ? "true" : "false") + ",\r\n  \"introMute\": " + (introMute ? "true" : "false") + ",\r\n  \"skipIntro\": " + (skipIntro ? "true" : "false") + "\r\n}\r\n";
             File.WriteAllText(Path.Combine(root, "launcher.json"), json, new UTF8Encoding(false));
         }
         catch { }

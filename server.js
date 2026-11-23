@@ -1482,6 +1482,7 @@ require('./routes/soon').main({ soonData, app });
 const notify = require('./notify');
 notify.init();
 require('./routes/notify').main({ notify, app });
+require('./routes/launcher').main({ launcherSettings: require('./launcherSettings'), app });
 process.on('exit', () => { try { notify.stop(); } catch (e) { /* выходим */ } });
 
 const obsRefresh = require('./obsRefresh');
