@@ -18,6 +18,7 @@
 <link rel="stylesheet" href="bosses.css?v=1">
 <link rel="stylesheet" href="overvoice-admin.css?v=10">
 <link rel="stylesheet" href="navsort.css?v=1">
+<link rel="stylesheet" href="settings.css?v=1">
 <link rel="stylesheet" href="../music-skins.css?v=7">
 <script>window.__ovQuery = location.search;
 /* замок: к запросам про темы добавляем токен, чтобы закрытые темы STARIKOV показывались только после пароля */
@@ -3199,11 +3200,12 @@
 
     <section class="tab-section" id="tab-admin-settings">
       <h1 class="tab-title">Настройки админки</h1>
-      <p class="tab-description">Ключ авторизации и режим разработчика. Цветовые темы панели — во вкладке «Стиль».</p>
+      <p class="tab-description">Ключ, копии, уведомления, лаунчер и режим разработчика. Цветовые темы панели — во вкладке «Стиль».</p>
 
-      <div class="card" id="keyCard" style="max-width:700px;">
+      <div class="card" id="keyCard">
         <h2 class="section-title">Ключ авторизации</h2>
         <p class="card-hint">Файл со всеми твоими данными и настройками: вход в Twitch и донаты, токены бота, раскладка виджетов, команды, алерты, шрифты, загруженные фото. Скачал оверлей на другом ПК — открой этот файл в пустом приложении, и всё подтянется. <b>В файле лежат ключи и токены — храни его как пароль, никому не отправляй.</b></p>
+        <div class="st-cols"><div class="st-blk"><h3 class="st-sub">Файл авторизации</h3>
         <div class="field">
           <label for="keyPassword">Пароль для файла (обязательно, минимум 6 символов)</label>
           <input type="password" id="keyPassword" autocomplete="new-password" placeholder="Пароль нужно будет ввести при открытии файла">
@@ -3214,17 +3216,19 @@
           <button class="btn btn-secondary" id="btnKeyOpen" type="button">Открыть файл авторизации</button>
           <input type="file" id="keyFile" accept=".overdeckkey,.json,application/json" style="display:none">
         </div>
-        <div class="form-message" id="keyMsg"></div>
-        <p class="card-hint" id="autoBackupInfo" style="margin-top:14px;">Автокопия настроек: проверяем…</p>
+        <div class="form-message" id="keyMsg"></div></div>
+        <div class="st-blk"><h3 class="st-sub">Автокопия</h3>
+        <p class="card-hint" id="autoBackupInfo">Автокопия настроек: проверяем…</p>
         <div class="actions"><button class="btn btn-secondary" id="btnAutoBackup" type="button">Сделать копию сейчас</button></div>
         <div id="keyChannelRow" style="display:none; margin-top:14px;">
           <p class="card-hint">Файла нет? Впиши имя своего канала Twitch — этого достаточно, чтобы запустить оверлей (остальное настроишь во вкладках).</p>
           <div class="field"><input type="text" id="keyChannel" maxlength="25" placeholder="Например, mychannel"></div>
           <button class="btn btn-secondary" id="btnKeyChannel" type="button">Сохранить канал и перезапустить</button>
         </div>
+      </div></div>
       </div>
 
-      <div class="card" id="devCard" style="max-width:700px;">
+      <div class="card" id="devCard">
         <h2 class="section-title">Режим разработчика</h2>
         <p class="card-hint">Открывает закрытые вкладки: «Турнир», «Чат-аватары», «Расширение Twitch». Это тестовые функции, они не входят в обычную версию. Нужен пароль.</p>
         <div id="devOff">
@@ -4346,6 +4350,7 @@
 <script src="tablock.js?v=1"></script>
 <script src="notify-admin.js?v=1"></script>
 <script src="launcher-admin.js?v=1"></script>
+<script src="settings-shell.js?v=1"></script>
 <script src="webcamtab.js?v=1"></script>
 <script src="faceswaptab.js?v=1"></script>
 <script src="whatsnew.js?v=70"></script>

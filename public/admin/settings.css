@@ -1,0 +1,111 @@
+/* settings.css — «Настройки админки»: меню разделов слева, выбранный раздел справа. Всё помещается в окно без прокрутки страницы. */
+
+.content { position: relative; }
+
+#tab-admin-settings.active {
+  position: absolute; inset: 24px 32px 26px;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+/* --- верх --- */
+.st-top { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 18px; flex: none; }
+.st-top .tab-title { margin: 0; }
+.st-top .tab-description { margin: 0; font-size: 13.5px; max-width: none; }
+
+/* --- каркас --- */
+.st-shell { flex: 1; min-height: 0; display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 16px; }
+
+/* --- меню --- */
+.st-nav {
+  display: flex; flex-direction: column; gap: 4px; padding: 10px; min-height: 0; overflow: auto;
+  background: var(--bg-card); border: 1px solid var(--divider); border-radius: 16px;
+}
+.st-ni {
+  position: relative; display: grid; grid-template-columns: 38px minmax(0, 1fr); gap: 12px; align-items: center;
+  width: 100%; padding: 10px 12px; text-align: left; font: inherit; color: var(--text-primary);
+  background: transparent; border: 1px solid transparent; border-radius: 12px; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.st-ni:hover { background: var(--bg-hover, var(--hover)); }
+.st-ni:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.st-ni .ic {
+  width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center;
+  background: var(--bg-card2, var(--hover)); color: var(--text-secondary); transition: background .15s, color .15s;
+}
+.st-ni .ic svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.st-ni .tx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.st-ni .tx b { font-size: 14px; font-weight: 600; line-height: 1.25; }
+.st-ni .tx span { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-ni[aria-selected="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 38%, transparent); }
+.st-ni[aria-selected="true"] .ic { background: var(--accent); color: #04110f; }
+.st-ni[aria-selected="true"]::before {
+  content: ""; position: absolute; left: -11px; top: 50%; width: 4px; height: 22px; margin-top: -11px;
+  border-radius: 0 4px 4px 0; background: var(--accent);
+}
+
+/* --- панель раздела --- */
+.st-pane {
+  display: none; flex-direction: column; min-height: 0; min-width: 0; overflow: hidden;
+  background: var(--bg-card); border: 1px solid var(--divider); border-radius: 16px;
+}
+.st-pane.on { display: flex; animation: stIn .2s ease-out; }
+@keyframes stIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.st-ph { flex: none; display: flex; align-items: center; gap: 14px; padding: 18px 24px; border-bottom: 1px solid var(--divider); }
+.st-ph .ic { width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); flex: none; }
+.st-ph .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.st-ph h2 { margin: 0; font: 600 18px 'Unbounded', Inter, system-ui, sans-serif; }
+.st-ph p { margin: 4px 0 0; font-size: 13px; line-height: 1.45; color: var(--text-secondary); max-width: 760px; }
+.st-pb { flex: 1; min-height: 0; overflow: auto; padding: 20px 24px 24px; }
+.st-pb.fill { overflow: hidden; display: flex; flex-direction: column; }
+
+/* карточки внутри панели: рамку и заголовок даёт сама панель */
+.st-pb > .card {
+  max-width: 1040px !important; margin: 0 !important; padding: 0 !important;
+  background: none !important; border: 0 !important; box-shadow: none !important;
+}
+.st-pb > .card > .section-title { display: none; }
+.st-pb > .card > .card-hint:first-of-type { display: none; } /* то же самое уже сказано в шапке раздела */
+.st-pb .form-message:empty { display: none; }
+
+/* блоки внутри раздела */
+.st-cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.st-blk { min-width: 0; padding: 16px 18px; background: var(--bg-card2, var(--hover)); border: 1px solid var(--divider); border-radius: 14px; }
+.st-sub { margin: 0 0 12px; font-size: 11.5px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text-mute, var(--text-secondary)); }
+.st-blk .field { margin-bottom: 12px; }
+.st-blk .actions { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.st-blk .key-check { align-items: flex-start; line-height: 1.4; }
+.st-blk .key-check input { margin-top: 2px; }
+.st-blk > .card-hint { margin: 0 0 4px; }
+
+/* уведомления и лаунчер: строки-переключатели плитками, по две в ряд */
+#ntCard, #lcCard { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; align-content: start; }
+#ntCard > .card-hint, #lcCard > .card-hint, #ntCard > .nt-acts, #ntCard > .nt-status, #lcCard > .lc-note { grid-column: 1 / -1; }
+.nt-row, .lc-row {
+  margin: 0 !important; padding: 14px 16px !important; border: 1px solid var(--divider) !important; border-radius: 14px;
+  background: var(--bg-card2, var(--hover)); min-height: 66px;
+}
+.nt-acts { margin-top: 2px !important; }
+
+/* копии и история: список точек прокручивается сам */
+.qol-hist { display: flex !important; flex-direction: column; min-height: 0; height: 100%; }
+.qol-hist > .card-hint:first-of-type { flex: none; }
+.qol-hist .widget-fields-title { flex: none; margin: 18px 0 8px !important; }
+.qol-hist .qol-hl { flex: 1; min-height: 0; max-height: none !important; overflow: auto; padding: 4px 14px; background: var(--bg-card2, var(--hover)); border: 1px solid var(--divider); border-radius: 14px; }
+.qol-hist .qol-h-row:last-child { border-bottom: 0; }
+.qol-hist > .actions { flex: none; }
+
+/* режим разработчика */
+#devCard .field { max-width: 380px; }
+
+/* --- узкие окна --- */
+@media (max-width: 1000px) {
+  #tab-admin-settings.active { position: static; display: block; }
+  .st-shell { display: flex; flex-direction: column; }
+  .st-nav { flex-direction: row; overflow-x: auto; }
+  .st-ni { width: auto; flex: none; grid-template-columns: 34px auto; }
+  .st-ni .tx span, .st-ni[aria-selected="true"]::before { display: none; }
+  .st-pane.on { display: flex; }
+  .st-pb, .st-pb.fill { overflow: visible; }
+  .st-cols, #ntCard, #lcCard { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) { .st-pane.on { animation: none; } .st-ni, .st-ni .ic { transition: none; } }
