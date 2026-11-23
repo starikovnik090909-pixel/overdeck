@@ -352,7 +352,7 @@ class Launcher : Form
     bool autoUpdate = true;
     bool introMute;
     bool updating;
-    Toggle chkAuto;
+    Toggle chkAuto, chkSound;
 
     ConsoleForm console;
     Label lblVersion, lblStatus, lblUpdate, lblUpdTitle, lblNode, lblAdminUrl;
@@ -520,6 +520,15 @@ class Launcher : Form
         chkAuto.CheckedChanged += delegate { autoUpdate = chkAuto.Checked; SaveUpdateConfig(); };
         Controls.Add(chkAuto);
 
+        // звук заставки запуска (кручение «O» и появление слова): включён = играет; то же переключает иконка динамика на самой заставке
+        chkSound = new Toggle();
+        chkSound.Text = "Звук при запуске";
+        chkSound.Checked = !introMute;
+        chkSound.Location = new Point(320, 336);
+        chkSound.Size = new Size(240, 24);
+        chkSound.CheckedChanged += delegate { introMute = !chkSound.Checked; SaveUpdateConfig(); };
+        Controls.Add(chkSound);
+
         Label hint = new Label();
         hint.Text = "Закрытие окна сворачивает в трей — сервер продолжает работать. Полностью выйти: значок в трее → «Выход».";
         hint.ForeColor = Color.FromArgb(92, 105, 104);
@@ -538,7 +547,7 @@ class Launcher : Form
             introHeader = hdr;
             introOverlay = new IntroOverlay();
             introOverlay.Muted = introMute;
-            introOverlay.MuteChanged = delegate(bool m) { introMute = m; SaveUpdateConfig(); };
+            introOverlay.MuteChanged = delegate(bool m) { introMute = m; SaveUpdateConfig(); if (chkSound != null) chkSound.Checked = !m; };
             Controls.Add(introOverlay);
             introOverlay.BringToFront();
             introOverlay.Finished += delegate { FinishIntro(); };
