@@ -621,7 +621,8 @@ function timelineWeightFor(type) {
 // ---------- Категории + статус трансляции (онлайн/офлайн): периодический опрос ----------
 
 let streamIsLive = false;
-let offlinePolls = 0; // подряд опросов «не в эфире» при идущем стриме: один пустой ответ Twitch не считаем концом стрима (иначе анонсы шлются заново)
+const OFFLINE_GRACE_MS = 3 * 60 * 1000; // стрим считается закончившимся, только если Twitch не показывает его подряд столько времени (короткие провалы API и обрывы связи — не конец)
+let offlineSince = 0; // с какого момента Twitch перестал показывать идущий стрим (0 — показывает или стрима и не было)
 let streamStatusKnown = false; // первый опрос после запуска сервера только узнаёт статус: данные идущего стрима не стираем
 
 async function pollCategoryOnce() {
@@ -636,8 +637,12 @@ async function pollCategoryOnce() {
     const wasLive = streamIsLive;
     const liveInfo = await twitch.fetchStreamInfoStrict(config, resolvedBroadcasterId);
     if (liveInfo === undefined) return; // Twitch не ответил или вернул ошибку (лимит, токен, сеть) — статус не меняем
-    if (!liveInfo && wasLive && ++offlinePolls < 2) return; // стрим «пропал» — ждём подтверждения следующим опросом
-    offlinePolls = 0;
+    if (liveInfo || !wasLive) offlineSince = 0;
+    else {
+      if (!offlineSince) offlineSince = Date.now();
+      if (Date.now() - offlineSince < OFFLINE_GRACE_MS) return; // стрим «пропал» — пока считаем идущим: вернётся без перезапуска сессии, анонсов и итогов
+      offlineSince = 0;
+    }
     streamIsLive = !!liveInfo;
     if (liveInfo) { try { gazetteService.journal.noteViewers(liveInfo.viewer_count); } catch (e) { /* журнал необязателен */ } }
     pixelHeroes.noteLive(streamIsLive); // идёт стрим — трансляция для опыта чаттеров продолжается (или начинается новая)
