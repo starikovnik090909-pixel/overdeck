@@ -27,7 +27,9 @@
 
   // ---------- смайлы в чате ----------
   function isEmoteWrap(n) { return n && n.nodeType === 1 && n.classList.contains('od-emote-wrap'); }
-  function mkImg(e, zw) { const im = document.createElement('img'); im.src = e.u; im.alt = e.n; im.title = e.n; im.className = zw ? 'od-zw' : 'od-emote'; im.loading = 'lazy'; im.decoding = 'async'; return im; }
+  // картинку смайла берём только с известных CDN по https (проверка и в фоновом скрипте, здесь — на случай подмены)
+  function emoteUrlOk(u) { try { const x = new URL(String(u)); return x.protocol === 'https:' && (x.hostname === 'cdn.7tv.app' || x.hostname === 'cdn.betterttv.net' || x.hostname.endsWith('.frankerfacez.com')); } catch (e) { return false; } }
+  function mkImg(e, zw) { const im = document.createElement('img'); im.src = emoteUrlOk(e.u) ? e.u : ''; im.alt = e.n; im.title = e.n; im.className = zw ? 'od-zw' : 'od-emote'; im.loading = 'lazy'; im.decoding = 'async'; return im; }
   function render(text, target) {
     const parts = text.split(/(\s+)/); let any = false, last = null;
     for (const w of parts) {

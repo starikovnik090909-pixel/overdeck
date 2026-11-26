@@ -13,6 +13,9 @@ function browserId() {
   if (/Vivaldi/i.test(ua)) return 'vivaldi';
   return 'chrome';
 }
+const clip = (s, n) => String(s == null ? '' : s).slice(0, n);
+const httpUrl = (u) => { try { const x = new URL(String(u)); return x.protocol === 'http:' || x.protocol === 'https:' ? clip(x.href, 500) : ''; } catch (e) { return ''; } };
+const num = (v) => (isFinite(Number(v)) ? Number(v) : 0);
 function cleanTitle(t) { return String(t || '').replace(/^\(\d+\)\s*/, '').replace(/\s[-–—|]\s(YouTube|Twitch|Rutube|Кинопоиск|Netflix)\s*$/i, '').trim(); }
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
@@ -23,8 +26,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (msg.t === 'gone') { items.delete(key); push(); return; }
   if (msg.t !== 'media') return;
   const tabTitle = cleanTitle(sender.tab.title);
-  items.set(key, { id: browserId(), title: msg.title || tabTitle || cleanTitle(msg.frameTitle), artist: msg.artist, cover: msg.cover, site: msg.site, playing: msg.playing,
-    pos: msg.pos, dur: msg.dur, rate: msg.rate, tabActive: !!sender.tab.active, at: Date.now() });
+  // данные пришли со страницы — длину строк ограничиваем, а в обложке пропускаем только http(s)
+  items.set(key, { id: browserId(), title: clip(msg.title || tabTitle || cleanTitle(msg.frameTitle), 200), artist: clip(msg.artist, 200), cover: httpUrl(msg.cover), site: clip(msg.site, 100), playing: !!msg.playing,
+    pos: num(msg.pos), dur: num(msg.dur), rate: num(msg.rate) || 1, tabActive: !!sender.tab.active, at: Date.now() });
   push();
 });
 chrome.tabs.onRemoved.addListener((id) => { for (const k of Array.from(items.keys())) if (k.startsWith(id + ':')) items.delete(k); push(); });
@@ -35,7 +39,7 @@ function push() {
   if (wait > 0) { if (!timer) timer = setTimeout(() => { timer = null; push(); }, wait); return; }
   lastPush = Date.now();
   const now = Date.now();
-  for (const [k, v] of items) if (now - v.at > 4000) items.delete(k);
+  for (const [k, v] of items) if (now - v.at > 8000) items.delete(k); // страница шлёт данные раз в 3 с
   send();
 }
 async function send() {
@@ -58,6 +62,12 @@ async function jget(url) { const r = await fetch(url, { cache: 'no-store' }); if
 async function twitchId(login) {
   const r = await fetch('https://gql.twitch.tv/gql', { method: 'POST', headers: { 'Client-ID': 'kimne78kx3ncx6brgo4mv6wki5h1ko', 'Content-Type': 'application/json' }, body: JSON.stringify({ query: 'query($l:String!){user(login:$l){id}}', variables: { l: login } }) });
   const j = await r.json(); return j && j.data && j.data.user && j.data.user.id;
+}
+function emoteUrlOk(u) {
+  try {
+    const x = new URL(String(u));
+    return x.protocol === 'https:' && !x.username && !x.password && (x.hostname === 'cdn.7tv.app' || x.hostname === 'cdn.betterttv.net' || x.hostname.endsWith('.frankerfacez.com'));
+  } catch (e) { return false; }
 }
 const BTTV_ZW = new Set(['SoSnowy', 'IceCold', 'SantaHat', 'TopHat', 'ReinDeer', 'CandyCane', 'cvMask', 'cvHazmat']);
 function from7tv(set, out) {
@@ -87,6 +97,8 @@ async function loadEmotes(login, src) {
     if (id) jobs.push(jget('https://api.frankerfacez.com/v1/room/id/' + id).then(addF).catch(() => {}));
   }
   await Promise.all(jobs);
+  // картинки смайлов берём только с известных CDN по https (адреса приходят из ответов сторонних API)
+  for (let i = list.length - 1; i >= 0; i--) if (!emoteUrlOk(list[i].u) || typeof list[i].n !== 'string') list.splice(i, 1);
   // повторы имён: приоритет у канала (добавлен позже), поэтому оставляем последнее
   const seen = new Map(); for (const e of list) seen.set(e.n, e);
   const out = Array.from(seen.values());
@@ -99,8 +111,9 @@ const RULE_ID = 1;
 async function applyHd() {
   const st = await chrome.storage.local.get(OD_DEFAULTS);
   const ok = st.hd && /^https:\/\/[^\s/]+(\/[^\s]*)?$/.test(String(st.relay || '').trim());
-  const rules = ok ? [{ id: RULE_ID, priority: 1, action: { type: 'redirect', redirect: { regexSubstitution: String(st.relay).trim().replace(/\/+$/, '') + '/\\1' } },
-    condition: { regexFilter: '^https://usher\\.ttvnw\\.net/(api/(?:v2/)?channel/hls/.*)', resourceTypes: ['xmlhttprequest', 'other'] } }] : [];
+  const rules = ok ? [{ id: RULE_ID, priority: 1, action: { type: 'redirect', redirect: { regexSubstitution: String(st.relay).trim().replace(/\/+$/, '').replace(/\\/g, '\\\\') + '/\\1' } },
+    // только запросы самого twitch.tv: плееры Twitch, встроенные на чужие сайты, через релей не идут
+    condition: { regexFilter: '^https://usher\\.ttvnw\\.net/(api/(?:v2/)?channel/hls/.*)', resourceTypes: ['xmlhttprequest', 'other'], initiatorDomains: ['twitch.tv'], excludedInitiatorDomains: ['player.twitch.tv', 'embed.twitch.tv'] } }] : [];
   try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [RULE_ID], addRules: rules }); } catch (e) { await chrome.storage.local.set({ hdErr: String(e.message || e) }); return; }
   await chrome.storage.local.set({ hdErr: '', hdOn: ok });
 }
